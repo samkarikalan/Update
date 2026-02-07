@@ -910,8 +910,8 @@ body.locked .swap-icon {
   justify-content: center;      /* center vertically */
   border: 2px solid #333;    /* boundary */
   border-radius: 8px;           /* optional rounded corners */
-  min-width: 120px;             /* ensures all boxes roughly same size */
-  background-color: #f9f9f9;    /* optional light background */
+  width: 37%;             /* ensures all boxes roughly same size */
+  background-color:none;    /* optional light background */
   text-align: center;           /* center text inside */
 }
 

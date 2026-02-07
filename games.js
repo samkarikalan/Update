@@ -27,13 +27,22 @@ function toggleRound() {
     // ---- ENTER ACTIVE (BUSY) MODE ----
     currentState = "active";
 
-    // Disable everything except Next button & win cups
-    document.querySelectorAll("button, .player-btn, .mode-card, .lock-icon, .swap-icon").forEach(el => {
-      if (el.id !== "nextBtn") {
+    // Disable everything except #nextBtn and .win-cup
+    document.querySelectorAll(
+      "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
+    ).forEach(el => {
+      if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
+        // Disable clicks
         el.style.pointerEvents = "none";
+        
+        // Add disabled styling
         el.classList.add("disabled");
+    
+        // Remove any inline onclick handlers to prevent JS actions
+        //if (el.onclick) el.onclick = null;
       }
     });
+
 
     const playmode = getPlayMode();
 
@@ -48,11 +57,24 @@ function toggleRound() {
     currentState = "idle";
     nextRound();
 
-    // Re-enable everything
+    
+   // Re-enable everything previously disabled
     document.querySelectorAll(".disabled").forEach(el => {
+      // Restore pointer events
       el.style.pointerEvents = "";
+    
+      // Remove the disabled class
       el.classList.remove("disabled");
+    
+      // If you had removed inline onclick handlers, you may need to restore them manually
+      // For example, for the menu button:
+      if (el.classList.contains("menu-btn")) {
+        el.onclick = function() {
+          showPage('homePage', this);
+        };
+      }
     });
+
 
     // Hide & disable win cups
     document.querySelectorAll(".win-cup").forEach(cup => {
@@ -1411,7 +1433,172 @@ function chkrenderRestingPlayers(data, index) {
   return restDiv;
 }
 
-function renderGames(data, index) {
+function renderGames(data, roundIndex) {
+  const wrapper = document.createElement('div');
+  const playmode = getPlayMode(); // "competitive" or "random"
+
+  data.games.forEach((game, gameIndex) => {
+    const courtDiv = document.createElement('div');
+    courtDiv.className = 'courtcard';
+
+    const courtName = document.createElement('div');
+    courtName.classList.add('courtname');
+    courtName.textContent = `Court ${gameIndex + 1}`;
+
+    const teamsDiv = document.createElement('div');
+    teamsDiv.className = 'teams';
+
+    const makeTeamDiv = (teamSide) => {
+      const teamDiv = document.createElement('div');
+      teamDiv.className = 'team';
+      teamDiv.dataset.teamSide = teamSide;
+      teamDiv.dataset.gameIndex = gameIndex;
+
+      // 🔁 Swap icon
+      const swapIcon = document.createElement('div');
+      swapIcon.className = 'swap-icon';
+      swapIcon.innerHTML = '🔁';
+      teamDiv.appendChild(swapIcon);
+
+      // 👥 Players
+      const teamPairs = teamSide === 'L' ? game.pair1 : game.pair2;
+      teamPairs.forEach((p, i) => {
+        teamDiv.appendChild(
+          makePlayerButton(p, teamSide, gameIndex, i, data, roundIndex)
+        );
+      });
+
+      // 🏆 Win cup
+      const winCup = document.createElement('img');
+      winCup.src = 'win-cup.png';
+      winCup.className = 'win-cup blinking';
+      winCup.title = 'Mark winner';
+      winCup.style.pointerEvents = 'none';
+      winCup.style.visibility = 'hidden';
+
+      // Show if this team already won
+      if (game.winner === teamSide) {
+        winCup.classList.add('active');
+        winCup.classList.remove('blinking');
+        winCup.style.visibility = 'visible';
+        winCup.style.pointerEvents = 'auto';
+      }
+
+      // Win-cup click logic (competitive mode)
+      if (playmode === 'competitive') {
+        winCup.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+
+          const allCups = teamDiv.parentElement.querySelectorAll('.win-cup');
+          const allSwapIcons = teamDiv.parentElement.querySelectorAll('.swap-icon');
+          const isActive = winCup.classList.contains('active');
+
+          if (!isActive) {
+            // Activate this team
+            allCups.forEach(cup => {
+              cup.classList.remove('active', 'blinking');
+              cup.style.visibility = 'hidden';
+              cup.style.pointerEvents = 'none';
+            });
+
+            winCup.classList.add('active');
+            winCup.classList.remove('blinking');
+            winCup.style.visibility = 'visible';
+            winCup.style.pointerEvents = 'auto';
+
+            // Hide swap icons while winner is active
+            allSwapIcons.forEach(icon => {
+              icon.style.visibility = 'hidden';
+              icon.style.pointerEvents = 'none';
+            });
+
+            game.winner = teamSide;
+            game.winners = teamPairs.slice();
+          } else {
+            // Reset to idle
+            allCups.forEach(cup => {
+              cup.classList.remove('active');
+              cup.classList.add('blinking');
+              cup.style.visibility = 'hidden';
+              cup.style.pointerEvents = 'none';
+            });
+
+            allSwapIcons.forEach(icon => {
+              icon.style.visibility = 'visible';
+              icon.style.pointerEvents = 'auto';
+            });
+
+            game.winner = undefined;
+            game.winners = [];
+          }
+        });
+      }
+
+      // Append cup to teamDiv
+      teamDiv.appendChild(winCup);
+
+      // Swap logic (latest round only)
+      const isLatestRound = roundIndex === allRounds.length - 1;
+      if (isLatestRound) {
+        swapIcon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+
+          if (game.winner) return; // Busy → no swap
+
+          if (window.selectedTeam) {
+            const src = window.selectedTeam;
+            if (src.gameIndex !== gameIndex) {
+              handleTeamSwapAcrossCourts(
+                src,
+                { teamSide, gameIndex },
+                data,
+                roundIndex
+              );
+            }
+            window.selectedTeam = null;
+            document.querySelectorAll('.selected-team').forEach(b => b.classList.remove('selected-team'));
+          } else {
+            window.selectedTeam = { teamSide, gameIndex };
+            teamDiv.classList.add('selected-team');
+          }
+        });
+      }
+
+      return teamDiv;
+    };
+
+    const teamLeft = makeTeamDiv('L');
+    const teamRight = makeTeamDiv('R');
+
+    const vs = document.createElement('span');
+    vs.className = 'vs';
+    vs.innerText = '  ';
+
+    teamsDiv.append(teamLeft, vs, teamRight);
+    courtDiv.append(courtName, teamsDiv);
+    wrapper.appendChild(courtDiv);
+
+    // If winner exists, hide inactive cups and swaps
+    if (playmode === 'competitive' && game.winner) {
+      teamsDiv.querySelectorAll('.win-cup').forEach(cup => {
+        if (!cup.classList.contains('active')) {
+          cup.style.visibility = 'hidden';
+          cup.style.pointerEvents = 'none';
+        }
+      });
+      teamsDiv.querySelectorAll('.swap-icon').forEach(icon => {
+        icon.style.visibility = 'hidden';
+        icon.style.pointerEvents = 'none';
+      });
+    }
+  });
+
+  return wrapper;
+}
+
+function renderGames2(data, index) {
   const wrapper = document.createElement('div');
   const playmode = getPlayMode(); // "competitive" or "random"
 
@@ -1584,249 +1771,6 @@ function renderGames(data, index) {
 
 
 
-function renderGamesold(data, index) {
-  const wrapper = document.createElement('div');
-
-  data.games.forEach((game, gameIndex) => {
-
-    // 🟦 Create the main container for the court
-    const courtDiv = document.createElement('div');
-    courtDiv.className = 'courtcard';
-
-    // 🏟️ Court name / number (TOP)
-    const courtName = document.createElement('div');
-    courtName.classList.add('courtname');
-    courtName.textContent = `Court ${gameIndex + 1}`;
-
-    // 🟨 Teams container (BELOW court name)
-    const teamsDiv = document.createElement('div');
-    teamsDiv.className = 'teams';
-
-    // Helper → Team letters (A, B, C, D...)
-    const getTeamLetter = (gameIndex, teamSide) => {
-      const teamNumber = gameIndex * 2 + (teamSide === 'L' ? 0 : 1);
-      return String.fromCharCode(65 + teamNumber);
-    };
-
-    // 🧩 Create a team block
-    const makeTeamDiv = (teamSide) => {
-      const teamDiv = document.createElement('div');
-      teamDiv.className = 'team';
-      teamDiv.dataset.teamSide = teamSide;
-      teamDiv.dataset.gameIndex = gameIndex;
-
-      // 🔁 Swap icon
-      const swapIcon = document.createElement('div');
-      swapIcon.className = 'swap-icon';
-      swapIcon.innerHTML = '🔁';
-      teamDiv.appendChild(swapIcon);
-
-      // 👥 Add player buttons
-      const teamPairs = teamSide === 'L' ? game.pair1 : game.pair2;
-      teamPairs.forEach((p, i) => {
-        teamDiv.appendChild(
-          makePlayerButton(p, teamSide, gameIndex, i, data, index)
-        );
-      });
-
-      // ✅ Swap logic (only for latest round)
-      const isLatestRound = index === allRounds.length - 1;
-      if (isLatestRound) {
-        swapIcon.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-
-          if (window.selectedTeam) {
-            const src = window.selectedTeam;
-
-            if (src.gameIndex !== gameIndex) {
-              handleTeamSwapAcrossCourts(
-                src,
-                { teamSide, gameIndex },
-                data,
-                index
-              );
-            }
-
-            window.selectedTeam = null;
-            document
-              .querySelectorAll('.selected-team')
-              .forEach(b => b.classList.remove('selected-team'));
-
-          } else {
-            window.selectedTeam = { teamSide, gameIndex };
-            teamDiv.classList.add('selected-team');
-          }
-        });
-      }
-
-      return teamDiv;
-    };
-
-    // 🟢 Create left & right teams
-    const teamLeft = makeTeamDiv('L');
-    const teamRight = makeTeamDiv('R');
-
-    // ⚪ VS label
-    const vs = document.createElement('span');
-    vs.className = 'vs';
-    vs.innerText = '  ';
-
-    // 🧱 Build structure (ORDER MATTERS)
-    teamsDiv.append(teamLeft, vs, teamRight);
-    courtDiv.append(courtName, teamsDiv);
-    wrapper.appendChild(courtDiv);
-  });
-
-  return wrapper;
-}
-
-
-
-function renderGamesold2(data, index) {
-  const wrapper = document.createElement('div');
-  const playmode = getPlayMode(); // "competitive" or "random"
-
-  data.games.forEach((game, gameIndex) => {
-    // Main court container
-    const courtDiv = document.createElement('div');
-    courtDiv.className = 'courtcard';
-
-    // Court name
-    const courtName = document.createElement('div');
-    courtName.classList.add('courtname');
-    courtName.textContent = `Court ${gameIndex + 1}`;
-
-    // Teams container
-    const teamsDiv = document.createElement('div');
-    teamsDiv.className = 'teams';
-
-    // Helper: Create a team block
-    const makeTeamDiv = (teamSide) => {
-      const teamDiv = document.createElement('div');
-      teamDiv.className = 'team';
-      teamDiv.dataset.teamSide = teamSide;
-      teamDiv.dataset.gameIndex = gameIndex;
-
-      // Swap icon (optional)
-      const swapIcon = document.createElement('div');
-      swapIcon.className = 'swap-icon';
-      swapIcon.innerHTML = '🔁';
-      teamDiv.appendChild(swapIcon);
-
-      // Players
-      const teamPairs = teamSide === 'L' ? game.pair1 : game.pair2;
-      teamPairs.forEach((p, i) => {
-        teamDiv.appendChild(
-          makePlayerButton(p, teamSide, gameIndex, i, data, index)
-        );
-      });
-
-      // ---------- WIN CUP ----------
-      const winCup = document.createElement('img');
-      winCup.src = 'win-cup.png';
-      winCup.className = 'win-cup blinking';
-      winCup.title = 'Mark winner';
-
-      // Initially hidden (handled later by updateWinCupVisibility)
-      winCup.style.display = 'none';
-
-      // Restore state from saved data
-      if (game.winner === teamSide) {
-        winCup.classList.add('active');
-        winCup.classList.remove('blinking');
-      }
-
-      // Competitive mode logic
-      if (playmode === 'competitive') {
-        winCup.addEventListener('click', (e) => {
-          e.stopPropagation();
-
-          const allCups = teamDiv.parentElement.querySelectorAll('.win-cup');
-          const isActive = winCup.classList.contains('active');
-
-          if (!isActive) {
-            // ---- ACTIVATE THIS TEAM ----
-            allCups.forEach(cup => {
-              cup.classList.remove('active');
-              cup.classList.remove('blinking');
-              cup.style.visibility = 'hidden';
-            });
-
-            winCup.classList.add('active');
-            winCup.style.visibility = 'visible';
-
-            game.winner = teamSide;
-            game.winners = teamPairs.slice();
-          } else {
-            // ---- DEACTIVATE / RESET COURT ----
-            allCups.forEach(cup => {
-              cup.classList.remove('active');
-              cup.classList.add('blinking');
-              cup.style.visibility = 'visible';
-            });
-
-            game.winner = undefined;
-            game.winners = [];
-          }
-        });
-      }
-
-      teamDiv.appendChild(winCup);
-
-      // Swap logic (unchanged)
-      swapIcon.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-
-        if (window.selectedTeam) {
-          const src = window.selectedTeam;
-
-          if (src.gameIndex !== gameIndex) {
-            handleTeamSwapAcrossCourts(
-              src,
-              { teamSide, gameIndex },
-              data,
-              index
-            );
-          }
-
-          window.selectedTeam = null;
-          document
-            .querySelectorAll('.selected-team')
-            .forEach(b => b.classList.remove('selected-team'));
-        }
-      });
-
-      return teamDiv;
-    };
-
-    // Left & right teams
-    const teamLeft = makeTeamDiv('L');
-    const teamRight = makeTeamDiv('R');
-
-    // VS label
-    const vs = document.createElement('span');
-    vs.className = 'vs';
-    vs.innerText = '  ';
-
-    // Build DOM
-    teamsDiv.append(teamLeft, vs, teamRight);
-    courtDiv.append(courtName, teamsDiv);
-    wrapper.appendChild(courtDiv);
-
-    // ---- RESTORE VISIBILITY IF WINNER EXISTS ----
-    if (playmode === 'competitive' && game.winner) {
-      teamsDiv.querySelectorAll('.win-cup').forEach(cup => {
-        if (!cup.classList.contains('active')) {
-          cup.style.visibility = 'hidden';
-        }
-      });
-    }
-  });
-
-  return wrapper;
-}
 
 
 function updateWinCupVisibility() {

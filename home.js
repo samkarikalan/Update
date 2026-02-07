@@ -164,7 +164,7 @@ function setFontSize(size) {
 
   if (size === "small") root.style.setProperty("--base-font-size", "12px");
   if (size === "medium") root.style.setProperty("--base-font-size", "15px");
-  if (size === "large") root.style.setProperty("--base-font-size", "18px");
+  if (size === "large") root.style.setProperty("--base-font-size", "20px");
 
   localStorage.setItem("appFontSize", size); // 👈 SAVE (ADD THIS)
 

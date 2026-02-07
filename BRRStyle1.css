@@ -1,6 +1,11 @@
 :root {
   --base-font-size: 12px; /* Default Medium */
 }
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 html {
   font-size: var(--base-font-size);
 }
