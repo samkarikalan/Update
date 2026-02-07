@@ -1,0 +1,862 @@
+:root {
+  --base-font-size: 12px; /* Default Medium */
+}
+html {
+  font-size: var(--base-font-size);
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f7f7f9;
+  color: #222;
+}
+body {
+  background: #f2eef9;
+}
+
+.app-logo-premium {
+  position: absolute;          /* REQUIRED */
+  left: 50%;
+  transform: translateX(-50%); /* FIX */
+
+  font-size: 35px;
+  font-weight: 800;
+  background: #1f2933;  
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  text-shadow: 2px 4px 8px rgba(0,0,0,0.15);
+  letter-spacing: -1px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.app-logo-premium {
+  justify-self: center;
+}
+
+/* ===== TOP TABS (Updated Style) ===== */
+
+
+.top-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  overflow: visible;
+  height: 60px;
+  padding: 0 12px;
+}
+
+
+.menu-btn {
+  font-size: 1.4rem;  
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lang-btn {
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding:10px;
+  user-select: none; 
+}
+
+.lang-menu {
+position: absolute;
+right: 0;
+top: 36px;
+width: 120px;
+background: #fff;
+border-radius: 12px;
+box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+display: none;
+z-index: 1000;
+}
+
+
+.lang-menu {
+  left: auto;
+  right: 0;   /* aligns menu edge with button edge */
+}
+
+
+.lang-menu div {
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.lang-menu div:hover {
+  background: #f0f4ff;
+}
+
+.lang-menu.show {
+  display: block;
+}
+
+
+
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.lang-wrapper {
+  margin-left: auto;
+  position: relative;
+}
+
+/* Flag icon button */
+.lang-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* Dropdown */
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+
+  display: none;
+  overflow: hidden;
+}
+
+.lang-menu div {
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.lang-menu div:hover {
+  background: #f2f4ff;
+}
+
+/* ===== TOP BAR ===== */
+.top-tabs {
+  position: sticky;
+  top: 0;
+
+  display: flex;
+  align-items: center;
+
+  margin: 0;
+  padding: 5px 12px;
+
+  background: linear-gradient(135deg, #009ffd);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: none;
+  border-radius: 0;
+
+  z-index: 999;
+}
+
+
+
+
+
+/* ===== TABS CONTAINER (CENTERED) ===== */
+.tabs-container {
+  flex: 1;                       /* take remaining width */
+  display: flex;
+  justify-content: space-evenly; /* ✅ equal spacing */
+  align-items: center;
+}
+
+/* ===== TAB BUTTONS ===== */
+.tab-btn {
+  background: none;
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: background 0.25s, transform 0.15s;
+
+  padding: 7px 16px;
+  border-radius: 16px;
+
+  font-size: 15px;
+  text-align: center;
+
+  display: inline-flex;        /* ✅ prevents canvas shrink */
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== ACTIVE TAB ONLY ===== */
+.tab-btn.active {
+  background:  #800080;
+  color: #ffffff;
+  box-shadow: 0 3px 7px rgba(93, 37, 235, 0.35);
+}
+
+
+
+
+/* ===============================
+   SETTINGS LAYOUT
+================================ */
+.settings-wrap {
+  display: grid;
+  gap: 10px;          /* compact */
+  padding: 6px;
+}
+
+/* ===============================
+   SECTION TITLE
+================================ */
+.sec {
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  color: #374151;
+  margin-bottom: 6px;
+  letter-spacing: .2px;
+}
+
+/* ===============================
+   ROW
+================================ */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+}
+
+/* ===============================
+   CARD BACKGROUNDS (LIGHT)
+================================ */
+.card-language { background: linear-gradient(180deg, #ffffff, #eef2ff); }
+.card-font     { background: linear-gradient(180deg, #ffffff, #f5f3ff); }
+.card-theme    { background: linear-gradient(180deg, #ffffff, #f1f5f9); }
+.card-reset    { background: linear-gradient(180deg, #fff7ed, #ffffff); }
+.card-timer    { background: linear-gradient(180deg, #f0f9ff, #ffffff); }
+
+/* ===============================
+   BUTTONS
+================================ */
+.btn {
+  flex: 1;
+  min-width: 50px;
+  padding: 9px 6px;          /* compact */
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.btn:active {
+  transform: scale(.96);
+}
+
+.btn.active {
+  background: #800080;
+  box-shadow: 0 4px 12px rgba(79,70,229,.45);
+}
+
+/* Reset buttons */
+.btn.warn {
+  background: linear-gradient(135deg, #fb923c, #f97316);
+}
+
+.btn.danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+
+/* ===============================
+   DIM / NIGHT MODE (SOFT)
+   same theme, just darker
+================================ */
+ .settings-card {
+  padding: 9px 6px;
+  border-radius: 10px;
+}
+
+.app-dark {
+  background: #a0a0a9;          /* slightly darker page */
+  color: #1f2937;
+}
+
+ .app-dark .settings-card {
+  background: #b8e0f85e;          /* soft grey */
+  box-shadow: 0 5px 14px rgba(55,65,81,.18);
+}
+
+
+.app-dark .card {
+  background: #b8e0f85e;          /* soft grey */
+  box-shadow: 0 5px 14px rgba(55,65,81,.18);
+}
+.app-dark .sec {
+  color: #374151;
+}
+
+
+.lang-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px;
+}
+
+
+
+/* Select container */
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 0 36px 0 38px;
+  height: 44px;
+  min-width: 160px;
+}
+
+/* Native select */
+
+
+/* Globe icon */
+.globe {
+  position: absolute;
+  left: 12px;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+/* Dropdown arrow */
+.arrow {
+  position: absolute;
+  right: 12px;
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Focus effect */
+.lang-select:focus {
+  outline: none;
+}
+.select-wrapper:has(.lang-select:focus) {
+  box-shadow: 0 0 0 2px #4f8cff33;
+}
+
+/* players*/
+/* Modal Background */
+#importModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* Modal Box */
+.modal-content {
+  display: flex;
+  gap: 15px;
+  width: 95%;
+
+  max-width: 550px;
+  background: #fff;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+/* Left Side - Textarea */
+#players-textarea {
+  width: 65%;
+  height: 260px;
+  resize: vertical;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #d4d4d8;
+}
+
+.modal-right {
+  width: 35%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* FIXED */
+  gap: 20px;                   /* keeps spacing clean */
+}
+
+/* Radio buttons */
+.gender-radio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 16px;
+}
+.gender-radio input {
+  transform: scale(1.2);
+}
+
+/* Buttons */
+.modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ok-btn,
+.cancel-btn {
+  padding: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ok-btn {
+  background: #2563eb;
+  color: white;
+}
+.ok-btn:hover {
+  background: #1e40af;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+}
+.cancel-btn:hover {
+  background: #cbd5e1;
+}
+
+.page {
+  font-size: 1.0rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Player Card Container */
+.player-edit-card {
+  display: grid;
+  grid-template-columns: 20px 20px 35px 1fr 55px;
+  /*   chk    sl    gender  name  delete  */
+
+  align-items: center;
+  gap: 5px;
+
+  font-size: 1.3rem;
+  padding: 6px 15px;
+  border-radius: 1.5rem;
+  border: 1px solid #ddd;
+  transition: all 0.3s;
+  margin: 4px 0;
+}
+
+/* Gender-based background */
+.player-edit-card.male {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+}
+
+.player-edit-card.female {
+  background-color: #fce4ec;
+  border-color: #f48fb1;
+}
+.gender-icon { cursor: pointer; }
+
+/* Inactive state */
+.player-edit-card.inactive {
+  opacity: 0.45;
+  background-color: #f1f1f1 !important;
+  border-color: #ccc !important;
+  filter: grayscale(0.8);
+}
+
+/* Keep controls clickable even when inactive */
+.player-edit-card.inactive button,
+.player-edit-card.inactive select,
+.player-edit-card.inactive input[type="checkbox"] {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  filter: none !important;
+}
+
+.player-edit-card {
+  cursor: grab;
+}
+
+.player-edit-card:active {
+  cursor: grabbing;
+  opacity: 0.85;
+}
+
+.pec-name {
+  cursor: pointer;
+}
+
+
+/* Columns */
+.pec-active {
+  text-align: center;
+}
+
+.pec-sl {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Gender icon column */
+.pec-gender {
+  text-align: center;
+}
+
+/* Gender icon style */
+.gender-icon {
+  font-size: 20px;
+}
+
+
+
+/* Name column – wraps to second line */
+.pec-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25rem;
+  word-break: break-word;
+  margin-left: -4px; /* reduce gap between gender → name */
+}
+
+/* Delete column */
+.pec-delete {
+  text-align: right;
+}
+
+.pec-delete .delete {
+  all: unset;
+  font-size: 25px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+
+.fixed-card {
+  display: grid;
+  grid-template-columns: 1fr 55px;
+  /*   sl    name   delete  */
+
+  align-items: center;
+  gap: 8px;
+
+  font-size: 1.25rem;
+  padding: 8px 15px;
+  border-radius: 1.5rem;
+  border: 1px solid #ccc;
+  margin: 5px 0;
+  background: B5EBDD;
+  transition: 0.25s ease;
+}
+
+/* Serial number (or bullet) */
+.fixed-sl {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Name */
+.fixed-name {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3rem;
+}
+
+/* Delete button container */
+.fixed-delete {
+  text-align: right;
+}
+
+/* Use your existing delete style */
+.fixed-delete .delete {
+  all: unset;
+  font-size: 25px;
+  cursor: pointer;
+  line-height: 1;
+}
+.row-addplayer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap; /* ❌ stop wrapping */
+  align-items: center; /* vertical alignment */
+}
+
+.card, .card-col {
+  background: #fff;
+  padding: 14px;
+  margin: 12px 0;
+  border-radius: 12px;  
+  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+}
+
+.card  {
+  width: 98%;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  font-size: 1.15rem;
+  border-radius: 1rem;
+  box-sizing: border-box;
+}
+
+.card input,
+.card select {
+  border: 0.0625rem solid #ccc;
+}
+.card select {
+  font-size: 1.15rem;
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0.5rem 0;  
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+.card input {
+  font-size: 1.15rem;
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0.5rem 0;  
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.card button {
+display: block;
+  margin: 0 auto;
+  background: #800080;
+  font-size: 1.15rem;
+  padding:6px;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0.75rem;
+  width: 98%;  
+  transition: background 0.3s, transform 0.2s;
+}
+
+.card button:hover {  
+  transform: scale(1.02);
+}
+
+.status-card {
+  padding: 12px 16px;
+  border-radius: 10px;
+  width: fit-content;
+  font-weight: 400;
+  font-size: 1rem;
+   
+}
+
+.status-display {
+  display: inline-block; /* 🔑 this is the fix */
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: white;
+  text-align: center;
+  min-width: 150px; /* constant width */
+}
+
+/* Status colors */
+.status-ready {
+  background-color: #28a745;
+}
+
+.status-progress {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.status-error {
+  background-color: #dc3545;
+}
+
+
+.primary {
+  background-color: #28a745; /* green */
+  color: white;
+}
+
+.primary.end {
+  background-color: #dc3545; /* red */
+}
+
+body.disabled {
+  pointer-events: none;
+  opacity: 0.9;
+  animation: blinkBorder 1s infinite;
+  border: 4px solid #ffc107; /* yellow/orange for in progress */
+  box-sizing: border-box;
+}
+
+@keyframes blinkBorder {
+  0%   { border-color: #ffc107; }
+  50%  { border-color: transparent; }
+  100% { border-color: #ffc107; }
+}
+
+/* Re-enable the toggle button */
+#nextBtn {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+
+/* Summary */
+.report-header,
+.player-card {
+  display: grid;
+  grid-template-columns: 50px 1fr minmax(60px, auto) minmax(60px, auto) minmax(60px, auto);
+  align-items: center;
+  gap: 10px;
+}
+
+/* Header styling */
+.report-header {
+  margin: 5px 0;
+  background: #800080;
+  font-weight: bold;
+  color: #fff;
+  padding: 6px;
+  border-radius: 6px;
+  margin-bottom: 1px;
+  position: sticky;
+  z-index: 10;
+}
+
+/* Player card styling */
+.player-card {
+  background: #296472;
+  color: #fff;
+  padding: 2px;
+  margin: 5px 0;
+  border-radius: 1.1rem;
+  border: 1px solid #555;
+  box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+/* Rank styling */
+.player-card .rank {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+/* Name column */
+.player-card .name {
+  font-size: 1.1rem;
+  padding-left: 6px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  z-index: 9999;
+}
+.hidden { display: none; }
+
+
+#page4 {
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.player-help section {
+  display: none;
+}
+
+.player-help.lang-en section[data-lang="en"],
+.player-help.lang-jp section[data-lang="jp"],
+.player-help.lang-kr section[data-lang="kr"],
+.player-help.lang-vi section[data-lang="vi"] {
+  display: block;
+}
+
+.help-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* Base button style */
+.help-btn {
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid #2a2a72;
+  background: #ffffff;
+  color: #2a2a72;
+  font-size: 0.9rem;
+  font-weight: 100;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+/* Hover state */
+.help-btn:hover {
+  background: rgba(42, 42, 114, 0.08);
+}
+
+/* Active button */
+.help-btn.active {
+  background: linear-gradient(135deg, #2a2a72, #009ffd);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 0.25rem 0.6rem rgba(0, 0, 0, 0.2);
+}
+
+/* Pressed effect */
+.help-btn:active {
+  transform: scale(0.97);
+}
+
+.help-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin: 16px 0;
+  padding: 16px;
+  background: #fff;
+}
+.help-card h3 { margin-top: 0; }
+.help-btn.active { background: #1976d2; color: #fff; }

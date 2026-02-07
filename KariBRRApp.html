@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>CLUB Scheduler</title>
+
+  <link rel="stylesheet" href="BRRStyle1.css">
+  <link rel="stylesheet" href="BRRStyle2.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="main.js" defer></script>
+  <script src="home.js" defer></script>
+  <script src="players.js" defer></script>
+  <script src="rounds.js" defer></script>
+  <script src="games.js" defer></script>
+  <script src="engjap.js" defer></script>
+  <!--<script src="timer.js" defer></script>-->
+  <script src="summary.js" defer></script>
+  <script src="help.js" defer></script>
+  <script src="ExportCSS.js" defer></script>
+  <!--
+  <script src="SaveRestore.js" defer></script> -->
+
+  
+</head>
+
+<body>
+  <div class="top-bar">
+  <span class="menu-btn" onclick="showPage('homePage', this)">☰</span>
+
+  <span class="app-logo-premium">CLUB Scheduler</span>
+
+  <!-- Flag button ONLY -->
+  <div class="lang-wrapper">
+    <button class="lang-btn" onclick="toggleLangMenu()" aria-label="Language">
+      <span id="currentFlag">🇺🇸</span>
+    </button>
+
+    <!-- Custom menu -->
+    <div class="lang-menu" id="langMenu">
+      <div data-lang="en" data-flag="🇺🇸">🇺🇸 English</div>
+      <div data-lang="jp" data-flag="🇯🇵">🇯🇵 日本語</div>
+      <div data-lang="kr" data-flag="🇰🇷">🇰🇷 한국어</div>
+      <div data-lang="zh" data-flag="🇨🇳">🇨🇳 中文</div>
+      <div data-lang="vi" data-flag="🇻🇳">🇻🇳 Tiếng Việt</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================= -->
+<!--       TOP TAB NAVIGATION      -->
+<!-- ============================= -->
+<div class="top-tabs">
+  <!-- Tabs container -->
+  <div class="tabs-container">
+    <button class="tab-btn active" onclick="showPage('page1', this)" data-i18n="players"></button>
+    <button class="tab-btn" onclick="showPage('page2', this)" data-i18n="rounds"></button>
+    <button class="tab-btn" onclick="showPage('page3', this)" data-i18n="summary"></button>
+    <button class="tab-btn" onclick="showPage('page4', this)" data-i18n="help"></button>
+  </div> 
+
+</div>
+
+<!-- ============================= -->
+<!--           HOME PAGE           -->
+<!-- ============================= -->
+<div id="homePage" class="page" style="display:none;">
+  <div class="settings-wrap">
+
+    <!-- Font Size -->
+    <div class="settings-card card-font">
+      <div class="sec" data-i18n="fontSize"></div>
+      <div class="row">
+        <div class="btn active" id="font_small" onclick="setFontSize('small')" data-i18n="small"></div>
+        <div class="btn" id="font_medium" onclick="setFontSize('medium')" data-i18n="medium"></div>
+        <div class="btn" id="font_large" onclick="setFontSize('large')" data-i18n="large"></div>
+      </div>
+    </div>
+
+    <!-- Theme -->
+    <div class="settings-card card-theme">
+      <div class="sec" data-i18n="theme"></div>
+      <div class="row">
+        <div class="btn active" id="theme_light" onclick="setTheme('light')" data-i18n="light"></div>
+        <div class="btn" id="theme_dark" onclick="setTheme('dark')" data-i18n="dark"></div>
+      </div>
+    </div>
+
+    <!-- Reset -->
+    <!-- Reset -->
+    <div class="settings-card card-reset">
+      <div class="sec" data-i18n="reset"></div>
+      <div class="row">
+        <div class="btn danger"
+           onclick="showConfirm('confirmResetAll', ResetAll)"
+           data-i18n="resetAll">
+        </div>
+
+        <div class="btn warn"
+           onclick="showConfirm('confirmResetGames', resetRounds)"
+           data-i18n="resetExcept">
+        </div>
+       </div>
+    </div>
+
+        <!-- Export / Save -->
+    <div class="settings-card card-export">
+      <div class="sec" data-i18n="export"></div>
+      <div class="row">
+        <div class="btn" onclick="exportBRR2HTML()" 
+          data-i18n="exporthtml">  📄 
+        </div>
+      </div>
+    </div>  
+
+    
+  </div>
+</div>
+
+
+<div id="confirmOverlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle"></div>
+
+    <div class="confirm-actions">
+      <button class="btn cancel" id="confirmCancel"></button>
+      <button class="btn danger" id="confirmYes"></button>
+    </div>
+  </div>
+</div>  
+<!--           PAGE 1              -->
+<!--         Players Page          -->
+<!-- ============================= -->
+<div id="page1" class="page" > 
+
+  <div class="card">    
+    <button onclick="showImportModal()" data-i18n="importPlayers"></button>
+  </div> 
+
+  <div class="card">
+    <input type="text"
+      id="player-name"
+      data-i18n-placeholder="enterPlayerName">
+
+    <div class="row-addplayer">  
+      <select id="player-gender">
+        <option value="Male" data-i18n="male"></option>
+        <option value="Female" data-i18n="female"></option>
+      </select>
+      <button class="add-button" onclick="addPlayer()" data-i18n="addPlayer"></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="playerList" class="player-list"></div>
+  </div>
+
+  <div class="card">
+    <h3 data-i18n="fixedPairs"></h3>
+    <select id="fixed-pair-1"></select>
+    <select id="fixed-pair-2"></select>
+    <button onclick="modifyFixedPair()" data-i18n="add"></button>
+
+    <div id="fixed-pair-list" class="fixed-pairs-list"></div>
+  </div>
+
+</div> <!-- page1 -->
+
+<!-- ============================= -->
+<!--           PAGE 2              -->
+<!--           Rounds Page         -->
+<!-- ============================= -->
+<div id="page2" class="page" style="display:none;">  
+  <div class="title-card">
+    <div id="roundTitle">R</div>
+    <img id="lockToggleBtn" class="lock-icon" src="lock.png" alt="Lock" />
+  </div>
+  
+  <div id="game-results"></div>  
+  <div class="row-field">  
+  <div class="court-card">
+    <label for="num-courts" class="row-label" data-i18n="courts"></label>
+    <button class="circle-btn" id="courtMinus">−</button>
+    <span id="num-courts">1</span>
+    <button class="circle-btn" id="courtPlus">+</button>
+  </div>    
+    
+  <!-- Mode Toggle (replaces status-card) -->
+  <div class="mode-card">
+    <span id="modeLabel"></span>
+
+    <label class="switch">
+      <input type="checkbox" id="modeToggle">
+      <span class="slider"></span>
+    </label>
+
+    <span></span>
+  </div>
+</div>
+
+  <div class="action-card">
+  <!-- LEFT : Mix / Refresh (secondary) --> 
+    
+    <button
+    class="action mid small"
+    id="roundShufle"
+    onclick="RefreshRound()"
+    aria-label="Mix round"
+  >
+    🎲
+  </button>
+
+  <!-- RIGHT : Next (primary) -->
+<button id="nextBtn" class="action right primary" onclick="toggleRound()">
+  <span id="btnText" data-i18n="nround"></span>
+  <span class="icon"> ▶</span>
+</button>
+
+
+
+
+</div>
+
+  
+</div>
+
+  
+  
+
+    
+  
+ </div>   
+
+
+
+
+
+
+
+<!-- Timer Sound -->
+<audio id="timerSound">
+  <source src="timer.mp3" type="audio/mpeg">
+</audio>
+ 
+
+<!-- ============================= -->
+<!--           PAGE 3              -->
+<!--        Summary / Report       -->
+<!-- ============================= -->
+<div id="page3" class="page" style="display:none;">
+  <div id="reportContainer"></div>
+  <div id="export"></div>
+</div>
+
+<div id="page4" class="page" style="display:none;">
+  <div class="help-buttons">
+    <button class="help-btn active" onclick="loadHelp('players')" data-i18n="players"></button>
+    <button class="help-btn" onclick="loadHelp('rounds')" data-i18n="rounds"></button>
+    <button class="help-btn" onclick="loadHelp('summary')" data-i18n="summary"></button>
+  </div>
+  <div id="helpContainer"></div>
+</div>
+  
+<!-- ============================= -->
+<!--           Import Modal        -->
+<!-- ============================= -->
+  <!-- Import Modal -->
+  <div id="importModal">
+  <div class="modal-content">
+
+    <!-- Left Section -->
+    <textarea
+      id="players-textarea"
+      rows="12"
+      data-i18n-placeholder="importExample"
+      placeholder="Enter or paste player names"
+    ></textarea>
+
+    <!-- Right Section -->
+    <div class="modal-right">
+
+      <!-- Gender -->
+      <div class="gender-radio" data-i18n="gender"></div>
+      <div class="gender-radio">
+        <label>
+          <input type="radio" name="genderSelect" value="Male" checked>
+          <span data-i18n="male"></span>
+        </label>
+        <label>
+          <input type="radio" name="genderSelect" value="Female">
+          <span data-i18n="female"></span>
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="modal-buttons">
+
+        <!-- 📋 Paste (NEW) 
+        <button
+          class="paste-btn"
+          onclick="pastePlayersText()"
+        >📋 Paste</button> -->
+
+        <!-- ⬇️ Import (existing) -->
+        <button
+          class="ok-btn"
+          onclick="addPlayersFromText()"
+          data-i18n="import"
+        ></button>
+
+        <!-- ✖ Cancel (existing) -->
+        <button
+          class="cancel-btn"
+          onclick="hideImportModal()"
+          data-i18n="cancel"
+        ></button>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  
+</body>
+</html>
