@@ -902,12 +902,34 @@ body.locked .swap-icon {
 }
 
 .export-team {
-  width: 40%;
-  border: 1px solid #000;
-  padding: 8px;
-  text-align: center;
-  font-size: 14px;
+  position: relative;           /* allow positioning of trophy */
+  padding: 10px 25px 10px 10px; /* top/right/bottom/left; right space for trophy */
+  display: flex;                /* use flex for centering and spacing */
+  flex-direction: column;       /* stack players vertically */
+  align-items: center;          /* center horizontally */
+  justify-content: center;      /* center vertically */
+  border: 2px solid #333;    /* boundary */
+  border-radius: 8px;           /* optional rounded corners */
+  min-width: 120px;             /* ensures all boxes roughly same size */
+  background-color: #f9f9f9;    /* optional light background */
+  text-align: center;           /* center text inside */
 }
+
+/* Trophy on the right for winning team */
+.export-team::after {
+  content: '🏆';
+  position: absolute;
+  right: 5px;                   /* stick to right edge */
+  top: 50%;                     /* vertically center */
+  transform: translateY(-50%);
+  display: none;                 /* hidden by default */
+}
+
+.export-team.winner::after {
+  display: inline-block;
+}
+
+
 
 .export-vs {
   width: 10%;

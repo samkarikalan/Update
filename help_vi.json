@@ -1,0 +1,132 @@
+{
+  "players": {
+    "male": {
+      "title": "🔵👨 Hàng người chơi màu xanh (Nam)",
+      "list": [
+        "Nền xanh + biểu tượng nam = Người chơi nam",
+        "Ví dụ: Alan",
+        "Checkbox được chọn → người chơi đang hoạt động",
+        "Người chơi nam đang hoạt động sẽ được xếp lịch"
+      ]
+    },
+    "female": {
+      "title": "🌸👩 Hàng người chơi màu hồng (Nữ)",
+      "list": [
+        "Nền hồng + biểu tượng nữ = Người chơi nữ",
+        "Ví dụ: Rose",
+        "Checkbox được chọn → người chơi đang hoạt động",
+        "Người chơi nữ đang hoạt động sẽ được xếp lịch"
+      ]
+    },
+    "checkbox": {
+      "title": "✅ Ý nghĩa Checkbox",
+      "list": [
+        "Được chọn → Người chơi đang hoạt động",
+        "Bỏ chọn → Không hoạt động (không xếp lịch)"
+      ]
+    },
+    "trash": {
+      "title": "🗑️ Biểu tượng thùng rác",
+      "content": "Nhấn vào thùng rác để xóa người chơi khỏi danh sách"
+    },
+    "rules": {
+      "title": "📊 Quy tắc quan trọng",
+      "list": [
+        "4 người chơi hoạt động = 1 sân",
+        "8 người chơi hoạt động = 2 sân",
+        "Giới tính không ảnh hưởng đến số sân"
+      ]
+    },
+    "tips": {
+      "title": "⭐ Mẹo nhanh",
+      "list": [
+        "Không thêm được sân? Kích hoạt thêm người chơi",
+        "Không được xếp lịch? Kiểm tra checkbox",
+        "Màu sắc chỉ để hiển thị"
+      ]
+    }
+  },
+  "rounds": {
+    "lock": {
+      "title": "🔒 Khóa",
+      "list": [
+        "Không cho đổi người thủ công",
+        "Xoay vòng tự động vẫn hoạt động"
+      ]
+    },
+    "unlock": {
+      "title": "🔒 Mở khóa",
+      "list": [
+        "Cho phép đổi người giữa các đội hoặc sân"
+      ]
+    },
+    "courts": {
+      "title": "🎾 Sân & Đội",
+      "list": [
+        "Mỗi hàng là 1 sân",
+        "Mỗi sân có 2 đội (mỗi đội 2 người)",
+        "Mỗi sân cần 4 người chơi"
+      ]
+    },
+    "swap_icon": {
+      "title": "🔄 Đổi chỗ",
+      "list": [
+        "Đổi người chơi giữa các đội hoặc sân",
+        "Dùng để cân bằng trận đấu"
+      ]
+    },
+    "swap_players": {
+      "title": "Đổi người chơi",
+      "list": [
+        "Mở khóa vòng<br>Cần mở khóa vòng trước khi thay đổi.",
+        "Chọn người chơi để đổi<br>Nhấn vào người chơi muốn thay thế trên sân.",
+        "Chọn người thay thế<br>- Từ sân khác (người chơi hoạt động)<br>- Từ danh sách người nghỉ",
+        "Xác nhận đổi<br>Người chơi sẽ được đổi ngay lập tức.",
+        "Dùng để cân bằng trận đấu, xử lý thay đổi đột xuất hoặc chấn thương."
+      ]
+    },
+    "resting": {
+      "title": "💤 Người chơi nghỉ",
+      "list": [
+        "Không chơi vòng này",
+        "#1, #2 = số vòng nghỉ",
+        "Giữ màu theo giới tính"
+      ]
+    }
+  },
+  "summary": {
+    "ranking": {
+      "title": "📊 Bảng xếp hạng người chơi",
+      "list": [
+        "Hiển thị người chơi theo độ công bằng",
+        "<b>Rank</b> = thứ tự ưu tiên",
+        "<b>Played</b> = số vòng đã chơi",
+        "<b>Rested</b> = số vòng nghỉ"
+      ]
+    },
+    "match_details": {
+      "title": "🏸 Chi tiết trận đấu",
+      "list": [
+        "Hiển thị các đội trong từng vòng",
+        "Mỗi khung là một đội",
+        "VS = hai đội thi đấu"
+      ]
+    },
+    "resting_summary": {
+      "title": "💤 Người chơi nghỉ",
+      "list": [
+        "Những người nghỉ trong vòng đó",
+        "<b>#1</b>, <b>#2</b> = số vòng nghỉ",
+        "Giữ màu theo giới tính"
+      ]
+    },
+    "tips": {
+      "title": "⭐ Mẹo tổng kết",
+      "list": [
+        "Xếp hạng cao = ưu tiên chơi",
+        "Dùng để kiểm tra công bằng",
+        "Không chỉnh sửa tại đây"
+      ]
+    }
+  }
+}

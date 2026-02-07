@@ -1,0 +1,131 @@
+{
+  "players": {
+    "male": {
+      "title": "🔵👨 Blue Player Row (Male)",
+      "list": [
+        "Blue background + man icon = Male player",
+        "Example: Alan",
+        "If the checkbox is checked → the player is active",
+        "Active male players are included in scheduling"
+      ]
+    },
+    "female": {
+      "title": "🌸👩 Pink Player Row (Female)",
+      "list": [
+        "Pink background + woman icon = Female player",
+        "Example: Rose",
+        "If the checkbox is checked → the player is active",
+        "Active female players are included in scheduling"
+      ]
+    },
+    "checkbox": {
+      "title": "✅ Checkbox Meaning",
+      "list": [
+        "Checked → Player is active",
+        "Unchecked → Player is inactive (not scheduled)"
+      ]
+    },
+    "trash": {
+      "title": "🗑️ Trash Icon",
+      "content": "Click the trash bin to remove the player from the list"
+    },
+    "rules": {
+      "title": "📊 Important Rules",
+      "list": [
+        "4 active players = 1 court",
+        "8 active players = 2 courts",
+        "Gender does not affect court count"
+      ]
+    },
+    "tips": {
+      "title": "⭐ Quick Tips",
+      "list": [
+        "Can’t add more courts? Activate more players",
+        "Player not scheduled? Check the checkbox",
+        "Blue / Pink color is visual only"
+      ]
+    }
+  },
+  "rounds": {
+    "lock": {
+      "title": "🔒 Lock",
+      "list": [
+        "Prevents swapping teams or players"
+      ]
+    },
+    "unlock": {
+      "title": "🔒 Unlock",
+      "list": [
+        "Enables swapping teams or players"
+      ]
+    },
+    "courts": {
+      "title": "🎾 Courts & Teams",
+      "list": [
+        "Each row represents one court",
+        "Each court has 2 teams (2 players per team)",
+        "4 active players are required per court"
+      ]
+    },
+    "swap_icon": {
+      "title": "🔄 Swap Icon",
+      "list": [
+        "Swap players between teams or courts",
+        "Used for balancing matches"
+      ]
+    },
+    "swap_players": {
+      "title": "Swap Players",
+      "list": [
+        "Unlock the rounds<br>Rounds must be unlocked before any changes can be made.",
+        "Select the player to swap<br>Tap or click the player you want to replace on a court.",
+        "Choose a replacement player<br>- From another court (active player)<br>- From the resting / sitting-out players list",
+        "Confirm the swap<br>The selected players will be exchanged instantly.",
+        "Used for balancing matches, fixing last-minute changes, or handling injuries."
+      ]
+    },
+    "resting": {
+      "title": "💤 Resting Players",
+      "list": [
+        "Players not playing this round",
+        "#1, #2 = number of rested rounds",
+        "Gender color is preserved"
+      ]
+    }
+  },
+  "summary": {
+    "ranking": {
+      "title": "📊 Player Ranking Table",
+      "list": [
+        "Shows all players sorted by play fairness",
+        "<b>Rank</b> indicates priority order",
+        "<b>Played</b> = number of rounds played",
+        "<b>Rested</b> = number of rounds rested"
+      ]
+    },
+    "match_details": {
+      "title": "🏸 Round Match Details",
+      "list": [
+        "Shows team matchups for each round",
+        "Each box represents one team",
+        "VS indicates competing teams"
+      ]
+    },
+    "resting_summary": {
+      "title": "💤 Resting Summary",
+      "list": [
+        "Shows players resting in that round",
+        "<b>#1</b>, <b>#2</b> indicate rest count",
+        "Gender color is preserved"
+      ]
+    },
+    "tips": {
+      "title": "⭐ Summary Tips",
+      "list": [
+        "Higher rank = more play priority",
+        "Used to verify fair rotation",
+        "No manual changes here"
+      ]
+    }
+  }
+}
