@@ -218,6 +218,234 @@ function CompetitiveRound(schedulerState) {
     restCount,
     opponentMap,
     lastRound,
+    winCount,
+    pairPlayedSet,
+    restQueue,
+  } = schedulerState;
+
+  const totalPlayers = activeplayers.length;
+  const numPlayersPerRound = numCourts * 4;
+  const numResting = Math.max(totalPlayers - numPlayersPerRound, 0);
+
+  /* ============================================================= */
+  /* ================= REST SELECTION (UNCHANGED) ================= */
+  /* ============================================================= */
+
+  let resting = [];
+  let playing = [];
+
+  if (fixedPairs.length > 0 && numResting >= 2) {
+    let needed = numResting;
+    const fixedMap = new Map();
+    for (const [a, b] of fixedPairs) {
+      fixedMap.set(a, b);
+      fixedMap.set(b, a);
+    }
+
+    for (const p of restQueue) {
+      if (resting.includes(p)) continue;
+
+      const partner = fixedMap.get(p);
+      if (partner && needed >= 2) {
+        resting.push(p, partner);
+        needed -= 2;
+      } else if (!partner && needed > 0) {
+        resting.push(p);
+        needed -= 1;
+      }
+
+      if (needed <= 0) break;
+    }
+
+    playing = activeplayers.filter(p => !resting.includes(p));
+  } else {
+    resting = restQueue.slice(0, numResting);
+    playing = activeplayers
+      .filter(p => !resting.includes(p))
+      .slice(0, numPlayersPerRound);
+  }
+
+  /* ============================================================= */
+  /* ========== OPTION A: BUILD PAIR-AWARE UNITS ================== */
+  /* ============================================================= */
+
+  const fixedMap = new Map();
+  for (const [a, b] of fixedPairs) {
+    fixedMap.set(a, b);
+    fixedMap.set(b, a);
+  }
+
+  const used = new Set();
+  const units = [];
+
+  for (const p of playing) {
+    if (used.has(p)) continue;
+
+    const partner = fixedMap.get(p);
+    if (partner && playing.includes(partner) && !used.has(partner)) {
+      used.add(p);
+      used.add(partner);
+
+      units.push({
+        type: "pair",
+        players: [p, partner],
+        wins: Math.max(winCount.get(p) || 0, winCount.get(partner) || 0),
+      });
+    } else {
+      used.add(p);
+      units.push({
+        type: "solo",
+        players: [p],
+        wins: winCount.get(p) || 0,
+      });
+    }
+  }
+
+  /* ============================================================= */
+  /* ========== RANKING + BUCKETS (UNIT-BASED) ==================== */
+  /* ============================================================= */
+
+  units.sort((a, b) => b.wins - a.wins);
+
+  const buckets = new Map(); // wins -> units[]
+  for (const u of units) {
+    if (!buckets.has(u.wins)) buckets.set(u.wins, []);
+    buckets.get(u.wins).push(u);
+  }
+
+  const bucketKeys = [...buckets.keys()].sort((a, b) => b - a);
+
+  /* ============================================================= */
+  /* ========== COURT ASSIGNMENT (SIZE-AWARE) ===================== */
+  /* ============================================================= */
+
+  const courts = [];
+  let bucketIndex = 0;
+
+  for (let c = 0; c < numCourts; c++) {
+    let courtPlayers = [];
+
+    while (courtPlayers.length < 4 && bucketIndex < bucketKeys.length) {
+      const key = bucketKeys[bucketIndex];
+      const bucket = buckets.get(key);
+
+      let progressed = false;
+
+      for (let i = 0; i < bucket.length; i++) {
+        const unit = bucket[i];
+        if (courtPlayers.length + unit.players.length <= 4) {
+          courtPlayers.push(...unit.players);
+          bucket.splice(i, 1);
+          progressed = true;
+          break;
+        }
+      }
+
+      if (!progressed) bucketIndex++;
+    }
+
+    if (courtPlayers.length === 4) {
+      courts.push(courtPlayers);
+    }
+  }
+
+  /* ============================================================= */
+  /* ========== PAIRING INSIDE COURTS (LOCK FIXED) ================= */
+  /* ============================================================= */
+
+  const games = [];
+
+  for (let i = 0; i < courts.length; i++) {
+    const players = courts[i];
+
+    const fixedInCourt = [];
+    const free = [];
+
+    for (const p of players) {
+      const partner = fixedMap.get(p);
+      if (partner && players.includes(partner)) {
+        if (!fixedInCourt.some(x => x.includes(p))) {
+          fixedInCourt.push([p, partner]);
+        }
+      } else {
+        free.push(p);
+      }
+    }
+
+    let pair1, pair2;
+
+    if (fixedInCourt.length === 1) {
+      pair1 = fixedInCourt[0];
+      pair2 = free;
+    } else {
+      const possiblePairings = [
+        [[players[0], players[1]], [players[2], players[3]]],
+        [[players[0], players[2]], [players[1], players[3]]],
+        [[players[0], players[3]], [players[1], players[2]]],
+      ];
+
+      let best = null;
+      let bestScore = Infinity;
+
+      for (const pairing of possiblePairings) {
+        let score = 0;
+
+        for (const pair of pairing) {
+          const key = pair.slice().sort().join("&");
+          if (lastRound?.pairs?.has(key)) score += 100;
+          if (pairPlayedSet.has(key)) score += 10;
+        }
+
+        const oppKey =
+          pairing[0].join("&") + "vs" + pairing[1].join("&");
+        if (opponentMap.has(oppKey)) score += 5;
+
+        if (score < bestScore) {
+          bestScore = score;
+          best = pairing;
+        }
+      }
+
+      pair1 = best[0];
+      pair2 = best[1];
+    }
+
+    games.push({
+      court: i + 1,
+      pair1,
+      pair2,
+    });
+  }
+
+  /* ============================================================= */
+  /* ================= FINALIZE ROUND ============================= */
+  /* ============================================================= */
+
+  const restingWithNumber = resting.map(p => {
+    const c = restCount.get(p) || 0;
+    return `${p}#${c + 1}`;
+  });
+
+  schedulerState.roundIndex =
+    (schedulerState.roundIndex || 0) + 1;
+
+  return {
+    round: schedulerState.roundIndex,
+    resting: restingWithNumber,
+    playing,
+    games,
+  };
+}
+
+
+function bestCompetitiveRound(schedulerState) {
+  const {
+    activeplayers,
+    numCourts,
+    fixedPairs,
+    restCount,
+    opponentMap,
+    lastRound,
     winCount, // <-- REQUIRED: Map(player -> wins)
     pairPlayedSet,
   } = schedulerState;
