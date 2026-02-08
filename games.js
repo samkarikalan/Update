@@ -26,6 +26,9 @@ function toggleRound() {
   
   if (currentState === "idle") {
     // ---- ENTER ACTIVE (BUSY) MODE ----
+    if (interactionLocked ==false) {
+      lockBtn.click();
+    }
     currentState = "active";
 
     // Disable everything except #nextBtn and .win-cup
@@ -1515,6 +1518,7 @@ function renderGames(data, roundIndex) {
 
       // 🏆 Winner toggle logic (minimal, correct)
       const toggleWinner = (e) => {
+        if (currentState === "idle") return;
         e.stopPropagation();
         e.preventDefault();
 
@@ -1529,7 +1533,7 @@ function renderGames(data, roundIndex) {
             cup.style.visibility = 'hidden';
             cup.style.pointerEvents = 'none';
           });
-
+          
           winCup.classList.add('active');
           winCup.classList.remove('blinking');
           winCup.style.visibility = 'visible';
@@ -2410,7 +2414,7 @@ lockBtn.addEventListener('click', () => {
   document.body.classList.toggle('locked', interactionLocked);
 
   // Update icon text
-  lockBtn.textContent = interactionLocked ? '🔒' : '🔓';
+  //lockBtn.textContent = interactionLocked ? '🔒' : '🔓';
 });
 
 
