@@ -22,86 +22,73 @@ function toggleRound() {
   const btn = document.getElementById("nextBtn");
   const textEl = document.getElementById("btnText");
   const icon = btn.querySelector(".icon");
-
-  const playmode = getPlayMode(); // "competitive" | "casual"
-
-  /* ========================================================= */
-  /* ================= ENTER ACTIVE MODE ===================== */
-  /* ========================================================= */
-
+  const playmode = getPlayMode();
+  
   if (currentState === "idle") {
+    // ---- ENTER ACTIVE (BUSY) MODE ----
     currentState = "active";
 
-    // Disable everything except next button and win cups
+    // Disable everything except #nextBtn and .win-cup
     document.querySelectorAll(
       "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
     ).forEach(el => {
       if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
+        // Disable clicks
         el.style.pointerEvents = "none";
-        el.classList.add("disabled");
+        
+        // Add disabled styling
+        el.classList.add("disabled");    
+        
       }
-    });
+    });   
 
-    // Enable win cups ONLY in competitive mode
     document.querySelectorAll(".win-cup").forEach(cup => {
-      if (playmode === "competitive") {
-        cup.style.visibility = "visible";
-        cup.style.pointerEvents = "auto";
-        cup.classList.add("blinking");
-      } else {
-        cup.style.visibility = "hidden";
-        cup.style.pointerEvents = "none";
-        cup.classList.remove("blinking");
-      }
+      cup.style.visibility = "visible";
+      cup.style.pointerEvents = "auto";
+      cup.classList.add("blinking");
+      cup.style.visibility = playmode === "competitive" ? "visible" : "hidden";
     });
-  }
 
-  /* ========================================================= */
-  /* ================= EXIT ACTIVE MODE ====================== */
-  /* ========================================================= */
-
-  else {
-    // ---- VALIDATION BEFORE EXIT ----
-    if (playmode === "competitive") {
-      if (
-        !currentRoundGames.length ||
-        gameWinners.size !== currentRoundGames.length
-      ) {
+  } else {
+    // ---- RETURN TO IDLE MODE ----   
+    if (playmode === "competitive") {     
+      const currentRoundGames = allRounds[allRounds.length - 1].games;
+      const winnersCount = currentRoundGames.filter(game => game.winner).length;
+      
+      if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
         alert("Please mark winners for all games");
         return; // ❌ stay in active mode
       }
+
     }
-
-    // ---- EXIT ACTIVE MODE ----
     currentState = "idle";
-
-    // Apply round results
     nextRound();
 
-    // Re-enable everything
+    
+   // Re-enable everything previously disabled
     document.querySelectorAll(".disabled").forEach(el => {
+      // Restore pointer events
       el.style.pointerEvents = "";
+    
+      // Remove the disabled class
       el.classList.remove("disabled");
-
-      // Restore known handlers if needed
+    
+      // If you had removed inline onclick handlers, you may need to restore them manually
+      // For example, for the menu button:
       if (el.classList.contains("menu-btn")) {
-        el.onclick = function () {
-          showPage("homePage", this);
+        el.onclick = function() {
+          showPage('homePage', this);
         };
       }
     });
 
-    // Disable & hide win cups
+
+    // Hide & disable win cups
     document.querySelectorAll(".win-cup").forEach(cup => {
       cup.style.pointerEvents = "none";
       cup.style.visibility = "hidden";
-      cup.classList.remove("blinking");
     });
   }
-
-  /* ========================================================= */
-  /* ================= BUTTON UI UPDATE ====================== */
-  /* ========================================================= */
 
   const state = roundStates[currentState];
   textEl.dataset.i18n = state.key;
@@ -109,6 +96,7 @@ function toggleRound() {
   btn.classList.toggle("end", state.class === "end");
   setLanguage(currentLang);
 }
+
 
 
 
@@ -427,182 +415,6 @@ function CompetitiveRound(schedulerState) {
   };
 }
 
-
-function bestCompetitiveRound(schedulerState) {
-  const {
-    activeplayers,
-    numCourts,
-    fixedPairs,
-    restCount,
-    opponentMap,
-    lastRound,
-    winCount, // <-- REQUIRED: Map(player -> wins)
-    pairPlayedSet,
-  } = schedulerState;
-
-  const totalPlayers = activeplayers.length;
-  const numPlayersPerRound = numCourts * 4;
-  const numResting = Math.max(totalPlayers - numPlayersPerRound, 0);
-
-  /* ================= REST SELECTION (UNCHANGED) ================= */
-  let resting = [];
-  let playing = [];
-
-  if (fixedPairs.length > 0 && numResting >= 2) {
-    let needed = numResting;
-    const fixedMap = new Map();
-    for (const [a, b] of fixedPairs) {
-      fixedMap.set(a, b);
-      fixedMap.set(b, a);
-    }
-
-    for (const p of schedulerState.restQueue) {
-      if (resting.includes(p)) continue;
-
-      const partner = fixedMap.get(p);
-      if (partner && needed >= 2) {
-        resting.push(p, partner);
-        needed -= 2;
-      } else if (!partner && needed > 0) {
-        resting.push(p);
-        needed -= 1;
-      }
-
-      if (needed <= 0) break;
-    }
-
-    playing = activeplayers.filter(p => !resting.includes(p));
-  } else {
-    const sortedPlayers = [...schedulerState.restQueue];
-    resting = sortedPlayers.slice(0, numResting);
-    playing = activeplayers
-      .filter(p => !resting.includes(p))
-      .slice(0, numPlayersPerRound);
-  }
-
-  /* ============================================================= */
-  /* ========== NEW: RANKING + BUCKET CREATION ==================== */
-  /* ============================================================= */
-
-  // 1️⃣ Sort playing players by wins (descending)
-  const rankedPlayers = [...playing].sort((a, b) => {
-    return (winCount.get(b) || 0) - (winCount.get(a) || 0);
-  });
-
-  // 2️⃣ Create win buckets
-  const buckets = new Map(); // wins -> [players]
-  for (const p of rankedPlayers) {
-    const w = winCount.get(p) || 0;
-    if (!buckets.has(w)) buckets.set(w, []);
-    buckets.get(w).push(p);
-  }
-
-  // Sort bucket keys descending (top ladder first)
-  const bucketKeys = [...buckets.keys()].sort((a, b) => b - a);
-
-  /* ============================================================= */
-  /* ========== NEW: COURT ASSIGNMENT (DOWNWARD BORROW) =========== */
-  /* ============================================================= */
-
-  const courts = [];
-  let bucketIndex = 0;
-
-  for (let c = 0; c < numCourts; c++) {
-    let courtPlayers = [];
-
-    while (courtPlayers.length < 4 && bucketIndex < bucketKeys.length) {
-      const key = bucketKeys[bucketIndex];
-      const bucket = buckets.get(key);
-
-      while (bucket.length > 0 && courtPlayers.length < 4) {
-        courtPlayers.push(bucket.shift());
-      }
-
-      // Move to next lower bucket ONLY when current is exhausted
-      if (bucket.length === 0) bucketIndex++;
-    }
-
-    if (courtPlayers.length === 4) {
-      courts.push(courtPlayers);
-    }
-  }
-
-  /* ============================================================= */
-  /* ========== NEW: PAIRING INSIDE EACH COURT ==================== */
-  /* ============================================================= */
-
-  const games = [];
-
-  for (let i = 0; i < courts.length; i++) {
-    const players = courts[i];
-
-    /*
-      Pairing priority:
-      1. Avoid last-round partner
-      2. Minimize historical pair count
-      3. Avoid last-round opponents
-    */
-
-    const possiblePairings = [
-      [[players[0], players[1]], [players[2], players[3]]],
-      [[players[0], players[2]], [players[1], players[3]]],
-      [[players[0], players[3]], [players[1], players[2]]],
-    ];
-
-    let best = null;
-    let bestScore = Infinity;
-
-    for (const pairing of possiblePairings) {
-      let score = 0;
-
-      for (const pair of pairing) {
-        const key = pair.slice().sort().join("&");
-
-        // Heavy penalty for last-round partner
-        if (lastRound?.pairs?.has(key)) score += 100;
-
-        // Smaller penalty for historical pairing
-        score += pairPlayedSet.has(key) ? 10 : 0;
-      }
-
-      // Opponent repetition penalty
-      const [p1, p2] = pairing;
-      const oppKey =
-        p1.join("&") + "vs" + p2.join("&");
-      if (opponentMap.has(oppKey)) score += 5;
-
-      if (score < bestScore) {
-        bestScore = score;
-        best = pairing;
-      }
-    }
-
-    games.push({
-      court: i + 1,
-      pair1: best[0],
-      pair2: best[1],
-    });
-  }
-
-  /* ============================================================= */
-  /* ================= FINALIZE ROUND ============================= */
-  /* ============================================================= */
-
-  const restingWithNumber = resting.map(p => {
-    const c = restCount.get(p) || 0;
-    return `${p}#${c + 1}`;
-  });
-
-  schedulerState.roundIndex =
-    (schedulerState.roundIndex || 0) + 1;
-
-  return {
-    round: schedulerState.roundIndex,
-    resting: restingWithNumber,
-    playing,
-    games,
-  };
-}
 
 
 function refCompetitiveRound(schedulerState) {
