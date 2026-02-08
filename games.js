@@ -23,66 +23,85 @@ function toggleRound() {
   const textEl = document.getElementById("btnText");
   const icon = btn.querySelector(".icon");
 
+  const playmode = getPlayMode(); // "competitive" | "casual"
+
+  /* ========================================================= */
+  /* ================= ENTER ACTIVE MODE ===================== */
+  /* ========================================================= */
+
   if (currentState === "idle") {
-    // ---- ENTER ACTIVE (BUSY) MODE ----
     currentState = "active";
 
-    // Disable everything except #nextBtn and .win-cup
+    // Disable everything except next button and win cups
     document.querySelectorAll(
       "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
     ).forEach(el => {
       if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
-        // Disable clicks
         el.style.pointerEvents = "none";
-        
-        // Add disabled styling
         el.classList.add("disabled");
-    
-        // Remove any inline onclick handlers to prevent JS actions
-        //if (el.onclick) el.onclick = null;
       }
     });
 
-
-    const playmode = getPlayMode();
-
+    // Enable win cups ONLY in competitive mode
     document.querySelectorAll(".win-cup").forEach(cup => {
-      cup.style.visibility = "visible";
-      cup.style.pointerEvents = "auto";
-      cup.classList.add("blinking");
-      cup.style.visibility = playmode === "competitive" ? "visible" : "hidden";
+      if (playmode === "competitive") {
+        cup.style.visibility = "visible";
+        cup.style.pointerEvents = "auto";
+        cup.classList.add("blinking");
+      } else {
+        cup.style.visibility = "hidden";
+        cup.style.pointerEvents = "none";
+        cup.classList.remove("blinking");
+      }
     });
+  }
 
-  } else {
-    // ---- RETURN TO IDLE MODE ----
+  /* ========================================================= */
+  /* ================= EXIT ACTIVE MODE ====================== */
+  /* ========================================================= */
+
+  else {
+    // ---- VALIDATION BEFORE EXIT ----
+    if (playmode === "competitive") {
+      if (
+        !currentRoundGames.length ||
+        gameWinners.size !== currentRoundGames.length
+      ) {
+        alert("Please mark winners for all games");
+        return; // ❌ stay in active mode
+      }
+    }
+
+    // ---- EXIT ACTIVE MODE ----
     currentState = "idle";
+
+    // Apply round results
     nextRound();
 
-    
-   // Re-enable everything previously disabled
+    // Re-enable everything
     document.querySelectorAll(".disabled").forEach(el => {
-      // Restore pointer events
       el.style.pointerEvents = "";
-    
-      // Remove the disabled class
       el.classList.remove("disabled");
-    
-      // If you had removed inline onclick handlers, you may need to restore them manually
-      // For example, for the menu button:
+
+      // Restore known handlers if needed
       if (el.classList.contains("menu-btn")) {
-        el.onclick = function() {
-          showPage('homePage', this);
+        el.onclick = function () {
+          showPage("homePage", this);
         };
       }
     });
 
-
-    // Hide & disable win cups
+    // Disable & hide win cups
     document.querySelectorAll(".win-cup").forEach(cup => {
       cup.style.pointerEvents = "none";
       cup.style.visibility = "hidden";
+      cup.classList.remove("blinking");
     });
   }
+
+  /* ========================================================= */
+  /* ================= BUTTON UI UPDATE ====================== */
+  /* ========================================================= */
 
   const state = roundStates[currentState];
   textEl.dataset.i18n = state.key;
@@ -90,7 +109,6 @@ function toggleRound() {
   btn.classList.toggle("end", state.class === "end");
   setLanguage(currentLang);
 }
-
 
 
 
