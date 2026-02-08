@@ -215,12 +215,12 @@ function CompetitiveRound(schedulerState) {
     activeplayers,
     numCourts,
     fixedPairs,
-    restCount,
-    opponentMap,
-    lastRound,
-    winCount,
-    pairPlayedSet,
     restQueue,
+    restCount,
+    winCount,
+    lastRound,
+    pairPlayedSet,
+    opponentMap,
   } = schedulerState;
 
   const totalPlayers = activeplayers.length;
@@ -228,7 +228,8 @@ function CompetitiveRound(schedulerState) {
   const numResting = Math.max(totalPlayers - numPlayersPerRound, 0);
 
   /* ============================================================= */
-  /* ================= REST SELECTION (UNCHANGED) ================= */
+  /* ================= STEP 0: REST SELECTION ===================== */
+  /* ======================= (UNCHANGED) ========================= */
   /* ============================================================= */
 
   let resting = [];
@@ -253,7 +254,6 @@ function CompetitiveRound(schedulerState) {
         resting.push(p);
         needed -= 1;
       }
-
       if (needed <= 0) break;
     }
 
@@ -266,7 +266,25 @@ function CompetitiveRound(schedulerState) {
   }
 
   /* ============================================================= */
-  /* ========== OPTION A: BUILD PAIR-AWARE UNITS ================== */
+  /* ================= STEP 1: BUCKET CREATION =================== */
+  /* ===================== (PLAYER-BASED) ======================== */
+  /* ============================================================= */
+
+  const ranked = [...playing].sort(
+    (a, b) => (winCount.get(b) || 0) - (winCount.get(a) || 0)
+  );
+
+  const buckets = new Map(); // wins -> players[]
+  for (const p of ranked) {
+    const w = winCount.get(p) || 0;
+    if (!buckets.has(w)) buckets.set(w, []);
+    buckets.get(w).push(p);
+  }
+
+  const bucketKeys = [...buckets.keys()].sort((a, b) => b - a);
+
+  /* ============================================================= */
+  /* ================= STEP 2: PAIR SELECTION ==================== */
   /* ============================================================= */
 
   const fixedMap = new Map();
@@ -275,150 +293,104 @@ function CompetitiveRound(schedulerState) {
     fixedMap.set(b, a);
   }
 
-  const used = new Set();
-  const units = [];
+  const available = new Set(playing);
+  const pairs = [];
 
-  for (const p of playing) {
-    if (used.has(p)) continue;
+  // --- 2A: pull fixed pairs first (bucket-aware) ---
+  for (const key of bucketKeys) {
+    const bucket = buckets.get(key);
 
-    const partner = fixedMap.get(p);
-    if (partner && playing.includes(partner) && !used.has(partner)) {
-      used.add(p);
-      used.add(partner);
+    for (const p of [...bucket]) {
+      if (!available.has(p)) continue;
 
-      units.push({
-        type: "pair",
-        players: [p, partner],
-        wins: Math.max(winCount.get(p) || 0, winCount.get(partner) || 0),
-      });
-    } else {
-      used.add(p);
-      units.push({
-        type: "solo",
-        players: [p],
-        wins: winCount.get(p) || 0,
-      });
+      const partner = fixedMap.get(p);
+      if (partner && available.has(partner)) {
+        pairs.push([p, partner]);
+        available.delete(p);
+        available.delete(partner);
+      }
     }
   }
 
-  /* ============================================================= */
-  /* ========== RANKING + BUCKETS (UNIT-BASED) ==================== */
-  /* ============================================================= */
+  // --- 2B: free player pairing (reuse your logic) ---
+  function scorePair(a, b) {
+    let score = 0;
+    const key = [a, b].sort().join("&");
 
-  units.sort((a, b) => b.wins - a.wins);
+    if (pairPlayedSet.has(key)) score += 10;
+    if (lastRound?.pairs?.has(key)) score += 100;
 
-  const buckets = new Map(); // wins -> units[]
-  for (const u of units) {
-    if (!buckets.has(u.wins)) buckets.set(u.wins, []);
-    buckets.get(u.wins).push(u);
+    return score;
   }
 
-  const bucketKeys = [...buckets.keys()].sort((a, b) => b - a);
+  const freePlayers = [...available];
 
-  /* ============================================================= */
-  /* ========== COURT ASSIGNMENT (SIZE-AWARE) ===================== */
-  /* ============================================================= */
+  while (freePlayers.length >= 2) {
+    let best = null;
+    let bestScore = Infinity;
 
-  const courts = [];
-  let bucketIndex = 0;
+    for (let i = 0; i < freePlayers.length; i++) {
+      for (let j = i + 1; j < freePlayers.length; j++) {
+        const a = freePlayers[i];
+        const b = freePlayers[j];
+        const s = scorePair(a, b);
 
-  for (let c = 0; c < numCourts; c++) {
-    let courtPlayers = [];
-
-    while (courtPlayers.length < 4 && bucketIndex < bucketKeys.length) {
-      const key = bucketKeys[bucketIndex];
-      const bucket = buckets.get(key);
-
-      let progressed = false;
-
-      for (let i = 0; i < bucket.length; i++) {
-        const unit = bucket[i];
-        if (courtPlayers.length + unit.players.length <= 4) {
-          courtPlayers.push(...unit.players);
-          bucket.splice(i, 1);
-          progressed = true;
-          break;
+        if (s < bestScore) {
+          bestScore = s;
+          best = [a, b];
         }
       }
-
-      if (!progressed) bucketIndex++;
     }
 
-    if (courtPlayers.length === 4) {
-      courts.push(courtPlayers);
-    }
+    pairs.push(best);
+    freePlayers.splice(freePlayers.indexOf(best[0]), 1);
+    freePlayers.splice(freePlayers.indexOf(best[1]), 1);
   }
 
   /* ============================================================= */
-  /* ========== PAIRING INSIDE COURTS (LOCK FIXED) ================= */
+  /* ================= STEP 3: GAME SELECTION ==================== */
+  /* =================== (PAIR vs PAIR) ========================== */
   /* ============================================================= */
+
+  function scoreGame(pairA, pairB) {
+    let score = 0;
+    const key =
+      pairA.join("&") + "vs" + pairB.join("&");
+
+    if (opponentMap.has(key)) score += 5;
+
+    return score;
+  }
 
   const games = [];
+  const pairPool = [...pairs];
 
-  for (let i = 0; i < courts.length; i++) {
-    const players = courts[i];
+  while (pairPool.length >= 2 && games.length < numCourts) {
+    let bestGame = null;
+    let bestScore = Infinity;
 
-    const fixedInCourt = [];
-    const free = [];
-
-    for (const p of players) {
-      const partner = fixedMap.get(p);
-      if (partner && players.includes(partner)) {
-        if (!fixedInCourt.some(x => x.includes(p))) {
-          fixedInCourt.push([p, partner]);
-        }
-      } else {
-        free.push(p);
-      }
-    }
-
-    let pair1, pair2;
-
-    if (fixedInCourt.length === 1) {
-      pair1 = fixedInCourt[0];
-      pair2 = free;
-    } else {
-      const possiblePairings = [
-        [[players[0], players[1]], [players[2], players[3]]],
-        [[players[0], players[2]], [players[1], players[3]]],
-        [[players[0], players[3]], [players[1], players[2]]],
-      ];
-
-      let best = null;
-      let bestScore = Infinity;
-
-      for (const pairing of possiblePairings) {
-        let score = 0;
-
-        for (const pair of pairing) {
-          const key = pair.slice().sort().join("&");
-          if (lastRound?.pairs?.has(key)) score += 100;
-          if (pairPlayedSet.has(key)) score += 10;
-        }
-
-        const oppKey =
-          pairing[0].join("&") + "vs" + pairing[1].join("&");
-        if (opponentMap.has(oppKey)) score += 5;
-
-        if (score < bestScore) {
-          bestScore = score;
-          best = pairing;
+    for (let i = 0; i < pairPool.length; i++) {
+      for (let j = i + 1; j < pairPool.length; j++) {
+        const s = scoreGame(pairPool[i], pairPool[j]);
+        if (s < bestScore) {
+          bestScore = s;
+          bestGame = [pairPool[i], pairPool[j]];
         }
       }
-
-      pair1 = best[0];
-      pair2 = best[1];
     }
 
     games.push({
-      court: i + 1,
-      pair1,
-      pair2,
+      court: games.length + 1,
+      pair1: bestGame[0],
+      pair2: bestGame[1],
     });
+
+    pairPool.splice(pairPool.indexOf(bestGame[0]), 1);
+    pairPool.splice(pairPool.indexOf(bestGame[1]), 1);
   }
 
   /* ============================================================= */
-  /* ================= FINALIZE ROUND ============================= */
+  /* ======================= FINALIZE ============================ */
   /* ============================================================= */
 
   const restingWithNumber = resting.map(p => {
