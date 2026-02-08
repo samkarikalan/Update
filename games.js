@@ -47,8 +47,9 @@ function toggleRound() {
     const playmode = getPlayMode();
 
     document.querySelectorAll(".win-cup").forEach(cup => {
+      cup.style.visibility = "visible";
       cup.style.pointerEvents = "auto";
-      cup.style.opacity = "1";
+      cup.classList.add("blinking");
       cup.style.visibility = playmode === "competitive" ? "visible" : "hidden";
     });
 
@@ -1435,7 +1436,7 @@ function chkrenderRestingPlayers(data, index) {
 
 function renderGames(data, roundIndex) {
   const wrapper = document.createElement('div');
-  const playmode = getPlayMode(); // "competitive" or "random"
+  const playmode = getPlayMode();
 
   data.games.forEach((game, gameIndex) => {
     const courtDiv = document.createElement('div');
@@ -1468,77 +1469,75 @@ function renderGames(data, roundIndex) {
         );
       });
 
-      // 🏆 Win cup
+      // 🏆 Win cup (created hidden)
       const winCup = document.createElement('img');
       winCup.src = 'win-cup.png';
       winCup.className = 'win-cup blinking';
       winCup.title = 'Mark winner';
-      winCup.style.pointerEvents = 'none';
       winCup.style.visibility = 'hidden';
+      winCup.style.pointerEvents = 'none';
 
-      // Show if this team already won
+      // Restore winner state
       if (game.winner === teamSide) {
         winCup.classList.add('active');
         winCup.classList.remove('blinking');
-        winCup.style.visibility = 'visible';
-        winCup.style.pointerEvents = 'auto';
       }
 
-      // Win-cup click logic (competitive mode)
-      if (playmode === 'competitive') {
-        winCup.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
+      // 🏆 Winner toggle logic (minimal, correct)
+      const toggleWinner = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
 
-          const allCups = teamDiv.parentElement.querySelectorAll('.win-cup');
-          const allSwapIcons = teamDiv.parentElement.querySelectorAll('.swap-icon');
-          const isActive = winCup.classList.contains('active');
+        const allCups = teamDiv.parentElement.querySelectorAll('.win-cup');
+        const allSwapIcons = teamDiv.parentElement.querySelectorAll('.swap-icon');
+        const isActive = winCup.classList.contains('active');
 
-          if (!isActive) {
-            // Activate this team
-            allCups.forEach(cup => {
-              cup.classList.remove('active', 'blinking');
-              cup.style.visibility = 'hidden';
-              cup.style.pointerEvents = 'none';
-            });
+        if (!isActive) {
+          // 👉 Mark this team
+          allCups.forEach(cup => {
+            cup.classList.remove('active', 'blinking');
+            cup.style.visibility = 'hidden';
+            cup.style.pointerEvents = 'none';
+          });
 
-            winCup.classList.add('active');
-            winCup.classList.remove('blinking');
-            winCup.style.visibility = 'visible';
-            winCup.style.pointerEvents = 'auto';
+          winCup.classList.add('active');
+          winCup.classList.remove('blinking');
+          winCup.style.visibility = 'visible';
+          winCup.style.pointerEvents = 'auto';
 
-            // Hide swap icons while winner is active
-            allSwapIcons.forEach(icon => {
-              icon.style.visibility = 'hidden';
-              icon.style.pointerEvents = 'none';
-            });
+          allSwapIcons.forEach(icon => {
+            icon.style.visibility = 'hidden';
+            icon.style.pointerEvents = 'none';
+          });
 
-            game.winner = teamSide;
-            game.winners = teamPairs.slice();
-          } else {
-            // Reset to idle
-            allCups.forEach(cup => {
-              cup.classList.remove('active');
-              cup.classList.add('blinking');
-              cup.style.visibility = 'hidden';
-              cup.style.pointerEvents = 'none';
-            });
+          game.winner = teamSide;
+          game.winners = teamPairs.slice();
+        } else {
+          // 👉 Unmark → show BOTH cups again
+          allCups.forEach(cup => {
+            cup.classList.remove('active');
+            cup.classList.add('blinking');
+            cup.style.visibility = 'visible';
+            cup.style.pointerEvents = 'auto';
+          });
 
-            allSwapIcons.forEach(icon => {
-              icon.style.visibility = 'visible';
-              icon.style.pointerEvents = 'auto';
-            });
+          allSwapIcons.forEach(icon => {
+            icon.style.visibility = 'visible';
+            icon.style.pointerEvents = 'auto';
+          });
 
-            game.winner = undefined;
-            game.winners = [];
-          }
-        });
-      }
+          game.winner = undefined;
+          game.winners = [];
+        }
+      };
 
-      // Append cup to teamDiv
+      // Attach to BOTH team and cup
+      winCup.addEventListener('click', toggleWinner);
+      teamDiv.addEventListener('click', toggleWinner);
+
       teamDiv.appendChild(winCup);
 
-      // Swap logic (latest round only)
+      // 🔁 Swap logic (unchanged)
       const isLatestRound = roundIndex === allRounds.length - 1;
       if (isLatestRound) {
         swapIcon.addEventListener('click', (e) => {
@@ -1579,24 +1578,11 @@ function renderGames(data, roundIndex) {
     teamsDiv.append(teamLeft, vs, teamRight);
     courtDiv.append(courtName, teamsDiv);
     wrapper.appendChild(courtDiv);
-
-    // If winner exists, hide inactive cups and swaps
-    if (playmode === 'competitive' && game.winner) {
-      teamsDiv.querySelectorAll('.win-cup').forEach(cup => {
-        if (!cup.classList.contains('active')) {
-          cup.style.visibility = 'hidden';
-          cup.style.pointerEvents = 'none';
-        }
-      });
-      teamsDiv.querySelectorAll('.swap-icon').forEach(icon => {
-        icon.style.visibility = 'hidden';
-        icon.style.pointerEvents = 'none';
-      });
-    }
   });
 
   return wrapper;
 }
+
 
 function renderGames2(data, index) {
   const wrapper = document.createElement('div');
