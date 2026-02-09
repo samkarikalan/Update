@@ -228,6 +228,176 @@ function CompetitiveRound(schedulerState) {
     restCount,
     winCount,
     lastRound,
+    recoveryMap,
+  } = schedulerState;
+
+  const totalPlayers = activeplayers.length;
+  const numPlayersPerRound = numCourts * 4;
+  const numResting = Math.max(totalPlayers - numPlayersPerRound, 0);
+
+  /* ========================================================= */
+  /* ================= STEP 0: REST SELECTION ================= */
+  /* ========================================================= */
+
+  let resting = [];
+  let playing = [];
+
+  if (numResting > 0) {
+    resting = restQueue.slice(0, numResting);
+    playing = activeplayers.filter(p => !resting.includes(p));
+  } else {
+    playing = [...activeplayers];
+  }
+
+  playing = playing.slice(0, numPlayersPerRound);
+
+  /* ========================================================= */
+  /* ========== STEP 1: EFFECTIVE RANK CALCULATION ============ */
+  /* ========================================================= */
+
+  const ranked = [...playing].sort((a, b) => {
+    const winsA = winCount.get(a) || 0;
+    const winsB = winCount.get(b) || 0;
+
+    const recA = recoveryMap.get(a) || 0;
+    const recB = recoveryMap.get(b) || 0;
+
+    // recovering players cannot outrank stable players with same wins
+    if (recA > 0 && recB === 0) return 1;
+    if (recB > 0 && recA === 0) return -1;
+
+    return winsB - winsA;
+  });
+
+  /* ========================================================= */
+  /* ================= STEP 2: COURT GROUPING ================= */
+  /* ========================================================= */
+
+  const courts = [];
+  for (let i = 0; i < ranked.length; i += 4) {
+    courts.push(ranked.slice(i, i + 4));
+  }
+
+  /* ========================================================= */
+  /* ================= STEP 3: PAIRING LOGIC ================== */
+  /* ========================================================= */
+
+  const fixedMap = new Map();
+  for (const [a, b] of fixedPairs) {
+    fixedMap.set(a, b);
+    fixedMap.set(b, a);
+  }
+
+  const lastRoundPairs = lastRound?.pairs || new Set();
+
+  function isLastRoundPair(a, b) {
+    return lastRoundPairs.has([a, b].sort().join("&"));
+  }
+
+  const games = [];
+
+  for (let c = 0; c < Math.min(courts.length, numCourts); c++) {
+    const group = courts[c];
+    const available = new Set(group);
+    const pairs = [];
+
+    /* ---------- Fixed pairs first ---------- */
+    for (const p of group) {
+      if (!available.has(p)) continue;
+      const partner = fixedMap.get(p);
+      if (partner && available.has(partner)) {
+        pairs.push([p, partner]);
+        available.delete(p);
+        available.delete(partner);
+      }
+    }
+
+    /* ---------- Free pairing inside court ---------- */
+    const free = [...available];
+    let candidatePairs = [];
+
+    for (let i = 0; i < free.length; i++) {
+      for (let j = i + 1; j < free.length; j++) {
+        candidatePairs.push([free[i], free[j]]);
+      }
+    }
+
+    // Prefer non-last-round pairs if available
+    const nonRepeated = candidatePairs.filter(
+      ([a, b]) => !isLastRoundPair(a, b)
+    );
+
+    const usablePairs =
+      nonRepeated.length > 0 ? nonRepeated : candidatePairs;
+
+    // Deterministic: pick first valid combination
+    const used = new Set();
+    for (const [a, b] of usablePairs) {
+      if (used.has(a) || used.has(b)) continue;
+      pairs.push([a, b]);
+      used.add(a);
+      used.add(b);
+      if (pairs.length === 2) break;
+    }
+
+    games.push({
+      court: c + 1,
+      pair1: pairs[0],
+      pair2: pairs[1],
+    });
+  }
+
+  /* ========================================================= */
+  /* ========== STEP 4: RECOVERY STATE UPDATE ================= */
+  /* ========================================================= */
+
+  if (lastRound?.results) {
+    for (const r of lastRound.results) {
+      const { winners, losers } = r;
+
+      for (const p of winners) {
+        if (recoveryMap.get(p) > 0) {
+          recoveryMap.set(p, recoveryMap.get(p) - 1);
+        }
+      }
+
+      for (const p of losers) {
+        if (!recoveryMap.has(p) || recoveryMap.get(p) === 0) {
+          recoveryMap.set(p, 2); // 👈 recovery wins required (tunable)
+        }
+      }
+    }
+  }
+
+  /* ========================================================= */
+  /* ======================== FINAL =========================== */
+  /* ========================================================= */
+
+  const restingWithNumber = resting.map(p => {
+    const c = restCount.get(p) || 0;
+    return `${p}#${c + 1}`;
+  });
+
+  schedulerState.roundIndex =
+    (schedulerState.roundIndex || 0) + 1;
+
+  return {
+    round: schedulerState.roundIndex,
+    resting: restingWithNumber,
+    playing,
+    games,
+  };
+}
+
+function oldddCompetitiveRound(schedulerState) {
+  const {
+    activeplayers,
+    numCourts,
+    fixedPairs,
+    restQueue,
+    restCount,
+    winCount,
+    lastRound,
     pairPlayedSet,
     opponentMap,
   } = schedulerState;
