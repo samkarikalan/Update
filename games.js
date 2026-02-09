@@ -396,6 +396,7 @@ function RandomRound(schedulerState) {
     activeplayers,
     numCourts,
     fixedPairs,
+    restQueue,
     restCount,
     opponentMap,
     lastRound,
@@ -405,8 +406,19 @@ function RandomRound(schedulerState) {
   const numPlayersPerRound = numCourts * 4;
   const numResting = Math.max(totalPlayers - numPlayersPerRound, 0);
 
-  // ================= REST SELECTION (UNCHANGED) =================
-  const fixedPairPlayers = new Set(fixedPairs.flat());
+  // ============================================================
+  // FAIRNESS MEMORY (PERSISTENT)
+  // ============================================================
+  if (!schedulerState.fairnessScore) {
+    schedulerState.fairnessScore = new Map();
+    activeplayers.forEach(p =>
+      schedulerState.fairnessScore.set(p, 0)
+    );
+  }
+
+  // ============================================================
+  // STEP 0: REST SELECTION (UNCHANGED)
+  // ============================================================
   let resting = [];
   let playing = [];
 
@@ -418,7 +430,7 @@ function RandomRound(schedulerState) {
       fixedMap.set(b, a);
     }
 
-    for (const p of schedulerState.restQueue) {
+    for (const p of restQueue) {
       if (resting.includes(p)) continue;
 
       const partner = fixedMap.get(p);
@@ -434,73 +446,34 @@ function RandomRound(schedulerState) {
 
     playing = activeplayers.filter(p => !resting.includes(p));
   } else {
-    resting = schedulerState.restQueue.slice(0, numResting);
+    resting = restQueue.slice(0, numResting);
     playing = activeplayers
       .filter(p => !resting.includes(p))
       .slice(0, numPlayersPerRound);
   }
 
-  // ================= FIXED PAIRS THIS ROUND =================
+  // ============================================================
+  // FIXED PAIRS THIS ROUND
+  // ============================================================
   const playingSet = new Set(playing);
   const fixedPairsThisRound = fixedPairs.filter(
     ([a, b]) => playingSet.has(a) && playingSet.has(b)
   );
 
-  const fixedPairPlayersThisRound = new Set(fixedPairsThisRound.flat());
-  let freePlayers = playing.filter(
-    p => !fixedPairPlayersThisRound.has(p)
-  );
-
-  // ================= ALL FIXED SHORTCUT (UNCHANGED) =================
-  const allFixed =
-    freePlayers.length === 0 &&
-    fixedPairsThisRound.length >= numCourts * 2;
-
-  if (allFixed) {
-    const games = getNextFixedPairGames(
-      schedulerState,
-      fixedPairs,
-      numCourts
-    );
-
-    const playingPlayers = new Set(
-      games.flatMap(g => [...g.pair1, ...g.pair2])
-    );
-
-    resting = activeplayers.filter(p => !playingPlayers.has(p));
-    playing = [...playingPlayers];
-
-    schedulerState.roundIndex =
-      (schedulerState.roundIndex || 0) + 1;
-
-    return {
-      round: schedulerState.roundIndex,
-      resting: resting.map(p => `${p}#${(restCount.get(p) || 0) + 1}`),
-      playing,
-      games,
-    };
-  }
+  const fixedPlayers = new Set(fixedPairsThisRound.flat());
+  let freePlayers = playing.filter(p => !fixedPlayers.has(p));
 
   // ============================================================
-  // 🔥 NEW PRIORITY-BASED FREE PLAYER ALGORITHM
+  // HELPERS
   // ============================================================
-
-  const games = [];
-  const usedPlayers = new Set();
-
-  function freshnessCount(group) {
+  function playerFreshness(p, group) {
     let fresh = 0;
-    for (let i = 0; i < group.length; i++) {
-      let ok = true;
-      for (let j = 0; j < group.length; j++) {
-        if (i !== j && opponentMap.has(`${group[i]}&${group[j]}`)) {
-          ok = false;
-          break;
-        }
+    for (const o of group) {
+      if (p !== o && !opponentMap.has(`${p}&${o}`)) {
+        fresh++;
       }
-      if (ok) fresh++;
     }
-    return fresh;
+    return fresh; // 0..3
   }
 
   function playedLastRound(group) {
@@ -508,33 +481,53 @@ function RandomRound(schedulerState) {
   }
 
   function scoreGroup(group) {
-    const fresh = freshnessCount(group);
-    if (fresh === 4) return 100;
-    if (fresh >= 3) return 80;
-    if (fresh >= 2) return 60;
-    if (!playedLastRound(group)) return 40;
-    return 10;
+    let score = 0;
+
+    // ---- round freshness priority ----
+    const freshList = group.map(p => playerFreshness(p, group));
+    const minFresh = Math.min(...freshList);
+
+    if (minFresh === 3) score += 100;
+    else if (minFresh === 2) score += 80;
+    else if (minFresh === 1) score += 60;
+    else score += 30;
+
+    if (!playedLastRound(group)) score += 30;
+
+    // ---- fairness compensation (KEY PART) ----
+    for (const p of group) {
+      const fairness = schedulerState.fairnessScore.get(p) || 0;
+      score += (10 - fairness); // low fairness = high priority
+    }
+
+    return score;
   }
 
-  function sampleGroups(players, count = 25) {
+  function sampleGroups(players, count = 30) {
     const groups = [];
     for (let i = 0; i < count; i++) {
-      const shuffled = shuffle(players).slice(0, 4);
-      if (shuffled.length === 4) groups.push(shuffled);
+      const g = shuffle(players).slice(0, 4);
+      if (g.length === 4) groups.push(g);
     }
     return groups;
   }
 
+  // ============================================================
+  // STEP 1: COURT CONSTRUCTION (FAIRNESS-AWARE)
+  // ============================================================
+  const games = [];
+  const usedPlayers = new Set();
   let available = freePlayers.slice();
 
   while (games.length < numCourts && available.length >= 4) {
     const candidates = sampleGroups(available);
 
     let best = null;
-    let bestScore = -1;
+    let bestScore = -Infinity;
 
     for (const g of candidates) {
       if (g.some(p => usedPlayers.has(p))) continue;
+
       const s = scoreGroup(g);
       if (s > bestScore) {
         bestScore = s;
@@ -557,7 +550,21 @@ function RandomRound(schedulerState) {
     });
   }
 
-  // ================= FINAL REST + RETURN =================
+  // ============================================================
+  // STEP 2: UPDATE FAIRNESS AFTER ROUND
+  // ============================================================
+  for (const game of games) {
+    const group = [...game.pair1, ...game.pair2];
+    for (const p of group) {
+      const gained = playerFreshness(p, group); // 0..3
+      const prev = schedulerState.fairnessScore.get(p) || 0;
+      schedulerState.fairnessScore.set(p, prev + gained);
+    }
+  }
+
+  // ============================================================
+  // FINALIZE
+  // ============================================================
   schedulerState.roundIndex =
     (schedulerState.roundIndex || 0) + 1;
 
