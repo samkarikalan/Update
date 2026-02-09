@@ -219,7 +219,7 @@ function AischedulerNextRound(schedulerState) {
   return result;
 }
 
-function CompetitiveRound(schedulerState) {
+function CompetitiveRoundkkk(schedulerState) {
   const {
     availablePlayers, // 👈 NEW (players already cleared for playing)
     numCourts,
@@ -460,7 +460,7 @@ function wasteCompetitiveRound(schedulerState) {
   };
 }
 
-function oldddCompetitiveRound(schedulerState) {
+function CompetitiveRound(schedulerState) {
   const {
     activeplayers,
     numCourts,
