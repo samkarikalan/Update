@@ -24,7 +24,7 @@ let schedulerState = {
     gamesMap: new Map(), // 🆕 per-player opponent tracking
 	markingWinnerMode: false,
 	winCount: new Map(), // 🏆 Track player wins
-	recoveryMap = new Map(),
+	recoveryMap: new Map(),
 // player -> remaining recovery wins
 };
 
