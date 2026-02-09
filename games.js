@@ -223,6 +223,83 @@ function CompetitiveRound(schedulerState) {
   const {
     activeplayers,
     numCourts,
+    winCount,
+    promotionDebt = new Map(),
+  } = schedulerState;
+
+  const numPlayersPerRound = numCourts * 4;
+
+  /* ============================================================
+     STEP 1: EFFECTIVE RANK (wins adjusted by penalty)
+     ============================================================ */
+
+  const ranked = [...activeplayers].sort((a, b) => {
+    const wa = (winCount.get(a) || 0) - (promotionDebt.get(a) || 0);
+    const wb = (winCount.get(b) || 0) - (promotionDebt.get(b) || 0);
+    return wb - wa;
+  });
+
+  /* ============================================================
+     STEP 2: GROUP BY EFFECTIVE WINS
+     ============================================================ */
+
+  const groups = new Map(); // effectiveWins -> players[]
+  for (const p of ranked) {
+    const w = (winCount.get(p) || 0) - (promotionDebt.get(p) || 0);
+    if (!groups.has(w)) groups.set(w, []);
+    groups.get(w).push(p);
+  }
+
+  const keys = [...groups.keys()].sort((a, b) => b - a);
+
+  /* ============================================================
+     STEP 3: SELECT PLAYERS (WHO PLAYS THIS ROUND)
+     ============================================================ */
+
+  const selected = [];
+  let idx = 0;
+
+  while (selected.length < numPlayersPerRound && idx < keys.length) {
+    const bucket = groups.get(keys[idx]);
+
+    for (const p of bucket) {
+      if (selected.length < numPlayersPerRound) {
+        selected.push(p);
+      }
+    }
+    idx++;
+  }
+
+  /* ============================================================
+     STEP 4: SAFETY FILL (if still short)
+     ============================================================ */
+
+  if (selected.length < numPlayersPerRound) {
+    for (const p of ranked) {
+      if (
+        !selected.includes(p) &&
+        selected.length < numPlayersPerRound
+      ) {
+        selected.push(p);
+      }
+    }
+  }
+
+  /* ============================================================
+     STEP 5: DELEGATE TO RANDOM ENGINE
+     ============================================================ */
+
+  return RandomRound({
+    ...schedulerState,
+    activeplayers: selected,
+  });
+}
+
+
+function wasteCompetitiveRound(schedulerState) {
+  const {
+    activeplayers,
+    numCourts,
     fixedPairs,
     restQueue,
     restCount,
