@@ -24,6 +24,8 @@ let schedulerState = {
     gamesMap: new Map(), // 🆕 per-player opponent tracking
 	markingWinnerMode: false,
 	winCount: new Map(), // 🏆 Track player wins
+	recoveryMap = new Map();
+// player -> remaining recovery wins
 };
 
 schedulerState.activeplayers = new Proxy([], {
