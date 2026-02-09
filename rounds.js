@@ -25,6 +25,7 @@ let schedulerState = {
 	markingWinnerMode: false,
 	winCount: new Map(), // 🏆 Track player wins
 	recoveryMap: new Map(),
+	promotionDebt: new Map(),
 // player -> remaining recovery wins
 };
 
