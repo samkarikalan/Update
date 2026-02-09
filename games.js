@@ -221,7 +221,7 @@ function AischedulerNextRound(schedulerState) {
 
 function CompetitiveRound(schedulerState) {
   const {
-    activeplayers,
+    availablePlayers, // 👈 NEW (players already cleared for playing)
     numCourts,
     winCount,
     promotionDebt = new Map(),
@@ -230,10 +230,10 @@ function CompetitiveRound(schedulerState) {
   const numPlayersPerRound = numCourts * 4;
 
   /* ============================================================
-     STEP 1: EFFECTIVE RANK (wins adjusted by penalty)
+     STEP 1: EFFECTIVE RANK
      ============================================================ */
 
-  const ranked = [...activeplayers].sort((a, b) => {
+  const ranked = [...availablePlayers].sort((a, b) => {
     const wa = (winCount.get(a) || 0) - (promotionDebt.get(a) || 0);
     const wb = (winCount.get(b) || 0) - (promotionDebt.get(b) || 0);
     return wb - wa;
@@ -243,7 +243,7 @@ function CompetitiveRound(schedulerState) {
      STEP 2: GROUP BY EFFECTIVE WINS
      ============================================================ */
 
-  const groups = new Map(); // effectiveWins -> players[]
+  const groups = new Map();
   for (const p of ranked) {
     const w = (winCount.get(p) || 0) - (promotionDebt.get(p) || 0);
     if (!groups.has(w)) groups.set(w, []);
@@ -253,16 +253,14 @@ function CompetitiveRound(schedulerState) {
   const keys = [...groups.keys()].sort((a, b) => b - a);
 
   /* ============================================================
-     STEP 3: SELECT PLAYERS (WHO PLAYS THIS ROUND)
+     STEP 3: SELECT WHO PLAYS
      ============================================================ */
 
   const selected = [];
   let idx = 0;
 
   while (selected.length < numPlayersPerRound && idx < keys.length) {
-    const bucket = groups.get(keys[idx]);
-
-    for (const p of bucket) {
+    for (const p of groups.get(keys[idx])) {
       if (selected.length < numPlayersPerRound) {
         selected.push(p);
       }
@@ -271,22 +269,19 @@ function CompetitiveRound(schedulerState) {
   }
 
   /* ============================================================
-     STEP 4: SAFETY FILL (if still short)
+     STEP 4: SAFETY FILL
      ============================================================ */
 
   if (selected.length < numPlayersPerRound) {
     for (const p of ranked) {
-      if (
-        !selected.includes(p) &&
-        selected.length < numPlayersPerRound
-      ) {
+      if (!selected.includes(p) && selected.length < numPlayersPerRound) {
         selected.push(p);
       }
     }
   }
 
   /* ============================================================
-     STEP 5: DELEGATE TO RANDOM ENGINE
+     STEP 5: PAIR USING ORIGINAL ENGINE
      ============================================================ */
 
   return RandomRound({
@@ -294,7 +289,6 @@ function CompetitiveRound(schedulerState) {
     activeplayers: selected,
   });
 }
-
 
 function wasteCompetitiveRound(schedulerState) {
   const {
