@@ -395,7 +395,6 @@ function RandomRound(schedulerState) {
   const {
     activeplayers,
     numCourts,
-    fixedPairs,
     restQueue,
     restCount,
     opponentMap,
@@ -407,7 +406,7 @@ function RandomRound(schedulerState) {
   const numResting = Math.max(totalPlayers - numPlayersPerRound, 0);
 
   // ============================================================
-  // FAIRNESS MEMORY (PERSISTENT)
+  // FAIRNESS MEMORY
   // ============================================================
   if (!schedulerState.fairnessScore) {
     schedulerState.fairnessScore = new Map();
@@ -417,51 +416,12 @@ function RandomRound(schedulerState) {
   }
 
   // ============================================================
-  // STEP 0: REST SELECTION (UNCHANGED)
+  // STEP 0: REST SELECTION (UNCHANGED LOGIC)
   // ============================================================
-  let resting = [];
-  let playing = [];
-
-  if (fixedPairs.length > 0 && numResting >= 2) {
-    let needed = numResting;
-    const fixedMap = new Map();
-    for (const [a, b] of fixedPairs) {
-      fixedMap.set(a, b);
-      fixedMap.set(b, a);
-    }
-
-    for (const p of restQueue) {
-      if (resting.includes(p)) continue;
-
-      const partner = fixedMap.get(p);
-      if (partner && needed >= 2) {
-        resting.push(p, partner);
-        needed -= 2;
-      } else if (!partner && needed > 0) {
-        resting.push(p);
-        needed -= 1;
-      }
-      if (needed <= 0) break;
-    }
-
-    playing = activeplayers.filter(p => !resting.includes(p));
-  } else {
-    resting = restQueue.slice(0, numResting);
-    playing = activeplayers
-      .filter(p => !resting.includes(p))
-      .slice(0, numPlayersPerRound);
-  }
-
-  // ============================================================
-  // FIXED PAIRS THIS ROUND
-  // ============================================================
-  const playingSet = new Set(playing);
-  const fixedPairsThisRound = fixedPairs.filter(
-    ([a, b]) => playingSet.has(a) && playingSet.has(b)
-  );
-
-  const fixedPlayers = new Set(fixedPairsThisRound.flat());
-  let freePlayers = playing.filter(p => !fixedPlayers.has(p));
+  const resting = restQueue.slice(0, numResting);
+  const playing = activeplayers
+    .filter(p => !resting.includes(p))
+    .slice(0, numPlayersPerRound);
 
   // ============================================================
   // HELPERS
@@ -483,70 +443,74 @@ function RandomRound(schedulerState) {
   function scoreGroup(group) {
     let score = 0;
 
-    // ---- round freshness priority ----
-    const freshList = group.map(p => playerFreshness(p, group));
-    const minFresh = Math.min(...freshList);
+    const freshness = group.map(p => playerFreshness(p, group));
+    const minFresh = Math.min(...freshness);
 
-    if (minFresh === 3) score += 100;
-    else if (minFresh === 2) score += 80;
+    // ---- round freshness priority ----
+    if (minFresh === 3) score += 120;
+    else if (minFresh === 2) score += 90;
     else if (minFresh === 1) score += 60;
     else score += 30;
 
+    // ---- last round avoidance ----
     if (!playedLastRound(group)) score += 30;
 
-    // ---- fairness compensation (KEY PART) ----
+    // ---- player fairness compensation ----
     for (const p of group) {
-      const fairness = schedulerState.fairnessScore.get(p) || 0;
-      score += (10 - fairness); // low fairness = high priority
+      const f = schedulerState.fairnessScore.get(p) || 0;
+      score += (12 - f); // low fairness = high boost
     }
 
     return score;
   }
 
-  function sampleGroups(players, count = 30) {
-    const groups = [];
-    for (let i = 0; i < count; i++) {
-      const g = shuffle(players).slice(0, 4);
-      if (g.length === 4) groups.push(g);
+  function generateCandidates(players, count = 10) {
+    const candidates = [];
+
+    // deterministic sliding windows
+    for (let i = 0; i + 3 < players.length && candidates.length < count; i++) {
+      candidates.push(players.slice(i, i + 4));
     }
-    return groups;
+
+    // shuffled variants
+    while (candidates.length < count) {
+      const g = shuffle(players).slice(0, 4);
+      if (g.length === 4) candidates.push(g);
+    }
+
+    return candidates;
   }
 
   // ============================================================
-  // STEP 1: COURT CONSTRUCTION (FAIRNESS-AWARE)
+  // STEP 1: COURT CONSTRUCTION (10 OPTIONS → RANK → PICK #1)
   // ============================================================
   const games = [];
-  const usedPlayers = new Set();
-  let available = freePlayers.slice();
+  let available = playing.slice();
 
   while (games.length < numCourts && available.length >= 4) {
-    const candidates = sampleGroups(available);
+    const candidates = generateCandidates(available, 10);
 
-    let best = null;
-    let bestScore = -Infinity;
+    const ranked = candidates
+      .map(g => ({ g, score: scoreGroup(g) }))
+      .sort((a, b) => b.score - a.score);
 
-    for (const g of candidates) {
-      if (g.some(p => usedPlayers.has(p))) continue;
+    const best = ranked[0].g;
 
-      const s = scoreGroup(g);
-      if (s > bestScore) {
-        bestScore = s;
-        best = g;
-      }
+    // absolute safety
+    if (best.length !== 4) {
+      console.error("Invalid group size", best);
+      break;
     }
 
-    if (!best) break;
-
-    const [a, b, c, d] = best;
     games.push({
       court: games.length + 1,
-      pair1: [a, b],
-      pair2: [c, d],
+      pair1: [best[0], best[1]],
+      pair2: [best[2], best[3]],
     });
 
+    // remove used players
     best.forEach(p => {
-      usedPlayers.add(p);
-      available = available.filter(x => x !== p);
+      available.splice(available.indexOf(p), 1);
     });
   }
 
@@ -556,7 +520,7 @@ function RandomRound(schedulerState) {
   for (const game of games) {
     const group = [...game.pair1, ...game.pair2];
     for (const p of group) {
-      const gained = playerFreshness(p, group); // 0..3
+      const gained = playerFreshness(p, group);
       const prev = schedulerState.fairnessScore.get(p) || 0;
       schedulerState.fairnessScore.set(p, prev + gained);
     }
@@ -575,7 +539,6 @@ function RandomRound(schedulerState) {
     games,
   };
 }
-
 
 function bestRandomRound(schedulerState) {
   const {
