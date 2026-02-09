@@ -3,6 +3,47 @@ const SUMMARY_CSS = `
    ROUND EXPORT – SUMMARY CSS
    Used only for HTML export
 ================================ */
+/* =================================================
+   ADDITIONS – compatible with renderRounds()
+   (No existing rules modified or removed)
+================================================= */
+
+/* Winner highlight (only applies if .winner exists) */
+.export-team.winner {
+  background: #dcfce7;
+  border: 1px solid #22c55e;
+  color: #065f46;
+  position: relative;
+}
+
+/* Winner icon */
+.export-team.winner::after {
+  content: "🏆";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 14px;
+}
+
+/* Improve team spacing without overriding layout */
+.export-team {
+  padding: 6px;
+  border-radius: 8px;
+}
+
+/* Better visual separation for matches */
+.export-match {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* Print-friendly winner safety */
+@media print {
+  .export-team.winner {
+    background: #e6ffe6 !important;
+    border-color: #22c55e !important;
+  }
+}
+
 
 #export {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
