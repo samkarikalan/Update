@@ -505,13 +505,29 @@ for (const game of games) {
 }
 
 // 7️⃣ 🏆 Update win count if winners recorded
+  // 7️⃣ 🏆 Update win count (+2 / -2) — COMPETITIVE ONLY
+if (getPlayMode() === "competitive") {
   for (const game of games) {
-    if (game.winners && Array.isArray(game.winners)) {
-      game.winners.forEach(playerName => {
-        schedulerState.winCount.set(playerName, (schedulerState.winCount.get(playerName) || 0) + 1);
-      });
+    if (!game.winner) continue; // 1 or 2 expected
+
+    const winners = game.winner === 1 ? game.pair1 : game.pair2;
+    const losers  = game.winner === 1 ? game.pair2 : game.pair1;
+
+    for (const p of winners) {
+      schedulerState.winCount.set(
+        p,
+        (schedulerState.winCount.get(p) || 0) + 2
+      );
     }
-  }	
+
+    for (const p of losers) {
+      schedulerState.winCount.set(
+        p,
+        (schedulerState.winCount.get(p) || 0) - 2
+      );
+    }
+  }
+}
 
 // after tracking pairs & games
 checkAndResetPairCycle(schedulerState, games, roundIndex);
