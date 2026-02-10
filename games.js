@@ -220,17 +220,19 @@ function AischedulerNextRound(schedulerState) {
 }
 
 function CompetitiveRound(schedulerState) {
-  const { winCount } = schedulerState;
+  const { rankPoints } = schedulerState;
 
   // 1️⃣ Use your existing, trusted RandomRound
   const baseRound = RandomRound(schedulerState);
 
-  // 2️⃣ Just rebalance pairs inside each court
+  // 2️⃣ Rebalance pairs inside each court using RANK POINTS
   const games = baseRound.games.map(g => {
     const p = [...g.pair1, ...g.pair2];
 
-    // sort by strength
-    p.sort((a, b) => (winCount.get(b) || 0) - (winCount.get(a) || 0));
+    // sort by competitive strength (NOT wins)
+    p.sort(
+      (a, b) => (rankPoints.get(b) || 0) - (rankPoints.get(a) || 0)
+    );
 
     // strong+weak vs strong+weak
     return {
@@ -245,6 +247,7 @@ function CompetitiveRound(schedulerState) {
     games,
   };
 }
+
 
 function RandomRound(schedulerState) {
   const {
