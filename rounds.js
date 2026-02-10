@@ -251,6 +251,10 @@ function initScheduler(numCourts) {
     schedulerState.fixedMap.set(b, a);
   });
     schedulerState.restQueue = createRestQueue();
+  for (const p of schedulerState.activeplayers) {
+  schedulerState.rankPoints.set(p, 0);
+}
+	
     
 }
 function updateScheduler() {
@@ -504,26 +508,25 @@ for (const game of games) {
   gamesMap.add(gameKey);
 }
 
-// 7️⃣ 🏆 Update win count if winners recorded
-  // 7️⃣ 🏆 Update win count (+2 / -2) — COMPETITIVE ONLY
+/// 7️⃣ 🏆 Update COMPETITIVE RANK POINTS (+2 / -2)
 if (getPlayMode() === "competitive") {
   for (const game of games) {
-    if (!game.winner) continue; // 1 or 2 expected
+    if (!game.winner) continue;
 
     const winners = game.winner === 1 ? game.pair1 : game.pair2;
     const losers  = game.winner === 1 ? game.pair2 : game.pair1;
 
     for (const p of winners) {
-      schedulerState.winCount.set(
+      schedulerState.rankPoints.set(
         p,
-        (schedulerState.winCount.get(p) || 0) + 2
+        (schedulerState.rankPoints.get(p) || 0) + 2
       );
     }
 
     for (const p of losers) {
-      schedulerState.winCount.set(
+      schedulerState.rankPoints.set(
         p,
-        (schedulerState.winCount.get(p) || 0) - 2
+        (schedulerState.rankPoints.get(p) || 0) - 2
       );
     }
   }
