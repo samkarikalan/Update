@@ -8,25 +8,31 @@ let resetRest = false;
 
 	
 let schedulerState = {
-    numCourts: 0,
-    allPlayers: [],
-    activeplayers: [],
-    fixedPairs: [],
-    PlayedCount: new Map(),
-    restCount: new Map(),
-    restQueue: new Map(),
-    PlayerScoreMap: new Map(),
-    playedTogether: new Map(),
-    fixedMap: new Map(),
-    roundIndex: 0,
-    pairPlayedSet: new Set(),
-	pairPlayedSet: new Set(),
-    gamesMap: new Map(), // 🆕 per-player opponent tracking
-	markingWinnerMode: false,
-	winCount: new Map(), // 🏆 Track player wins
-	recoveryMap: new Map(),
-	promotionDebt: new Map(),
-// player -> remaining recovery wins
+  numCourts: 0,
+  allPlayers: [],
+  activeplayers: [],
+  fixedPairs: [],
+
+  PlayedCount: new Map(),
+  restCount: new Map(),
+  restQueue: new Map(),
+
+  PlayerScoreMap: new Map(),   // random / fairness logic
+  rankPoints: new Map(),       // ✅ competitive (+2 / −2)
+
+  playedTogether: new Map(),
+  fixedMap: new Map(),
+
+  roundIndex: 0,
+
+  pairPlayedSet: new Set(),
+  gamesMap: new Set(),
+
+  markingWinnerMode: false,
+
+  winCount: new Map(),
+  recoveryMap: new Map(),
+  promotionDebt: new Map(),
 };
 
 schedulerState.activeplayers = new Proxy([], {
@@ -225,38 +231,46 @@ function prevRound() {
 }
 
 function initScheduler(numCourts) {
-  schedulerState.numCourts = numCourts;  
-  schedulerState.restCount = new Map(schedulerState.activeplayers.map(p => [p, 0]));
- //schedulerState.restQueue = new Map(schedulerState.activeplayers.map(p => [p, 0]));
-    
-  schedulerState.PlayedCount = new Map(schedulerState.activeplayers.map(p => [p, 0]));
-  schedulerState.PlayerScoreMap = new Map(schedulerState.activeplayers.map(p => [p, 0]));
+  schedulerState.numCourts = numCourts;
+
+  schedulerState.PlayedCount = new Map(
+    schedulerState.activeplayers.map(p => [p, 0])
+  );
+
+  schedulerState.restCount = new Map(
+    schedulerState.activeplayers.map(p => [p, 0])
+  );
+
+  schedulerState.PlayerScoreMap = new Map(
+    schedulerState.activeplayers.map(p => [p, 0])
+  );
+
+  // ✅ Competitive ranking points
+  schedulerState.rankPoints = new Map(
+    schedulerState.activeplayers.map(p => [p, 0])
+  );
+
+  schedulerState.winCount = new Map(
+    schedulerState.activeplayers.map(p => [p, 0])
+  );
+
   schedulerState.playedTogether = new Map();
   schedulerState.fixedMap = new Map();
   schedulerState.pairPlayedSet = new Set();
   schedulerState.gamesMap = new Set();
+
   schedulerState.roundIndex = 0;
-  // 🆕 Initialize opponentMap — nested map for opponent counts
-  schedulerState.opponentMap = new Map();
-  for (const p1 of schedulerState.activeplayers) {
-    const innerMap = new Map();
-    for (const p2 of schedulerState.activeplayers) {
-      if (p1 !== p2) innerMap.set(p2, 0); // start all counts at 0
-    }
-    schedulerState.opponentMap.set(p1, innerMap);
-  }
-  // Map each fixed pair for quick lookup
+
+  // Fixed pairs lookup
   schedulerState.fixedPairs.forEach(([a, b]) => {
     schedulerState.fixedMap.set(a, b);
     schedulerState.fixedMap.set(b, a);
   });
-    schedulerState.restQueue = createRestQueue();
-  for (const p of schedulerState.activeplayers) {
-  schedulerState.rankPoints.set(p, 0);
+
+  schedulerState.restQueue = createRestQueue();
 }
-	
-    
-}
+
+
 function updateScheduler() {
    schedulerState.opponentMap = new Map();
   for (const p1 of schedulerState.activeplayers) {
