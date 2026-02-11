@@ -638,7 +638,7 @@ function report() {
     card.className = "player-card";
     card.innerHTML = `
       <div class="rank">#${index + 1}</div>
-      <div class="name">${p.name.replace(/^\d+\.?\s*/, "")}</div>
+      <div class="name">${p.name}</div>
       <div class="stat wins">${wins}</div>
       <div class="stat played">${played}</div>
       <div class="stat rest">${rest}</div>
