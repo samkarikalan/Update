@@ -219,35 +219,143 @@ function AischedulerNextRound(schedulerState) {
   return result;
 }
 
+
 function CompetitiveRound(schedulerState) {
-  const { rankPoints } = schedulerState;
 
-  // 1️⃣ Use your existing, trusted RandomRound
-  const baseRound = RandomRound(schedulerState);
+  const attempts = schedulerState.numCourts * 10;
 
-  // 2️⃣ Rebalance pairs inside each court using RANK POINTS
-  const games = baseRound.games.map(g => {
-    const p = [...g.pair1, ...g.pair2];
+  let bestRound = null;
+  let bestScore = -Infinity;
 
-    // sort by competitive strength (NOT wins)
-    p.sort(
+  for (let i = 0; i < attempts; i++) {
+
+    const tempState = {
+      ...schedulerState,
+      activeplayers: [...schedulerState.activeplayers]
+    };
+
+    const candidate = generateCandidateRound(tempState);
+
+    const score = scoreRound(candidate, schedulerState);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestRound = candidate;
+    }
+  }
+
+  return bestRound;
+}
+
+
+
+function generateCandidateRound(state) {
+
+  const {
+    activeplayers,
+    rankPoints,
+    numCourts
+  } = state;
+
+  const playersPerRound = numCourts * 4;
+
+  // Sort by rank
+  const sorted = [...activeplayers].sort(
+    (a, b) => (rankPoints.get(b) || 0) - (rankPoints.get(a) || 0)
+  );
+
+  // Light shuffle for variation
+  for (let i = sorted.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+  }
+
+  const selected = sorted.slice(0, playersPerRound);
+
+  const games = [];
+  let court = 1;
+
+  for (let i = 0; i < selected.length; i += 4) {
+
+    const group = selected.slice(i, i + 4);
+
+    group.sort(
       (a, b) => (rankPoints.get(b) || 0) - (rankPoints.get(a) || 0)
     );
 
-    // strong+weak vs strong+weak
-    return {
-      court: g.court,
-      pair1: [p[0], p[3]],
-      pair2: [p[1], p[2]],
-    };
-  });
+    games.push({
+      court: court++,
+      pair1: [group[0], group[3]],
+      pair2: [group[1], group[2]],
+    });
+  }
 
   return {
-    ...baseRound,
-    games,
+    ...state,
+    games
   };
 }
 
+
+function scoreRound(round, state) {
+
+  const {
+    pairPlayedSet,
+    gamesMap,
+    opponentMap,
+    rankPoints
+  } = state;
+
+  let score = 0;
+
+  for (const g of round.games) {
+
+    const p1Key = g.pair1.slice().sort().join("&");
+    const p2Key = g.pair2.slice().sort().join("&");
+    const gameKey = [p1Key, p2Key].sort().join(":");
+
+    // 1️⃣ Unique Pair (Highest Priority)
+    if (!pairPlayedSet.has(p1Key)) score += 80;
+    else score -= 150;
+
+    if (!pairPlayedSet.has(p2Key)) score += 80;
+    else score -= 150;
+
+    // 2️⃣ Unique Game
+    if (!gamesMap.has(gameKey)) score += 60;
+    else score -= 120;
+
+    // 3️⃣ Team Balance
+    const team1 =
+      (rankPoints.get(g.pair1[0]) || 0) +
+      (rankPoints.get(g.pair1[1]) || 0);
+
+    const team2 =
+      (rankPoints.get(g.pair2[0]) || 0) +
+      (rankPoints.get(g.pair2[1]) || 0);
+
+    score -= Math.abs(team1 - team2) * 5;
+
+    // 4️⃣ Tier Spread Control
+    const values = [...g.pair1, ...g.pair2]
+      .map(p => rankPoints.get(p) || 0);
+
+    const spread = Math.max(...values) - Math.min(...values);
+    score -= spread * 3;
+
+    // 5️⃣ Opponent Repetition
+    for (const a of g.pair1) {
+      for (const b of g.pair2) {
+        const oppCount =
+          opponentMap.get(a)?.get(b) || 0;
+
+        score -= oppCount * 10;
+      }
+    }
+  }
+
+  return score;
+}
 
 function RandomRound(schedulerState) {
   const {
