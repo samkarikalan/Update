@@ -235,7 +235,6 @@ function CompetitiveRound(schedulerState) {
     };
 
     const candidate = generateCandidateRound(tempState);
-
     const score = scoreRound(candidate, schedulerState);
 
     if (score > bestScore) {
@@ -244,7 +243,37 @@ function CompetitiveRound(schedulerState) {
     }
   }
 
-  return bestRound;
+  if (!bestRound) return null;
+
+  const { games } = bestRound;
+
+  // 🔹 Collect playing players
+  const playingSet = new Set(
+    games.flatMap(g => [...g.pair1, ...g.pair2])
+  );
+
+  const playing = [...playingSet];
+
+  // 🔹 Determine resting players
+  const resting = schedulerState.activeplayers
+    .filter(p => !playingSet.has(p));
+
+  // 🔹 Format resting with rest count preview
+  const restingWithNumber = resting.map(p => {
+    const c = schedulerState.restCount.get(p) || 0;
+    return `${p}#${c + 1}`;
+  });
+
+  // 🔹 Increment round index (same as RandomRound)
+  schedulerState.roundIndex =
+    (schedulerState.roundIndex || 0) + 1;
+
+  return {
+    round: schedulerState.roundIndex,
+    resting: restingWithNumber,
+    playing,
+    games
+  };
 }
 
 
