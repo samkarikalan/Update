@@ -255,9 +255,9 @@ function CompetitiveRound(schedulerState) {
   const playing = [...playingSet];
 
   // 🔹 Determine resting players
-  const resting = schedulerState.activeplayers
-    .filter(p => !playingSet.has(p));
-
+  // Preserve LIFO rest order
+  const resting = schedulerState.restQueue
+  .filter(p => !playingSet.has(p));
   // 🔹 Format resting with rest count preview
   const restingWithNumber = resting.map(p => {
     const c = schedulerState.restCount.get(p) || 0;
