@@ -130,24 +130,14 @@ function renderRoundsold() {
   });
 }
 
-
-
-
-function isAndroidWebView() {
-  return (
-    /Android/i.test(navigator.userAgent) &&
-    /wv/.test(navigator.userAgent)
-  );
-}
-
 async function exportBRR2HTML() {
-showPage('page3');
-await new Promise(r => setTimeout(r, 300));
+  showPage('page3');
+  await new Promise(r => setTimeout(r, 300));
 
-const page = document.getElementById('page3');
-if (!page) return alert("Export page not found");
+  const page = document.getElementById('page3');
+  if (!page) return alert("Export page not found");
 
-const html = `
+  const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -164,8 +154,49 @@ ${page.outerHTML}
 </html>
 `;
 
-Android.saveHtml(html);
+  // ✅ Android WebView
+  if (window.Android && typeof Android.saveHtml === "function") {
+    Android.saveHtml(html);
+  }
+
+  // ✅ iOS WebView (if you implemented message handler)
+  else if (window.webkit && window.webkit.messageHandlers?.saveHtml) {
+    window.webkit.messageHandlers.saveHtml.postMessage(html);
+  }
+
+  // ✅ Normal browser fallback (download file)
+  else {
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "BRR_Export.html";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
 }
+
+
+
+function isWebView() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+
+  // iOS WebView (no "Safari" in UA)
+  const iOSWebView =
+    /iPhone|iPad|iPod/i.test(ua) &&
+    !/Safari/i.test(ua);
+
+  // Android WebView
+  const androidWebView =
+    /Android/i.test(ua) &&
+    (/wv/.test(ua) || !/Chrome/i.test(ua));
+
+  return iOSWebView || androidWebView;
+}
+
+
 
 async function exportBRR2HTMLbk() {
   showPage('page3');
