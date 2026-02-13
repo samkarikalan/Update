@@ -297,14 +297,36 @@ function generateCompetitiveCandidate(state) {
   if (selected.length < playersPerRound)
     return null;
 
+  // 🔥 NEW DISTRIBUTION LOGIC
+  const courts = Array.from({ length: numCourts }, () => []);
+
+  // Snake distribution
+  let direction = 1;
+  let index = 0;
+
+  for (let i = 0; i < selected.length; i++) {
+
+    courts[index].push(selected[i]);
+
+    index += direction;
+
+    if (index === numCourts) {
+      index = numCourts - 1;
+      direction = -1;
+    }
+
+    if (index < 0) {
+      index = 0;
+      direction = 1;
+    }
+  }
+
   const games = [];
-  let court = 1;
+  let courtNumber = 1;
 
-  for (let i = 0; i < selected.length; i += 4) {
+  for (const group of courts) {
 
-    const group = selected.slice(i, i + 4);
-
-    // Shuffle group
+    // Shuffle within court
     for (let j = group.length - 1; j > 0; j--) {
       const k = Math.floor(Math.random() * (j + 1));
       [group[j], group[k]] = [group[k], group[j]];
@@ -320,7 +342,7 @@ function generateCompetitiveCandidate(state) {
       patterns[Math.floor(Math.random() * patterns.length)];
 
     games.push({
-      court: court++,
+      court: courtNumber++,
       pair1: [group[choice[0][0]], group[choice[0][1]]],
       pair2: [group[choice[1][0]], group[choice[1][1]]],
     });
