@@ -939,3 +939,180 @@ function showToast(msg) {
 function alert(msg) {
   showToast(msg);   // your toast function
 }
+
+
+/* =========================
+   NEW IMPORT MODULE JS (Prefixed)
+========================= */
+
+const newImportState = {
+  enterPlayers: [],   // players added in Enter Mode
+  selectPlayers: [],  // database players
+  prefix: 'NEW_',     // internal prefix for uniqueness
+};
+
+const NEW_IMPORT_DB_KEY = 'newImportPlayerDatabase';
+
+/* =========================
+   LOCAL DATABASE FUNCTIONS
+========================= */
+
+function newImportInitDB() {
+  let db = localStorage.getItem(NEW_IMPORT_DB_KEY);
+  if (!db) {
+    localStorage.setItem(NEW_IMPORT_DB_KEY, JSON.stringify([]));
+    db = '[]';
+  }
+  return JSON.parse(db);
+}
+
+function newImportSaveDB(db) {
+  localStorage.setItem(NEW_IMPORT_DB_KEY, JSON.stringify(db));
+}
+
+function newImportAddToDB(player) {
+  const db = newImportInitDB();
+  if (!db.some(p => p.name === player.name)) {
+    db.push({ name: player.name, gender: player.gender });
+    newImportSaveDB(db);
+  }
+}
+
+/* =========================
+   TAB SWITCHING
+========================= */
+const newImportEnterTab = document.getElementById('newImport-enter-tab');
+const newImportSelectTab = document.getElementById('newImport-select-tab');
+const newImportEnterMode = document.getElementById('newImport-enter-mode');
+const newImportSelectMode = document.getElementById('newImport-select-mode');
+
+newImportEnterTab.onclick = () => {
+  newImportEnterTab.classList.add('active');
+  newImportSelectTab.classList.remove('active');
+  newImportEnterMode.classList.remove('hidden');
+  newImportSelectMode.classList.add('hidden');
+};
+
+newImportSelectTab.onclick = () => {
+  newImportSelectTab.classList.add('active');
+  newImportEnterTab.classList.remove('active');
+  newImportSelectMode.classList.remove('hidden');
+  newImportEnterMode.classList.add('hidden');
+};
+
+/* =========================
+   ENTER MODE LOGIC
+========================= */
+const newImportEnterTextarea = document.getElementById('newImport-enter-textarea');
+const newImportEnterCards = document.getElementById('newImport-enter-cards');
+
+newImportEnterTextarea.addEventListener('input', () => {
+  const lines = newImportEnterTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  newImportState.enterPlayers = lines.map(l => ({
+    name: newImportState.prefix + l,
+    displayName: l,
+    gender: 'Male'
+  }));
+  newImportRefreshEnterCards();
+});
+
+function newImportRefreshEnterCards() {
+  newImportEnterCards.innerHTML = '';
+  newImportState.enterPlayers.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = `newImport-player-card ${p.gender.toLowerCase()}`;
+    card.innerHTML = `
+      <span class="newImport-player-name">${p.displayName}</span>
+      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}"
+           class="newImport-gender-icon" data-index="${i}">
+    `;
+    newImportEnterCards.appendChild(card);
+
+    card.querySelector('.newImport-gender-icon').onclick = (e) => {
+      const idx = parseInt(e.target.dataset.index);
+      newImportToggleEnterGender(idx, e.target);
+    };
+  });
+}
+
+function newImportToggleEnterGender(index, iconEl) {
+  const player = newImportState.enterPlayers[index];
+  player.gender = player.gender === 'Male' ? 'Female' : 'Male';
+  iconEl.src = player.gender === 'Male' ? 'male.png' : 'female.png';
+  const card = iconEl.closest('.newImport-player-card');
+  card.classList.remove('male', 'female');
+  card.classList.add(player.gender.toLowerCase());
+}
+
+/* =========================
+   SELECT MODE LOGIC
+========================= */
+const newImportSelectCards = document.getElementById('newImport-select-cards');
+
+function newImportLoadSelectPlayers() {
+  const dbPlayers = newImportInitDB();
+  newImportState.selectPlayers = dbPlayers;
+  newImportRefreshSelectCards();
+}
+
+function newImportRefreshSelectCards() {
+  newImportSelectCards.innerHTML = '';
+  newImportState.selectPlayers.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = `newImport-player-card ${p.gender.toLowerCase()}`;
+    card.innerHTML = `
+      <span class="newImport-player-name">${p.name}</span>
+      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}" class="newImport-gender-icon">
+      <button class="newImport-add-btn">+</button>
+    `;
+    newImportSelectCards.appendChild(card);
+
+    card.querySelector('.newImport-add-btn').onclick = () => newImportAddToEnter(p);
+  });
+}
+
+function newImportAddToEnter(player) {
+  const newName = newImportState.prefix + player.name;
+  if (!newImportState.enterPlayers.some(ep => ep.name === newName)) {
+    newImportState.enterPlayers.push({
+      name: newName,
+      displayName: player.name,
+      gender: player.gender
+    });
+    newImportRefreshEnterCards();
+  }
+}
+
+/* =========================
+   OK / CANCEL BUTTONS
+========================= */
+document.getElementById('newImport-ok').onclick = () => {
+  const textarea = document.getElementById('players-textarea');
+  textarea.value = newImportState.enterPlayers
+    .map(p => `${p.displayName},${p.gender}`)
+    .join('\n');
+
+  newImportState.enterPlayers.forEach(p => newImportAddToDB({name: p.displayName, gender: p.gender}));
+  addPlayersFromText(); // your existing function
+  newImportHideModal();
+};
+
+document.getElementById('newImport-cancel').onclick = newImportHideModal;
+
+function newImportHideModal() {
+  document.getElementById('newImport-modal').style.display = 'none';
+  newImportEnterTextarea.value = '';
+  newImportState.enterPlayers = [];
+  newImportRefreshEnterCards();
+}
+
+/* =========================
+   SHOW MODAL
+========================= */
+function newImportShowModal() {
+  document.getElementById('newImport-modal').style.display = 'flex';
+  newImportLoadSelectPlayers();
+}
+
+
+
