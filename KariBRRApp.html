@@ -267,34 +267,43 @@
 <!--           Import Modal        -->
 <!-- ============================= -->
   <!-- NEW IMPORT MODAL -->
-<div id="newImport-modal" class="newImport-modal hidden">
-  <div class="newImport-content">
+<div id="newImportModal" class="newImport-modal">
+  <div class="newImport-modal-content">
+
+    <!-- Header -->
+    <div class="newImport-header">
+      <h2 data-i18n="importPlayers">Import Players</h2>
+      <button class="newImport-close-btn" onclick="newImportHideModal()">×</button>
+    </div>
 
     <!-- Tabs -->
-    <div class="newImport-tab-header">
-      <button id="newImport-enter-tab" class="active">Enter</button>
-      <button id="newImport-select-tab">Select</button>
+    <div class="newImport-tabs">
+      <button class="newImport-tab-btn active" onclick="newImportShowTab('enter')"
+              id="newImportEnterTabBtn">Enter</button>
+      <button class="newImport-tab-btn" onclick="newImportShowTab('select')"
+              id="newImportSelectTabBtn">Select</button>
     </div>
 
-    <!-- Enter Mode -->
-    <div id="newImport-enter-mode" class="newImport-tab-content">
-      <textarea id="newImport-enter-textarea" placeholder="Paste player names here..."></textarea>
-      <div id="newImport-enter-cards" class="newImport-cards-container"></div>
+    <!-- Tab contents -->
+    <div class="newImport-tab-content" id="newImportEnterTab">
+      <textarea id="newImport-textarea" placeholder="Paste player names here"></textarea>
+      <button class="newImport-paste-btn" onclick="newImportPasteText()">📋 Paste</button>
+
+      <div class="newImport-cards-container" id="newImportEnterCards"></div>
     </div>
 
-    <!-- Select Mode -->
-    <div id="newImport-select-mode" class="newImport-tab-content hidden">
-      <div id="newImport-select-cards" class="newImport-cards-container"></div>
+    <div class="newImport-tab-content hidden" id="newImportSelectTab">
+      <div class="newImport-cards-container" id="newImportSelectCards"></div>
     </div>
 
-    <!-- Buttons -->
-    <div class="newImport-modal-buttons">
-      <button id="newImport-ok" class="newImport-ok-btn">OK</button>
-      <button id="newImport-cancel" class="newImport-cancel-btn">Cancel</button>
+    <!-- Footer -->
+    <div class="newImport-footer">
+      <button class="newImport-ok-btn" onclick="newImportAddPlayers()">OK</button>
+      <button class="newImport-cancel-btn" onclick="newImportHideModal()">Cancel</button>
     </div>
+
   </div>
 </div>
-  
   
   <!-- Import Modal -->
   <div id="importModal">
