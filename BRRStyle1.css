@@ -865,3 +865,92 @@ body.disabled {
 }
 .help-card h3 { margin-top: 0; }
 .help-btn.active { background: #1976d2; color: #fff; }
+
+/* MODAL BASE */
+.newImport-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.newImport-modal.hidden { display: none; }
+
+/* CONTENT BOX */
+.newImport-content {
+  width: 500px;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TAB HEADER */
+.newImport-tab-header { display: flex; margin-bottom: 10px; }
+.newImport-tab-header button {
+  flex: 1;
+  padding: 8px 0;
+  cursor: pointer;
+  background: #eee;
+  border: none;
+  font-weight: bold;
+}
+.newImport-tab-header button.active { background: #ccc; }
+
+/* TAB CONTENT */
+.newImport-tab-content { flex: 1; overflow-y: auto; }
+.newImport-tab-content.hidden { display: none; }
+
+textarea#newImport-enter-textarea {
+  width: 100%;
+  height: 80px;
+  resize: vertical;
+  margin-bottom: 10px;
+  padding: 5px;
+  font-size: 14px;
+}
+
+/* CARDS */
+.newImport-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.newImport-player-card {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.newImport-player-card.male { background: #cce5ff; }
+.newImport-player-card.female { background: #ffcce5; }
+
+.newImport-player-card .newImport-player-name { flex: 1; margin-right: 6px; }
+.newImport-player-card .newImport-gender-icon { width: 20px; height: 20px; cursor: pointer; }
+.newImport-player-card .newImport-add-btn { margin-left: 6px; cursor: pointer; }
+
+/* BUTTONS */
+.newImport-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.newImport-modal-buttons .newImport-ok-btn,
+.newImport-modal-buttons .newImport-cancel-btn {
+  padding: 6px 12px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+}
+.newImport-ok-btn { background: #28a745; color: #fff; }
+.newImport-cancel-btn { background: #dc3545; color: #fff; }
+
