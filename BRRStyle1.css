@@ -867,90 +867,154 @@ body.disabled {
 .help-btn.active { background: #1976d2; color: #fff; }
 
 /* MODAL BASE */
+/* Modal background */
 .newImport-modal {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: none;
   z-index: 9999;
 }
-.newImport-modal.hidden { display: none; }
 
-/* CONTENT BOX */
-.newImport-content {
-  width: 500px;
-  max-height: 80vh;
+/* Modal content */
+.newImport-modal-content {
+  position: relative;
   background: #fff;
-  border-radius: 10px;
-  padding: 20px;
+  width: 90%;
+  max-width: 800px;
+  margin: 30px auto;
+  border-radius: 8px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
 }
 
-/* TAB HEADER */
-.newImport-tab-header { display: flex; margin-bottom: 10px; }
-.newImport-tab-header button {
-  flex: 1;
-  padding: 8px 0;
-  cursor: pointer;
-  background: #eee;
+/* Header */
+.newImport-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.newImport-close-btn {
+  font-size: 24px;
   border: none;
-  font-weight: bold;
+  background: transparent;
+  cursor: pointer;
 }
-.newImport-tab-header button.active { background: #ccc; }
 
-/* TAB CONTENT */
-.newImport-tab-content { flex: 1; overflow-y: auto; }
-.newImport-tab-content.hidden { display: none; }
+/* Tabs */
+.newImport-tabs {
+  display: flex;
+  margin-top: 10px;
+  gap: 5px;
+}
 
-textarea#newImport-enter-textarea {
+.newImport-tab-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #f0f0f0;
+}
+
+.newImport-tab-btn.active {
+  background: #007bff;
+  color: #fff;
+}
+
+/* Tab content */
+.newImport-tab-content {
+  margin-top: 10px;
+}
+
+.hidden { display: none; }
+
+/* Textarea */
+#newImport-textarea {
   width: 100%;
-  height: 80px;
-  resize: vertical;
+  min-height: 80px;
+  padding: 8px;
   margin-bottom: 10px;
-  padding: 5px;
-  font-size: 14px;
+  box-sizing: border-box;
 }
 
-/* CARDS */
+/* Paste button */
+.newImport-paste-btn {
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+/* Cards container */
 .newImport-cards-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
+/* Player cards */
 .newImport-player-card {
+  width: 40%;             /* two columns */
   display: flex;
-  align-items: center;
-  padding: 5px 10px;
+  align-items: flex-start; /* top align for multi-line name */
+  justify-content: space-between;
+  padding: 8px;
   border-radius: 6px;
-  cursor: pointer;
-  min-width: 100px;
+  min-height: 50px;
+  cursor: default;
+  position: relative;
+  box-sizing: border-box;
+  background: #d0e7ff;     /* default male background */
 }
 
-.newImport-player-card.male { background: #cce5ff; }
-.newImport-player-card.female { background: #ffcce5; }
+/* Female background */
+.newImport-player-card.female { background: #ffd0e0; }
 
-.newImport-player-card .newImport-player-name { flex: 1; margin-right: 6px; }
-.newImport-player-card .newImport-gender-icon { width: 20px; height: 20px; cursor: pointer; }
-.newImport-player-card .newImport-add-btn { margin-left: 6px; cursor: pointer; }
+/* Gender icon */
+.newImport-gender-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
 
-/* BUTTONS */
-.newImport-modal-buttons {
+/* Player name */
+.newImport-player-name {
+  flex: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.2em;
+  font-weight: 500;
+}
+
+/* Remove button */
+.newImport-remove-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.newImport-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  margin-top: 10px;
 }
-.newImport-modal-buttons .newImport-ok-btn,
-.newImport-modal-buttons .newImport-cancel-btn {
-  padding: 6px 12px;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-}
-.newImport-ok-btn { background: #28a745; color: #fff; }
-.newImport-cancel-btn { background: #dc3545; color: #fff; }
-
