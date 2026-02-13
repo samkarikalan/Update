@@ -222,7 +222,7 @@ function AischedulerNextRound(schedulerState) {
 
 function CompetitiveRound(schedulerState) {
 
-  const attempts = schedulerState.numCourts * 10;
+  const attempts = schedulerState.numCourts * 150; // 🔥 increased attempts
 
   let bestRound = null;
   let bestScore = -Infinity;
@@ -247,26 +247,38 @@ function CompetitiveRound(schedulerState) {
 
   const { games } = bestRound;
 
-  // 🔹 Collect playing players
   const playingSet = new Set(
     games.flatMap(g => [...g.pair1, ...g.pair2])
   );
 
   const playing = [...playingSet];
 
-  // 🔹 Determine resting players
-  // Preserve LIFO rest order
   const resting = schedulerState.restQueue
-  .filter(p => !playingSet.has(p));
-  // 🔹 Format resting with rest count preview
+    .filter(p => !playingSet.has(p));
+
   const restingWithNumber = resting.map(p => {
     const c = schedulerState.restCount.get(p) || 0;
     return `${p}#${c + 1}`;
   });
 
-  // 🔹 Increment round index (same as RandomRound)
+  // 🔥 increment round index first
   schedulerState.roundIndex =
     (schedulerState.roundIndex || 0) + 1;
+
+  // 🔒 Register cooldown pairs for this round
+  if (!schedulerState.pairCooldownMap) {
+    schedulerState.pairCooldownMap = new Map();
+  }
+
+  for (const g of games) {
+    for (const pair of [g.pair1, g.pair2]) {
+      const key = pair.slice().sort().join("&");
+      schedulerState.pairCooldownMap.set(
+        key,
+        schedulerState.roundIndex
+      );
+    }
+  }
 
   return {
     round: schedulerState.roundIndex,
@@ -275,7 +287,6 @@ function CompetitiveRound(schedulerState) {
     games
   };
 }
-
 
 
 function generateCandidateRound(state) {
@@ -332,7 +343,9 @@ function scoreRound(round, state) {
     pairPlayedSet,
     gamesMap,
     opponentMap,
-    rankPoints
+    rankPoints,
+    pairCooldownMap,
+    roundIndex
   } = state;
 
   let score = 0;
@@ -343,7 +356,16 @@ function scoreRound(round, state) {
     const p2Key = g.pair2.slice().sort().join("&");
     const gameKey = [p1Key, p2Key].sort().join(":");
 
-    // 1️⃣ Unique Pair (Highest Priority)
+    // 🔒 2-Round Cooldown (HARD BLOCK)
+    const currentRound = roundIndex || 0;
+
+    const last1 = pairCooldownMap?.get(p1Key);
+    const last2 = pairCooldownMap?.get(p2Key);
+
+    if (last1 && currentRound - last1 <= 2) return -Infinity;
+    if (last2 && currentRound - last2 <= 2) return -Infinity;
+
+    // 1️⃣ Unique Pair (existing logic untouched)
     if (!pairPlayedSet.has(p1Key)) score += 80;
     else score -= 150;
 
@@ -385,6 +407,7 @@ function scoreRound(round, state) {
 
   return score;
 }
+
 
 function RandomRound(schedulerState) {
   const {
