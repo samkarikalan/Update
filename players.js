@@ -945,76 +945,78 @@ function alert(msg) {
    NEW IMPORT MODULE JS (Prefixed)
 ========================= */
 
+// State
 const newImportState = {
-  enterPlayers: [],   // players added in Enter Mode
-  selectPlayers: [],  // database players
-  prefix: 'NEW_',     // internal prefix for uniqueness
+  enterPlayers: [],
+  selectPlayers: [],
+  dbPlayers: []
 };
 
-const NEW_IMPORT_DB_KEY = 'newImportPlayerDatabase';
+// DOM elements
+const newImportModal = document.getElementById('newImportModal');
+const newImportEnterCards = document.getElementById('newImportEnterCards');
+const newImportSelectCards = document.getElementById('newImportSelectCards');
+const newImportTextarea = document.getElementById('newImport-textarea');
 
-/* =========================
-   LOCAL DATABASE FUNCTIONS
-========================= */
 
-function newImportInitDB() {
-  let db = localStorage.getItem(NEW_IMPORT_DB_KEY);
-  if (!db) {
-    localStorage.setItem(NEW_IMPORT_DB_KEY, JSON.stringify([]));
-    db = '[]';
+// ----------------------
+// MODAL
+// ----------------------
+function newImportShowModal() {
+  newImportModal.style.display = 'block';
+  newImportLoadDatabase();
+  newImportRefreshSelectCards();
+}
+
+function newImportHideModal() {
+  newImportModal.style.display = 'none';
+  newImportTextarea.value = '';
+  newImportState.enterPlayers = [];
+}
+
+
+// ----------------------
+// TABS
+// ----------------------
+function newImportShowTab(tab) {
+  document.getElementById('newImportEnterTab').classList.add('hidden');
+  document.getElementById('newImportSelectTab').classList.add('hidden');
+  document.getElementById('newImportEnterTabBtn').classList.remove('active');
+  document.getElementById('newImportSelectTabBtn').classList.remove('active');
+
+  if (tab === 'enter') {
+    document.getElementById('newImportEnterTab').classList.remove('hidden');
+    document.getElementById('newImportEnterTabBtn').classList.add('active');
+  } else {
+    document.getElementById('newImportSelectTab').classList.remove('hidden');
+    document.getElementById('newImportSelectTabBtn').classList.add('active');
   }
-  return JSON.parse(db);
 }
 
-function newImportSaveDB(db) {
-  localStorage.setItem(NEW_IMPORT_DB_KEY, JSON.stringify(db));
-}
 
-function newImportAddToDB(player) {
-  const db = newImportInitDB();
-  if (!db.some(p => p.name === player.name)) {
-    db.push({ name: player.name, gender: player.gender });
-    newImportSaveDB(db);
+// ----------------------
+// ENTER MODE
+// ----------------------
+function newImportPasteText() {
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText()
+      .then(text => {
+        newImportTextarea.value += (newImportTextarea.value ? '\n' : '') + text;
+        newImportProcessTextarea();
+      });
+  } else {
+    alert('Paste not supported. Please type or paste manually.');
   }
 }
 
-/* =========================
-   TAB SWITCHING
-========================= */
-const newImportEnterTab = document.getElementById('newImport-enter-tab');
-const newImportSelectTab = document.getElementById('newImport-select-tab');
-const newImportEnterMode = document.getElementById('newImport-enter-mode');
-const newImportSelectMode = document.getElementById('newImport-select-mode');
-
-newImportEnterTab.onclick = () => {
-  newImportEnterTab.classList.add('active');
-  newImportSelectTab.classList.remove('active');
-  newImportEnterMode.classList.remove('hidden');
-  newImportSelectMode.classList.add('hidden');
-};
-
-newImportSelectTab.onclick = () => {
-  newImportSelectTab.classList.add('active');
-  newImportEnterTab.classList.remove('active');
-  newImportSelectMode.classList.remove('hidden');
-  newImportEnterMode.classList.add('hidden');
-};
-
-/* =========================
-   ENTER MODE LOGIC
-========================= */
-const newImportEnterTextarea = document.getElementById('newImport-enter-textarea');
-const newImportEnterCards = document.getElementById('newImport-enter-cards');
-
-newImportEnterTextarea.addEventListener('input', () => {
-  const lines = newImportEnterTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-  newImportState.enterPlayers = lines.map(l => ({
-    name: newImportState.prefix + l,
-    displayName: l,
-    gender: 'Male'
+function newImportProcessTextarea() {
+  const lines = newImportTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  newImportState.enterPlayers = lines.map(name => ({
+    displayName: name,
+    gender: 'Male'   // default male, can toggle
   }));
   newImportRefreshEnterCards();
-});
+}
 
 function newImportRefreshEnterCards() {
   newImportEnterCards.innerHTML = '';
@@ -1022,97 +1024,83 @@ function newImportRefreshEnterCards() {
     const card = document.createElement('div');
     card.className = `newImport-player-card ${p.gender.toLowerCase()}`;
     card.innerHTML = `
+      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}" class="newImport-gender-icon" data-index="${i}">
       <span class="newImport-player-name">${p.displayName}</span>
-      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}"
-           class="newImport-gender-icon" data-index="${i}">
+      <button class="newImport-remove-btn" data-index="${i}">×</button>
     `;
     newImportEnterCards.appendChild(card);
 
+    // toggle gender
     card.querySelector('.newImport-gender-icon').onclick = (e) => {
       const idx = parseInt(e.target.dataset.index);
-      newImportToggleEnterGender(idx, e.target);
+      newImportState.enterPlayers[idx].gender = newImportState.enterPlayers[idx].gender === 'Male' ? 'Female' : 'Male';
+      newImportRefreshEnterCards();
+    };
+
+    // remove player
+    card.querySelector('.newImport-remove-btn').onclick = (e) => {
+      const idx = parseInt(e.target.dataset.index);
+      newImportState.enterPlayers.splice(idx, 1);
+      newImportRefreshEnterCards();
     };
   });
 }
 
-function newImportToggleEnterGender(index, iconEl) {
-  const player = newImportState.enterPlayers[index];
-  player.gender = player.gender === 'Male' ? 'Female' : 'Male';
-  iconEl.src = player.gender === 'Male' ? 'male.png' : 'female.png';
-  const card = iconEl.closest('.newImport-player-card');
-  card.classList.remove('male', 'female');
-  card.classList.add(player.gender.toLowerCase());
-}
 
-/* =========================
-   SELECT MODE LOGIC
-========================= */
-const newImportSelectCards = document.getElementById('newImport-select-cards');
-
-function newImportLoadSelectPlayers() {
-  const dbPlayers = newImportInitDB();
-  newImportState.selectPlayers = dbPlayers;
-  newImportRefreshSelectCards();
+// ----------------------
+// SELECT MODE
+// ----------------------
+function newImportLoadDatabase() {
+  const db = localStorage.getItem('newImportPlayersDB');
+  if (db) {
+    newImportState.dbPlayers = JSON.parse(db);
+  } else {
+    newImportState.dbPlayers = [];
+    localStorage.setItem('newImportPlayersDB', JSON.stringify([]));
+  }
 }
 
 function newImportRefreshSelectCards() {
   newImportSelectCards.innerHTML = '';
-  newImportState.selectPlayers.forEach((p, i) => {
+  newImportState.dbPlayers.forEach((p, i) => {
     const card = document.createElement('div');
     card.className = `newImport-player-card ${p.gender.toLowerCase()}`;
     card.innerHTML = `
-      <span class="newImport-player-name">${p.name}</span>
       <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}" class="newImport-gender-icon">
-      <button class="newImport-add-btn">+</button>
+      <span class="newImport-player-name">${p.displayName}</span>
     `;
+    card.onclick = () => {
+      if (!newImportState.enterPlayers.some(ep => ep.displayName === p.displayName)) {
+        newImportState.enterPlayers.push({...p});
+        newImportRefreshEnterCards();
+        newImportShowTab('enter');
+      }
+    };
     newImportSelectCards.appendChild(card);
-
-    card.querySelector('.newImport-add-btn').onclick = () => newImportAddToEnter(p);
   });
 }
 
-function newImportAddToEnter(player) {
-  const newName = newImportState.prefix + player.name;
-  if (!newImportState.enterPlayers.some(ep => ep.name === newName)) {
-    newImportState.enterPlayers.push({
-      name: newName,
-      displayName: player.name,
-      gender: player.gender
-    });
-    newImportRefreshEnterCards();
+
+// ----------------------
+// ADD PLAYERS
+// ----------------------
+function newImportAddPlayers() {
+  if (newImportState.enterPlayers.length === 0) {
+    alert('No players to add!');
+    return;
   }
-}
 
-/* =========================
-   OK / CANCEL BUTTONS
-========================= */
-document.getElementById('newImport-ok').onclick = () => {
-  const textarea = document.getElementById('players-textarea');
-  textarea.value = newImportState.enterPlayers
-    .map(p => `${p.displayName},${p.gender}`)
-    .join('\n');
+  // Save to local db if new
+  newImportState.enterPlayers.forEach(p => {
+    if (!newImportState.dbPlayers.some(dp => dp.displayName === p.displayName)) {
+      newImportState.dbPlayers.push({...p});
+    }
+  });
+  localStorage.setItem('newImportPlayersDB', JSON.stringify(newImportState.dbPlayers));
 
-  newImportState.enterPlayers.forEach(p => newImportAddToDB({name: p.displayName, gender: p.gender}));
-  addPlayersFromText(); // your existing function
+  // Export to main app
+  addPlayersFromText(newImportState.enterPlayers);
+
   newImportHideModal();
-};
-
-document.getElementById('newImport-cancel').onclick = newImportHideModal;
-
-function newImportHideModal() {
-  document.getElementById('newImport-modal').style.display = 'none';
-  newImportEnterTextarea.value = '';
-  newImportState.enterPlayers = [];
-  newImportRefreshEnterCards();
 }
-
-/* =========================
-   SHOW MODAL
-========================= */
-function newImportShowModal() {
-  document.getElementById('newImport-modal').style.display = 'flex';
-  newImportLoadSelectPlayers();
-}
-
-
 
