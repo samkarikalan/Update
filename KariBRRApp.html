@@ -139,7 +139,7 @@
 <div id="page1" class="page" > 
 
   <div class="card">    
-    <button onclick="showImportModal()" data-i18n="importPlayers"></button>
+    <button onclick="newImportShowModal()" data-i18n="importPlayers"></button>
   </div> 
 
   <div class="card">
@@ -266,6 +266,36 @@
 <!-- ============================= -->
 <!--           Import Modal        -->
 <!-- ============================= -->
+  <!-- NEW IMPORT MODAL -->
+<div id="newImport-modal" class="newImport-modal hidden">
+  <div class="newImport-content">
+
+    <!-- Tabs -->
+    <div class="newImport-tab-header">
+      <button id="newImport-enter-tab" class="active">Enter</button>
+      <button id="newImport-select-tab">Select</button>
+    </div>
+
+    <!-- Enter Mode -->
+    <div id="newImport-enter-mode" class="newImport-tab-content">
+      <textarea id="newImport-enter-textarea" placeholder="Paste player names here..."></textarea>
+      <div id="newImport-enter-cards" class="newImport-cards-container"></div>
+    </div>
+
+    <!-- Select Mode -->
+    <div id="newImport-select-mode" class="newImport-tab-content hidden">
+      <div id="newImport-select-cards" class="newImport-cards-container"></div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="newImport-modal-buttons">
+      <button id="newImport-ok" class="newImport-ok-btn">OK</button>
+      <button id="newImport-cancel" class="newImport-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+  
+  
   <!-- Import Modal -->
   <div id="importModal">
   <div class="modal-content">
