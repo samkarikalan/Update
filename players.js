@@ -95,8 +95,8 @@ function showImportModal() {
 }
 
 function hideImportModal() {
-  document.getElementById('importModal').style.display = 'none';
-  document.getElementById('players-textarea').value = '';
+  document.getElementById('newImportModal').style.display = 'none';
+  //document.getElementById('players-textarea').value = '';
 }
 
 /* =========================
@@ -272,6 +272,54 @@ function updateGenderGroups() {
   schedulerState.femalePlayers = schedulerState.allPlayers
     .filter(p => p.gender === "Female" && p.active)
     .map(p => p.name);
+}
+
+function addPlayersFromInputUI() {
+
+  const importPlayers = newImportState.enterPlayers;
+
+  if (!importPlayers || importPlayers.length === 0) {
+    alert('No players to add!');
+    return;
+  }
+
+  const extractedNames = [];
+
+  importPlayers.forEach(p => {
+
+    const name = p.displayName.trim();
+    const gender = p.gender || "Male";
+
+    if (
+      !schedulerState.allPlayers.some(
+        existing => existing.name.trim().toLowerCase() === name.toLowerCase()
+      ) &&
+      !extractedNames.some(
+        existing => existing.name.trim().toLowerCase() === name.toLowerCase()
+      )
+    ) {
+      extractedNames.push({
+        name: name,
+        gender: gender,
+        active: true
+      });
+    }
+
+  });
+
+  schedulerState.allPlayers.push(...extractedNames);
+
+  schedulerState.activeplayers = schedulerState.allPlayers
+    .filter(p => p.active)
+    .map(p => p.name)
+    .reverse();
+
+  updatePlayerList();
+  updateFixedPairSelectors();
+  hideImportModal();
+
+  // Optional: reset selection after import
+  newImportState.selectPlayers = [];
 }
 
 
@@ -997,26 +1045,96 @@ function newImportShowTab(tab) {
 // ----------------------
 // ENTER MODE
 // ----------------------
-function newImportPasteText() {
-  if (navigator.clipboard && navigator.clipboard.readText) {
-    navigator.clipboard.readText()
-      .then(text => {
-        newImportTextarea.value += (newImportTextarea.value ? '\n' : '') + text;
-        newImportProcessTextarea();
-      });
-  } else {
-    alert('Paste not supported. Please type or paste manually.');
-  }
+newImportTextarea.addEventListener(
+  "input",
+  debounce(newImportProcessTextarea, 250)
+);
+
+function debounce(func, delay = 250) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
 }
 
 function newImportProcessTextarea() {
-  const lines = newImportTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-  newImportState.enterPlayers = lines.map(name => ({
-    displayName: name,
-    gender: 'Male'   // default male, can toggle
-  }));
-  newImportRefreshEnterCards();
+  const text = newImportTextarea.value;
+  if (!text.trim()) return;
+
+  const lines = text.split(/\r?\n/);
+
+  const genderLookup = {
+    male: "Male",
+    m: "Male",
+    female: "Female",
+    f: "Female"
+  };
+
+  const extracted = [];
+
+  lines.forEach((rawLine, index) => {
+    let line = rawLine.trim();
+    if (!line) return;
+
+    // ✅ Ignore last line if user is still typing (no newline yet)
+    const isLastLine = index === lines.length - 1;
+    const endsWithNewLine = text.endsWith("\n") || text.endsWith("\r");
+    if (isLastLine && !endsWithNewLine) return;
+
+    // Ignore links
+    if (line.toLowerCase().includes("http")) return;
+
+    let gender = "Male"; // default
+
+    // Remove numbering (1. John → John)
+    const match = line.match(/^(\d+\.?\s*)?(.*)$/);
+    if (match) {
+      line = match[2].trim();
+    }
+
+    // Handle comma format: Name,Gender
+    if (line.includes(",")) {
+      const parts = line.split(",").map(p => p.trim());
+      line = parts[0];
+
+      if (parts[1]) {
+        const g = parts[1].toLowerCase();
+        if (genderLookup[g]) gender = genderLookup[g];
+      }
+    }
+
+    // Handle parentheses: John (Female)
+    const parenMatch = line.match(/\(([^)]+)\)/);
+    if (parenMatch) {
+      const inside = parenMatch[1].trim().toLowerCase();
+      if (genderLookup[inside]) gender = genderLookup[inside];
+      line = line.replace(/\([^)]+\)/, "").trim();
+    }
+
+    if (!line) return;
+
+    // Prevent duplicates (case-insensitive)
+    const exists =
+      extracted.some(p => p.displayName.toLowerCase() === line.toLowerCase()) ||
+      newImportState.enterPlayers.some(p => p.displayName.toLowerCase() === line.toLowerCase());
+
+    if (!exists) {
+      extracted.push({
+        displayName: line,
+        gender
+      });
+    }
+  });
+
+  if (extracted.length > 0) {
+    newImportState.enterPlayers.push(...extracted);
+    newImportRefreshEnterCards();
+  }
 }
+
+
+
 
 function newImportRefreshEnterCards() {
   newImportEnterCards.innerHTML = '';
@@ -1038,12 +1156,15 @@ function newImportRefreshEnterCards() {
     };
 
     // remove player
-    card.querySelector('.newImport-remove-btn').onclick = (e) => {
-      const idx = parseInt(e.target.dataset.index);
-      newImportState.enterPlayers.splice(idx, 1);
-      newImportRefreshEnterCards();
-    };
-  });
+
+	card.querySelector('.newImport-remove-btn').onclick = (e) => {
+	  const idx = parseInt(e.target.dataset.index);
+	  newImportState.enterPlayers.splice(idx, 1);
+	  newImportRefreshEnterCards();
+	  newImportRefreshSelectCards(); // 👈 ADD THIS
+	};
+
+});
 }
 
 
@@ -1062,23 +1183,49 @@ function newImportLoadDatabase() {
 
 function newImportRefreshSelectCards() {
   newImportSelectCards.innerHTML = '';
+
   newImportState.dbPlayers.forEach((p, i) => {
+
+    // Check if already added
+    const alreadyAdded = newImportState.enterPlayers.some(
+      ep => ep.displayName.toLowerCase() === p.displayName.toLowerCase()
+    );
+
     const card = document.createElement('div');
     card.className = `newImport-player-card ${p.gender.toLowerCase()}`;
+
     card.innerHTML = `
-      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}" class="newImport-gender-icon">
+      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}"
+           class="newImport-gender-icon">
       <span class="newImport-player-name">${p.displayName}</span>
+      <button class="newImport-add-btn"
+              data-index="${i}"
+              ${alreadyAdded ? 'disabled' : ''}>
+        ${alreadyAdded ? '✓' : '+'}
+      </button>
     `;
-    card.onclick = () => {
-      if (!newImportState.enterPlayers.some(ep => ep.displayName === p.displayName)) {
-        newImportState.enterPlayers.push({...p});
-        newImportRefreshEnterCards();
-        newImportShowTab('enter');
-      }
-    };
+
     newImportSelectCards.appendChild(card);
   });
 }
+
+newImportSelectCards.addEventListener('click', function (e) {
+
+  if (!e.target.classList.contains('newImport-add-btn')) return;
+
+  const idx = parseInt(e.target.dataset.index);
+  const player = newImportState.dbPlayers[idx];
+
+  const exists = newImportState.enterPlayers.some(
+    ep => ep.displayName.toLowerCase() === player.displayName.toLowerCase()
+  );
+
+  if (!exists) {
+    newImportState.enterPlayers.push({ ...player });
+    newImportRefreshEnterCards();
+    newImportRefreshSelectCards(); // update + to ✓
+  }
+});
 
 
 // ----------------------

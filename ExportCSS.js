@@ -1,4 +1,4 @@
-const SUMMARY_CSS = `
+const SUMMARY_CSSold = `
 /* ===============================
    ROUND EXPORT – SUMMARY CSS
    Used only for HTML export

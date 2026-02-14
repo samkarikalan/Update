@@ -10,6 +10,7 @@
 
   <link rel="stylesheet" href="BRRStyle1.css">
   <link rel="stylesheet" href="BRRStyle2.css">
+  <link rel="stylesheet" href="Export.css">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="main.js" defer></script>
@@ -268,13 +269,7 @@
 <!-- ============================= -->
   <!-- NEW IMPORT MODAL -->
 <div id="newImportModal" class="newImport-modal">
-  <div class="newImport-modal-content">
-
-    <!-- Header -->
-    <div class="newImport-header">
-      <h2 data-i18n="importPlayers">Import Players</h2>
-      <button class="newImport-close-btn" onclick="newImportHideModal()">×</button>
-    </div>
+  <div class="newImport-modal-content">  
 
     <!-- Tabs -->
     <div class="newImport-tabs">
@@ -286,9 +281,7 @@
 
     <!-- Tab contents -->
     <div class="newImport-tab-content" id="newImportEnterTab">
-      <textarea id="newImport-textarea" placeholder="Paste player names here"></textarea>
-      <button class="newImport-paste-btn" onclick="newImportPasteText()">📋 Paste</button>
-
+      <textarea id="newImport-textarea" placeholder="Paste player names here"></textarea>    
       <div class="newImport-cards-container" id="newImportEnterCards"></div>
     </div>
 
@@ -298,71 +291,12 @@
 
     <!-- Footer -->
     <div class="newImport-footer">
-      <button class="newImport-ok-btn" onclick="newImportAddPlayers()">OK</button>
+      <button class="newImport-ok-btn" onclick="addPlayersFromInputUI()">OK</button>
       <button class="newImport-cancel-btn" onclick="newImportHideModal()">Cancel</button>
     </div>
 
   </div>
-</div>
-  
-  <!-- Import Modal -->
-  <div id="importModal">
-  <div class="modal-content">
-
-    <!-- Left Section -->
-    <textarea
-      id="players-textarea"
-      rows="12"
-      data-i18n-placeholder="importExample"
-      placeholder="Enter or paste player names"
-    ></textarea>
-
-    <!-- Right Section -->
-    <div class="modal-right">
-
-      <!-- Gender -->
-      <div class="gender-radio" data-i18n="gender"></div>
-      <div class="gender-radio">
-        <label>
-          <input type="radio" name="genderSelect" value="Male" checked>
-          <span data-i18n="male"></span>
-        </label>
-        <label>
-          <input type="radio" name="genderSelect" value="Female">
-          <span data-i18n="female"></span>
-        </label>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="modal-buttons">
-
-        <!-- 📋 Paste (NEW) 
-        <button
-          class="paste-btn"
-          onclick="pastePlayersText()"
-        >📋 Paste</button> -->
-
-        <!-- ⬇️ Import (existing) -->
-        <button
-          class="ok-btn"
-          onclick="addPlayersFromText()"
-          data-i18n="import"
-        ></button>
-
-        <!-- ✖ Cancel (existing) -->
-        <button
-          class="cancel-btn"
-          onclick="hideImportModal()"
-          data-i18n="cancel"
-        ></button>
-
-      </div>
-
-    </div>
-
-  </div>
-</div>
-  
+</div> 
   
   
 </body>

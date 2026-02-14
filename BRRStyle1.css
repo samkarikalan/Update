@@ -183,7 +183,7 @@ z-index: 1000;
 .tabs-container {
   flex: 1;                       /* take remaining width */
   display: flex;
-  justify-content: space-evenly; /* ✅ equal spacing */
+  justify-content: space-evenly; /* âœ… equal spacing */
   align-items: center;
 }
 
@@ -203,7 +203,7 @@ z-index: 1000;
   font-size: 15px;
   text-align: center;
 
-  display: inline-flex;        /* ✅ prevents canvas shrink */
+  display: inline-flex;        /* âœ… prevents canvas shrink */
   align-items: center;
   justify-content: center;
 }
@@ -373,93 +373,7 @@ z-index: 1000;
   box-shadow: 0 0 0 2px #4f8cff33;
 }
 
-/* players*/
-/* Modal Background */
-#importModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
 
-/* Modal Box */
-.modal-content {
-  display: flex;
-  gap: 15px;
-  width: 95%;
-
-  max-width: 550px;
-  background: #fff;
-  padding: 18px;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-}
-
-/* Left Side - Textarea */
-#players-textarea {
-  width: 65%;
-  height: 260px;
-  resize: vertical;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 10px;
-  border: 1px solid #d4d4d8;
-}
-
-.modal-right {
-  width: 35%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start; /* FIXED */
-  gap: 20px;                   /* keeps spacing clean */
-}
-
-/* Radio buttons */
-.gender-radio {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-size: 16px;
-}
-.gender-radio input {
-  transform: scale(1.2);
-}
-
-/* Buttons */
-.modal-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ok-btn,
-.cancel-btn {
-  padding: 10px;
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.ok-btn {
-  background: #2563eb;
-  color: white;
-}
-.ok-btn:hover {
-  background: #1e40af;
-}
-
-.cancel-btn {
-  background: #e5e7eb;
-}
-.cancel-btn:hover {
-  background: #cbd5e1;
-}
 
 .page {
   font-size: 1.0rem;
@@ -548,14 +462,14 @@ z-index: 1000;
 
 
 
-/* Name column – wraps to second line */
+/* Name column â€“ wraps to second line */
 .pec-name {
   white-space: normal;
   overflow: visible;
   text-overflow: clip;
   line-height: 1.25rem;
   word-break: break-word;
-  margin-left: -4px; /* reduce gap between gender → name */
+  margin-left: -4px; /* reduce gap between gender â†’ name */
 }
 
 /* Delete column */
@@ -616,7 +530,7 @@ z-index: 1000;
 .row-addplayer {
   display: flex;
   gap: 10px;
-  flex-wrap: nowrap; /* ❌ stop wrapping */
+  flex-wrap: nowrap; /* âŒ stop wrapping */
   align-items: center; /* vertical alignment */
 }
 
@@ -688,7 +602,7 @@ display: block;
 }
 
 .status-display {
-  display: inline-block; /* 🔑 this is the fix */
+  display: inline-block; /* ðŸ”‘ this is the fix */
   padding: 6px 12px;
   border-radius: 6px;
   color: white;
@@ -741,51 +655,7 @@ body.disabled {
 }
 
 
-/* Summary */
-.report-header,
-.player-card {
-  display: grid;
-  grid-template-columns: 50px 1fr minmax(60px, auto) minmax(60px, auto) minmax(60px, auto);
-  align-items: center;
-  gap: 10px;
-}
 
-/* Header styling */
-.report-header {
-  margin: 5px 0;
-  background: #800080;
-  font-weight: bold;
-  color: #fff;
-  padding: 6px;
-  border-radius: 6px;
-  margin-bottom: 1px;
-  position: sticky;
-  z-index: 10;
-}
-
-/* Player card styling */
-.player-card {
-  background: #296472;
-  color: #fff;
-  padding: 2px;
-  margin: 5px 0;
-  border-radius: 1.1rem;
-  border: 1px solid #555;
-  box-shadow: 0 0 4px rgba(0,0,0,0.4);
-}
-
-/* Rank styling */
-.player-card .rank {
-  text-align: center;
-  font-size: 1.1rem;
-  font-weight: bold;
-}
-
-/* Name column */
-.player-card .name {
-  font-size: 1.1rem;
-  padding-left: 6px;
-}
 
 .toast {
   position: fixed;
@@ -868,15 +738,14 @@ body.disabled {
 
 /* MODAL BASE */
 /* Modal background */
+
 .newImport-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;               /* replaces top/left/width/height */
   background: rgba(0,0,0,0.5);
   display: none;
   z-index: 9999;
+  overflow-y: auto;       /* allow scrolling if content is tall */
 }
 
 /* Modal content */
@@ -923,7 +792,7 @@ body.disabled {
 }
 
 .newImport-tab-btn.active {
-  background: #007bff;
+  background:#800080;
   color: #fff;
 }
 
@@ -961,21 +830,18 @@ body.disabled {
 
 /* Player cards */
 .newImport-player-card {
-  width: 40%;             /* two columns */
+  width: 95%;             /* two columns */
   display: flex;
   align-items: flex-start; /* top align for multi-line name */
   justify-content: space-between;
-  padding: 8px;
-  border-radius: 6px;
-  min-height: 50px;
+  padding: 5px;
+  border-radius: 50px;  
   cursor: default;
   position: relative;
   box-sizing: border-box;
-  background: #d0e7ff;     /* default male background */
+  background: #e6eff4;     /* default male background */
 }
 
-/* Female background */
-.newImport-player-card.female { background: #ffd0e0; }
 
 /* Gender icon */
 .newImport-gender-icon {
@@ -1017,4 +883,23 @@ body.disabled {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 10px;
+}
+
+.newImport-add-btn {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  line-height: 22px;
+  cursor: pointer;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.newImport-add-btn:disabled {
+  background: #aaa;
+  cursor: default;
 }
