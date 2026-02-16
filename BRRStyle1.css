@@ -746,15 +746,17 @@ body.disabled {
   display: none;
   z-index: 9999;
   overflow-y: auto;       /* allow scrolling if content is tall */
+  width: 95%;  
+  height: 95%;
+  padding: 15px;
 }
 
 /* Modal content */
 .newImport-modal-content {
   position: relative;
   background: #fff;
-  width: 90%;
-  max-width: 800px;
-  margin: 30px auto;
+  
+  margin: 5px 
   border-radius: 8px;
   padding: 15px;
   display: flex;
@@ -769,7 +771,7 @@ body.disabled {
 }
 
 .newImport-close-btn {
-  font-size: 24px;
+  font-size: 1.4rem;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -810,6 +812,7 @@ body.disabled {
   padding: 8px;
   margin-bottom: 10px;
   box-sizing: border-box;
+  font-size: 1.4rem;
 }
 
 /* Paste button */
@@ -823,8 +826,7 @@ body.disabled {
 .newImport-cards-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  max-height: 300px;
+  gap: 10px;  
   overflow-y: auto;
 }
 
@@ -839,6 +841,7 @@ body.disabled {
   cursor: default;
   position: relative;
   box-sizing: border-box;
+  font-size: 1.4rem;
   background: #e6eff4;     /* default male background */
 }
 
@@ -858,6 +861,7 @@ body.disabled {
   word-wrap: break-word;
   overflow-wrap: break-word;
   line-height: 1.2em;
+  font-size: 1.4rem;
   font-weight: 500;
 }
 
@@ -869,7 +873,7 @@ body.disabled {
   border-radius: 50%;
   width: 20px;
   height: 20px;
-  font-size: 14px;
+  font-size: 1.4rem;
   line-height: 18px;
   text-align: center;
   cursor: pointer;
@@ -892,7 +896,7 @@ body.disabled {
   border-radius: 50%;
   width: 24px;
   height: 24px;
-  font-size: 16px;
+  font-size: 1.4rem;
   line-height: 22px;
   cursor: pointer;
   margin-left: 8px;
