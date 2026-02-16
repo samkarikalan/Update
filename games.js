@@ -205,17 +205,34 @@ function getNextFixedPairGames(schedulerState, fixedPairs, numCourts) {
 function AischedulerNextRound(schedulerState) {
   const { PlayedCount, activeplayers } = schedulerState;
   let playmode = getPlayMode();
+  const page2 = document.getElementById("page2");
 
   let result;
+
   if (playmode === "random") {
     result = RandomRound(schedulerState);
+
+    // 🔵 Set Random background
+    page2.classList.remove("competitive-mode");
+    page2.classList.add("random-mode");
+
   } else {
     if (activeplayers.every(p => (PlayedCount.get(p) || 0) >= 5)) {
       result = CompetitiveRound(schedulerState);
+
+      // 🟠 Set Competitive background
+      page2.classList.remove("random-mode");
+      page2.classList.add("competitive-mode");
+
     } else {
       result = RandomRound(schedulerState);
+
+      // 🔵 Still Random because condition not met
+      page2.classList.remove("competitive-mode");
+      page2.classList.add("random-mode");
     }
   }
+
   return result;
 }
 
