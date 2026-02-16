@@ -236,241 +236,205 @@ function AischedulerNextRound(schedulerState) {
   return result;
 }
 
-function CompetitiveRound(schedulerState) {
-
-  const attempts = schedulerState.numCourts * 30;
-
-  let bestRound = null;
-  let bestScore = -Infinity;
-
-  for (let i = 0; i < attempts; i++) {
-
-    const tempState = {
-      ...schedulerState,
-      activeplayers: [...schedulerState.activeplayers]
-    };
-
-    const candidate = generateCompetitiveCandidate(tempState);
-    if (!candidate) continue;
-
-    if (!applyCompetitiveRules(candidate, schedulerState))
-      continue;
-
-    const score = scoreRound(candidate, schedulerState);
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestRound = candidate;
-    }
+function startCompetitivePhaseIfNeeded(state) {
+  if (state.roundIndex === 6 && !state.phase2Started) {
+    state.pairPlayedSet = new Set();
+    state.gameHistorySet = new Set();
+    state.opponentMap = new Map();
+    state.pairCooldownMap = new Map();
+    state.phase2Started = true;
   }
+}
 
-  if (!bestRound) return null;
+function selectPlayersForRound(state, courts) {
+  const required = courts * 4;
 
-  const { games } = bestRound;
-
-  // 🔹 Collect playing players
-  const playingSet = new Set(
-    games.flatMap(g => [...g.pair1, ...g.pair2])
-  );
-
-  const playing = [...playingSet];
-
-  // 🔹 Preserve LIFO resting order
-  const resting = schedulerState.restQueue
-    .filter(p => !playingSet.has(p));
-
-  const restingWithNumber = resting.map(p => {
-    const c = schedulerState.restCount.get(p) || 0;
-    return `${p}#${c + 1}`;
+  const sorted = [...state.activeplayers].sort((a, b) => {
+    const restDiff = (state.restCount.get(b) || 0) - (state.restCount.get(a) || 0);
+    if (restDiff !== 0) return restDiff;
+    return (state.PlayedCount.get(a) || 0) - (state.PlayedCount.get(b) || 0);
   });
 
-  // 🔹 Increment round index
-  schedulerState.roundIndex =
-    (schedulerState.roundIndex || 0) + 1;
-
-  // 🔹 Update cooldown AFTER increment
-  updatePairCooldown(games, schedulerState);
-
-  return {
-    round: schedulerState.roundIndex,
-    resting: restingWithNumber,
-    playing,
-    games
-  };
+  return sorted.slice(0, required);
 }
 
-function generateCompetitiveCandidate(state) {
+function generateCandidateLayout(players, state, courts) {
+  const shuffled = [...players].sort(() => Math.random() - 0.5);
 
-  const { activeplayers, rankPoints, numCourts } = state;
+  const mode = Math.floor(Math.random() * 3);
 
-  const playersPerRound = numCourts * 4;
+  let arranged = [];
 
-  const sorted = [...activeplayers].sort(
-    (a, b) => (rankPoints.get(b) || 0) - (rankPoints.get(a) || 0)
-  );
+  if (mode === 0) {
+    // Snake distribution
+    const ranked = [...shuffled].sort((a, b) =>
+      (state.rankPoints.get(b) || 0) - (state.rankPoints.get(a) || 0)
+    );
 
-  const selected = sorted.slice(0, playersPerRound);
+    let forward = true;
+    for (let i = 0; i < courts; i++) arranged.push([]);
 
-  if (selected.length < playersPerRound)
-    return null;
-
-  // 🔥 NEW DISTRIBUTION LOGIC
-  const courts = Array.from({ length: numCourts }, () => []);
-
-  // Snake distribution
-  let direction = 1;
-  let index = 0;
-
-  for (let i = 0; i < selected.length; i++) {
-
-    courts[index].push(selected[i]);
-
-    index += direction;
-
-    if (index === numCourts) {
-      index = numCourts - 1;
-      direction = -1;
-    }
-
-    if (index < 0) {
-      index = 0;
-      direction = 1;
-    }
-  }
-
-  const games = [];
-  let courtNumber = 1;
-
-  for (const group of courts) {
-
-    // Shuffle within court
-    for (let j = group.length - 1; j > 0; j--) {
-      const k = Math.floor(Math.random() * (j + 1));
-      [group[j], group[k]] = [group[k], group[j]];
-    }
-
-    const patterns = [
-      [[0,1],[2,3]],
-      [[0,2],[1,3]],
-      [[0,3],[1,2]]
-    ];
-
-    const choice =
-      patterns[Math.floor(Math.random() * patterns.length)];
-
-    games.push({
-      court: courtNumber++,
-      pair1: [group[choice[0][0]], group[choice[0][1]]],
-      pair2: [group[choice[1][0]], group[choice[1][1]]],
+    ranked.forEach((p, i) => {
+      const index = forward ? i % courts : courts - 1 - (i % courts);
+      arranged[index].push(p);
+      if ((i + 1) % courts === 0) forward = !forward;
     });
+
+  } else {
+    // Pure shuffle grouping
+    for (let i = 0; i < courts; i++) {
+      arranged.push(shuffled.slice(i * 4, i * 4 + 4));
+    }
   }
 
-  return { games };
+  return arranged.map(group => {
+    const sorted = [...group].sort((a, b) =>
+      (state.rankPoints.get(b) || 0) - (state.rankPoints.get(a) || 0)
+    );
+
+    return {
+      team1: [sorted[0], sorted[3]],
+      team2: [sorted[1], sorted[2]]
+    };
+  });
 }
 
-function applyCompetitiveRules(round, state) {
+function isHardInvalid(candidate, state) {
+  if (!state.lastRoundGames) return false;
 
-  const {
-    pairCooldownMap,
-    roundIndex,
-    rankPoints
-  } = state;
+  const serialize = g =>
+    [...g.team1, ...g.team2].sort().join("-");
 
-  const nextRound = (roundIndex || 0) + 1;
+  const lastGames = state.lastRoundGames.map(serialize);
 
-  for (const g of round.games) {
-
-    const p1Key = g.pair1.slice().sort().join("&");
-    const p2Key = g.pair2.slice().sort().join("&");
-
-    // 🔴 2-Round Cooldown
-    const last1 = pairCooldownMap.get(p1Key);
-    const last2 = pairCooldownMap.get(p2Key);
-
-    if (last1 && nextRound - last1 <= 2)
-      return false;
-
-    if (last2 && nextRound - last2 <= 2)
-      return false;
-
-    // 🔴 Team balance control
-    const team1 =
-      (rankPoints.get(g.pair1[0]) || 0) +
-      (rankPoints.get(g.pair1[1]) || 0);
-
-    const team2 =
-      (rankPoints.get(g.pair2[0]) || 0) +
-      (rankPoints.get(g.pair2[1]) || 0);
-
-    if (Math.abs(team1 - team2) > 8)
-      return false;
-
-    // 🔴 Court strength spread control
-    const all = [...g.pair1, ...g.pair2];
-    const values = all.map(p => rankPoints.get(p) || 0);
-
-    const spread = Math.max(...values) - Math.min(...values);
-
-    if (spread > 12)
-      return false;
-  }
-
-  return true;
+  return candidate.some(g => lastGames.includes(serialize(g)));
 }
 
-function scoreRound(round, state) {
-
-  const {
-    pairPlayedSet,
-    gamesMap,
-    opponentMap,
-    rankPoints
-  } = state;
-
+function scoreCandidate(candidate, state) {
   let score = 0;
 
-  for (const g of round.games) {
+  candidate.forEach(game => {
 
-    const p1Key = g.pair1.slice().sort().join("&");
-    const p2Key = g.pair2.slice().sort().join("&");
-    const gameKey = [p1Key, p2Key].sort().join(":");
+    const pairs = [
+      game.team1,
+      game.team2
+    ];
 
-    // Unique pair preference
-    if (!pairPlayedSet.has(p1Key)) score += 80;
+    pairs.forEach(pair => {
+      const key = [...pair].sort().join("-");
+      if (!state.pairPlayedSet.has(key)) score += 100;
+      else score -= 60;
+    });
+
+    const gameKey = [...game.team1, ...game.team2].sort().join("-");
+    if (!state.gameHistorySet.has(gameKey)) score += 80;
     else score -= 40;
 
-    if (!pairPlayedSet.has(p2Key)) score += 80;
-    else score -= 40;
-
-    // Unique game preference
-    if (!gamesMap.has(gameKey)) score += 60;
-    else score -= 30;
-
-    // Opponent repetition penalty
-    for (const a of g.pair1) {
-      for (const b of g.pair2) {
+    // Opponent diversity
+    game.team1.forEach(p1 => {
+      game.team2.forEach(p2 => {
         const oppCount =
-          opponentMap.get(a)?.get(b) || 0;
+          state.opponentMap.get(p1)?.get(p2) || 0;
         score -= oppCount * 10;
-      }
-    }
-  }
+      });
+    });
+
+    // Team balance
+    const team1Rank = game.team1.reduce((s, p) =>
+      s + (state.rankPoints.get(p) || 0), 0);
+    const team2Rank = game.team2.reduce((s, p) =>
+      s + (state.rankPoints.get(p) || 0), 0);
+
+    score -= Math.abs(team1Rank - team2Rank);
+
+    // Court spread
+    const all = [...game.team1, ...game.team2];
+    const ranks = all.map(p => state.rankPoints.get(p) || 0);
+    score -= (Math.max(...ranks) - Math.min(...ranks));
+
+  });
 
   return score;
 }
 
-function updatePairCooldown(games, state) {
+function updateHistory(candidate, state) {
+  candidate.forEach(game => {
 
-  const { pairCooldownMap, roundIndex } = state;
+    // Pair history
+    [game.team1, game.team2].forEach(pair => {
+      const key = [...pair].sort().join("-");
+      state.pairPlayedSet.add(key);
+    });
 
-  for (const g of games) {
+    // Game history
+    const gameKey = [...game.team1, ...game.team2].sort().join("-");
+    state.gameHistorySet.add(gameKey);
 
-    const p1Key = g.pair1.slice().sort().join("&");
-    const p2Key = g.pair2.slice().sort().join("&");
+    // Opponent history
+    game.team1.forEach(p1 => {
+      if (!state.opponentMap.has(p1))
+        state.opponentMap.set(p1, new Map());
 
-    pairCooldownMap.set(p1Key, roundIndex);
-    pairCooldownMap.set(p2Key, roundIndex);
+      game.team2.forEach(p2 => {
+        if (!state.opponentMap.has(p2))
+          state.opponentMap.set(p2, new Map());
+
+        const current =
+          state.opponentMap.get(p1).get(p2) || 0;
+
+        state.opponentMap.get(p1).set(p2, current + 1);
+        state.opponentMap.get(p2).set(p1, current + 1);
+      });
+    });
+
+    // Played count
+    [...game.team1, ...game.team2].forEach(p => {
+      state.PlayedCount.set(
+        p,
+        (state.PlayedCount.get(p) || 0) + 1
+      );
+    });
+
+  });
+
+  state.lastRoundGames = candidate;
+}
+
+function CompetitiveRound(state, courts) {
+
+  startCompetitivePhaseIfNeeded(state);
+
+  const players = selectPlayersForRound(state, courts);
+
+  let bestCandidate = null;
+  let bestScore = -Infinity;
+
+  const attempts = courts * 30;
+
+  for (let i = 0; i < attempts; i++) {
+
+    const candidate =
+      generateCandidateLayout(players, state, courts);
+
+    if (isHardInvalid(candidate, state)) continue;
+
+    const score = scoreCandidate(candidate, state);
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestCandidate = candidate;
+    }
   }
+
+  // Fallback safety
+  if (!bestCandidate) {
+    bestCandidate =
+      generateCandidateLayout(players, state, courts);
+  }
+
+  updateHistory(bestCandidate, state);
+
+  return bestCandidate;
 }
 
 
