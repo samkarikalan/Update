@@ -1,3 +1,21 @@
+/* Default background */
+#page2 {
+  transition: background-color 0.3s ease;
+}
+
+/* Random Mode */
+#page2.random-mode {
+  background-color: none;   /* light blue */
+}
+
+/* Competitive Mode */
+#page2.competitive-mode {
+  background-color: #fff3e6;   /* light orange */
+}
+
+
+
+
 .disabled {
   opacity: 0.9;
   cursor: not-allowed;
