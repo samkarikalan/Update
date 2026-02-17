@@ -268,6 +268,8 @@
 <!--           Import Modal        -->
 <!-- ============================= -->
   <!-- NEW IMPORT MODAL -->
+  
+
   <div id="newImportModal" class="newImport-modal">
   <div class="newImport-modal-content">
 
@@ -276,14 +278,12 @@
       <button class="newImport-tab-btn active"
               onclick="newImportShowTab('enter')"
               id="newImportEnterTabBtn"
-              data-i18n="enter">
-      </button>
+              data-i18n="enter"></button>
 
       <button class="newImport-tab-btn"
               onclick="newImportShowTab('select')"
               id="newImportSelectTabBtn"
-              data-i18n="select">
-      </button>
+              data-i18n="select"></button>
     </div>
 
     <!-- ENTER TAB -->
@@ -291,23 +291,19 @@
 
       <textarea id="newImport-textarea"
                 data-i18n-placeholder="pastePlayers"
-                placeholder="">
-      </textarea>
+                placeholder=""></textarea>
 
-      <div class="newImport-cards-container"
-           id="newImportEnterCards">
-      </div>
+      <div id="newImportEnterCards"
+           class="newImport-cards-container"></div>
 
       <div class="newImport-footer">
         <button class="newImport-ok-btn"
-                onclick="newImportAddPlayers()"
-                data-i18n="ok">
-        </button>
+                onclick="addPlayersFromInputUI()"
+                data-i18n="ok"></button>
 
         <button class="newImport-cancel-btn"
                 onclick="newImportHideModal()"
-                data-i18n="cancel">
-        </button>
+                data-i18n="cancel"></button>
       </div>
 
     </div>
@@ -322,20 +318,17 @@
         <button class="newImport-subtab-btn active"
                 onclick="newImportShowSelectMode('history')"
                 id="newImportHistoryBtn"
-                data-i18n="history">
-        </button>
+                data-i18n="history"></button>
 
         <button class="newImport-subtab-btn"
                 onclick="newImportShowSelectMode('registered')"
                 id="newImportRegisteredBtn"
-                data-i18n="registered">
-        </button>
+                data-i18n="registered"></button>
 
         <button class="newImport-subtab-btn"
                 onclick="newImportShowSelectMode('favorites')"
                 id="newImportFavoritesBtn"
-                data-i18n="favorites">
-        </button>
+                data-i18n="favorites"></button>
 
       </div>
 
@@ -347,14 +340,14 @@
              placeholder="">
 
       <!-- Cards -->
-      <div id="newImportSelectContainer"
-           class="newImport-cards-container">
-      </div>
+      <div id="newImportSelectCards"
+           class="newImport-cards-container"></div>
 
     </div>
 
   </div>
 </div>
+
 
 
   
