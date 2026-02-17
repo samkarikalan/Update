@@ -994,25 +994,34 @@ function alert(msg) {
 ========================= */
 
 // State
+// ======================
+// STATE
+// ======================
 const newImportState = {
   enterPlayers: [],
-  selectPlayers: [],
-  dbPlayers: []
+  dbPlayers: [],
+  historyPlayers: [],
+  favoritePlayers: [],
+  currentSelectMode: 'registered'
 };
 
-// DOM elements
+// ======================
+// DOM
+// ======================
 const newImportModal = document.getElementById('newImportModal');
 const newImportEnterCards = document.getElementById('newImportEnterCards');
 const newImportSelectCards = document.getElementById('newImportSelectCards');
 const newImportTextarea = document.getElementById('newImport-textarea');
 
 
-// ----------------------
+// ======================
 // MODAL
-// ----------------------
+// ======================
 function newImportShowModal() {
   newImportModal.style.display = 'block';
   newImportLoadDatabase();
+  newImportLoadHistory();
+  newImportLoadFavorites();
   newImportRefreshSelectCards();
 }
 
@@ -1020,31 +1029,63 @@ function newImportHideModal() {
   newImportModal.style.display = 'none';
   newImportTextarea.value = '';
   newImportState.enterPlayers = [];
+  newImportRefreshEnterCards();
 }
 
 
-// ----------------------
-// TABS
-// ----------------------
-function newImportShowTab(tab) {
-  document.getElementById('newImportEnterTab').classList.add('hidden');
-  document.getElementById('newImportSelectTab').classList.add('hidden');
-  document.getElementById('newImportEnterTabBtn').classList.remove('active');
-  document.getElementById('newImportSelectTabBtn').classList.remove('active');
+// ======================
+// SUB MODE SWITCH (History / Registered / Favorites)
+// ======================
+function newImportShowSelectMode(mode) {
 
-  if (tab === 'enter') {
-    document.getElementById('newImportEnterTab').classList.remove('hidden');
-    document.getElementById('newImportEnterTabBtn').classList.add('active');
-  } else {
-    document.getElementById('newImportSelectTab').classList.remove('hidden');
-    document.getElementById('newImportSelectTabBtn').classList.add('active');
-  }
+  newImportState.currentSelectMode = mode;
+
+  document.querySelectorAll('.newImport-subtab-btn')
+    .forEach(btn => btn.classList.remove('active'));
+
+  const btn = document.getElementById('newImport-' + mode + 'Btn');
+  if (btn) btn.classList.add('active');
+
+  newImportRefreshSelectCards();
 }
 
 
-// ----------------------
+// ======================
+// STORAGE LOADERS
+// ======================
+function newImportLoadDatabase() {
+  const db = localStorage.getItem('newImportPlayersDB');
+  newImportState.dbPlayers = db ? JSON.parse(db) : [];
+}
+
+function newImportLoadHistory() {
+  const data = localStorage.getItem('newImportHistory');
+  newImportState.historyPlayers = data ? JSON.parse(data) : [];
+}
+
+function newImportLoadFavorites() {
+  const data = localStorage.getItem('newImportFavorites');
+  newImportState.favoritePlayers = data ? JSON.parse(data) : [];
+}
+
+function newImportSaveHistory() {
+  localStorage.setItem(
+    'newImportHistory',
+    JSON.stringify(newImportState.historyPlayers)
+  );
+}
+
+function newImportSaveFavorites() {
+  localStorage.setItem(
+    'newImportFavorites',
+    JSON.stringify(newImportState.favoritePlayers)
+  );
+}
+
+
+// ======================
 // ENTER MODE
-// ----------------------
+// ======================
 newImportTextarea.addEventListener(
   "input",
   debounce(newImportProcessTextarea, 250)
@@ -1059,6 +1100,7 @@ function debounce(func, delay = 250) {
 }
 
 function newImportProcessTextarea() {
+
   const text = newImportTextarea.value;
   if (!text.trim()) return;
 
@@ -1074,37 +1116,28 @@ function newImportProcessTextarea() {
   const extracted = [];
 
   lines.forEach((rawLine, index) => {
+
     let line = rawLine.trim();
     if (!line) return;
 
-    // ✅ Ignore last line if user is still typing (no newline yet)
     const isLastLine = index === lines.length - 1;
     const endsWithNewLine = text.endsWith("\n") || text.endsWith("\r");
     if (isLastLine && !endsWithNewLine) return;
 
-    // Ignore links
     if (line.toLowerCase().includes("http")) return;
 
-    let gender = "Male"; // default
+    let gender = "Male";
 
-    // Remove numbering (1. John → John)
     const match = line.match(/^(\d+\.?\s*)?(.*)$/);
-    if (match) {
-      line = match[2].trim();
-    }
+    if (match) line = match[2].trim();
 
-    // Handle comma format: Name,Gender
     if (line.includes(",")) {
       const parts = line.split(",").map(p => p.trim());
       line = parts[0];
-
-      if (parts[1]) {
-        const g = parts[1].toLowerCase();
-        if (genderLookup[g]) gender = genderLookup[g];
-      }
+      const g = parts[1]?.toLowerCase();
+      if (genderLookup[g]) gender = genderLookup[g];
     }
 
-    // Handle parentheses: John (Female)
     const parenMatch = line.match(/\(([^)]+)\)/);
     if (parenMatch) {
       const inside = parenMatch[1].trim().toLowerCase();
@@ -1114,82 +1147,102 @@ function newImportProcessTextarea() {
 
     if (!line) return;
 
-    // Prevent duplicates (case-insensitive)
     const exists =
       extracted.some(p => p.displayName.toLowerCase() === line.toLowerCase()) ||
       newImportState.enterPlayers.some(p => p.displayName.toLowerCase() === line.toLowerCase());
 
     if (!exists) {
-      extracted.push({
-        displayName: line,
-        gender
-      });
+      extracted.push({ displayName: line, gender });
     }
   });
 
   if (extracted.length > 0) {
     newImportState.enterPlayers.push(...extracted);
     newImportRefreshEnterCards();
+    newImportRefreshSelectCards();
   }
 }
 
 
-
-
+// ======================
+// ENTER CARDS
+// ======================
 function newImportRefreshEnterCards() {
+
   newImportEnterCards.innerHTML = '';
+
   newImportState.enterPlayers.forEach((p, i) => {
+
     const card = document.createElement('div');
     card.className = `newImport-player-card ${p.gender.toLowerCase()}`;
+
     card.innerHTML = `
-      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}" class="newImport-gender-icon" data-index="${i}">
+      <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}"
+           class="newImport-gender-icon"
+           data-index="${i}">
       <span class="newImport-player-name">${p.displayName}</span>
       <button class="newImport-remove-btn" data-index="${i}">×</button>
+      <button class="newImport-fav-btn" data-index="${i}">★</button>
     `;
+
     newImportEnterCards.appendChild(card);
 
-    // toggle gender
+    // Toggle gender
     card.querySelector('.newImport-gender-icon').onclick = (e) => {
       const idx = parseInt(e.target.dataset.index);
-      newImportState.enterPlayers[idx].gender = newImportState.enterPlayers[idx].gender === 'Male' ? 'Female' : 'Male';
+      newImportState.enterPlayers[idx].gender =
+        newImportState.enterPlayers[idx].gender === 'Male'
+          ? 'Female'
+          : 'Male';
       newImportRefreshEnterCards();
     };
 
-    // remove player
+    // Remove
+    card.querySelector('.newImport-remove-btn').onclick = (e) => {
+      const idx = parseInt(e.target.dataset.index);
+      newImportState.enterPlayers.splice(idx, 1);
+      newImportRefreshEnterCards();
+      newImportRefreshSelectCards();
+    };
 
-	card.querySelector('.newImport-remove-btn').onclick = (e) => {
-	  const idx = parseInt(e.target.dataset.index);
-	  newImportState.enterPlayers.splice(idx, 1);
-	  newImportRefreshEnterCards();
-	  newImportRefreshSelectCards(); // 👈 ADD THIS
-	};
+    // Favorite
+    card.querySelector('.newImport-fav-btn').onclick = (e) => {
+      const idx = parseInt(e.target.dataset.index);
+      const player = newImportState.enterPlayers[idx];
 
-});
+      if (!newImportState.favoritePlayers.some(
+        p => p.displayName === player.displayName
+      )) {
+        newImportState.favoritePlayers.push({...player});
+        newImportSaveFavorites();
+      }
+    };
+  });
 }
 
 
-// ----------------------
+// ======================
 // SELECT MODE
-// ----------------------
-function newImportLoadDatabase() {
-  const db = localStorage.getItem('newImportPlayersDB');
-  if (db) {
-    newImportState.dbPlayers = JSON.parse(db);
-  } else {
-    newImportState.dbPlayers = [];
-    localStorage.setItem('newImportPlayersDB', JSON.stringify([]));
-  }
-}
-
+// ======================
 function newImportRefreshSelectCards() {
+
   newImportSelectCards.innerHTML = '';
 
-  newImportState.dbPlayers.forEach((p, i) => {
+  let source = [];
 
-    // Check if already added
-    const alreadyAdded = newImportState.enterPlayers.some(
-      ep => ep.displayName.toLowerCase() === p.displayName.toLowerCase()
-    );
+  if (newImportState.currentSelectMode === 'history')
+    source = newImportState.historyPlayers;
+  else if (newImportState.currentSelectMode === 'favorites')
+    source = newImportState.favoritePlayers;
+  else
+    source = newImportState.dbPlayers;
+
+  source.forEach((p, i) => {
+
+    const alreadyAdded =
+      newImportState.enterPlayers.some(
+        ep => ep.displayName.toLowerCase() === p.displayName.toLowerCase()
+      );
 
     const card = document.createElement('div');
     card.className = `newImport-player-card ${p.gender.toLowerCase()}`;
@@ -1214,38 +1267,58 @@ newImportSelectCards.addEventListener('click', function (e) {
   if (!e.target.classList.contains('newImport-add-btn')) return;
 
   const idx = parseInt(e.target.dataset.index);
-  const player = newImportState.dbPlayers[idx];
 
-  const exists = newImportState.enterPlayers.some(
+  let source = [];
+  if (newImportState.currentSelectMode === 'history')
+    source = newImportState.historyPlayers;
+  else if (newImportState.currentSelectMode === 'favorites')
+    source = newImportState.favoritePlayers;
+  else
+    source = newImportState.dbPlayers;
+
+  const player = source[idx];
+
+  if (!newImportState.enterPlayers.some(
     ep => ep.displayName.toLowerCase() === player.displayName.toLowerCase()
-  );
-
-  if (!exists) {
-    newImportState.enterPlayers.push({ ...player });
+  )) {
+    newImportState.enterPlayers.push({...player});
     newImportRefreshEnterCards();
-    newImportRefreshSelectCards(); // update + to ✓
+    newImportRefreshSelectCards();
   }
 });
 
 
-// ----------------------
-// ADD PLAYERS
-// ----------------------
+// ======================
+// FINAL ADD
+// ======================
 function newImportAddPlayers() {
+
   if (newImportState.enterPlayers.length === 0) {
     alert('No players to add!');
     return;
   }
 
-  // Save to local db if new
+  // Save to DB
   newImportState.enterPlayers.forEach(p => {
-    if (!newImportState.dbPlayers.some(dp => dp.displayName === p.displayName)) {
+    if (!newImportState.dbPlayers.some(
+      dp => dp.displayName === p.displayName
+    )) {
       newImportState.dbPlayers.push({...p});
     }
   });
-  localStorage.setItem('newImportPlayersDB', JSON.stringify(newImportState.dbPlayers));
 
-  // Export to main app
+  localStorage.setItem(
+    'newImportPlayersDB',
+    JSON.stringify(newImportState.dbPlayers)
+  );
+
+  // Save to history
+  newImportState.historyPlayers = [
+    ...newImportState.enterPlayers
+  ];
+  newImportSaveHistory();
+
+  // EXPORT (unchanged)
   addPlayersFromText(newImportState.enterPlayers);
 
   newImportHideModal();
