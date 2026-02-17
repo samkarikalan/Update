@@ -400,44 +400,101 @@ function updateHistory(candidate, state) {
   state.lastRoundGames = candidate;
 }
 
-function CompetitiveRound(state, courts) {
+function CompetitiveRound(state) {
 
-  startCompetitivePhaseIfNeeded(state);
+  const {
+    activeplayers,
+    numCourts,
+    restCount
+  } = state;
 
-  const players = selectPlayersForRound(state, courts);
+  const totalPlayers = activeplayers.length;
+  const playersPerRound = numCourts * 4;
+  const numResting = Math.max(totalPlayers - playersPerRound, 0);
 
-  let bestCandidate = null;
-  let bestScore = -Infinity;
+  /* ==========================
+     1️⃣ RESTING (same as Random)
+  ========================== */
 
-  const attempts = courts * 30;
+  const sortedForRest = [...state.restQueue];
+  const resting = sortedForRest.slice(0, numResting);
 
-  for (let i = 0; i < attempts; i++) {
+  const playing = activeplayers
+    .filter(p => !resting.includes(p))
+    .slice(0, playersPerRound);
 
-    const candidate =
-      generateCandidateLayout(players, state, courts);
+  /* ==========================
+     2️⃣ RANK SORT (competitive logic)
+  ========================== */
 
-    if (isHardInvalid(candidate, state)) continue;
+  const ranked = [...playing].sort((a, b) =>
+    (state.rankPoints.get(b) || 0) -
+    (state.rankPoints.get(a) || 0)
+  );
 
-    const score = scoreCandidate(candidate, state);
+  /* ==========================
+     3️⃣ SNAKE DISTRIBUTION
+  ========================== */
 
-    if (score > bestScore) {
-      bestScore = score;
-      bestCandidate = candidate;
+  const courts = Array.from({ length: numCourts }, () => []);
+  let forward = true;
+
+  ranked.forEach((player, i) => {
+    const index = forward
+      ? i % numCourts
+      : numCourts - 1 - (i % numCourts);
+
+    courts[index].push(player);
+
+    if ((i + 1) % numCourts === 0) {
+      forward = !forward;
     }
-  }
+  });
 
-  // Fallback safety
-  if (!bestCandidate) {
-    bestCandidate =
-      generateCandidateLayout(players, state, courts);
-  }
+  /* ==========================
+     4️⃣ BUILD GAMES
+  ========================== */
 
-  updateHistory(bestCandidate, state);
+  const games = [];
 
-  return bestCandidate;
+  courts.forEach((group, i) => {
+
+    const sortedGroup = [...group].sort((a, b) =>
+      (state.rankPoints.get(b) || 0) -
+      (state.rankPoints.get(a) || 0)
+    );
+
+    if (sortedGroup.length < 4) return;
+
+    games.push({
+      court: i + 1,
+      pair1: [sortedGroup[0], sortedGroup[3]],
+      pair2: [sortedGroup[1], sortedGroup[2]]
+    });
+  });
+
+  /* ==========================
+     5️⃣ REST DISPLAY FORMAT
+  ========================== */
+
+  const restingWithNumber = resting.map(p => {
+    const c = restCount.get(p) || 0;
+    return `${p}#${c + 1}`;
+  });
+
+  /* ==========================
+     6️⃣ ROUND INDEX
+  ========================== */
+
+  state.roundIndex = (state.roundIndex || 0) + 1;
+
+  return {
+    round: state.roundIndex,
+    resting: restingWithNumber,
+    playing,
+    games
+  };
 }
-
-
 
 
 function RandomRound(schedulerState) {
