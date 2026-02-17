@@ -739,171 +739,219 @@ body.disabled {
 /* MODAL BASE */
 /* Modal background */
 
+/* =========================
+   MODAL FULLSCREEN
+========================= */
 .newImport-modal {
   position: fixed;
-  inset: 0;               /* replaces top/left/width/height */
-  background: rgba(0,0,0,0.5);
-  display: none;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #ffffff;
   z-index: 9999;
-  overflow-y: auto;       /* allow scrolling if content is tall */
-  width: 95%;  
-  height: 95%;
-  padding: 15px;
+  display: none;
 }
 
-/* Modal content */
 .newImport-modal-content {
-  position: relative;
-  background: #fff;
-  
-  margin: 5px 
-  border-radius: 8px;
-  padding: 15px;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
-/* Header */
-.newImport-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.newImport-close-btn {
-  font-size: 1.4rem;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-/* Tabs */
+/* =========================
+   MAIN TABS
+========================= */
 .newImport-tabs {
   display: flex;
-  margin-top: 10px;
-  gap: 5px;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .newImport-tab-btn {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 0.75rem;
+  border-radius: 0.625rem;
+  border: none;
+  background: #e5e5e5;
+  font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
-  background: #f0f0f0;
+  transition: 0.2s;
 }
 
 .newImport-tab-btn.active {
-  background:#800080;
+  background: #8a007a;
   color: #fff;
 }
 
-/* Tab content */
-.newImport-tab-content {
-  margin-top: 10px;
+/* =========================
+   SUB TABS
+========================= */
+.newImport-subtabs {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
 }
 
-.hidden { display: none; }
+.newImport-subtab-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: #eeeeee;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
 
-/* Textarea */
+.newImport-subtab-btn.active {
+  background: #8a007a;
+  color: white;
+}
+
+/* =========================
+   TAB CONTENT
+========================= */
+.newImport-tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* =========================
+   TEXTAREA
+========================= */
 #newImport-textarea {
   width: 100%;
-  min-height: 80px;
-  padding: 8px;
-  margin-bottom: 10px;
+  min-height: 7.5rem;
+  padding: 0.75rem;
+  border-radius: 0.625rem;
+  border: 0.0625rem solid #ddd;
+  font-size: 0.875rem;
+  resize: none;
+  margin-bottom: 0.75rem;
   box-sizing: border-box;
-  font-size: 1.4rem;
 }
 
-/* Paste button */
-.newImport-paste-btn {
-  margin-bottom: 10px;
-  padding: 6px 12px;
-  cursor: pointer;
+/* =========================
+   SEARCH BAR
+========================= */
+.newImport-search {
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  border: 0.0625rem solid #ddd;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
 }
 
-/* Cards container */
+/* =========================
+   PLAYER CARDS CONTAINER
+========================= */
 .newImport-cards-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;  
+  flex: 1;
   overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+  padding-right: 0.25rem;
 }
 
-/* Player cards */
+/* =========================
+   PLAYER CARD
+========================= */
 .newImport-player-card {
-  width: 95%;             /* two columns */
   display: flex;
-  align-items: flex-start; /* top align for multi-line name */
-  justify-content: space-between;
-  padding: 5px;
-  border-radius: 50px;  
-  cursor: default;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  border-radius: 0.625rem;
+  background: #f8f8f8;
+  font-size: 0.875rem;
   position: relative;
-  box-sizing: border-box;
-  font-size: 1.4rem;
-  background: #e6eff4;     /* default male background */
 }
 
-
-/* Gender icon */
-.newImport-gender-icon {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-  flex-shrink: 0;
-  cursor: pointer;
+/* Gender Accent */
+.newImport-player-card.male {
+  border-left: 0.25rem solid #4a90e2;
 }
 
-/* Player name */
+.newImport-player-card.female {
+  border-left: 0.25rem solid #e24a90;
+}
+
+/* Player Name */
 .newImport-player-name {
   flex: 1;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  line-height: 1.2em;
-  font-size: 1.4rem;
-  font-weight: 500;
+  word-break: break-word;
 }
 
-/* Remove button */
-.newImport-remove-btn {
-  background: #dc3545;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 1.4rem;
-  line-height: 18px;
-  text-align: center;
+/* Gender Icon */
+.newImport-gender-icon {
+  width: 1.25rem;
+  height: 1.25rem;
   cursor: pointer;
-  margin-left: 8px;
-  flex-shrink: 0;
 }
 
-/* Footer */
-.newImport-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 10px;
+/* =========================
+   CARD BUTTONS
+========================= */
+.newImport-add-btn,
+.newImport-remove-btn,
+.newImport-fav-btn {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  cursor: pointer;
 }
 
 .newImport-add-btn {
-  background: #28a745;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  font-size: 1.4rem;
-  line-height: 22px;
-  cursor: pointer;
-  margin-left: 8px;
-  flex-shrink: 0;
+  color: #2e7d32;
+}
+
+.newImport-remove-btn {
+  color: #c62828;
+}
+
+.newImport-fav-btn {
+  color: #f9a825;
 }
 
 .newImport-add-btn:disabled {
-  background: #aaa;
-  cursor: default;
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.newImport-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+}
+
+.newImport-ok-btn,
+.newImport-cancel-btn {
+  padding: 0.625rem 1.125rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.newImport-ok-btn {
+  background: #8a007a;
+  color: white;
+}
+
+.newImport-cancel-btn {
+  background: #e0e0e0;
 }
