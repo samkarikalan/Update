@@ -1023,8 +1023,6 @@ function alert(msg) {
 
 // State
 // ======================
-// STATE
-// ======================
 const newImportState = {
   enterPlayers: [],
   dbPlayers: [],
@@ -1032,7 +1030,6 @@ const newImportState = {
   favoritePlayers: [],
   currentSelectMode: "registered"
 };
-
 
 // ======================
 // DOM (wait until ready)
@@ -1043,7 +1040,6 @@ let newImportSelectCards;
 let newImportTextarea;
 
 document.addEventListener("DOMContentLoaded", () => {
-
   newImportModal = document.getElementById("newImportModal");
   newImportEnterCards = document.getElementById("newImportEnterCards");
   newImportSelectCards = document.getElementById("newImportSelectCards");
@@ -1054,15 +1050,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  newImportTextarea.addEventListener(
-    "input",
-    debounce(newImportProcessTextarea, 250)
-  );
-
-  // select card click handler
+  newImportTextarea.addEventListener("input", debounce(newImportProcessTextarea, 250));
   newImportSelectCards.addEventListener("click", newImportHandleSelectClick);
 });
-
 
 // ======================
 // HELPERS
@@ -1075,21 +1065,18 @@ function debounce(func, delay = 250) {
   };
 }
 
-
 // ======================
 // MODAL
 // ======================
 function newImportShowModal() {
   newImportModal.style.display = "block";
-
+  newImportShowTab('enter');
   newImportLoadDatabase();
   newImportLoadHistory();
   newImportLoadFavorites();
-
   newImportRefreshEnterCards();
   newImportRefreshSelectCards();
 }
-
 function newImportHideModal() {
   newImportModal.style.display = "none";
   newImportTextarea.value = "";
@@ -1097,28 +1084,32 @@ function newImportHideModal() {
   newImportRefreshEnterCards();
 }
 
+// ======================
+// TAB SWITCH
+// ======================
+function newImportShowTab(tab) {
+  document.querySelectorAll('.newImport-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.newImport-tab-content').forEach(tabDiv => tabDiv.classList.add('hidden'));
+  if (tab === 'enter') {
+    document.getElementById('newImportEnterTabBtn').classList.add('active');
+    document.getElementById('newImportEnterTab').classList.remove('hidden');
+  } else {
+    document.getElementById('newImportSelectTabBtn').classList.add('active');
+    document.getElementById('newImportSelectTab').classList.remove('hidden');
+  }
+}
 
 // ======================
 // SUB MODE SWITCH
 // ======================
 function newImportShowSelectMode(mode) {
-
   newImportState.currentSelectMode = mode;
-
-  document.querySelectorAll(".newImport-subtab-btn")
-    .forEach(btn => btn.classList.remove("active"));
-
-  // match HTML IDs exactly:
-  // newImportHistoryBtn / newImportRegisteredBtn / newImportFavoritesBtn
-  const btnId =
-    "newImport" + mode.charAt(0).toUpperCase() + mode.slice(1) + "Btn";
-
+  document.querySelectorAll(".newImport-subtab-btn").forEach(btn => btn.classList.remove("active"));
+  const btnId = "newImport" + mode.charAt(0).toUpperCase() + mode.slice(1) + "Btn";
   const btn = document.getElementById(btnId);
   if (btn) btn.classList.add("active");
-
   newImportRefreshSelectCards();
 }
-
 
 // ======================
 // STORAGE
@@ -1127,75 +1118,51 @@ function newImportLoadDatabase() {
   const db = localStorage.getItem("newImportPlayersDB");
   newImportState.dbPlayers = db ? JSON.parse(db) : [];
 }
-
 function newImportLoadHistory() {
   const data = localStorage.getItem("newImportHistory");
   newImportState.historyPlayers = data ? JSON.parse(data) : [];
 }
-
 function newImportLoadFavorites() {
   const data = localStorage.getItem("newImportFavorites");
   newImportState.favoritePlayers = data ? JSON.parse(data) : [];
 }
-
 function newImportSaveHistory() {
-  localStorage.setItem(
-    "newImportHistory",
-    JSON.stringify(newImportState.historyPlayers)
-  );
+  localStorage.setItem("newImportHistory", JSON.stringify(newImportState.historyPlayers));
 }
-
 function newImportSaveFavorites() {
-  localStorage.setItem(
-    "newImportFavorites",
-    JSON.stringify(newImportState.favoritePlayers)
-  );
+  localStorage.setItem("newImportFavorites", JSON.stringify(newImportState.favoritePlayers));
 }
-
 
 // ======================
 // TEXT INPUT PROCESSING
 // ======================
 function newImportProcessTextarea() {
-
   const text = newImportTextarea.value;
-
-  // clear players if textarea cleared
   if (!text.trim()) {
     newImportState.enterPlayers = [];
     newImportRefreshEnterCards();
     newImportRefreshSelectCards();
     return;
   }
-
   const lines = text.split(/\r?\n/);
-
   const genderLookup = {
     male: "Male",
     m: "Male",
     female: "Female",
     f: "Female"
   };
-
   const extracted = [];
-
   lines.forEach((rawLine, index) => {
-
     let line = rawLine.trim();
     if (!line) return;
-
     const isLastLine = index === lines.length - 1;
     const endsWithNewLine = text.endsWith("\n") || text.endsWith("\r");
     if (isLastLine && !endsWithNewLine) return;
-
     if (line.toLowerCase().includes("http")) return;
-
     let gender = "Male";
-
     // remove numbering
     const match = line.match(/^(\d+\.?\s*)?(.*)$/);
     if (match) line = match[2].trim();
-
     // comma gender
     if (line.includes(",")) {
       const parts = line.split(",").map(p => p.trim());
@@ -1203,7 +1170,6 @@ function newImportProcessTextarea() {
       const g = parts[1]?.toLowerCase();
       if (genderLookup[g]) gender = genderLookup[g];
     }
-
     // (gender)
     const parenMatch = line.match(/\(([^)]+)\)/);
     if (parenMatch) {
@@ -1211,16 +1177,12 @@ function newImportProcessTextarea() {
       if (genderLookup[inside]) gender = genderLookup[inside];
       line = line.replace(/\([^)]+\)/, "").trim();
     }
-
     if (!line) return;
-
     const exists =
       extracted.some(p => p.displayName.toLowerCase() === line.toLowerCase()) ||
       newImportState.enterPlayers.some(p => p.displayName.toLowerCase() === line.toLowerCase());
-
     if (!exists) extracted.push({ displayName: line, gender });
   });
-
   if (extracted.length > 0) {
     newImportState.enterPlayers.push(...extracted);
     newImportRefreshEnterCards();
@@ -1228,30 +1190,23 @@ function newImportProcessTextarea() {
   }
 }
 
-
 // ======================
 // ENTER CARDS
 // ======================
 function newImportRefreshEnterCards() {
-
   newImportEnterCards.innerHTML = "";
-
   newImportState.enterPlayers.forEach((p, i) => {
-
     const card = document.createElement("div");
     card.className = `newImport-player-card newImport-${p.gender.toLowerCase()}`;
-
     card.innerHTML = `
       <img src="${p.gender === "Male" ? "male.png" : "female.png"}"
-           class="newImport-gender-icon"
-           data-index="${i}">
+        class="newImport-gender-icon"
+        data-index="${i}">
       <span class="newImport-player-name">${p.displayName}</span>
       <button class="newImport-remove-btn" data-index="${i}">×</button>
       <button class="newImport-fav-btn" data-index="${i}">★</button>
     `;
-
     newImportEnterCards.appendChild(card);
-
     // toggle gender
     card.querySelector(".newImport-gender-icon").onclick = (e) => {
       const idx = parseInt(e.target.dataset.index);
@@ -1261,7 +1216,6 @@ function newImportRefreshEnterCards() {
           : "Male";
       newImportRefreshEnterCards();
     };
-
     // remove
     card.querySelector(".newImport-remove-btn").onclick = (e) => {
       const idx = parseInt(e.target.dataset.index);
@@ -1269,12 +1223,10 @@ function newImportRefreshEnterCards() {
       newImportRefreshEnterCards();
       newImportRefreshSelectCards();
     };
-
     // favorite
     card.querySelector(".newImport-fav-btn").onclick = (e) => {
       const idx = parseInt(e.target.dataset.index);
       const player = newImportState.enterPlayers[idx];
-
       if (!newImportState.favoritePlayers.some(p => p.displayName === player.displayName)) {
         newImportState.favoritePlayers.push({ ...player });
         newImportSaveFavorites();
@@ -1283,69 +1235,53 @@ function newImportRefreshEnterCards() {
   });
 }
 
-
 // ======================
 // SELECT CARDS
 // ======================
 function newImportRefreshSelectCards() {
-
   newImportSelectCards.innerHTML = "";
-
   let source = [];
-
   if (newImportState.currentSelectMode === "history")
     source = newImportState.historyPlayers;
   else if (newImportState.currentSelectMode === "favorites")
     source = newImportState.favoritePlayers;
   else
     source = newImportState.dbPlayers;
-
   source.forEach((p, i) => {
-
     const alreadyAdded =
       newImportState.enterPlayers.some(
         ep => ep.displayName.toLowerCase() === p.displayName.toLowerCase()
       );
-
     const card = document.createElement("div");
     card.className = `newImport-player-card newImport-${p.gender.toLowerCase()}`;
-
     card.innerHTML = `
       <img src="${p.gender === "Male" ? "male.png" : "female.png"}"
-           class="newImport-gender-icon">
+        class="newImport-gender-icon">
       <span class="newImport-player-name">${p.displayName}</span>
       <button class="newImport-add-btn"
-              data-index="${i}"
-              ${alreadyAdded ? "disabled" : ""}>
+        data-index="${i}"
+        ${alreadyAdded ? "disabled" : ""}>
         ${alreadyAdded ? "✓" : "+"}
       </button>
     `;
-
     newImportSelectCards.appendChild(card);
   });
 }
-
 
 // ======================
 // SELECT CLICK HANDLER
 // ======================
 function newImportHandleSelectClick(e) {
-
   if (!e.target.classList.contains("newImport-add-btn")) return;
-
   const idx = parseInt(e.target.dataset.index);
-
   let source = [];
-
   if (newImportState.currentSelectMode === "history")
     source = newImportState.historyPlayers;
   else if (newImportState.currentSelectMode === "favorites")
     source = newImportState.favoritePlayers;
   else
     source = newImportState.dbPlayers;
-
   const player = source[idx];
-
   if (!newImportState.enterPlayers.some(
     ep => ep.displayName.toLowerCase() === player.displayName.toLowerCase()
   )) {
@@ -1355,41 +1291,30 @@ function newImportHandleSelectClick(e) {
   }
 }
 
-
 // ======================
 // FINAL ADD
 // ======================
 function newImportAddPlayers() {
-
   if (newImportState.enterPlayers.length === 0) {
     alert("No players to add!");
     return;
   }
-
   // save to DB
   newImportState.enterPlayers.forEach(p => {
     if (!newImportState.dbPlayers.some(dp => dp.displayName === p.displayName)) {
       newImportState.dbPlayers.push({ ...p });
     }
   });
-
-  localStorage.setItem(
-    "newImportPlayersDB",
-    JSON.stringify(newImportState.dbPlayers)
-  );
-
+  localStorage.setItem("newImportPlayersDB", JSON.stringify(newImportState.dbPlayers));
   // append history
   newImportState.historyPlayers = [
     ...newImportState.enterPlayers,
     ...newImportState.historyPlayers
   ].slice(0, 50);
-
   newImportSaveHistory();
-
   // external export (your existing function)
   if (typeof addPlayersFromText === "function") {
     addPlayersFromText(newImportState.enterPlayers);
   }
-
   newImportHideModal();
 }

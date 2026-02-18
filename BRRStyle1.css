@@ -764,18 +764,21 @@ body.disabled {
    MAIN TABS
 ========================= */
 .newImport-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  display: flex;  
+  align-items: center;
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #009ffd);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: none;
+  border-radius: 0;
 }
 
 .newImport-tab-btn {
   flex: 1;
-  padding: 0.75rem;
-  border-radius: 0.625rem;
+  padding: 0.75rem;  
   border: none;
   background: #e5e5e5;
-  font-size: 0.95rem;
+  font-size: 1.25rem;
   font-weight: 500;
   cursor: pointer;
   transition: 0.2s;
@@ -792,16 +795,24 @@ body.disabled {
 .newImport-subtabs {
   display: flex;
   gap: 0.375rem;
-  margin-bottom: 0.75rem;
+  margin: 0.1rem;
+
+  top: 0;
+  align-items: center;
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #538eb0b0);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: none;
+  border-radius: 0;
 }
 
 .newImport-subtab-btn {
   flex: 1;
   padding: 0.5rem;
-  border-radius: 0.5rem;
+  border-radius: 2.5rem;
   border: none;
   background: #eeeeee;
-  font-size: 0.8rem;
+  font-size: 1.15rem;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -829,12 +840,12 @@ body.disabled {
    TEXTAREA
 ========================= */
 #newImport-textarea {
-  width: 100%;
+  width: 98%;
   min-height: 7.5rem;
-  padding: 0.75rem;
+  padding: 0.75rem 0.75rem;
   border-radius: 0.625rem;
   border: 0.0625rem solid #ddd;
-  font-size: 0.875rem;
+  font-size: 1.25rem;
   resize: none;
   margin-bottom: 0.75rem;
   box-sizing: border-box;
@@ -857,8 +868,7 @@ body.disabled {
 .newImport-cards-container {
   flex: 1;
   overflow-y: auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: grid;  
   gap: 0.625rem;
   padding-right: 0.25rem;
 }
@@ -873,7 +883,7 @@ body.disabled {
   padding: 0.625rem;
   border-radius: 0.625rem;
   background: #f8f8f8;
-  font-size: 0.875rem;
+  font-size: 1.15rem;
   position: relative;
 }
 
@@ -955,3 +965,5 @@ body.disabled {
 .newImport-cancel-btn {
   background: #e0e0e0;
 }
+
+
