@@ -11,7 +11,7 @@ const translations = {
     resetAll: "Reset App",
     resetExcept: "Reset Games",
     enterCourts: "Enter Number of Courts",
-    importPlayers: "Import Multiple Players ▶",
+    importPlayers: "Import / Browse Players ▶",
     gender: "Gender",
     male: "Male",
     female: "Female",
