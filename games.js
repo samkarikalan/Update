@@ -203,298 +203,241 @@ function getNextFixedPairGames(schedulerState, fixedPairs, numCourts) {
 
 
 function AischedulerNextRound(schedulerState) {
+
   const { PlayedCount, activeplayers } = schedulerState;
-  let playmode = getPlayMode();
+  const playmode = getPlayMode();
   const page2 = document.getElementById("page2");
 
   let result;
 
-  if (playmode === "random") {
+  // Determine if competitive condition is satisfied
+  const canStartCompetitive =
+    activeplayers.length > 0 &&
+    activeplayers.every(p => (PlayedCount.get(p) || 0) >= 5);
+
+  // --------------------------------------------------
+  // RANDOM MODE
+  // --------------------------------------------------
+  if (playmode === "random" || !canStartCompetitive) {
+
+    // If switching FROM competitive TO random → reset random memory if needed
+    if (schedulerState._lastMode === "competitive") {
+      // Optional: reset if you want fresh random after comp
+      // resetForRandomPhase(schedulerState);
+    }
+
     result = RandomRound(schedulerState);
 
-    // 🔵 Set Random background
     page2.classList.remove("competitive-mode");
     page2.classList.add("random-mode");
 
-  } else {
-    if (activeplayers.every(p => (PlayedCount.get(p) || 0) >= 5)) {
-      result = CompetitiveRound(schedulerState);
+    schedulerState._lastMode = "random";
+  }
 
-      // 🟠 Set Competitive background
-      page2.classList.remove("random-mode");
-      page2.classList.add("competitive-mode");
+  // --------------------------------------------------
+  // COMPETITIVE MODE
+  // --------------------------------------------------
+  else {
 
-    } else {
-      result = RandomRound(schedulerState);
-
-      // 🔵 Still Random because condition not met
-      page2.classList.remove("competitive-mode");
-      page2.classList.add("random-mode");
+    // 🔥 RESET ONLY ONCE when entering competitive
+    if (schedulerState._lastMode !== "competitive") {
+      resetForCompetitivePhase(schedulerState);
     }
+
+    result = CompetitiveRound(schedulerState);
+
+    page2.classList.remove("random-mode");
+    page2.classList.add("competitive-mode");
+
+    schedulerState._lastMode = "competitive";
   }
 
   return result;
 }
 
-function startCompetitivePhaseIfNeeded(state) {
-  if (state.roundIndex === 6 && !state.phase2Started) {
-    state.pairPlayedSet = new Set();
-    state.gameHistorySet = new Set();
-    state.opponentMap = new Map();
-    state.pairCooldownMap = new Map();
-    state.phase2Started = true;
+function resetForCompetitivePhase(state) {
+
+  // Clear pair uniqueness memory
+  state.pairPlayedSet.clear();
+  state.playedTogether.clear();
+  state.gamesMap.clear();
+  state.pairCooldownMap.clear();
+
+  // Reset opponent tracking
+  state.opponentMap = new Map();
+  for (const p1 of state.activeplayers) {
+    const inner = new Map();
+    for (const p2 of state.activeplayers) {
+      if (p1 !== p2) inner.set(p2, 0);
+    }
+    state.opponentMap.set(p1, inner);
   }
+
+  // DO NOT TOUCH:
+  // winCount
+  // rankPoints
+  // PlayedCount
+  // restCount
+  // restQueue
 }
 
-function selectPlayersForRound(state, courts) {
-  const required = courts * 4;
+function getPlayingAndResting(state) {
 
-  const sorted = [...state.activeplayers].sort((a, b) => {
-    const restDiff = (state.restCount.get(b) || 0) - (state.restCount.get(a) || 0);
-    if (restDiff !== 0) return restDiff;
-    return (state.PlayedCount.get(a) || 0) - (state.PlayedCount.get(b) || 0);
-  });
+  const totalPlayers = state.activeplayers.length;
+  const playersPerRound = state.courts * 4;
 
-  return sorted.slice(0, required);
+  let resting = [];
+  let playing = [];
+
+  if (totalPlayers > playersPerRound) {
+    const needRest = totalPlayers - playersPerRound;
+    resting = selectRestPlayers(state, needRest); // your LIFO logic
+  }
+
+  const restSet = new Set(resting);
+  playing = state.activeplayers.filter(p => !restSet.has(p));
+
+  return { playing, resting };
 }
 
-function generateCandidateLayout(players, state, courts) {
-  const shuffled = [...players].sort(() => Math.random() - 0.5);
+function extractActiveFixedPairs(state, playing) {
 
-  const mode = Math.floor(Math.random() * 3);
+  const activePairs = [];
+  const lockedPlayers = new Set();
 
-  let arranged = [];
+  for (const pair of state.fixedPairs || []) {
+    const [a, b] = pair;
 
-  if (mode === 0) {
-    // Snake distribution
-    const ranked = [...shuffled].sort((a, b) =>
-      (state.rankPoints.get(b) || 0) - (state.rankPoints.get(a) || 0)
-    );
-
-    let forward = true;
-    for (let i = 0; i < courts; i++) arranged.push([]);
-
-    ranked.forEach((p, i) => {
-      const index = forward ? i % courts : courts - 1 - (i % courts);
-      arranged[index].push(p);
-      if ((i + 1) % courts === 0) forward = !forward;
-    });
-
-  } else {
-    // Pure shuffle grouping
-    for (let i = 0; i < courts; i++) {
-      arranged.push(shuffled.slice(i * 4, i * 4 + 4));
+    if (playing.includes(a) && playing.includes(b)) {
+      activePairs.push([a, b]);
+      lockedPlayers.add(a);
+      lockedPlayers.add(b);
     }
   }
 
-  return arranged.map(group => {
-    const sorted = [...group].sort((a, b) =>
-      (state.rankPoints.get(b) || 0) - (state.rankPoints.get(a) || 0)
-    );
-
-    return {
-      team1: [sorted[0], sorted[3]],
-      team2: [sorted[1], sorted[2]]
-    };
-  });
+  return { activePairs, lockedPlayers };
 }
 
-function isHardInvalid(candidate, state) {
-  if (!state.lastRoundGames) return false;
+function groupByTier(state, players) {
 
-  const serialize = g =>
-    [...g.team1, ...g.team2].sort().join("-");
+  const strong = [];
+  const inter = [];
+  const weak = [];
 
-  const lastGames = state.lastRoundGames.map(serialize);
+  for (const p of players) {
+    const rating = state.winCount.get(p) || 0;
 
-  return candidate.some(g => lastGames.includes(serialize(g)));
+    if (rating >= state.strongThreshold) strong.push(p);
+    else if (rating >= state.interThreshold) inter.push(p);
+    else weak.push(p);
+  }
+
+  return { strong, inter, weak };
 }
 
-function scoreCandidate(candidate, state) {
-  let score = 0;
+function buildBestTeam(state, pool) {
 
-  candidate.forEach(game => {
+  for (let i = 0; i < pool.length; i++) {
+    for (let j = i + 1; j < pool.length; j++) {
 
-    const pairs = [
-      game.team1,
-      game.team2
-    ];
+      const p1 = pool[i];
+      const p2 = pool[j];
 
-    pairs.forEach(pair => {
-      const key = [...pair].sort().join("-");
-      if (!state.pairPlayedSet.has(key)) score += 100;
-      else score -= 60;
-    });
+      const key = createSortedKey(p1, p2);
 
-    const gameKey = [...game.team1, ...game.team2].sort().join("-");
-    if (!state.gameHistorySet.has(gameKey)) score += 80;
-    else score -= 40;
+      if (!state.pairPlayedSet.has(key)) {
+        return [p1, p2];
+      }
+    }
+  }
 
-    // Opponent diversity
-    game.team1.forEach(p1 => {
-      game.team2.forEach(p2 => {
-        const oppCount =
-          state.opponentMap.get(p1)?.get(p2) || 0;
-        score -= oppCount * 10;
-      });
-    });
-
-    // Team balance
-    const team1Rank = game.team1.reduce((s, p) =>
-      s + (state.rankPoints.get(p) || 0), 0);
-    const team2Rank = game.team2.reduce((s, p) =>
-      s + (state.rankPoints.get(p) || 0), 0);
-
-    score -= Math.abs(team1Rank - team2Rank);
-
-    // Court spread
-    const all = [...game.team1, ...game.team2];
-    const ranks = all.map(p => state.rankPoints.get(p) || 0);
-    score -= (Math.max(...ranks) - Math.min(...ranks));
-
-  });
-
-  return score;
-}
-
-function updateHistory(candidate, state) {
-  candidate.forEach(game => {
-
-    // Pair history
-    [game.team1, game.team2].forEach(pair => {
-      const key = [...pair].sort().join("-");
-      state.pairPlayedSet.add(key);
-    });
-
-    // Game history
-    const gameKey = [...game.team1, ...game.team2].sort().join("-");
-    state.gameHistorySet.add(gameKey);
-
-    // Opponent history
-    game.team1.forEach(p1 => {
-      if (!state.opponentMap.has(p1))
-        state.opponentMap.set(p1, new Map());
-
-      game.team2.forEach(p2 => {
-        if (!state.opponentMap.has(p2))
-          state.opponentMap.set(p2, new Map());
-
-        const current =
-          state.opponentMap.get(p1).get(p2) || 0;
-
-        state.opponentMap.get(p1).set(p2, current + 1);
-        state.opponentMap.get(p2).set(p1, current + 1);
-      });
-    });
-
-    // Played count
-    [...game.team1, ...game.team2].forEach(p => {
-      state.PlayedCount.set(
-        p,
-        (state.PlayedCount.get(p) || 0) + 1
-      );
-    });
-
-  });
-
-  state.lastRoundGames = candidate;
+  // fallback if no unique pair
+  return [pool[0], pool[1]];
 }
 
 function CompetitiveRound(state) {
 
-  const {
-    activeplayers,
-    numCourts,
-    restCount
-  } = state;
-
-  const totalPlayers = activeplayers.length;
-  const playersPerRound = numCourts * 4;
-  const numResting = Math.max(totalPlayers - playersPerRound, 0);
-
-  /* ==========================
-     1️⃣ RESTING (same as Random)
-  ========================== */
-
-  const sortedForRest = [...state.restQueue];
-  const resting = sortedForRest.slice(0, numResting);
-
-  const playing = activeplayers
-    .filter(p => !resting.includes(p))
-    .slice(0, playersPerRound);
-
-  /* ==========================
-     2️⃣ RANK SORT (competitive logic)
-  ========================== */
-
-  const ranked = [...playing].sort((a, b) =>
-    (state.rankPoints.get(b) || 0) -
-    (state.rankPoints.get(a) || 0)
-  );
-
-  /* ==========================
-     3️⃣ SNAKE DISTRIBUTION
-  ========================== */
-
-  const courts = Array.from({ length: numCourts }, () => []);
-  let forward = true;
-
-  ranked.forEach((player, i) => {
-    const index = forward
-      ? i % numCourts
-      : numCourts - 1 - (i % numCourts);
-
-    courts[index].push(player);
-
-    if ((i + 1) % numCourts === 0) {
-      forward = !forward;
-    }
-  });
-
-  /* ==========================
-     4️⃣ BUILD GAMES
-  ========================== */
+  const { playing, resting } = getPlayingAndResting(state);
 
   const games = [];
+  const used = new Set();
 
-  courts.forEach((group, i) => {
+  // Step 1: Handle fixed pairs
+  const { activePairs, lockedPlayers } =
+      extractActiveFixedPairs(state, playing);
 
-    const sortedGroup = [...group].sort((a, b) =>
-      (state.rankPoints.get(b) || 0) -
-      (state.rankPoints.get(a) || 0)
-    );
+  // Add locked teams first
+  const lockedTeams = [...activePairs];
 
-    if (sortedGroup.length < 4) return;
+  // Remove locked players from free pool
+  const freePool = playing.filter(p => !lockedPlayers.has(p));
 
-    games.push({
-      court: i + 1,
-      pair1: [sortedGroup[0], sortedGroup[3]],
-      pair2: [sortedGroup[1], sortedGroup[2]]
-    });
-  });
+  // Step 2: Resolve locked teams first
+  while (lockedTeams.length > 0) {
 
-  /* ==========================
-     5️⃣ REST DISPLAY FORMAT
-  ========================== */
+    const team1 = lockedTeams.shift();
 
-  const restingWithNumber = resting.map(p => {
-    const c = restCount.get(p) || 0;
-    return `${p}#${c + 1}`;
-  });
+    const opponent = buildBestTeam(state, freePool);
 
-  /* ==========================
-     6️⃣ ROUND INDEX
-  ========================== */
+    games.push([team1, opponent]);
 
-  state.roundIndex = (state.roundIndex || 0) + 1;
+    team1.forEach(p => used.add(p));
+    opponent.forEach(p => used.add(p));
+
+    removePlayersFromArray(freePool, opponent);
+  }
+
+  // Step 3: Pair remaining free pool
+  const tierGroups = groupByTier(state, freePool);
+
+  const remaining = [...freePool];
+
+  while (remaining.length >= 4) {
+
+    const team1 = buildBestTeam(state, remaining);
+    removePlayersFromArray(remaining, team1);
+
+    const team2 = buildBestTeam(state, remaining);
+    removePlayersFromArray(remaining, team2);
+
+    games.push([team1, team2]);
+  }
+
+  // Step 4: Update memory
+  updateAfterRound(state, games);
 
   return {
-    round: state.roundIndex,
-    resting: restingWithNumber,
-    playing,
-    games
+    games,
+    resting
   };
 }
+
+function updateAfterRound(state, games) {
+
+  for (const [team1, team2] of games) {
+
+    const key1 = createSortedKey(team1[0], team1[1]);
+    const key2 = createSortedKey(team2[0], team2[1]);
+
+    state.pairPlayedSet.add(key1);
+    state.pairPlayedSet.add(key2);
+
+    // update opponent map
+    for (const p1 of team1) {
+      for (const p2 of team2) {
+        state.opponentMap.get(p1).set(
+          p2,
+          state.opponentMap.get(p1).get(p2) + 1
+        );
+        state.opponentMap.get(p2).set(
+          p1,
+          state.opponentMap.get(p2).get(p1) + 1
+        );
+      }
+    }
+  }
+}
+
 
 
 function RandomRound(schedulerState) {
