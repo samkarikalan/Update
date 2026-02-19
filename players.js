@@ -1,3 +1,23 @@
+const textarea = document.getElementById("player-name");
+const defaultHeight = 40;
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
+textarea.addEventListener("input", function () {
+  autoResize(this);
+});
+
+textarea.addEventListener("blur", function () {
+  if (!this.value.trim()) {
+    this.style.height = defaultHeight + "px";
+  }
+});
+
+
+
 function getGenderIconByName(playerName) {
   const player = schedulerState.allPlayers.find(
     p => p.name === playerName
@@ -103,6 +123,126 @@ function hideImportModal() {
    ADD SINGLE PLAYER
 ========================= */
 function addPlayer() {
+
+  const textarea = document.getElementById("player-name");
+  if (!textarea) return;
+
+  const text = textarea.value.trim();
+  if (!text) return;
+
+  const defaultGender =
+    document.getElementById("player-gender")?.value || "Male";
+
+  const lines = text.split(/\r?\n/);
+
+  // ======================
+  // GENDER LOOKUP (multi-language)
+  // ======================
+  const genderLookup = {};
+
+  if (typeof translations !== "undefined") {
+    Object.values(translations).forEach(langObj => {
+      if (langObj.male)
+        genderLookup[langObj.male.toLowerCase()] = "Male";
+
+      if (langObj.female)
+        genderLookup[langObj.female.toLowerCase()] = "Female";
+    });
+  }
+
+  // fallback English
+  genderLookup["male"] = "Male";
+  genderLookup["m"] = "Male";
+  genderLookup["female"] = "Female";
+  genderLookup["f"] = "Female";
+
+  const extractedNames = [];
+
+  for (let line of lines) {
+
+    line = line.trim();
+    if (!line) continue;
+
+    let gender = defaultGender;
+
+    // Remove numbering (1. John → John)
+    const match = line.match(/^(\d+\.?\s*)?(.*)$/);
+    if (match) line = match[2].trim();
+
+    // ======================
+    // name, gender
+    // ======================
+    if (line.includes(",")) {
+      const parts = line.split(",").map(p => p.trim());
+      line = parts[0];
+
+      if (parts[1]) {
+        const g = parts[1].toLowerCase();
+        if (genderLookup[g]) gender = genderLookup[g];
+      }
+    }
+
+    // ======================
+    // name (gender)
+    // ======================
+    const parenMatch = line.match(/\(([^)]+)\)/);
+    if (parenMatch) {
+      const inside = parenMatch[1].trim().toLowerCase();
+
+      if (genderLookup[inside])
+        gender = genderLookup[inside];
+
+      line = line.replace(/\([^)]+\)/, "").trim();
+    }
+
+    if (!line) continue;
+
+    const normalized = line.toLowerCase();
+
+    // Avoid duplicates
+    const exists =
+      schedulerState.allPlayers.some(
+        p => p.name.trim().toLowerCase() === normalized
+      ) ||
+      extractedNames.some(
+        p => p.name.trim().toLowerCase() === normalized
+      );
+
+    if (!exists) {
+      extractedNames.push({
+        name: line,
+        gender,
+        active: true
+      });
+    }
+  }
+
+  if (extractedNames.length === 0) return;
+
+  // ======================
+  // SAVE
+  // ======================
+  schedulerState.allPlayers.push(...extractedNames);
+
+  schedulerState.activeplayers = schedulerState.allPlayers
+    .filter(p => p.active)
+    .map(p => p.name)
+    .reverse();
+
+  updatePlayerList();
+  updateFixedPairSelectors();
+
+  // ======================
+  // RESET UI (smooth shrink)
+  // ======================
+  const defaultHeight = 40;
+  textarea.value = "";
+  textarea.style.height = defaultHeight + "px";
+  textarea.focus();
+}
+
+
+function oldaddPlayer() {
   const name = document.getElementById('player-name').value.trim();
   const gender = document.getElementById('player-gender').value;
   if (name && !schedulerState.allPlayers.some(p => p.name.toLowerCase() === name.toLowerCase())) {
