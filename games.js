@@ -213,7 +213,7 @@ function AischedulerNextRound(schedulerState) {
   // Determine if competitive condition is satisfied
   const canStartCompetitive =
     activeplayers.length > 0 &&
-    activeplayers.every(p => (PlayedCount.get(p) || 0) >= 5);
+    activeplayers.every(p => (PlayedCount.get(p) || 0) >= 50);
 
   // --------------------------------------------------
   // RANDOM MODE
