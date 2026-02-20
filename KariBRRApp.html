@@ -274,6 +274,7 @@
   <div id="newImportModal" class="newImport-modal" style="display:none;">
   <div class="newImport-modal-content">
     <!-- Main Tabs -->
+    <!--
     <div class="newImport-tabs">
       <button class="newImport-tab-btn active"
         onclick="newImportShowTab('enter')"
@@ -284,7 +285,7 @@
         id="newImportSelectTabBtn"
         data-i18n="select">Select</button>
     </div>
-    <!-- ENTER TAB -->
+    <!-- ENTER TAB 
     <div class="newImport-tab-content" id="newImportEnterTab">
       <textarea id="newImport-textarea"
         data-i18n-placeholder="pastePlayers"
@@ -299,6 +300,8 @@
           data-i18n="cancel">Cancel</button>
       </div>
     </div>
+    -->
+
     <!-- SELECT TAB -->
     <div class="newImport-tab-content hidden" id="newImportSelectTab">
       <!-- Sub Tabs -->
@@ -325,6 +328,16 @@
       <!-- Cards -->
       <div id="newImportSelectCards" class="newImport-cards-container"></div>
     </div>
+
+
+    <div class="newImport-footer">
+        <button class="newImport-ok-btn"
+          onclick="addPlayersFromInputUI()"
+          data-i18n="ok">OK</button>
+        <button class="newImport-cancel-btn"
+          onclick="newImportHideModal()"
+          data-i18n="cancel">Cancel</button>
+      </div>
   </div>
 </div>
   
