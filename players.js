@@ -90,10 +90,56 @@ function addFixedCard(p1, p2, key) {
 function pastePlayersText() {
   const textarea = document.getElementById('players-textarea');
 
+  const stopMarkers = [
+    /court full/i, /wl/i, /waitlist/i, /late cancel/i,
+    /cancelled/i, /reserve/i, /bench/i, /extras/i, /backup/i
+  ];
+
+  function cleanText(text) {
+    const lines = text.split(/\r?\n/);
+
+    let startIndex = 0;
+    let stopIndex = lines.length;
+
+    // Find first "Confirm" line
+    const confirmLineIndex = lines.findIndex(line => /confirm/i.test(line));
+
+    if (confirmLineIndex >= 0) {
+      startIndex = confirmLineIndex + 1;
+
+      for (let i = startIndex; i < lines.length; i++) {
+        if (stopMarkers.some(re => re.test(lines[i]))) {
+          stopIndex = i;
+          break;
+        }
+      }
+    }
+
+    const cleanedLines = [];
+
+    for (let i = startIndex; i < stopIndex; i++) {
+      let line = lines[i].trim();
+
+      if (!line) continue;                  // skip empty
+      if (line.toLowerCase().includes("http")) continue; // skip links
+
+      cleanedLines.push(line);
+    }
+
+    return cleanedLines.join("\n");
+  }
+
   if (navigator.clipboard && navigator.clipboard.readText) {
     navigator.clipboard.readText()
       .then(text => {
-        textarea.value += (textarea.value ? '\n' : '') + text;
+        const cleaned = cleanText(text);
+
+        if (!cleaned) {
+          alert("No valid player names found.");
+          return;
+        }
+
+        textarea.value += (textarea.value ? '\n' : '') + cleaned;
         textarea.focus();
       })
       .catch(() => {
