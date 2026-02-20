@@ -144,18 +144,20 @@
   </div> 
 
   <div class="card">
-    <input type="text"
-      id="player-name"
-      data-i18n-placeholder="enterPlayerName">
+  <textarea 
+    id="player-name"
+    rows="1"
+    data-i18n-placeholder="enterPlayerName"
+  ></textarea>
 
-    <div class="row-addplayer">  
-      <select id="player-gender">
-        <option value="Male" data-i18n="male"></option>
-        <option value="Female" data-i18n="female"></option>
-      </select>
-      <button class="add-button" onclick="addPlayer()" data-i18n="addPlayer"></button>
-    </div>
+  <div class="row-addplayer">  
+    <select id="player-gender">
+      <option value="Male" data-i18n="male"></option>
+      <option value="Female" data-i18n="female"></option>
+    </select>
+    <button class="add-button" onclick="addPlayer()" data-i18n="addPlayer"></button>
   </div>
+</div>
 
   <div class="card">
     <div id="playerList" class="player-list"></div>
