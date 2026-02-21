@@ -755,228 +755,173 @@ body.disabled {
 /* =========================
    MODAL FULLSCREEN
 ========================= */
-.newImport-modal {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #ffffff;
-  z-index: 9999;
-  display: none;
+
+/* modal */
+/* ================= MODAL ================= */
+.newImport-modal{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100vh;
+  z-index:9999;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  background:rgba(0,0,0,.4);
 }
 
-.newImport-modal-content {
+.newImport-modal-content{
+  margin:40px 0;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  width:900px;
+  max-width:95vw;
+}
+
+/* ================= LAYOUT ================= */
+.newImport-layout{
+  display:grid;
+  grid-template-columns:1fr 1.4fr;
+  gap:20px;
+  min-height:420px;
+}
+
+.newImport-left{
+  border-right:1px solid #ddd;
+  padding-right:15px;
+}
+
+.newImport-right {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 1rem;
-  box-sizing: border-box;
+  gap: 10px;
+  height: 100%;        /* allow child to stretch */
+  min-height: 0;       /* IMPORTANT for scroll in flex */
 }
 
-/* =========================
-   MAIN TABS
-========================= */
-.newImport-tabs {
-  display: flex;  
-  align-items: center;
-  padding: 5px 12px;
-  background: linear-gradient(135deg, #009ffd);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  border: none;
-  border-radius: 0;
+/* ================= TABS ================= */
+.newImport-subtabs{
+  display:flex;
+  border-bottom:2px solid #ddd;
 }
 
-.newImport-tab-btn {
-  flex: 1;
-  padding: 0.75rem;  
-  border: none;
-  background: #e5e5e5;
-  font-size: 1.25rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.2s;
+.newImport-subtab-btn{
+  flex:1;
+  padding:10px 0;
+  border:none;
+  background:none;
+  font-weight:600;
+  cursor:pointer;
+  border-bottom:3px solid transparent;
 }
 
-.newImport-tab-btn.active {
-  background: #8a007a;
-  color: #fff;
+.newImport-subtab-btn.active{
+  border-bottom:3px solid #007bff;
+  color:#007bff;
 }
 
-/* =========================
-   SUB TABS
-========================= */
-.newImport-subtabs {
-  display: flex;
-  gap: 0.375rem;
-  margin: 0.1rem;
-
-  top: 0;
-  align-items: center;
-  padding: 5px 12px;
-  background: linear-gradient(135deg, #538eb0b0);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  border: none;
-  border-radius: 0;
+/* ================= SEARCH ================= */
+.newImport-search{
+  padding:8px;
 }
 
-.newImport-subtab-btn {
-  flex: 1;
-  padding: 0.5rem;
-  border-radius: 2.5rem;
-  border: none;
-  background: #eeeeee;
-  font-size: 1.15rem;
-  cursor: pointer;
-  transition: 0.2s;
+/* ================= BUTTONS ================= */
+.newImport-clear-btn{
+  padding:6px 10px;
+  font-size:12px;
+  border:1px solid #ddd;
+  background:#f8f8f8;
+  border-radius:6px;
+  cursor:pointer;
 }
 
-.newImport-subtab-btn.active {
-  background: #8a007a;
-  color: white;
-}
-
-/* =========================
-   TAB CONTENT
-========================= */
-.newImport-tab-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* =========================
-   TEXTAREA
-========================= */
-#newImport-textarea {
-  width: 98%;
-  min-height: 7.5rem;
-  padding: 0.75rem 0.75rem;
-  border-radius: 0.625rem;
-  border: 0.0625rem solid #ddd;
-  font-size: 1.25rem;
-  resize: none;
-  margin-bottom: 0.75rem;
-  box-sizing: border-box;
-}
-
-/* =========================
-   SEARCH BAR
-========================= */
-.newImport-search {
-  padding: 0.625rem;
-  border-radius: 0.5rem;
-  border: 0.0625rem solid #ddd;
-  margin-bottom: 0.75rem;
-  font-size: 0.875rem;
-}
-
-/* =========================
-   PLAYER CARDS CONTAINER
-========================= */
+/* ================= CARDS GRID ================= */
 .newImport-cards-container {
-  flex: 1;
-  overflow-y: auto;
-  display: grid;  
-  gap: 0.625rem;
-  padding-right: 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 220px);
+  gap: 10px;
+
+  flex: 1;            /* take remaining space */
+  overflow-y: auto;   /* enable scroll */
+  max-height: 420px;  /* adjust if you want taller */
+  padding-right: 5px; /* prevent scrollbar overlap */
 }
 
-/* =========================
-   PLAYER CARD
-========================= */
-.newImport-player-card {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem;
-  border-radius: 0.625rem;
-  background: #f8f8f8;
-  font-size: 1.15rem;
-  position: relative;
+/* ================= PLAYER CARD ================= */
+.newImport-player-card{
+  width:220px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  background:#fff;
 }
 
-/* Gender Accent */
-.newImport-player-card.male {
-  border-left: 0.25rem solid #4a90e2;
+/* top row → gender + name */
+.newImport-player-top{
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
-.newImport-player-card.female {
-  border-left: 0.25rem solid #e24a90;
+.newImport-player-top img{
+  width:24px;
+  cursor:pointer;
 }
 
-/* Player Name */
-.newImport-player-name {
-  flex: 1;
-  word-break: break-word;
+.newImport-player-name{
+  flex:1;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
 }
 
-/* Gender Icon */
-.newImport-gender-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  cursor: pointer;
+/* bottom row → buttons */
+.newImport-player-actions{
+  display:flex;
+  gap:6px;
 }
 
-/* =========================
-   CARD BUTTONS
-========================= */
-.newImport-add-btn,
-.newImport-remove-btn,
-.newImport-fav-btn {
-  border: none;
-  background: transparent;
-  font-size: 1rem;
-  cursor: pointer;
+/* ================= SELECTED SECTION ================= */
+.newImport-selected-header{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
 }
 
-.newImport-add-btn {
-  color: #2e7d32;
+.newImport-selected-container{
+  max-height:360px;
+  overflow:auto;
 }
 
-.newImport-remove-btn {
-  color: #c62828;
+/* smaller selected cards */
+#newImportSelectedCards .newImport-player-card{
+  font-size:12px;
+  padding:6px;
+  background:#f7f9fc;
 }
 
-.newImport-fav-btn {
-  color: #f9a825;
+#newImportSelectedCards .newImport-player-name{
+  white-space:normal;
+  word-break:break-word;
 }
 
-.newImport-add-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+/* ================= FOOTER ================= */
+.newImport-footer{
+  margin-top:20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
 }
 
-/* =========================
-   FOOTER
-========================= */
-.newImport-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.625rem;
-  margin-top: 0.75rem;
+.newImport-cards-container::-webkit-scrollbar {
+  width: 6px;
 }
 
-.newImport-ok-btn,
-.newImport-cancel-btn {
-  padding: 0.625rem 1.125rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
+.newImport-cards-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 6px;
 }
-
-.newImport-ok-btn {
-  background: #8a007a;
-  color: white;
-}
-
-.newImport-cancel-btn {
-  background: #e0e0e0;
-}
-
-
