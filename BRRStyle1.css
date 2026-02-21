@@ -773,34 +773,31 @@ body.disabled {
 .newImport-modal-content{
   margin:0px 0;
   background:#fff;
-  padding:20px;
+  padding:5px;
   border-radius:10px;
-  width:95%;
-  max-width:95%;
+  width:100%;
+  height: 100%; 
+  
 }
 
 /* ================= LAYOUT ================= */
-.newImport-layout{
-  display:grid;
-  grid-template-columns:0.8fr 1fr;
-  gap:5px;
-  min-height:100%;
+.newImport-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 5px;
 }
 
-.newImport-left{
-  border-right:1px solid #ddd;
-  padding-right:15px;
-  max-width:95%;
+.newImport-left {
+  border-right: 1px solid #ddd;
+  padding: 10px;
 }
 
-.newImport-right {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 100%;        /* allow child to stretch */
-  min-height: 0;       /* IMPORTANT for scroll in flex */
-  max-width:95%;
-  
+@media (max-width: 480px) {
+  .newImport-left {
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+  }
 }
 
 /* ================= TABS ================= */
