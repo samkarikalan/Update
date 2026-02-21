@@ -758,180 +758,149 @@ body.disabled {
 
 /* modal */
 /* ================= MODAL ================= */
-.newImport-modal{
-  position:fixed;
-  inset:0;
+/* Modal background */
+/* ================= MODAL ================= */
+.newImport-modal {
+  position: fixed;
+  inset: 0; /* top/right/bottom/left = 0 */
   width:100%;
-  height:100vh;
-  z-index:9999;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  background:rgba(0,0,0,.4);
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* align modal top */
+  padding: 0px 0px;
+  overflow-y: auto; /* allow scrolling if content taller than viewport */
+  z-index: 9999;
 }
 
-.newImport-modal-content{
-  margin:0px 0;
-  background:#fff;
-  padding:5px;
-  border-radius:10px;
-  width:100%;
-  height: 100%; 
-  
+/* Modal container */
+.newImport-container {
+  display: flex;
+  gap: 1px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  flex-wrap: wrap; /* wrap on small screens */
 }
 
-/* ================= LAYOUT ================= */
-.newImport-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 5px;
-}
+/* ================= LEFT → Selected Players ================= */
 
-.newImport-left {
-  border-right: 1px solid #ddd;
-  padding: 10px;
-}
 
-@media (max-width: 480px) {
+@media {
   .newImport-left {
     border-right: none;
     border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
+    padding-right: 0;
+    padding-bottom: 15px;
+    width: 100%;
   }
 }
 
-/* ================= TABS ================= */
-.newImport-subtabs{
-  display:flex;
-  border-bottom:2px solid #ddd;
+
+
+
+/* ================= RIGHT → Tabs + Players ================= */
+
+
+/* Tabs */
+.newImport-subtabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
 }
 
-.newImport-subtab-btn{
-  flex:1;
-  padding:10px 0;
-  border:none;
-  background:none;
-  font-weight:600;
-  cursor:pointer;
-  border-bottom:3px solid transparent;
+.newImport-subtab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #eee;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
-.newImport-subtab-btn.active{
-  border-bottom:3px solid #007bff;
-  color:#007bff;
+.newImport-subtab-btn.active {
+  background: #2196f3;
+  color: white;
 }
 
-/* ================= SEARCH ================= */
-.newImport-search{
-  padding:8px;
+/* Search box */
+.newImport-search {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 90%;
 }
 
-/* ================= BUTTONS ================= */
-.newImport-clear-btn{
-  padding:6px 10px;
-  font-size:12px;
-  border:1px solid #ddd;
-  background:#f8f8f8;
-  border-radius:6px;
-  cursor:pointer;
+/* Clear buttons */
+.newImport-list-actions {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
 }
 
-/* ================= CARDS GRID ================= */
+.newImport-clear-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #ff5252;
+  color: white;
+  font-size: 0.9rem;
+}
+
+/* Cards container */
 .newImport-cards-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 220px);
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-
-  flex: 1;            /* take remaining space */
-  overflow-y: auto;   /* enable scroll */
-  max-height: 420px;  /* adjust if you want taller */
+  overflow-y: auto;
+ 
   padding-right: 5px; /* prevent scrollbar overlap */
 }
 
 /* ================= PLAYER CARD ================= */
-.newImport-player-card{
-  width:220px;
-  border:1px solid #ddd;
-  border-radius:8px;
-  padding:8px;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  background:#fff;
+.newImport-player-card {
+  width: 95%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #fff;
 }
 
-/* top row → gender + name */
-.newImport-player-top{
-  display:flex;
-  align-items:center;
-  gap:8px;
+/* Top row → icon + name */
+.newImport-player-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.newImport-player-top img{
-  width:24px;
-  cursor:pointer;
+.newImport-player-top img {
+  width: 24px;
+  cursor: pointer;
 }
 
-.newImport-player-name{
-  flex:1;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
+.newImport-player-name {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-/* bottom row → buttons */
-.newImport-player-actions{
-  display:flex;
-  gap:6px;
-}
-
-/* ================= SELECTED SECTION ================= */
-.newImport-selected-header{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:10px;
-}
-
-.newImport-selected-container{
-  max-height:360px;
-  overflow:auto;
-}
-
-/* smaller selected cards */
-#newImportSelectedCards .newImport-player-card{
-  font-size:12px;
-  padding:6px;
-  background:#f7f9fc;
-}
-
-#newImportSelectedCards .newImport-player-name{
-  white-space:normal;
-  word-break:break-word;
-}
-
-/* ================= FOOTER ================= */
-.newImport-footer{
-  margin-top:20px;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-}
-
-.newImport-cards-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.newImport-cards-container::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 6px;
-}
-
+/* Bottom row → buttons */
 .newImport-player-actions {
   display: flex;
-  gap: 10px;
+  gap: 6px;
 }
 
-/* base circle button */
+/* Circular buttons */
 .circle-btn {
   width: 40px;
   height: 40px;
@@ -946,31 +915,62 @@ body.disabled {
   transition: all 0.2s ease;
 }
 
-/* hover */
 .circle-btn:hover {
   transform: scale(1.1);
 }
 
-/* ⭐ favorite selected → yellow */
 .circle-btn.active-favorite {
   background: gold;
   color: white;
 }
 
-/* ➕ added selected → blue */
 .circle-btn.active-added {
   background: #2196f3;
   color: white;
 }
 
-/* delete button style */
 .circle-btn.delete {
   background: #ff5252;
   color: white;
 }
 
-/* disabled add button */
 .circle-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* ================= FOOTER ================= */
+.newImport-footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.newImport-ok-btn {
+  background: #2196f3;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.newImport-cancel-btn {
+  background: #ccc;
+  color: black;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Scrollbar style */
+.newImport-cards-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.newImport-cards-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 6px;
 }

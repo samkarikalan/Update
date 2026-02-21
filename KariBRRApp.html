@@ -269,82 +269,59 @@
 <!-- ============================= -->
 <!--           Import Modal        -->
 <!-- ============================= -->
-  <!-- NEW IMPORT MODAL -->
-  <!-- PLAYER IMPORT MODAL -->
-<div id="newImportModal"
-     class="newImport-modal"
-     style="display:none;"
+<div id="newImportModal" class="newImport-modal" style="display:none;"
      onclick="if(event.target===this)newImportHideModal()">
 
-  <div class="newImport-modal-content">
+  <!-- Modal content -->
+  <div class="newImport-container">
 
-    <div class="newImport-layout">
-
-      <!-- LEFT → SELECTED PLAYERS -->
-      <div class="newImport-left">
-
-        <div class="newImport-selected-header">
-          <strong>
-            Selected (<span id="newImportSelectedCount">0</span>)
-          </strong>
-
-          <button class="newImport-clear-btn"
-                  onclick="newImportClearSelected()">Clear</button>
-        </div>
-
-        <div id="newImportSelectedCards"
-             class="newImport-cards-container newImport-selected-container">
-        </div>
-
+    <!-- LEFT → Selected Players -->
+    <div class="newImport-left">
+      <div class="newImport-selected-header">
+        <strong>Selected (<span id="newImportSelectedCount">0</span>)</strong>
+        <button class="newImport-clear-btn" onclick="newImportClearSelected()">Clear</button>
       </div>
 
+      <div id="newImportSelectedCards" class="newImport-cards-container newImport-selected-container">
+        <!-- Selected player cards appear here -->
+      </div>
+    </div>
 
-      <!-- RIGHT → HISTORY / FAVORITES -->
-      <div class="newImport-right">
+    <!-- RIGHT → Tabs + Players -->
+    <div class="newImport-right">
 
-        <!-- Tabs -->
-        <div class="newImport-subtabs">
-          <button class="newImport-subtab-btn active"
-                  onclick="newImportShowSelectMode('history')"
-                  id="newImportHistoryBtn">History</button>
-
-          <button class="newImport-subtab-btn"
-                  onclick="newImportShowSelectMode('favorites')"
-                  id="newImportFavoritesBtn">Favorites</button>
-        </div>
-
-        <!-- Search -->
-        <input type="text"
-               id="newImportSearch"
-               class="newImport-search"
-               placeholder="Search players">
-
-        <!-- Clear -->
-        <div class="newImport-list-actions">
-          <button class="newImport-clear-btn"
-                  onclick="newImportClearHistory()">Clear History</button>
-
-          <button class="newImport-clear-btn"
-                  onclick="newImportClearFavorites()">Clear Favorites</button>
-        </div>
-
-        <!-- Player list -->
-        <div id="newImportSelectCards"
-             class="newImport-cards-container"></div>
-
+      <!-- Tabs -->
+      <div class="newImport-subtabs">
+        <button class="newImport-subtab-btn active"
+                onclick="newImportShowSelectMode('history')"
+                id="newImportHistoryBtn">History</button>
+        <button class="newImport-subtab-btn"
+                onclick="newImportShowSelectMode('favorites')"
+                id="newImportFavoritesBtn">Favorites</button>
       </div>
 
-    </div>
+      <!-- Search -->
+      <input type="text" id="newImportSearch" class="newImport-search" placeholder="Search players">
 
-    <!-- FOOTER -->
-    <div class="newImport-footer">
-      <button onclick="addPlayersFromInputUI()">OK</button>
-      <button onclick="newImportHideModal()">Cancel</button>
-    </div>
+      <!-- Clear buttons -->
+      <div class="newImport-list-actions">
+        <button class="newImport-clear-btn" onclick="newImportClearHistory()">Clear History</button>
+        <button class="newImport-clear-btn" onclick="newImportClearFavorites()">Clear Favorites</button>
+      </div>
 
+      <!-- Player list -->
+      <div id="newImportSelectCards" class="newImport-cards-container">
+        <!-- Player cards appear here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="newImport-footer">
+    <button class="newImport-ok-btn" onclick="addPlayersFromInputUI()">OK</button>
+    <button class="newImport-cancel-btn" onclick="newImportHideModal()">Cancel</button>
   </div>
 </div>
-  
 
 
 
