@@ -761,7 +761,7 @@ body.disabled {
 .newImport-modal{
   position:fixed;
   inset:0;
-  width:100vw;
+  width:100%;
   height:100vh;
   z-index:9999;
   display:flex;
@@ -771,25 +771,26 @@ body.disabled {
 }
 
 .newImport-modal-content{
-  margin:40px 0;
+  margin:0px 0;
   background:#fff;
   padding:20px;
   border-radius:10px;
-  width:900px;
-  max-width:95vw;
+  width:95%;
+  max-width:95%;
 }
 
 /* ================= LAYOUT ================= */
 .newImport-layout{
   display:grid;
-  grid-template-columns:1fr 1.4fr;
-  gap:20px;
-  min-height:420px;
+  grid-template-columns:0.8fr 1fr;
+  gap:5px;
+  min-height:100%;
 }
 
 .newImport-left{
   border-right:1px solid #ddd;
   padding-right:15px;
+  max-width:95%;
 }
 
 .newImport-right {
@@ -798,6 +799,8 @@ body.disabled {
   gap: 10px;
   height: 100%;        /* allow child to stretch */
   min-height: 0;       /* IMPORTANT for scroll in flex */
+  max-width:95%;
+  
 }
 
 /* ================= TABS ================= */
@@ -924,4 +927,53 @@ body.disabled {
 .newImport-cards-container::-webkit-scrollbar-thumb {
   background: #ccc;
   border-radius: 6px;
+}
+
+.newImport-player-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* base circle button */
+.circle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* hover */
+.circle-btn:hover {
+  transform: scale(1.1);
+}
+
+/* ⭐ favorite selected → yellow */
+.circle-btn.active-favorite {
+  background: gold;
+  color: white;
+}
+
+/* ➕ added selected → blue */
+.circle-btn.active-added {
+  background: #2196f3;
+  color: white;
+}
+
+/* delete button style */
+.circle-btn.delete {
+  background: #ff5252;
+  color: white;
+}
+
+/* disabled add button */
+.circle-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

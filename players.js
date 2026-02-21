@@ -1357,15 +1357,29 @@ function newImportRefreshSelectCards(){
           <div class="newImport-player-name">${p.displayName}</div>
         </div>
 
-        <div class="newImport-player-actions">
-          <button data-action="favorite" data-index="${i}">
-            ${fav?"★":"☆"}
-          </button>
-          <button data-action="delete" data-index="${i}">×</button>
-          <button data-action="add" data-index="${i}" ${added?"disabled":""}>
-            ${added?"✓":"+"}
-          </button>
-        </div>
+		<div class="newImport-player-actions">
+		  <button 
+		    class="circle-btn favorite ${fav ? 'active-favorite' : ''}" 
+		    data-action="favorite" 
+		    data-index="${i}">
+		    ${fav ? "★" : "☆"}
+		  </button>
+		
+		  <button 
+		    class="circle-btn delete" 
+		    data-action="delete" 
+		    data-index="${i}">
+		    ×
+		  </button>
+		
+		  <button 
+		    class="circle-btn add ${added ? 'active-added' : ''}" 
+		    data-action="add" 
+		    data-index="${i}" 
+		    ${added ? "disabled" : ""}>
+		    ${added ? "✓" : "+"}
+		  </button>
+		</div>
       `;
 
       newImportSelectCards.appendChild(card);
@@ -1494,3 +1508,20 @@ function newImportClearFavorites(){
   localStorage.setItem("newImportFavorites","[]");
   newImportRefreshSelectCards();
 }
+
+document.addEventListener("click", (e) => {
+  if (!e.target.matches(".circle-btn")) return;
+
+  const action = e.target.dataset.action;
+
+  if (action === "favorite") {
+    e.target.classList.toggle("active-favorite");
+    e.target.textContent = e.target.classList.contains("active-favorite") ? "★" : "☆";
+  }
+
+  if (action === "add") {
+    e.target.classList.add("active-added");
+    e.target.textContent = "✓";
+    e.target.disabled = true;
+  }
+});
