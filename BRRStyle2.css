@@ -88,7 +88,7 @@
   padding: 5px 10px;
   border-radius: 20px;
   background: linear-gradient(to bottom right, #d6f0ff, #b8e0f8);
-  font-size: 22px;
+  font-size: 1.4rem;
 }
 
 /* Toggle switch */
@@ -162,7 +162,7 @@ input:checked + .slider:before {
 }
 
 .confirm-title {
-  font-size: 14px;
+  font-size: 1rem;
   margin-bottom: 14px;
 }
 
@@ -192,7 +192,7 @@ input:checked + .slider:before {
 .courtname {
   text-align: center;
   margin: 2px ;  
-  font-size:12px;
+  font-size: 0.8rem;
 }
 .teams {
   display: flex;
@@ -587,8 +587,8 @@ input:checked + .slider:before {
   font-family: sans-serif;
 }
 .row-label {
-  width: auto;         /* adjust based on your layout */
-  font-size: 17px;
+  width: auto;
+  font-size: 1.1rem;
   padding: 5px 5px;
   color: #333;
 }
@@ -608,7 +608,7 @@ input:checked + .slider:before {
 
 
 #num-courts {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
@@ -619,7 +619,7 @@ input:checked + .slider:before {
   border: none;
   background: #1a8656;
   color: white;
-  font-size: 17px;
+  font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;  
   
@@ -634,7 +634,7 @@ input:checked + .slider:before {
   
   padding: 6px 5px;
   border-radius: 20px;
-  font-size: 20px;
+  font-size: 1.25rem;
   user-select: none;
 
   display: inline-flex;        /* keeps it inline but flex-enabled */
@@ -662,7 +662,7 @@ input:checked + .slider:before {
 }
 
 .sec {
-  font-size: 14px;
+  font-size: 0.9rem;
   text-align: center;
   padding: 3px; 
 }
@@ -724,7 +724,7 @@ body.locked .swap-icon {
 
 /* Navigation Buttons */
 .round-navigation button {
-  font-size: 15px;
+  font-size: 1rem;
   background: #800080;
   display: flex;
   align-items: center;
@@ -805,7 +805,7 @@ body.locked .swap-icon {
 .action {
   padding: 10px 0;
   border: none;
-  font-size: 18px;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #ffffff;
   cursor: pointer;
@@ -830,7 +830,7 @@ body.locked .swap-icon {
 /* MID – icon / neutral action */
 .action.mid {
   flex: 0.5;
-  font-size: 26px;
+  font-size: 1.6rem;
   background: #000000; /* deep neutral */
 }
 
@@ -852,7 +852,7 @@ body.locked .swap-icon {
   width: 100%;
   padding: 8px 0;
   border: none;
-  font-size: 18px;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #fff;
   cursor: pointer;
