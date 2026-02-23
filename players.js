@@ -1291,7 +1291,41 @@ function newImportHideModal(){
 
 
 // ================= TAB SWITCH =================
+
 function newImportShowSelectMode(mode){
+
+  // keep your state
+  newImportState.currentSelectMode = mode;
+
+  // remove active from all tabs
+  document.querySelectorAll(".newImport-subtab-btn")
+    .forEach(btn => btn.classList.remove("active"));
+
+  // activate selected tab
+  document.getElementById(
+    "newImport" + mode.charAt(0).toUpperCase() + mode.slice(1) + "Btn"
+  )?.classList.add("active");
+
+  /* ---------- NEW: toggle clear buttons ---------- */
+
+  const clearHistory = document.getElementById("newImportClearHistoryBtn");
+  const clearFavorites = document.getElementById("newImportClearFavoritesBtn");
+
+  if(clearHistory && clearFavorites){
+    if(mode === "history"){
+      clearHistory.style.display = "block";
+      clearFavorites.style.display = "none";
+    }else{
+      clearHistory.style.display = "none";
+      clearFavorites.style.display = "block";
+    }
+  }
+
+  /* ---------- keep your card rendering ---------- */
+  newImportRefreshSelectCards();
+}
+
+function newImportShowSelectModeor(mode){
   newImportState.currentSelectMode=mode;
 
   document.querySelectorAll(".newImport-subtab-btn")
@@ -1525,3 +1559,6 @@ document.addEventListener("click", (e) => {
     e.target.disabled = true;
   }
 });
+
+btn.classList.toggle("active", isFavorite);
+btn.classList.toggle("active", isAdded);
