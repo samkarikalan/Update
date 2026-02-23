@@ -309,6 +309,25 @@ function addPlayer() {
   textarea.focus();
 }
 
+function saveAllPlayersState() {
+
+  // save scheduler players (main list)
+  localStorage.setItem(
+    "schedulerPlayers",
+    JSON.stringify(schedulerState.allPlayers)
+  );
+
+  // save import modal lists
+  localStorage.setItem(
+    "newImportHistory",
+    JSON.stringify(newImportState.historyPlayers)
+  );
+
+  localStorage.setItem(
+    "newImportFavorites",
+    JSON.stringify(newImportState.favoritePlayers)
+  );
+}
 
 function oldaddPlayer() {
   const name = document.getElementById('player-name').value.trim();
@@ -469,6 +488,9 @@ function toggleGender(index, iconEl) {
   // 6️⃣ Refresh dependent UI
   updateFixedPairSelectors();
   refreshFixedCards(); // 🔥 THIS fixes your issue
+
+   saveAllPlayersState();
+	
 }
 
 
@@ -1515,8 +1537,32 @@ function newImportHandleCardClick(e){
 
   // TOGGLE GENDER
   if(action==="gender"){
-    player.gender = player.gender==="Male" ? "Female" : "Male";
-  }
+  player.gender = player.gender==="Male" ? "Female" : "Male";
+
+  // update in history
+  newImportState.historyPlayers.forEach(p=>{
+    if(p.displayName===player.displayName){
+      p.gender = player.gender;
+    }
+  });
+
+  // update in favorites
+  newImportState.favoritePlayers.forEach(p=>{
+    if(p.displayName===player.displayName){
+      p.gender = player.gender;
+    }
+  });
+
+  localStorage.setItem(
+    "newImportHistory",
+    JSON.stringify(newImportState.historyPlayers)
+  );
+
+  localStorage.setItem(
+    "newImportFavorites",
+    JSON.stringify(newImportState.favoritePlayers)
+  );
+}
 
   // TOGGLE FAVORITE
   if(action==="favorite"){
