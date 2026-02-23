@@ -1757,5 +1757,3 @@ document.addEventListener("click", (e) => {
   }
 });
 
-btn.classList.toggle("active", isFavorite);
-btn.classList.toggle("active", isAdded);

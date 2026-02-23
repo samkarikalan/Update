@@ -70,6 +70,127 @@ function renderRounds() {
   });
 }
 
+// ExportCSS.js
+
+async function createSummaryCSS() {
+  return `
+/* Summary */
+.report-header,
+.player-card {
+  display: grid;
+  grid-template-columns: 50px 1fr minmax(60px, auto) minmax(60px, auto) minmax(60px, auto);
+  align-items: center;
+  gap: 10px;
+}
+
+/* Header styling */
+.report-header {
+  margin: 5px 0;
+  background: #800080;
+  font-weight: bold;
+  color: #fff;
+  padding: 6px;
+  border-radius: 6px;
+  margin-bottom: 1px;
+  position: sticky;
+  z-index: 10;
+}
+
+/* Player card styling */
+.player-card {
+  background: #296472;
+  color: #fff;
+  padding: 2px;
+  margin: 5px 0;
+  border-radius: 1.1rem;
+  border: 1px solid #555;
+  box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
+
+/* Rank styling */
+.player-card .rank {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+/* Name column */
+.player-card .name {
+  font-size: 1.1rem;
+  padding-left: 6px;
+}
+
+
+.export-round {
+  margin: 15px 3px 3px;
+  border: 3px solid #800080;
+}
+
+.export-round-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 4px;
+  text-align: center;
+}
+
+.export-match {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 5px;
+}
+
+.export-team {
+  position: relative;           /* allow positioning of trophy */
+  padding: 10px 25px 10px 10px; /* top/right/bottom/left; right space for trophy */
+  display: flex;                /* use flex for centering and spacing */
+  flex-direction: column;       /* stack players vertically */
+  align-items: center;          /* center horizontally */
+  justify-content: center;      /* center vertically */
+  border: 2px solid #333;    /* boundary */
+  border-radius: 8px;           /* optional rounded corners */
+  width: 37%;             /* ensures all boxes roughly same size */
+  background-color:none;    /* optional light background */
+  text-align: center;           /* center text inside */
+}
+
+/* Trophy on the right for winning team */
+.export-team::after {
+  content: '🏆';
+  position: absolute;
+  right: 5px;                   /* stick to right edge */
+  top: 50%;                     /* vertically center */
+  transform: translateY(-50%);
+  display: none;                 /* hidden by default */
+}
+
+.export-team.winner::after {
+  display: inline-block;
+}
+
+
+
+.export-vs {
+  width: 10%;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Sitting out */
+.export-rest-title {
+  margin: 5px;
+  font-weight: 600;
+}
+
+.export-rest-box {
+  margin: 5px;
+  font-size: 13px;
+}
+
+`;
+}
 
 async function exportBRR2HTML() {
   const SUMMARY_CSS = await createSummaryCSS();
@@ -122,80 +243,8 @@ ${page.outerHTML}
 
 
 
-function isWebView() {
-  const ua = navigator.userAgent || navigator.vendor || window.opera;
-
-  // iOS WebView (no "Safari" in UA)
-  const iOSWebView =
-    /iPhone|iPad|iPod/i.test(ua) &&
-    !/Safari/i.test(ua);
-
-  // Android WebView
-  const androidWebView =
-    /Android/i.test(ua) &&
-    (/wv/.test(ua) || !/Chrome/i.test(ua));
-
-  return iOSWebView || androidWebView;
-}
-
-
-
-async function exportBRR2HTMLbk() {
-  showPage('page3');
-  await new Promise(r => setTimeout(r, 300));
-
-  const page = document.getElementById('page3');
-  if (!page) return alert("Export page not found");
-
-  let css = '';
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        css += rule.cssText + '\n';
-      }
-    } catch {}
-  }
-
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BRR Export</title>
-<style>${css}</style>
-</head>
-<body>
-${page.outerHTML}
-</body>
-</html>
-`;
-
-  Android.saveHtml(html);
-}
 
 
 
 
-function makeTitle(text) {
-  const h = document.createElement('h2');
-  h.innerText = text;
-  h.style.textAlign = 'center';
-  h.style.marginBottom = '10px';
-  return h;
-}
 
-function waitForPaint() {
-  return new Promise(resolve => setTimeout(resolve, 150));
-}
-function saveSchedule() {
-  // Placeholder – implement later
-  console.log('Save schedule clicked');
-
-  // Future ideas:
-  // localStorage.setItem('savedSchedule', JSON.stringify(allRounds));
-  // export JSON
-  // cloud sync
-
-  alert('Save feature coming soon');
-}
