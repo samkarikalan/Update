@@ -758,30 +758,49 @@ body.disabled {
 .newImport-modal {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+
   background: rgba(0,0,0,0.45);
-  display: flex;
-  justify-content: center;
-  
-  /* CHANGE THIS */
-  align-items: flex-start;
-
-  /* ADD THIS */
-  overflow-y: auto;
-  padding: 40px 0;
-
   z-index: 9999;
-}
 
+  display: flex;
+}
 .newImport-container {
   background: white;
+
   width: 100%;
-  
-  border-radius: 12px;
-  padding: 20px;
+  height: 100%;        /* fill screen */
+  max-width: none;     /* remove box look */
+  border-radius: 0;    /* full screen style */
+
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
+
+  padding: 20px;
+
+  overflow-y: auto;    /* scroll INSIDE modal */
 }
+
+/* ===== Selected Players Section ===== */
+.newImport-selected-section{
+  background: #f4f8ff;      /* light blue */
+  border: 1px solid #dbe7ff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* ===== History / Favorites Section ===== */
+.newImport-select-section{
+  background: #fafafa;      /* light gray */
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 8px;
+  
+}
+
+
 
 /* ---------- cards row ---------- */
 .newImport-cards-container {
@@ -815,12 +834,21 @@ body.disabled {
 .newImport-clear-btn {
   padding: 6px 12px;
   cursor: pointer;
+  font-size: 1rem;
+  
+}
+.newImport-ok-btn{
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  
 }
 
 .newImport-search {
   padding: 8px;
   border: 1px solid #ddd;
   margin-top: 10px;
+  margin-bottom: 10px;
   width:95%;
   
 }
