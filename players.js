@@ -1359,7 +1359,72 @@ function newImportSaveFavorites(){
 
 
 // ================= RENDER LIST =================
+
 function newImportRefreshSelectCards(){
+  newImportSelectCards.innerHTML="";
+
+  const source =
+    newImportState.currentSelectMode==="favorites"
+      ? newImportState.favoritePlayers
+      : newImportState.historyPlayers;
+
+  const search = newImportSearch.value.toLowerCase();
+
+  source
+    .filter(p => p.displayName.toLowerCase().includes(search))
+    .forEach((p)=>{
+
+      const added = newImportState.selectedPlayers.some(
+        sp => sp.displayName === p.displayName
+      );
+
+      const fav = newImportState.favoritePlayers.some(
+        fp => fp.displayName === p.displayName
+      );
+
+      const card = document.createElement("div");
+      card.className="newImport-player-card";
+
+      card.innerHTML=`
+        <div class="newImport-player-top">
+          <img src="${p.gender==="Male"?"male.png":"female.png"}"
+               data-action="gender"
+               data-player="${p.displayName}">
+          <div class="newImport-player-name">${p.displayName}</div>
+        </div>
+
+        <div class="newImport-player-actions">
+          <button 
+            class="circle-btn favorite ${fav ? 'active-favorite' : ''}" 
+            data-action="favorite" 
+            data-player="${p.displayName}">
+            ${fav ? "★" : "☆"}
+          </button>
+
+          <button 
+            class="circle-btn delete" 
+            data-action="delete" 
+            data-player="${p.displayName}">
+            ×
+          </button>
+
+          <button 
+            class="circle-btn add ${added ? 'active-added' : ''}" 
+            data-action="add" 
+            data-player="${p.displayName}" 
+            ${added ? "disabled" : ""}>
+            ${added ? "✓" : "+"}
+          </button>
+        </div>
+      `;
+
+      newImportSelectCards.appendChild(card);
+    });
+}
+
+
+
+function newImportRefreshSelectCards2(){
   newImportSelectCards.innerHTML="";
 
   const source=
@@ -1422,7 +1487,78 @@ function newImportRefreshSelectCards(){
 
 
 // ================= CARD ACTIONS =================
+
 function newImportHandleCardClick(e){
+  const action = e.target.dataset.action;
+  if(!action) return;
+
+  const playerName = e.target.dataset.player;
+  if(!playerName) return;
+
+  const source =
+    newImportState.currentSelectMode==="favorites"
+      ? newImportState.favoritePlayers
+      : newImportState.historyPlayers;
+
+  const player = source.find(p => p.displayName === playerName);
+  if(!player) return;
+
+  // ADD PLAYER
+  if(action==="add"){
+    if(!newImportState.selectedPlayers.some(
+      p => p.displayName===player.displayName
+    )){
+      newImportState.selectedPlayers.push({...player});
+      newImportRefreshSelectedCards();
+    }
+  }
+
+  // TOGGLE GENDER
+  if(action==="gender"){
+    player.gender = player.gender==="Male" ? "Female" : "Male";
+  }
+
+  // TOGGLE FAVORITE
+  if(action==="favorite"){
+    const i = newImportState.favoritePlayers.findIndex(
+      p => p.displayName===player.displayName
+    );
+
+    if(i>=0){
+      newImportState.favoritePlayers.splice(i,1);
+    }else{
+      newImportState.favoritePlayers.push({...player});
+    }
+
+    newImportSaveFavorites();
+  }
+
+  // DELETE PLAYER
+  if(action==="delete"){
+    const removeIndex = source.findIndex(
+      p => p.displayName === playerName
+    );
+
+    if(removeIndex >= 0) source.splice(removeIndex,1);
+
+    if(newImportState.currentSelectMode==="history"){
+      localStorage.setItem(
+        "newImportHistory",
+        JSON.stringify(newImportState.historyPlayers)
+      );
+    }else{
+      localStorage.setItem(
+        "newImportFavorites",
+        JSON.stringify(newImportState.favoritePlayers)
+      );
+    }
+  }
+
+  newImportRefreshSelectCards();
+}
+
+
+function newImportHandleCardClickold(e){
   const action=e.target.dataset.action;
   if(!action) return;
 

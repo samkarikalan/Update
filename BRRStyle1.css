@@ -827,6 +827,7 @@ body.disabled {
 .newImport-subtabs {
   display: flex;
   gap: 8px;
+ 
 }
 
 
@@ -858,6 +859,7 @@ body.disabled {
   margin-top: 10px;
   margin-bottom: 10px;
   width:95%;
+  font-size:1rem;
   
 }
 /* Cards container */
@@ -969,7 +971,7 @@ body.disabled {
   cursor:pointer;
   font-weight:600;
   color:#666;
-
+  font-size:1.25rem;
   border-bottom:3px solid transparent;
   transition:all .2s ease;
 }
