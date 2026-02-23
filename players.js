@@ -1461,7 +1461,22 @@ function newImportHandleCardClick(e){
     newImportSaveFavorites();
   }
 
-  if(action==="delete") source.splice(idx,1);
+  if(action==="delete"){
+  source.splice(idx,1);
+
+  // save to storage depending on tab
+  if(newImportState.currentSelectMode==="history"){
+    localStorage.setItem(
+      "newImportHistory",
+      JSON.stringify(newImportState.historyPlayers)
+    );
+  }else{
+    localStorage.setItem(
+      "newImportFavorites",
+      JSON.stringify(newImportState.favoritePlayers)
+    );
+  }
+}
 
   newImportRefreshSelectCards();
 }
