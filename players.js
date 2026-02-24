@@ -1,4 +1,4 @@
-const textarea = document.getElementById("player-name");
+const textarea = document.getElementById("players-names");
 const defaultHeight = 40;
 
 function autoResize(el) {
@@ -170,7 +170,7 @@ function hideImportModal() {
 ========================= */
 function addPlayer() {
 
-  const textarea = document.getElementById("player-name");
+  const textarea = document.getElementById("players-names");
   if (!textarea) return;
 
   const text = textarea.value.trim();
