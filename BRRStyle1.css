@@ -593,9 +593,8 @@ display: block;
   transform: scale(1.02);
 }
 
-#player-name {
+#players-names {
   width: 100%;
-  min-height: 40px;
   max-height: 160px;
   resize: none;
   overflow-y: auto;
