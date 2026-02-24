@@ -1724,6 +1724,20 @@ function newImportAddPlayers(){
   newImportHideModal();
 }
 
+function newImportAddIfNotExists(list, player) {
+  const exists = list.some(
+    p => p.displayName.trim().toLowerCase() ===
+         player.displayName.trim().toLowerCase()
+  );
+
+  if (!exists) {
+    list.push(player);
+    return true;
+  }
+
+  return false;
+}
+
 
 // ================= CLEAR LISTS =================
 function newImportClearHistory(){
