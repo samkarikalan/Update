@@ -1,392 +1,252 @@
-const textarea = document.getElementById("players-names");
-const defaultHeight = 40;
+/* ============================================================
+   PLAYERS TAB — Add, edit, delete, players and fixed pairs
+   File: players.js
+   ============================================================ */
 
-function autoResize(el) {
-  el.style.height = "auto";
-  el.style.height = el.scrollHeight + "px";
-}
-
-textarea.addEventListener("input", function () {
-  autoResize(this);
+document.addEventListener("DOMContentLoaded", function () {
+  const textarea = document.getElementById("players-names");
+  if (!textarea) return;
+  // Grow on input, but never shrink below the CSS min-height (3 rows)
+  textarea.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = this.scrollHeight + "px";
+  });
+  textarea.addEventListener("blur", function () {
+    // Reset to natural size when empty so CSS min-height takes over
+    if (!this.value.trim()) this.style.height = "";
+  });
 });
 
-textarea.addEventListener("blur", function () {
-  if (!this.value.trim()) {
-    this.style.height = defaultHeight + "px";
-  }
-});
-
-
-
+/* =========================
+   GENDER HELPERS
+========================= */
 function getGenderIconByName(playerName) {
-  const player = schedulerState.allPlayers.find(
-    p => p.name === playerName
-  );
-
+  const player = schedulerState.allPlayers.find(p => p.name === playerName);
   if (!player) return "❔";
-
   return player.gender === "Male" ? "👨‍💼" : "🙎‍♀️";
 }
 
+function getGenderIcon(gender) {
+  return gender === "Male" ? "👨‍💼" : "🙎‍♀️";
+}
+
+function updateGenderGroups() {
+  schedulerState.malePlayers = schedulerState.allPlayers
+    .filter(p => p.gender === "Male" && p.active).map(p => p.name);
+  schedulerState.femalePlayers = schedulerState.allPlayers
+    .filter(p => p.gender === "Female" && p.active).map(p => p.name);
+}
+
+/* =========================
+   FIXED PAIRS
+========================= */
 function refreshFixedCards() {
   const list = document.getElementById("fixed-pair-list");
   list.innerHTML = "";
-
-  schedulerState.fixedPairs.forEach(([p1, p2], index) => {
-    addFixedCard(p1, p2, index);
-  });
+  schedulerState.fixedPairs.forEach(([p1, p2], index) => addFixedCard(p1, p2, index));
 }
 
+// ── Custom picker state ──
+const fpSelected = { 1: null, 2: null };
+let fpOpenPicker = null;
+
+function fpGetImgSrc(playerName) {
+  const player = schedulerState.allPlayers.find(p => p.name === playerName);
+  return (player && player.gender === "Female") ? "female.png" : "male.png";
+}
+
+function fpGetRating(playerName) {
+  const player = schedulerState.allPlayers.find(p => p.name === playerName);
+  return player ? parseFloat(player.rating || 1).toFixed(1) : "";
+}
+
+function fpTogglePicker(n) {
+  const other = n === 1 ? 2 : 1;
+  if (fpOpenPicker === n) { fpClosePicker(n); return; }
+  fpClosePicker(other);
+  fpOpenPicker = n;
+  document.getElementById("fpField" + n).classList.add("fp-open");
+  fpRenderDropdown(n);
+  document.getElementById("fpDropdown" + n).style.display = "block";
+}
+
+function fpClosePicker(n) {
+  const field = document.getElementById("fpField" + n);
+  if (field) field.classList.remove("fp-open");
+  const dd = document.getElementById("fpDropdown" + n);
+  if (dd) dd.style.display = "none";
+  if (fpOpenPicker === n) fpOpenPicker = null;
+}
+
+function fpRenderDropdown(n) {
+  const other = n === 1 ? 2 : 1;
+  const otherSel = fpSelected[other];
+  const pairedPlayers = new Set(schedulerState.fixedPairs.flat());
+  const available = schedulerState.activeplayers.filter(p =>
+    p !== otherSel && !pairedPlayers.has(p)
+  );
+  const dd = document.getElementById("fpDropdown" + n);
+  dd.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.className = "fp-dropdown-inner";
+  if (!available.length) {
+    wrap.innerHTML = '<div class="fp-option-empty">No players available</div>';
+  }
+  available.forEach(name => {
+    const row = document.createElement("div");
+    row.className = "fp-option" + (fpSelected[n] === name ? " fp-highlighted" : "");
+    row.innerHTML = `
+      <img src="${fpGetImgSrc(name)}" class="fp-option-avatar">
+      <span class="fp-option-name">${name}</span>
+      <span class="fp-option-rating">★ ${fpGetRating(name)}</span>
+    `;
+    row.onclick = (e) => { e.stopPropagation(); fpSelectPlayer(n, name); };
+    wrap.appendChild(row);
+  });
+  dd.appendChild(wrap);
+}
+
+function fpSelectPlayer(n, name) {
+  fpSelected[n] = name;
+  const src   = fpGetImgSrc(name);
+  const field = document.getElementById("fpField" + n);
+
+  // Swap placeholder for real avatar
+  const oldAv = document.getElementById("fpAvatar" + n);
+  const img   = document.createElement("img");
+  img.src = src; img.className = "fp-avatar-img"; img.id = "fpAvatar" + n;
+  oldAv.replaceWith(img);
+
+  const label = document.getElementById("fpLabel" + n);
+  label.textContent = name;
+  label.classList.add("fp-label-chosen");
+  field.classList.add("fp-selected");
+  fpClosePicker(n);
+
+  // Enable Add button if both selected
+  const addBtn = document.getElementById("fpAddBtn");
+  if (addBtn) {
+    const ready = fpSelected[1] && fpSelected[2];
+    addBtn.disabled = !ready;
+    addBtn.classList.toggle("disabled-btn", !ready);
+  }
+}
+
+function fpResetPickers() {
+  [1, 2].forEach(n => {
+    fpSelected[n] = null;
+    fpClosePicker(n);
+    const field = document.getElementById("fpField" + n);
+    if (field) field.classList.remove("fp-selected", "fp-open");
+    const oldAv = document.getElementById("fpAvatar" + n);
+    if (oldAv) {
+      const ph = document.createElement("div");
+      ph.className = "fp-avatar-placeholder"; ph.id = "fpAvatar" + n;
+      oldAv.replaceWith(ph);
+    }
+    const label = document.getElementById("fpLabel" + n);
+    if (label) { label.textContent = "Player " + n; label.classList.remove("fp-label-chosen"); }
+    const dd = document.getElementById("fpDropdown" + n);
+    if (dd) dd.style.display = "none";
+  });
+  const addBtn = document.getElementById("fpAddBtn");
+  if (addBtn) { addBtn.disabled = true; addBtn.classList.add("disabled-btn"); }
+}
 
 function updateFixedPairSelectors() {
-  const sel1 = document.getElementById('fixed-pair-1');
-  const sel2 = document.getElementById('fixed-pair-2');
-  const pairedPlayers = new Set(schedulerState.fixedPairs.flat());
+  // Re-render dropdowns if open, otherwise just reset pickers
+  fpResetPickers();
+}
 
-  sel1.innerHTML = '<option value="" data-i18n="selectPlayer1"></option>';
-  sel2.innerHTML = '<option value="" data-i18n="selectPlayer2"></option>';
-
-  schedulerState.activeplayers.slice().reverse().forEach(p => {
-    if (!pairedPlayers.has(p)) {
-      const option1 = document.createElement('option');
-      const option2 = document.createElement('option');
-
-      const icon = getGenderIconByName(p);
-
-      option1.value = option2.value = p;
-      option1.textContent = option2.textContent = `${icon} ${p}`;
-
-      sel1.appendChild(option1);
-      sel2.appendChild(option2);
-    }
-  });
+function getGenderImg(playerName) {
+  const player = schedulerState.allPlayers.find(p => p.name === playerName);
+  const src = (player && player.gender === "Female") ? "female.png" : "male.png";
+  return `<img src="${src}" class="fixed-pair-avatar">`;
 }
 
 function addFixedCard(p1, p2, key) {
   const list = document.getElementById('fixed-pair-list');
-
   const card = document.createElement("div");
   card.className = "fixed-card";
   card.setAttribute("data-key", key);
-
-  const icon1 = getGenderIconByName(p1);
-  const icon2 = getGenderIconByName(p2);
-
+  const img1 = getGenderImg(p1);
+  const img2 = getGenderImg(p2);
   card.innerHTML = `
-    <div class="fixed-name">
-      ${icon1} ${p1} & ${icon2} ${p2}
-    </div>
+    <div class="fixed-name">${img1} ${p1} &amp; ${img2} ${p2}</div>
     <div class="fixed-delete">
-      <button class="pec-btn delete"
-              onclick="modifyFixedPair('${p1}', '${p2}')">🗑</button>
+      <button class="pec-btn delete" onclick="modifyFixedPair('${p1}', '${p2}')">🗑</button>
     </div>
   `;
-
   list.appendChild(card);
 }
 
-
-
-function pastePlayersText() {
-  const textarea = document.getElementById('players-textarea');
-
-  const stopMarkers = [
-    /court full/i, /wl/i, /waitlist/i, /late cancel/i,
-    /cancelled/i, /reserve/i, /bench/i, /extras/i, /backup/i
-  ];
-
-  function cleanText(text) {
-    const lines = text.split(/\r?\n/);
-
-    let startIndex = 0;
-    let stopIndex = lines.length;
-
-    // Find first "Confirm" line
-    const confirmLineIndex = lines.findIndex(line => /confirm/i.test(line));
-
-    if (confirmLineIndex >= 0) {
-      startIndex = confirmLineIndex + 1;
-
-      for (let i = startIndex; i < lines.length; i++) {
-        if (stopMarkers.some(re => re.test(lines[i]))) {
-          stopIndex = i;
-          break;
-        }
-      }
-    }
-
-    const cleanedLines = [];
-
-    for (let i = startIndex; i < stopIndex; i++) {
-      let line = lines[i].trim();
-
-      if (!line) continue;                  // skip empty
-      if (line.toLowerCase().includes("http")) continue; // skip links
-
-      cleanedLines.push(line);
-    }
-
-    return cleanedLines.join("\n");
+function modifyFixedPair(p1 = null, p2 = null) {
+  if (!p1 || !p2) {
+    p1 = fpSelected[1];
+    p2 = fpSelected[2];
   }
-
-  if (navigator.clipboard && navigator.clipboard.readText) {
-    navigator.clipboard.readText()
-      .then(text => {
-        const cleaned = cleanText(text);
-
-        if (!cleaned) {
-          alert("No valid player names found.");
-          return;
-        }
-
-        textarea.value += (textarea.value ? '\n' : '') + cleaned;
-        textarea.focus();
-      })
-      .catch(() => {
-        alert('Paste not allowed. Long-press and paste instead.');
-      });
-  } else {
-    alert('Paste not supported on this device.');
+  if (!p1 || !p2) { alert("Please select both players."); return; }
+  if (p1 === p2)  { alert("You cannot pair the same player with themselves."); return; }
+  const pairKey = [p1, p2].sort().join('&');
+  const index   = schedulerState.fixedPairs.findIndex(
+    pair => pair.slice().sort().join('&') === pairKey
+  );
+  if (index !== -1) {
+    schedulerState.fixedPairs.splice(index, 1);
+    removeFixedCard(pairKey);
+    fpResetPickers();
+    return;
   }
+  schedulerState.fixedPairs.push([p1, p2]);
+  addFixedCard(p1, p2, pairKey);
+  fpResetPickers();
 }
 
-
-
-function showImportModal() {
-  const textarea = document.getElementById("players-textarea");
-  // Clear any entered text
-  textarea.value = "";
-  textarea.placeholder = translations[currentLang].importExample;
-  document.getElementById('importModal').style.display = 'block';
+function removeFixedCard(key) {
+  const card = document.querySelector(`[data-key="${key}"]`);
+  if (card) card.remove();
 }
 
-function hideImportModal() {
-  document.getElementById('newImportModal').style.display = 'none';
-  //document.getElementById('players-textarea').value = '';
+function removeFixedPairsForPlayer(playerName) {
+  schedulerState.fixedPairs = schedulerState.fixedPairs.filter(pair => {
+    const keep = !pair.includes(playerName);
+    if (!keep) removeFixedCard(pair.slice().sort().join("&"));
+    return keep;
+  });
+  updateFixedPairSelectors();
 }
 
 /* =========================
-   ADD SINGLE PLAYER
+   PLAYER STATE SAVE
 ========================= */
-function addPlayer() {
 
-  const textarea = document.getElementById("players-names");
-  if (!textarea) return;
-
-  const text = textarea.value.trim();
-  if (!text) return;
-
-  const defaultGender =
-    document.getElementById("player-gender")?.value || "Male";
-
-  const lines = text.split(/\r?\n/);
-
-  // ======================
-  // GENDER LOOKUP (multi-language)
-  // ======================
-  const genderLookup = {};
-
-  if (typeof translations !== "undefined") {
-    Object.values(translations).forEach(langObj => {
-      if (langObj.male)
-        genderLookup[langObj.male.toLowerCase()] = "Male";
-
-      if (langObj.female)
-        genderLookup[langObj.female.toLowerCase()] = "Female";
-    });
-  }
-
-  // fallback English
-  genderLookup["male"] = "Male";
-  genderLookup["m"] = "Male";
-  genderLookup["female"] = "Female";
-  genderLookup["f"] = "Female";
-
-  const extractedNames = [];
-
-  for (let line of lines) {
-    line = line.trim();
-    if (!line) continue;
-
-    let gender = defaultGender;
-
-    // Remove numbering (1. John → John)
-    const match = line.match(/^(\d+\.?\s*)?(.*)$/);
-    if (match) line = match[2].trim();
-
-    // name, gender
-    if (line.includes(",")) {
-      const parts = line.split(",").map(p => p.trim());
-      line = parts[0];
-
-      if (parts[1]) {
-        const g = parts[1].toLowerCase();
-        if (genderLookup[g]) gender = genderLookup[g];
-      }
-    }
-
-    // name (gender)
-    const parenMatch = line.match(/\(([^)]+)\)/);
-    if (parenMatch) {
-      const inside = parenMatch[1].trim().toLowerCase();
-
-      if (genderLookup[inside])
-        gender = genderLookup[inside];
-
-      line = line.replace(/\([^)]+\)/, "").trim();
-    }
-
-    if (!line) continue;
-
-    const normalized = line.toLowerCase();
-
-    // Avoid duplicates in scheduler + current import
-    const exists =
-      schedulerState.allPlayers.some(
-        p => p.name.trim().toLowerCase() === normalized
-      ) ||
-      extractedNames.some(
-        p => p.name.trim().toLowerCase() === normalized
-      );
-
-    if (!exists) {
-      extractedNames.push({
-        name: line,
-        gender,
-        active: true
-      });
-    }
-  }
-
-  if (extractedNames.length === 0) return;
-
-  // ======================
-  // SAVE TO MAIN PLAYER LIST
-  // ======================
-  schedulerState.allPlayers.push(...extractedNames);
-
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-    .reverse();
-
-  updatePlayerList();
-  updateFixedPairSelectors();
-
-  // ======================
-  // ENSURE IMPORT HISTORY EXISTS
-  // ======================
-  if (!localStorage.getItem("newImportHistory")) {
-    localStorage.setItem("newImportHistory", JSON.stringify([]));
-  }
-
-  // ======================
-  // SAVE TO IMPORT HISTORY (for Import Modal)
-  // ======================
-  let history = JSON.parse(localStorage.getItem("newImportHistory"));
-
-  const historyPlayers = extractedNames.map(p => ({
-    displayName: p.name,
-    gender: p.gender
-  }));
-
-  historyPlayers.forEach(newPlayer => {
-    if (!history.some(p => p.displayName === newPlayer.displayName)) {
-      history.unshift(newPlayer); // newest first
-    }
-  });
-
-  history = history.slice(0, 50); // keep last 50
-
-  localStorage.setItem("newImportHistory", JSON.stringify(history));
-
-  // ======================
-  // RESET UI
-  // ======================
-  const defaultHeight = 40;
-  textarea.value = "";
-  textarea.style.height = defaultHeight + "px";
-  textarea.focus();
-}
+/* =========================
+   RATING SYNC — schedulerState → history
+   Called after save so import history carries latest ratings
+========================= */
 
 function saveAllPlayersState() {
-
-  // save scheduler players (main list)
-  localStorage.setItem(
-    "schedulerPlayers",
-    JSON.stringify(schedulerState.allPlayers)
-  );
-
-  // save import modal lists
-  localStorage.setItem(
-    "newImportHistory",
-    JSON.stringify(newImportState.historyPlayers)
-  );
-
-  localStorage.setItem(
-    "newImportFavorites",
-    JSON.stringify(newImportState.favoritePlayers)
-  );
+  localStorage.setItem("schedulerPlayers",   JSON.stringify(schedulerState.allPlayers));
+  localStorage.setItem("newImportFavorites", JSON.stringify(newImportState.favoritePlayers));
 }
-
-function oldaddPlayer() {
-  const name = document.getElementById('player-name').value.trim();
-  const gender = document.getElementById('player-gender').value;
-  if (name && !schedulerState.allPlayers.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-    schedulerState.allPlayers.push({ name, gender, active: true });
-    schedulerState.activeplayers = schedulerState.allPlayers
-      .filter(p => p.active)
-      .map(p => p.name)
-      .reverse();
-
-    updatePlayerList();
-    updateFixedPairSelectors();
-  } else if (name) {
-    alert(`Player "${name}" already exists!`);
-  }
-  document.getElementById('player-name').value = '';
-  	
-}
-
 
 /* =========================
-   EDIT PLAYER INFO
+   EDIT PLAYER
 ========================= */
 function editPlayer(i, field, val) {
   const player = schedulerState.allPlayers[i];
-
-  // Normal update
   if (field === 'active') {
-    player.active = !!val;                         // make sure it's boolean
-    if (val) {                                     // ←←← THIS IS THE ONLY NEW PART
+    player.active = !!val;
+    if (val) {
       const highest = Math.max(0, ...schedulerState.allPlayers.map(p => p.turnOrder || 0));
-      player.turnOrder = highest + 1;              // put him at the very end of the line
+      player.turnOrder = highest + 1;
     }
   } else {
     player[field] = val.trim();
   }
-
-  // Your two existing lines — unchanged
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-    .reverse();
-
+  schedulerState.activeplayers.splice(0, schedulerState.activeplayers.length,
+    ...schedulerState.allPlayers.filter(p => p.active).map(p => p.name).reverse());
   updatePlayerList();
-  updateFixedPairSelectors();  	
-}
-
-function removeFixedPairsForPlayer(playerName) {
-  // Remove from data
-  schedulerState.fixedPairs = schedulerState.fixedPairs.filter(pair => {
-    const keep = !pair.includes(playerName);
-    if (!keep) {
-      const key = pair.slice().sort().join("&");
-      removeFixedCard(key); // Remove UI card
-    }
-    return keep;
-  });
-
   updateFixedPairSelectors();
 }
 
@@ -396,861 +256,298 @@ function removeFixedPairsForPlayer(playerName) {
 function deletePlayer(i) {
   const deletedPlayer = schedulerState.allPlayers[i]?.name;
   if (!deletedPlayer) return;
-
-  // 1️⃣ Remove player
   schedulerState.allPlayers.splice(i, 1);
-
-  // 2️⃣ Remove any fixed pairs involving this player
   removeFixedPairsForPlayer(deletedPlayer);
-
-  // 3️⃣ Recalculate active players
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-    .reverse();
-
-  // 4️⃣ Refresh UI
+  schedulerState.activeplayers.splice(0, schedulerState.activeplayers.length,
+    ...schedulerState.allPlayers.filter(p => p.active).map(p => p.name).reverse());
   updatePlayerList();
   updateFixedPairSelectors();
-  refreshFixedCards(); // 🔥 THIS is the key
-}
-
-
-
-function olddeletePlayer(i) {
-  schedulerState.allPlayers.splice(i, 1);
-   schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-    .reverse();
-
-  updatePlayerList();
-  updateFixedPairSelectors();
-  
+  refreshFixedCards();
 }
 
 function toggleActive(index, checkbox) {
-  // Update data model first
   schedulerState.allPlayers[index].active = checkbox.checked;
-
   const card = checkbox.closest(".player-edit-card");
-
-  // Apply the CSS class based on active state
-  if (checkbox.checked) {
-    card.classList.remove("inactive");
-  } else {
-    card.classList.add("inactive");
-  }
-
-  // Recalculate active players list
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-	.reverse();
-
-  // Refresh UI
+  checkbox.checked ? card.classList.remove("inactive") : card.classList.add("inactive");
+  schedulerState.activeplayers.splice(0, schedulerState.activeplayers.length,
+    ...schedulerState.allPlayers.filter(p => p.active).map(p => p.name).reverse());
   updateFixedPairSelectors();
-  
-	
-}
-
-
-function getGenderIcon(gender) {
-  return gender === "Male" ? "👨‍💼" : "🙎‍♀️";
 }
 
 function toggleGender(index, iconEl) {
   const player = schedulerState.allPlayers[index];
   if (!player) return;
-
-  // 1️⃣ Toggle gender
   player.gender = player.gender === "Male" ? "Female" : "Male";
-
   const genderClass = player.gender.toLowerCase();
-
-  // 2️⃣ Update icon
-  iconEl.textContent = getGenderIcon(player.gender);
-
-  // 3️⃣ Update icon class
+  // Update img src if using image avatar, or textContent if emoji
+  if (iconEl.tagName === "IMG") {
+    iconEl.src = player.gender === "Female" ? "female.png" : "male.png";
+  } else {
+    iconEl.textContent = getGenderIcon(player.gender);
+  }
   iconEl.classList.remove("male", "female");
   iconEl.classList.add(genderClass);
-
-  // 4️⃣ Update card class
   const card = iconEl.closest(".player-edit-card");
-  if (card) {
-    card.classList.remove("male", "female");
-    card.classList.add(genderClass);
-  }
-
-  // 5️⃣ Update linked state
+  if (card) { card.classList.remove("male", "female"); card.classList.add(genderClass); }
   updateGenderGroups();
-
-  // 6️⃣ Refresh dependent UI
   updateFixedPairSelectors();
-  refreshFixedCards(); // 🔥 THIS fixes your issue
-
-   saveAllPlayersState();
-	
+  refreshFixedCards();
+  saveAllPlayersState();
 }
-
-
-function updateGenderGroups() {
-  schedulerState.malePlayers = schedulerState.allPlayers
-    .filter(p => p.gender === "Male" && p.active)
-    .map(p => p.name);
-
-  schedulerState.femalePlayers = schedulerState.allPlayers
-    .filter(p => p.gender === "Female" && p.active)
-    .map(p => p.name);
-}
-
-function addPlayersFromInputUI() {
-
-  const importPlayers = newImportState.selectedPlayers;
-
-  if (!importPlayers || importPlayers.length === 0) {
-    alert('No players to add!');
-    return;
-  }
-
-  const extractedNames = [];
-
-  importPlayers.forEach(p => {
-
-    const name = p.displayName.trim();
-    const gender = p.gender || "Male";
-
-    if (
-      !schedulerState.allPlayers.some(
-        existing => existing.name.trim().toLowerCase() === name.toLowerCase()
-      ) &&
-      !extractedNames.some(
-        existing => existing.name.trim().toLowerCase() === name.toLowerCase()
-      )
-    ) {
-      extractedNames.push({
-        name: name,
-        gender: gender,
-        active: true
-      });
-    }
-
-  });
-
-  schedulerState.allPlayers.push(...extractedNames);
-
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-    .reverse();
-
-  updatePlayerList();
-  updateFixedPairSelectors();
-  hideImportModal();
-
-  // Optional: reset selection after import
-  newImportState.selectPlayers = [];
-}
-
 
 /* =========================
-   ADD PLAYERS FROM TEXT
+   IMPORT MODAL BRIDGE
 ========================= */
-function addPlayersFromText() {
-
+function showImportModal() {
   const textarea = document.getElementById("players-textarea");
-  if (!textarea) return;
+  if (textarea) {
+    textarea.value = "";
+    textarea.placeholder = translations[currentLang].importExample;
+  }
+  document.getElementById('importModal').style.display = 'block';
+}
 
-  const text = textarea.value.trim();
-  if (!text) return;
+function hideImportModal() {
+  document.getElementById('newImportModal').style.display = 'none';
+}
 
-  const defaultGender =
-    document.querySelector('input[name="genderSelect"]:checked')?.value || "Male";
+// OK button — moves selectedPlayers into scheduler
+function addPlayersFromInputUI() {
+  const importPlayers = newImportState.selectedPlayers;
+  if (!importPlayers || importPlayers.length === 0) { alert('No players to add!'); return; }
 
-  const lines = text.split(/\r?\n/);
+  // If existing players, ask replace or add
+  if (schedulerState.allPlayers.length > 0) {
+    const replace = confirm("Replace current players?\nOK = Replace  /  Cancel = Add to existing");
+    if (replace) {
+      schedulerState.allPlayers.splice(0, schedulerState.allPlayers.length);
+    }
+  }
 
-  // stop markers
+  importPlayers.forEach(p => {
+    const name    = p.displayName.trim();
+    const gender  = p.gender || "Male";
+    const nameKey = name.toLowerCase();
+    const exists  = schedulerState.allPlayers.some(e => e.name.trim().toLowerCase() === nameKey);
+    if (!exists) schedulerState.allPlayers.push({ name, gender, active: true });
+  });
+
+  schedulerState.activeplayers.splice(0, schedulerState.activeplayers.length,
+    ...schedulerState.allPlayers.filter(p => p.active).map(p => p.name).reverse());
+
+  hideImportModal();
+  newImportState.selectedPlayers = [];
+  const playersBtn = document.querySelector('.tab-btn[onclick*="playersPage"]');
+  showPage('playersPage', playersBtn);
+  updatePlayerList();
+  syncRatings();
+}
+
+/* =========================
+   PASTE / TEXT MODAL (legacy)
+========================= */
+function pastePlayersText() {
+  const textarea    = document.getElementById('players-textarea');
   const stopMarkers = [
     /court full/i, /wl/i, /waitlist/i, /late cancel/i,
     /cancelled/i, /reserve/i, /bench/i, /extras/i, /backup/i
   ];
-
-  let startIndex = 0;
-  let stopIndex = lines.length;
-
-  // detect "confirm" section
-  const confirmLineIndex = lines.findIndex(line => /confirm/i.test(line));
-
-  if (confirmLineIndex >= 0) {
-    startIndex = confirmLineIndex + 1;
-
-    for (let i = startIndex; i < lines.length; i++) {
-      if (stopMarkers.some(re => re.test(lines[i]))) {
-        stopIndex = i;
-        break;
+  function cleanText(text) {
+    const lines = text.split(/\r?\n/);
+    let startIndex = 0, stopIndex = lines.length;
+    const confirmIdx = lines.findIndex(l => /confirm/i.test(l));
+    if (confirmIdx >= 0) {
+      startIndex = confirmIdx + 1;
+      for (let i = startIndex; i < lines.length; i++) {
+        if (stopMarkers.some(re => re.test(lines[i]))) { stopIndex = i; break; }
       }
     }
+    const out = [];
+    for (let i = startIndex; i < stopIndex; i++) {
+      const l = lines[i].trim();
+      if (!l || l.toLowerCase().includes("http")) continue;
+      out.push(l);
+    }
+    return out.join("\n");
   }
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText()
+      .then(text => {
+        const cleaned = cleanText(text);
+        if (!cleaned) { alert("No valid player names found."); return; }
+        textarea.value += (textarea.value ? '\n' : '') + cleaned;
+        textarea.focus();
+      })
+      .catch(() => alert('Paste not allowed. Long-press and paste instead.'));
+  } else {
+    alert('Paste not supported on this device.');
+  }
+}
 
-  // ======================
-  // GENDER LOOKUP (multi-language)
-  // ======================
-  const genderLookup = {};
-
+function addPlayersFromText() {
+  const textarea = document.getElementById("players-textarea");
+  if (!textarea) return;
+  const text = textarea.value.trim();
+  if (!text) return;
+  const defaultGender = document.querySelector('input[name="genderSelect"]:checked')?.value || "Male";
+  const lines = text.split(/\r?\n/);
+  const stopMarkers = [
+    /court full/i, /wl/i, /waitlist/i, /late cancel/i,
+    /cancelled/i, /reserve/i, /bench/i, /extras/i, /backup/i
+  ];
+  let startIndex = 0, stopIndex = lines.length;
+  const confirmIdx = lines.findIndex(l => /confirm/i.test(l));
+  if (confirmIdx >= 0) {
+    startIndex = confirmIdx + 1;
+    for (let i = startIndex; i < lines.length; i++) {
+      if (stopMarkers.some(re => re.test(lines[i]))) { stopIndex = i; break; }
+    }
+  }
+  const genderLookup = { male: "Male", m: "Male", female: "Female", f: "Female" };
   if (typeof translations !== "undefined") {
-    Object.values(translations).forEach(langObj => {
-      if (langObj.male)
-        genderLookup[langObj.male.toLowerCase()] = "Male";
-
-      if (langObj.female)
-        genderLookup[langObj.female.toLowerCase()] = "Female";
+    Object.values(translations).forEach(l => {
+      if (l.male)   genderLookup[l.male.toLowerCase()]   = "Male";
+      if (l.female) genderLookup[l.female.toLowerCase()] = "Female";
     });
   }
-
-  // fallback English
-  genderLookup["male"] = "Male";
-  genderLookup["m"] = "Male";
-  genderLookup["female"] = "Female";
-  genderLookup["f"] = "Female";
-
-  // ======================
-  // EXTRACT NAMES
-  // ======================
   const extractedNames = [];
-
   for (let i = startIndex; i < stopIndex; i++) {
-
     let line = lines[i].trim();
-    if (!line) continue;
-    if (/https?/i.test(line)) continue;
-
+    if (!line || /https?/i.test(line)) continue;
     let gender = defaultGender;
-
-    // remove numbering (1. John → John)
-    const match = line.match(/^(\d+\.?\s*)?(.*)$/);
-    if (match) line = match[2].trim();
-
-    // ======================
-    // name, gender
-    // ======================
+    const m = line.match(/^(\d+\.?\s*)?(.*)$/);
+    if (m) line = m[2].trim();
     if (line.includes(",")) {
-      const parts = line.split(",").map(p => p.trim());
-
-      line = parts[0];
-
-      if (parts[1]) {
-        const g = parts[1].toLowerCase();
-        if (genderLookup[g]) gender = genderLookup[g];
-      }
+      const [name, g] = line.split(",").map(p => p.trim());
+      line = name;
+      if (g && genderLookup[g.toLowerCase()]) gender = genderLookup[g.toLowerCase()];
     }
-
-    // ======================
-    // name (gender)
-    // ======================
-    const parenMatch = line.match(/\(([^)]+)\)/);
-    if (parenMatch) {
-      const inside = parenMatch[1].trim().toLowerCase();
-
-      if (genderLookup[inside])
-        gender = genderLookup[inside];
-
+    const pm = line.match(/\(([^)]+)\)/);
+    if (pm) {
+      const inside = pm[1].trim().toLowerCase();
+      if (genderLookup[inside]) gender = genderLookup[inside];
       line = line.replace(/\([^)]+\)/, "").trim();
     }
-
     if (!line) continue;
-
     const normalized = line.toLowerCase();
-
-    // avoid duplicates globally + in this import
     const exists =
-      schedulerState.allPlayers.some(
-        p => p.name.trim().toLowerCase() === normalized
-      ) ||
-      extractedNames.some(
-        p => p.name.trim().toLowerCase() === normalized
-      );
-
-    if (!exists) {
-      extractedNames.push({
-        name: line,
-        gender,
-        active: true
-      });
-    }
+      schedulerState.allPlayers.some(p => p.name.trim().toLowerCase() === normalized) ||
+      extractedNames.some(p => p.name.trim().toLowerCase() === normalized);
+    if (!exists) extractedNames.push({ name: line, gender, active: true });
   }
-
-  if (extractedNames.length === 0) return;
-
-  // ======================
-  // SAVE
-  // ======================
+  if (!extractedNames.length) return;
   schedulerState.allPlayers.push(...extractedNames);
-
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-    .reverse();
-
+  schedulerState.activeplayers.splice(0, schedulerState.activeplayers.length,
+    ...schedulerState.allPlayers.filter(p => p.active).map(p => p.name).reverse());
   updatePlayerList();
   updateFixedPairSelectors();
   hideImportModal();
 }
 
-
-
 /* =========================
- 
-PLAYER MANAGEMENT
- 
+   PLAYER LIST RENDERING
 ========================= */
-
 function createPlayerCard(player, index) {
   let cardClass = `player-edit-card player-row ${player.gender.toLowerCase()}`;
   if (!player.active) cardClass += " inactive";
-
   const card = document.createElement("div");
   card.className = cardClass;
-
-  // 🔹 Drag support
   card.draggable = true;
   card.dataset.index = index;
   card.addEventListener("dragstart", onDragStart);
-  card.addEventListener("dragover", onDragOver);
-  card.addEventListener("drop", onDrop);
-
-  const genderIcon =
-    player.gender === "Male" ? "👨‍💼" :
-    player.gender === "Female" ? "🙎‍♀️" :
-    "❔";
-
+  card.addEventListener("dragover",  onDragOver);
+  card.addEventListener("drop",      onDrop);
+  const genderImg = player.gender === "Female" ? "female.png" : "male.png";
   card.innerHTML = `
     <div class="pec-col pec-active">
-      <input type="checkbox"
-        ${player.active ? "checked" : ""}
-        onchange="toggleActive(${index}, this)">
-    </div>
-
-    <div class="pec-col pec-sl">${index + 1}</div>
-
-    <div class="pec-col pec-gender">
-      <span class="gender-icon ${player.gender.toLowerCase()}"
-            onclick="toggleGender(${index}, this)">
-        ${genderIcon}
-      </span>
-    </div>
-
-    <div class="pec-col pec-name"
-         onclick="editPlayerName(${index})">
-      ${player.name}
-    </div>
-
-    <div class="pec-col pec-delete">
-      <button class="pec-btn delete"
-              onclick="deletePlayer(${index})">🗑</button>
-    </div>
-  `;
-
-  return card;
-}
-
-function editPlayerName(index) {
-  const oldPlayer = schedulerState.allPlayers[index];
-  const oldName = oldPlayer.name;
-
-  const newName = prompt("Edit player name", oldName);
-  if (!newName) return;
-
-  const trimmed = newName.trim();
-  if (!trimmed) return;
-
-  const duplicate = schedulerState.allPlayers.some(
-    (p, i) =>
-      i !== index &&
-      p.name.toLowerCase() === trimmed.toLowerCase()
-  );
-
-  if (duplicate) {
-    alert("Player name already exists!");
-    return;
-  }
-
-  // ✅ immutable update
-  schedulerState.allPlayers = schedulerState.allPlayers.map((p, i) =>
-    i === index ? { ...p, name: trimmed } : p
-  );
-
-  updatePlayerList();
-}
-
-let draggedIndex = null;
-
-function onDragStart(e) {
-  draggedIndex = Number(e.currentTarget.dataset.index);
-  e.dataTransfer.effectAllowed = "move";
-}
-
-function onDragOver(e) {
-  e.preventDefault(); // Allow drop
-}
-
-function onDrop(e) {
-  const targetIndex = Number(e.currentTarget.dataset.index);
-  if (draggedIndex === targetIndex) return;
-
-  const list = schedulerState.allPlayers;
-  const [moved] = list.splice(draggedIndex, 1);
-  list.splice(targetIndex, 0, moved);
-
-  updatePlayerList();
-}
-
-
-
-function xxxcreatePlayerCard(player, index) {
-  // Base card class + gender
-  let cardClass = `player-edit-card player-row ${player.gender.toLowerCase()}`;
-  
-  // Add 'inactive' class if player is not active
-  if (!player.active) {
-    cardClass += " inactive";
-  }
-
-  const card = document.createElement("div");
-  card.className = cardClass;
-
-  // Gender icon
-  const genderIcon =
-    player.gender === "Male" ? "👨‍💼" :
-    player.gender === "Female" ? "🙎‍♀️" :
-    "❔";
-
-  card.innerHTML = `
-    <div class="pec-col pec-active">
-      <input type="checkbox"
-        ${player.active ? "checked" : ""}
-        onchange="toggleActive(${index}, this)">
+      <input type="checkbox" ${player.active ? "checked" : ""} onchange="toggleActive(${index}, this)">
     </div>
     <div class="pec-col pec-sl">${index + 1}</div>
     <div class="pec-col pec-gender">
-      <span class="gender-icon ${player.gender.toLowerCase()}"
-      onclick="toggleGender(${index}, this)">
-  ${genderIcon}
-</span>
-    </div> 
-
-    <div class="pec-col pec-name">${player.name}</div>    
-
+      <img src="${genderImg}" class="gender-icon pec-gender-img" onclick="toggleGender(${index}, this)" title="Tap to toggle gender">
+    </div>
+    <div class="pec-col pec-name" onclick="editPlayerName(${index})">${player.name}</div>
+    <div class="pec-col pec-rating">
+      <span class="rating-badge" data-player="${player.name}">${(typeof getRating === 'function' ? getRating(player.name) : 1.0).toFixed(1)}</span>
+    </div>
     <div class="pec-col pec-delete">
       <button class="pec-btn delete" onclick="deletePlayer(${index})">🗑</button>
     </div>
   `;
-
   return card;
 }
-/*
-========================
-   UPDATE PLAYER LIST TABLE
-========================= */
-function reportold1() {
-  const table = document.getElementById('page3-table');
-  table.innerHTML = `
-    <tr>
-      <th>No</th>
-      <th>Name</th>
-      <th>P/R</th>
-    </tr>
-  `;
 
-  schedulerState.allPlayers.forEach((p, i) => {
-    const row = document.createElement('tr');
+function editPlayerName(index) {
+  const oldName = schedulerState.allPlayers[index].name;
+  const newName = prompt("Edit player name", oldName);
+  if (!newName) return;
+  const trimmed = newName.trim();
+  if (!trimmed) return;
+  const duplicate = schedulerState.allPlayers.some(
+    (p, i) => i !== index && p.name.toLowerCase() === trimmed.toLowerCase()
+  );
+  if (duplicate) { alert("Player name already exists!"); return; }
+  schedulerState.allPlayers = schedulerState.allPlayers.map((p, i) =>
+    i === index ? { ...p, name: trimmed } : p
+  );
+  updatePlayerList();
+}
 
-    row.innerHTML = `
-      <!-- No -->
-      <td class="no-col" style="text-align:center; font-weight:bold;">
-        ${i + 1}
-      </td>
-
-      <!-- Name (plain text) -->
-      <td class="Player-cell">
-        ${p.name}
-      </td>
-
-      <!-- Played / Rest circles -->
-      <td class="stat-cell">
-        <span class="played-count" id="played_${i}"></span>
-        <span class="rest-count" id="rest_${i}"></span>
-      </td>
-    `;
-
-    // 🔥 Update Played circle
-    const playedElem = row.querySelector(`#played_${i}`);
-    if (playedElem) {
-      const playedValue = schedulerState.PlayedCount.get(p.name) || 0;
-      playedElem.textContent = playedValue;
-      playedElem.style.borderColor = getPlayedColor(playedValue);
-    }
-
-    // 🔥 Update Rest circle
-    const restElem = row.querySelector(`#rest_${i}`);
-    if (restElem) {
-      const restValue = schedulerState.restCount.get(p.name) || 0;
-      restElem.textContent = restValue;
-      restElem.style.borderColor = getRestColor(restValue);
-    }
-
-    table.appendChild(row);
-  });
+let draggedIndex = null;
+function onDragStart(e) {
+  draggedIndex = Number(e.currentTarget.dataset.index);
+  e.dataTransfer.effectAllowed = "move";
+}
+function onDragOver(e) { e.preventDefault(); }
+function onDrop(e) {
+  const targetIndex = Number(e.currentTarget.dataset.index);
+  if (draggedIndex === targetIndex) return;
+  const [moved] = schedulerState.allPlayers.splice(draggedIndex, 1);
+  schedulerState.allPlayers.splice(targetIndex, 0, moved);
+  updatePlayerList();
 }
 
 function updatePlayerList() {
   const container = document.getElementById("playerList");
   container.innerHTML = "";
-
   schedulerState.allPlayers.forEach((player, index) => {
-    const card = createPlayerCard(player, index);
-    container.appendChild(card);
+    container.appendChild(createPlayerCard(player, index));
   });
-  // Recalculate active players list
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-	.reverse();
-
-  // Refresh UI
+  schedulerState.activeplayers.splice(0, schedulerState.activeplayers.length,
+    ...schedulerState.allPlayers.filter(p => p.active).map(p => p.name).reverse());
   updateFixedPairSelectors();
-	
-  updateCourtButtons()
-  updateRoundsPageAccess(); 	
+  updateCourtButtons();
+  updateRoundsPageAccess();
 }
 
-function oldupdatePlayerList() {
-  const table = document.getElementById('player-list-table');
-  table.innerHTML = `
-    <tr>
-      <th>No</th>
-      <th></th>
-      <th>Name</th>
-      <th>M/F</th>
-      <th>Del</th>
-    </tr>
-  `;
-
-  schedulerState.allPlayers.forEach((p, i) => {
-    const row = document.createElement('tr');
-    if (!p.active) row.classList.add('inactive');
-
-    row.innerHTML = `
-      <!-- No. -->
-      <td class="no-col" style="text-align:center; font-weight:bold;">${i + 1}</td>
-
-      <!-- Active checkbox -->
-      <td style="text-align:center;">
-        <input type="checkbox" ${p.active ? 'checked' : ''}
-          onchange="editPlayer(${i}, 'active', this.checked)">
-      </td>
-
-      <!-- Name -->
-      <td class="Player-cell">
-        <input type="text" value="${p.name}"
-          ${!p.active ? 'disabled' : ''}
-          onchange="editPlayer(${i}, 'name', this.value)">
-      </td>
-
-      <!-- Gender -->
-      <td class="gender-cell">
-        <label class="gender-btn male">
-          <input type="radio" name="gender-${i}" value="Male"
-            ${p.gender === 'Male' ? 'checked' : ''}
-            onchange="editPlayer(${i}, 'gender', 'Male')">
-          <span>M</span>
-        </label>
-        <label class="gender-btn female">
-          <input type="radio" name="gender-${i}" value="Female"
-            ${p.gender === 'Female' ? 'checked' : ''}
-            onchange="editPlayer(${i}, 'gender', 'Female')">
-          <span>F</span>
-        </label>
-      </td>
-
-      <!-- Delete button col -->
-      <td style="text-align:center;">
-        <button onclick="deletePlayer(${i})">🗑️</button>
-      </td>
-    `;  // <-- ⬅ HERE: properly closed backtick!
-
-    table.appendChild(row);
-  });
-}
-
-
-
+/* =========================
+   COLOUR HELPERS
+========================= */
 function getPlayedColor(value) {
   if (!value || value <= 0) return "#e0e0e0";
-
-  const plays = Math.min(value, 20);
-  const hue = (plays - 1) * 36; // 36° steps → 10 distinct, bold colors: 0°, 36°, 72°, ..., 684° → wraps cleanly
-
-  return `hsl(${hue}, 92%, 58%)`;
+  return `hsl(${(Math.min(value, 20) - 1) * 36}, 92%, 58%)`;
 }
-
 function getRestColor(value) {
   if (!value || value <= 0) return "#e0e0e0";
-
-  const rests = Math.min(value, 20);
-  const hue = ((rests - 1) * 36 + 180) % 360; // +180° offset = perfect opposite color
-
-  return `hsl(${hue}, 88%, 62%)`;
-}
-
-
-
-
-let selectedNoCell = null;
-
-function enableTouchRowReorder() {
-  const table = document.getElementById("player-list-table");
-  Array.from(table.querySelectorAll(".no-col")).forEach(cell => {
-    cell.addEventListener("click", onNumberTouch);
-    cell.addEventListener("touchend", onNumberTouch);
-  });
-}
-
-function onNumberTouch(e) {
-  e.preventDefault();
-  const cell = e.currentTarget;
-  const sourceRow = selectedNoCell ? selectedNoCell.parentElement : null;
-  const targetRow = cell.parentElement;
-
-  // Select first row
-  if (!sourceRow) {
-    selectedNoCell = cell;
-    cell.classList.add("selected-no");
-    return;
-  }
-
-  // Unselect if same row
-  if (sourceRow === targetRow) {
-    selectedNoCell.classList.remove("selected-no");
-    selectedNoCell = null;
-    return;
-  }
-
-  const table = document.getElementById("player-list-table");
-
-  // Move source row AFTER target row
-  const nextSibling = targetRow.nextSibling;
-  table.insertBefore(sourceRow, nextSibling);
-
-  // Clear selection
-  selectedNoCell.classList.remove("selected-no");
-  selectedNoCell = null;
-
-  // Update No. column
-  updateNumbers();
-  syncPlayersFromTable();
-}
-
-
-function updateNumbers() {
-  const table = document.getElementById("player-list-table");
-  Array.from(table.querySelectorAll(".no-col")).forEach((cell, idx) => {
-    cell.textContent = idx + 1;
-  });
-}
-
-function syncPlayersFromTable() {
-  const table = document.getElementById('player-list-table');
-  const rows = table.querySelectorAll('tr');
-
-  const updated = [];
-
-  rows.forEach((row, index) => {
-    if (index === 0) return; // skip header
-
-    const nameCell = row.querySelector('.player-name');
-    const genderCell = row.querySelector('.player-gender');
-
-    if (!nameCell || !genderCell) return;
-
-    updated.push({
-      name: nameCell.textContent.trim(),
-      gender: genderCell.textContent.trim(),
-      active: !row.classList.contains('inactive-row')
-    });
-  });
-
-  // Update your global arrays
-  schedulerState.allPlayers = updated;
-  schedulerState.activeplayers = schedulerState.allPlayers
-    .filter(p => p.active)
-    .map(p => p.name)
-    .reverse();
-
-}
-
-
-// Function to toggle all checkboxes
-function toggleAllCheckboxes(masterCheckbox) {
-  // Only run if the checkbox exists and event came from it
-  if (!masterCheckbox || masterCheckbox.id !== 'select-all-checkbox') return;
-  const checkboxes = document.querySelectorAll('#player-list-table td:first-child input[type="checkbox"]');
-  checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
-}
-/* =========================
-   FIXED PAIRS MANAGEMENT
-========================= */
-function oldupdateFixedPairSelectors() {
-  const sel1 = document.getElementById('fixed-pair-1');
-  const sel2 = document.getElementById('fixed-pair-2');
-  const pairedPlayers = new Set(schedulerState.fixedPairs.flat());
-  sel1.innerHTML = '<option value="" data-i18n="selectPlayer1"></option>';
-  sel2.innerHTML = '<option value="" data-i18n="selectPlayer2"></option>';
-  //sel2.innerHTML = '<option value="">-- Select Player 2 --</option>';
-  // Only active players
-  schedulerState.activeplayers.slice().reverse().forEach(p => {
-    if (!pairedPlayers.has(p)) {
-      const option1 = document.createElement('option');
-      const option2 = document.createElement('option');
-      option1.value = option2.value = p;
-      option1.textContent = option2.textContent = p;
-      sel1.appendChild(option1);
-      sel2.appendChild(option2);
-    }
-  });
-}
-
-function modifyFixedPair(p1 = null, p2 = null) {
-  // If called from delete button (icon), values passed.
-  // If called from main button, read from selectors:
-  if (!p1 || !p2) {
-    p1 = document.getElementById('fixed-pair-1').value;
-    p2 = document.getElementById('fixed-pair-2').value;
-  }
-
-  if (!p1 || !p2) {
-    alert("Please select both players.");
-    return;
-  }
-
-  if (p1 === p2) {
-    alert("You cannot pair the same player with themselves.");
-    return;
-  }
-
-  const pairKey = [p1, p2].sort().join('&');
-
-  // Check if pair already exists
-  const index = schedulerState.fixedPairs.findIndex(
-    pair => pair.sort().join('&') === pairKey
-  );
-
-  // -------------------------
-  // REMOVE if exists
-  // -------------------------
-  if (index !== -1) {
-    schedulerState.fixedPairs.splice(index, 1);
-    removeFixedCard(pairKey);
-    updateFixedPairSelectors();
-    return;
-  }
-
-  // -------------------------
-  // ADD if does not exist
-  // -------------------------
-  schedulerState.fixedPairs.push([p1, p2]);
-  addFixedCard(p1, p2, pairKey);
-  updateFixedPairSelectors();
-}
-
-function oldaddFixedCard(p1, p2, key) {
-  const list = document.getElementById('fixed-pair-list');
-
-  const card = document.createElement("div");
-  card.className = "fixed-card";
-  card.setAttribute("data-key", key);
-
-  card.innerHTML = `
-    
-    <div class="fixed-name">${p1} & ${p2}</div>
-    <div class="fixed-delete">
-      <button class="pec-btn delete"
-              onclick="modifyFixedPair('${p1}', '${p2}')">🗑</button>
-    </div>
-  `;
-
-  list.appendChild(card);
-}
-
-function removeFixedCard(key) {
-  const card = document.querySelector(`[data-key="${key}"]`);
-  if (card) card.remove();
-}
-
-function addFixedPairold() {
-  const p1 = document.getElementById('fixed-pair-1').value;
-  const p2 = document.getElementById('fixed-pair-2').value;
-  if (!p1 || !p2) {
-    alert("Please select both players.");
-    return;
-  }
-  if (p1 === p2) {
-    alert("You cannot pair the same player with themselves.");
-    return;
-  }
-  const pairKey = [p1, p2].sort().join('&');
-  const alreadyExists = schedulerState.fixedPairs.some(pair => pair.sort().join('&') === pairKey);
-  if (alreadyExists) {
-    alert(`Fixed pair "${p1} & ${p2}" already exists.`);
-    return;
-  }
-  schedulerState.fixedPairs.push([p1, p2]);
-  const div = document.createElement('div');
-  div.classList.add('fixed-pair-item');
-  div.innerHTML = `
-    ${p1} & ${p2}
-    <span class="fixed-pair-remove" onclick="removeFixedPair(this, '${p1}', '${p2}')">
-      Remove
-    </span>
-  `;
-  document.getElementById('fixed-pair-list').appendChild(div);
-  updateFixedPairSelectors();
-}
-function removeFixedPair(el, p1, p2) {
-  schedulerState.fixedPairs = schedulerState.fixedPairs.filter(pair => !(pair[0] === p1 && pair[1] === p2));
-  el.parentElement.remove();
-  updateFixedPairSelectors();
+  return `hsl(${((Math.min(value, 20) - 1) * 36 + 180) % 360}, 88%, 62%)`;
 }
 
 /* =========================
- 
-PAGE NAVIGATION
- 
+   TOAST / ALERT
 ========================= */
-
 function showToast(msg) {
-  if (!msg) return; // ⛔ nothing to show
-
+  if (!msg) return;
   const toast = document.getElementById("toast");
-  if (!toast) return; // ⛔ toast element not present
-
+  if (!toast) return;
   toast.textContent = msg;
   toast.classList.remove("hidden");
-
-  setTimeout(() => {
-    if (toast) toast.classList.add("hidden");
-  }, 2500);
+  setTimeout(() => { if (toast) toast.classList.add("hidden"); }, 2500);
 }
+function alert(msg) { showToast(msg); }
 
-
-function alert(msg) {
-  showToast(msg);   // your toast function
-}
-
-
-
-// ======================
-// HELPERS
-// ======================
+/* =========================
+   MISC HELPERS
+========================= */
 function debounce(func, delay = 250) {
   let timeout;
   return function (...args) {
@@ -1259,515 +556,4 @@ function debounce(func, delay = 250) {
   };
 }
 
-// ======================
-// MODAL
-// ======================
-
-// ================= STATE =================
-const newImportState = {
-  historyPlayers: [],
-  favoritePlayers: [],
-  selectedPlayers: [],
-  currentSelectMode: "history"
-};
-
-let newImportModal;
-let newImportSelectCards;
-let newImportSelectedCards;
-let newImportSelectedCount;
-let newImportSearch;
-
-
-// ================= INIT =================
-document.addEventListener("DOMContentLoaded", () => {
-  newImportModal = document.getElementById("newImportModal");
-  newImportSelectCards = document.getElementById("newImportSelectCards");
-  newImportSelectedCards = document.getElementById("newImportSelectedCards");
-  newImportSelectedCount = document.getElementById("newImportSelectedCount");
-  newImportSearch = document.getElementById("newImportSearch");
-
-  newImportLoadHistory();
-  newImportLoadFavorites();
-
-  newImportRefreshSelectCards();
-  newImportRefreshSelectedCards();
-
-  newImportSelectCards.addEventListener("click", newImportHandleCardClick);
-  newImportSearch.addEventListener("input", newImportRefreshSelectCards);
-});
-
-
-// ================= MODAL =================
-function newImportShowModal(){
-  newImportModal.style.display="flex";
-  newImportLoadHistory();
-  newImportLoadFavorites();
-  newImportRefreshSelectCards();
-  newImportRefreshSelectedCards();
-}
-
-function newImportHideModal(){
-  newImportModal.style.display="none";
-  newImportState.selectedPlayers=[];
-}
-
-
-// ================= TAB SWITCH =================
-
-function newImportShowSelectMode(mode){
-
-  // keep your state
-  newImportState.currentSelectMode = mode;
-
-  // remove active from all tabs
-  document.querySelectorAll(".newImport-subtab-btn")
-    .forEach(btn => btn.classList.remove("active"));
-
-  // activate selected tab
-  document.getElementById(
-    "newImport" + mode.charAt(0).toUpperCase() + mode.slice(1) + "Btn"
-  )?.classList.add("active");
-
-  /* ---------- NEW: toggle clear buttons ---------- */
-
-  const clearHistory = document.getElementById("newImportClearHistoryBtn");
-  const clearFavorites = document.getElementById("newImportClearFavoritesBtn");
-
-  if(clearHistory && clearFavorites){
-    if(mode === "history"){
-      clearHistory.style.display = "block";
-      clearFavorites.style.display = "none";
-    }else{
-      clearHistory.style.display = "none";
-      clearFavorites.style.display = "block";
-    }
-  }
-
-  /* ---------- keep your card rendering ---------- */
-  newImportRefreshSelectCards();
-}
-
-function newImportShowSelectModeor(mode){
-  newImportState.currentSelectMode=mode;
-
-  document.querySelectorAll(".newImport-subtab-btn")
-    .forEach(btn=>btn.classList.remove("active"));
-
-  document.getElementById(
-    "newImport"+mode.charAt(0).toUpperCase()+mode.slice(1)+"Btn"
-  )?.classList.add("active");
-
-  newImportRefreshSelectCards();
-}
-
-
-// ================= STORAGE =================
-function newImportLoadHistory(){
-  const data=localStorage.getItem("newImportHistory");
-  newImportState.historyPlayers=data?JSON.parse(data):[];
-}
-
-function newImportLoadFavorites(){
-  const data=localStorage.getItem("newImportFavorites");
-  newImportState.favoritePlayers=data?JSON.parse(data):[];
-}
-
-function newImportSaveFavorites(){
-  localStorage.setItem(
-    "newImportFavorites",
-    JSON.stringify(newImportState.favoritePlayers)
-  );
-}
-
-
-// ================= RENDER LIST =================
-
-function newImportRefreshSelectCards(){
-  newImportSelectCards.innerHTML="";
-
-  const source =
-    newImportState.currentSelectMode==="favorites"
-      ? newImportState.favoritePlayers
-      : newImportState.historyPlayers;
-
-  const search = newImportSearch.value.toLowerCase();
-
-  source
-    .filter(p => p.displayName.toLowerCase().includes(search))
-    .forEach((p)=>{
-
-      const added = newImportState.selectedPlayers.some(
-        sp => sp.displayName === p.displayName
-      );
-
-      const fav = newImportState.favoritePlayers.some(
-        fp => fp.displayName === p.displayName
-      );
-
-      const card = document.createElement("div");
-      card.className="newImport-player-card";
-
-      card.innerHTML=`
-        <div class="newImport-player-top">
-          <img src="${p.gender==="Male"?"male.png":"female.png"}"
-               data-action="gender"
-               data-player="${p.displayName}">
-          <div class="newImport-player-name">${p.displayName}</div>
-        </div>
-
-        <div class="newImport-player-actions">
-          <button 
-            class="circle-btn favorite ${fav ? 'active-favorite' : ''}" 
-            data-action="favorite" 
-            data-player="${p.displayName}">
-            ${fav ? "★" : "☆"}
-          </button>
-
-          <button 
-            class="circle-btn delete" 
-            data-action="delete" 
-            data-player="${p.displayName}">
-            ×
-          </button>
-
-          <button 
-            class="circle-btn add ${added ? 'active-added' : ''}" 
-            data-action="add" 
-            data-player="${p.displayName}" 
-            ${added ? "disabled" : ""}>
-            ${added ? "✓" : "+"}
-          </button>
-        </div>
-      `;
-
-      newImportSelectCards.appendChild(card);
-    });
-}
-
-
-
-function newImportRefreshSelectCards2(){
-  newImportSelectCards.innerHTML="";
-
-  const source=
-    newImportState.currentSelectMode==="favorites"
-      ?newImportState.favoritePlayers
-      :newImportState.historyPlayers;
-
-  const search=newImportSearch.value.toLowerCase();
-
-  source
-    .filter(p=>p.displayName.toLowerCase().includes(search))
-    .forEach((p,i)=>{
-      const added=newImportState.selectedPlayers.some(
-        sp=>sp.displayName===p.displayName
-      );
-
-      const fav=newImportState.favoritePlayers.some(
-        fp=>fp.displayName===p.displayName
-      );
-
-      const card=document.createElement("div");
-      card.className="newImport-player-card";
-
-      card.innerHTML=`
-        <div class="newImport-player-top">
-          <img src="${p.gender==="Male"?"male.png":"female.png"}"
-               data-action="gender"
-               data-index="${i}">
-          <div class="newImport-player-name">${p.displayName}</div>
-        </div>
-
-		<div class="newImport-player-actions">
-		  <button 
-		    class="circle-btn favorite ${fav ? 'active-favorite' : ''}" 
-		    data-action="favorite" 
-		    data-index="${i}">
-		    ${fav ? "★" : "☆"}
-		  </button>
-		
-		  <button 
-		    class="circle-btn delete" 
-		    data-action="delete" 
-		    data-index="${i}">
-		    ×
-		  </button>
-		
-		  <button 
-		    class="circle-btn add ${added ? 'active-added' : ''}" 
-		    data-action="add" 
-		    data-index="${i}" 
-		    ${added ? "disabled" : ""}>
-		    ${added ? "✓" : "+"}
-		  </button>
-		</div>
-      `;
-
-      newImportSelectCards.appendChild(card);
-    });
-}
-
-
-// ================= CARD ACTIONS =================
-
-function newImportHandleCardClick(e){
-  const action = e.target.dataset.action;
-  if(!action) return;
-
-  const playerName = e.target.dataset.player;
-  if(!playerName) return;
-
-  const source =
-    newImportState.currentSelectMode==="favorites"
-      ? newImportState.favoritePlayers
-      : newImportState.historyPlayers;
-
-  const player = source.find(p => p.displayName === playerName);
-  if(!player) return;
-
-  // ADD PLAYER
-  if(action==="add"){
-    if(!newImportState.selectedPlayers.some(
-      p => p.displayName===player.displayName
-    )){
-      newImportState.selectedPlayers.push({...player});
-      newImportRefreshSelectedCards();
-    }
-  }
-
-  // TOGGLE GENDER
-  if(action==="gender"){
-  player.gender = player.gender==="Male" ? "Female" : "Male";
-
-  // update in history
-  newImportState.historyPlayers.forEach(p=>{
-    if(p.displayName===player.displayName){
-      p.gender = player.gender;
-    }
-  });
-
-  // update in favorites
-  newImportState.favoritePlayers.forEach(p=>{
-    if(p.displayName===player.displayName){
-      p.gender = player.gender;
-    }
-  });
-
-  localStorage.setItem(
-    "newImportHistory",
-    JSON.stringify(newImportState.historyPlayers)
-  );
-
-  localStorage.setItem(
-    "newImportFavorites",
-    JSON.stringify(newImportState.favoritePlayers)
-  );
-}
-
-  // TOGGLE FAVORITE
-  if(action==="favorite"){
-    const i = newImportState.favoritePlayers.findIndex(
-      p => p.displayName===player.displayName
-    );
-
-    if(i>=0){
-      newImportState.favoritePlayers.splice(i,1);
-    }else{
-      newImportState.favoritePlayers.push({...player});
-    }
-
-    newImportSaveFavorites();
-  }
-
-  // DELETE PLAYER
-  if(action==="delete"){
-    const removeIndex = source.findIndex(
-      p => p.displayName === playerName
-    );
-
-    if(removeIndex >= 0) source.splice(removeIndex,1);
-
-    if(newImportState.currentSelectMode==="history"){
-      localStorage.setItem(
-        "newImportHistory",
-        JSON.stringify(newImportState.historyPlayers)
-      );
-    }else{
-      localStorage.setItem(
-        "newImportFavorites",
-        JSON.stringify(newImportState.favoritePlayers)
-      );
-    }
-  }
-
-  newImportRefreshSelectCards();
-}
-
-
-function newImportHandleCardClickold(e){
-  const action=e.target.dataset.action;
-  if(!action) return;
-
-  const idx=parseInt(e.target.dataset.index);
-
-  const source=
-    newImportState.currentSelectMode==="favorites"
-      ?newImportState.favoritePlayers
-      :newImportState.historyPlayers;
-
-  const player=source[idx];
-  if(!player) return;
-
-  if(action==="add"){
-    if(!newImportState.selectedPlayers.some(
-      p=>p.displayName===player.displayName
-    )){
-      newImportState.selectedPlayers.push({...player});
-      newImportRefreshSelectedCards();
-    }
-  }
-
-  if(action==="gender"){
-    player.gender=player.gender==="Male"?"Female":"Male";
-  }
-
-  if(action==="favorite"){
-    const i=newImportState.favoritePlayers.findIndex(
-      p=>p.displayName===player.displayName
-    );
-
-    i>=0
-      ?newImportState.favoritePlayers.splice(i,1)
-      :newImportState.favoritePlayers.push({...player});
-
-    newImportSaveFavorites();
-  }
-
-  if(action==="delete"){
-  source.splice(idx,1);
-
-  // save to storage depending on tab
-  if(newImportState.currentSelectMode==="history"){
-    localStorage.setItem(
-      "newImportHistory",
-      JSON.stringify(newImportState.historyPlayers)
-    );
-  }else{
-    localStorage.setItem(
-      "newImportFavorites",
-      JSON.stringify(newImportState.favoritePlayers)
-    );
-  }
-}
-
-  newImportRefreshSelectCards();
-}
-
-
-// ================= SELECTED LIST =================
-function newImportRefreshSelectedCards(){
-  newImportSelectedCards.innerHTML="";
-  newImportSelectedCount.textContent=newImportState.selectedPlayers.length;
-
-  newImportState.selectedPlayers.forEach((p,i)=>{
-    const card=document.createElement("div");
-    card.className="newImport-player-card";
-
-    card.innerHTML=`
-      <div class="newImport-player-top">
-        <img src="${p.gender==="Male"?"male.png":"female.png"}">
-        <div class="newImport-player-name">${p.displayName}</div>
-      </div>
-      <div class="newImport-player-actions">
-        <button onclick="newImportRemoveSelected(${i})">×</button>
-      </div>
-    `;
-
-    newImportSelectedCards.appendChild(card);
-  });
-}
-
-function newImportRemoveSelected(i){
-  newImportState.selectedPlayers.splice(i,1);
-  newImportRefreshSelectedCards();
-  newImportRefreshSelectCards();
-}
-
-function newImportClearSelected(){
-  newImportState.selectedPlayers=[];
-  newImportRefreshSelectedCards();
-  newImportRefreshSelectCards();
-}
-
-
-// ================= FINAL IMPORT =================
-function newImportAddPlayers(){
-  if(!newImportState.selectedPlayers.length){
-    alert("No players selected");
-    return;
-  }
-
-  if(typeof addPlayersFromText==="function"){
-    addPlayersFromText(newImportState.selectedPlayers);
-  }
-
-  newImportState.historyPlayers=[
-    ...newImportState.selectedPlayers,
-    ...newImportState.historyPlayers
-  ].slice(0,50);
-
-  localStorage.setItem(
-    "newImportHistory",
-    JSON.stringify(newImportState.historyPlayers)
-  );
-
-  newImportHideModal();
-}
-
-function newImportAddIfNotExists(list, player) {
-  const exists = list.some(
-    p => p.displayName.trim().toLowerCase() ===
-         player.displayName.trim().toLowerCase()
-  );
-
-  if (!exists) {
-    list.push(player);
-    return true;
-  }
-
-  return false;
-}
-
-
-// ================= CLEAR LISTS =================
-function newImportClearHistory(){
-  if(!confirm("Clear history?")) return;
-  newImportState.historyPlayers=[];
-  localStorage.setItem("newImportHistory","[]");
-  newImportRefreshSelectCards();
-}
-
-function newImportClearFavorites(){
-  if(!confirm("Clear favorites?")) return;
-  newImportState.favoritePlayers=[];
-  localStorage.setItem("newImportFavorites","[]");
-  newImportRefreshSelectCards();
-}
-
-document.addEventListener("click", (e) => {
-  if (!e.target.matches(".circle-btn")) return;
-
-  const action = e.target.dataset.action;
-
-  if (action === "favorite") {
-    e.target.classList.toggle("active-favorite");
-    e.target.textContent = e.target.classList.contains("active-favorite") ? "★" : "☆";
-  }
-
-  if (action === "add") {
-    e.target.classList.add("active-added");
-    e.target.textContent = "✓";
-    e.target.disabled = true;
-  }
-});
 

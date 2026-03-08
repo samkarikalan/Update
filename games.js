@@ -1,3 +1,8 @@
+/* ============================================================
+   GAMES — Round rendering, win marking, player swaps
+   File: games.js
+   ============================================================ */
+
 let roundActive = false;
 
 let currentState = "idle";
@@ -17,6 +22,84 @@ const roundStates = {
     class: "end"
   }
 };
+function getPairKey(a, b) {
+  return [a, b].sort().join("|");
+}
+
+// Game identity must be based on PAIR vs PAIR (not 4 flattened players)
+function getGameKey(pair1Key, pair2Key) {
+  return [pair1Key, pair2Key].sort().join("|");
+}
+
+const repetitionHistory = {
+  pairSet: new Set(),
+  gameSet: new Set(),
+  builtUntilRound: -1
+};
+
+function updatePreviousHistory(currentRoundIndex) {
+
+  // Safety reset (if reset/back navigation happens)
+  if (repetitionHistory.builtUntilRound >= currentRoundIndex - 1) {
+    repetitionHistory.pairSet.clear();
+    repetitionHistory.gameSet.clear();
+    repetitionHistory.builtUntilRound = -1;
+  }
+
+  // Build only missing rounds
+  for (
+    let i = repetitionHistory.builtUntilRound + 1;
+    i < currentRoundIndex;
+    i++
+  ) {
+
+    const round = allRounds[i];
+    if (!round?.games) continue;
+
+    for (const game of round.games) {
+
+      const t1 = game.pair1;
+      const t2 = game.pair2;
+
+      if (!t1 || !t2) continue;
+
+      const pair1Key = getPairKey(t1[0], t1[1]);
+      const pair2Key = getPairKey(t2[0], t2[1]);
+
+      // Store pair history
+      repetitionHistory.pairSet.add(pair1Key);
+      repetitionHistory.pairSet.add(pair2Key);
+
+      // Store exact game history (pair vs pair)
+      const gameKey = getGameKey(pair1Key, pair2Key);
+      repetitionHistory.gameSet.add(gameKey);
+    }
+  }
+
+  repetitionHistory.builtUntilRound = currentRoundIndex - 1;
+}
+
+function isPairRepeated(pair) {
+  if (!pair) return false;
+
+  const pairKey = getPairKey(pair[0], pair[1]);
+  return repetitionHistory.pairSet.has(pairKey);
+}
+
+function isGameRepeated(game) {
+  if (!game?.pair1 || !game?.pair2) return false;
+
+  const pair1Key = getPairKey(game.pair1[0], game.pair1[1]);
+  const pair2Key = getPairKey(game.pair2[0], game.pair2[1]);
+
+  const gameKey = getGameKey(pair1Key, pair2Key);
+
+  return repetitionHistory.gameSet.has(gameKey);
+}
+
+
+
+
 
 function toggleRound() {
   const btn = document.getElementById("nextBtn");
@@ -36,24 +119,26 @@ function toggleRound() {
       "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
     ).forEach(el => {
       if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
-        // Disable clicks
         el.style.pointerEvents = "none";
-        
-        // Add disabled styling
         el.classList.add("disabled");    
-        
       }
     });   
 
+    // Show win cups whenever competitive toggle is ON
+    // (even during warm-up) so winners can be marked for seeding
     document.querySelectorAll(".win-cup").forEach(cup => {
-      cup.style.visibility = "visible";
-      cup.style.pointerEvents = "auto";
-      cup.classList.add("blinking");
       cup.style.visibility = playmode === "competitive" ? "visible" : "hidden";
+      cup.style.pointerEvents = playmode === "competitive" ? "auto" : "none";
+      cup.classList.add("blinking");
     });
 
+    document.getElementById("roundsPage").classList.add("active-mode");
+
   } else {
-    // ---- RETURN TO IDLE MODE ----   
+    // ---- RETURN TO IDLE MODE ----
+
+    // Require winners if competitive toggle is ON
+    // (warm-up rounds included — results seed tier rankings)
     if (playmode === "competitive") {     
       const currentRoundGames = allRounds[allRounds.length - 1].games;
       const winnersCount = currentRoundGames.filter(game => game.winner).length;
@@ -63,28 +148,27 @@ function toggleRound() {
         return; // ❌ stay in active mode
       }
 
+      // Always update points when competitive toggle is ON
+      // warm-up rounds → seeds tier rankings
+      // competitive rounds → drives tier rankings
+      updatePointsAfterRound(schedulerState);
     }
+
     currentState = "idle";
     nextRound();
-
+    document.getElementById("roundsPage").classList.remove("active-mode");
     
-   // Re-enable everything previously disabled
+    // Re-enable everything previously disabled
     document.querySelectorAll(".disabled").forEach(el => {
-      // Restore pointer events
       el.style.pointerEvents = "";
-    
-      // Remove the disabled class
       el.classList.remove("disabled");
     
-      // If you had removed inline onclick handlers, you may need to restore them manually
-      // For example, for the menu button:
       if (el.classList.contains("menu-btn")) {
         el.onclick = function() {
-          showPage('homePage', this);
+          showPage('settingsPage', this);
         };
       }
     });
-
 
     // Hide & disable win cups
     document.querySelectorAll(".win-cup").forEach(cup => {
@@ -204,26 +288,24 @@ function getNextFixedPairGames(schedulerState, fixedPairs, numCourts) {
 
 function AischedulerNextRound(schedulerState) {
 
-  const { PlayedCount, activeplayers } = schedulerState;
+  const { activeplayers } = schedulerState;
   const playmode = getPlayMode();
-  const page2 = document.getElementById("page2");
+  const page2 = document.getElementById("roundsPage");
 
   let result;
 
-  // Determine if competitive condition is satisfied
+  // Use minRounds from user input instead of hardcoded played count
   const canStartCompetitive =
     activeplayers.length > 0 &&
-    activeplayers.every(p => (PlayedCount.get(p) || 0) >= 50);
+    allRounds.length >= (schedulerState.minRounds || 6);
 
   // --------------------------------------------------
   // RANDOM MODE
   // --------------------------------------------------
   if (playmode === "random" || !canStartCompetitive) {
 
-    // If switching FROM competitive TO random → reset random memory if needed
     if (schedulerState._lastMode === "competitive") {
-      // Optional: reset if you want fresh random after comp
-      // resetForRandomPhase(schedulerState);
+      // resetForRandomPhase(schedulerState); // optional
     }
 
     result = RandomRound(schedulerState);
@@ -239,11 +321,12 @@ function AischedulerNextRound(schedulerState) {
   // --------------------------------------------------
   else {
 
-    // 🔥 RESET ONLY ONCE when entering competitive
+    // Reset only once when entering competitive
     if (schedulerState._lastMode !== "competitive") {
       resetForCompetitivePhase(schedulerState);
     }
 
+    // 🔥 Uses new CompetitiveRound from competitive_algorithm.js
     result = CompetitiveRound(schedulerState);
 
     page2.classList.remove("random-mode");
@@ -291,7 +374,8 @@ function getPlayingAndResting(state) {
 
   if (totalPlayers > playersPerRound) {
     const needRest = totalPlayers - playersPerRound;
-    resting = selectRestPlayers(state, needRest); // your LIFO logic
+    // Use existing restQueue order (same logic as RandomRound)
+    resting = state.restQueue.slice(0, needRest);
   }
 
   const restSet = new Set(resting);
@@ -319,17 +403,20 @@ function extractActiveFixedPairs(state, playing) {
 }
 
 function groupByTier(state, players) {
+  // Tier boundaries based on persistent player rating (master DB)
+  // 1.0 – 2.0  → Weak
+  // 2.1 – 3.5  → Intermediate
+  // 3.6 – 5.0  → Strong
 
   const strong = [];
-  const inter = [];
-  const weak = [];
+  const inter  = [];
+  const weak   = [];
 
   for (const p of players) {
-    const rating = state.winCount.get(p) || 0;
-
-    if (rating >= state.strongThreshold) strong.push(p);
-    else if (rating >= state.interThreshold) inter.push(p);
-    else weak.push(p);
+    const rating = getRating(p);
+    if (rating >= 3.6)      strong.push(p);
+    else if (rating >= 2.1) inter.push(p);
+    else                    weak.push(p);
   }
 
   return { strong, inter, weak };
@@ -355,66 +442,16 @@ function buildBestTeam(state, pool) {
   return [pool[0], pool[1]];
 }
 
-function CompetitiveRound(state) {
-
-  const { playing, resting } = getPlayingAndResting(state);
-
-  const games = [];
-  const used = new Set();
-
-  // Step 1: Handle fixed pairs
-  const { activePairs, lockedPlayers } =
-      extractActiveFixedPairs(state, playing);
-
-  // Add locked teams first
-  const lockedTeams = [...activePairs];
-
-  // Remove locked players from free pool
-  const freePool = playing.filter(p => !lockedPlayers.has(p));
-
-  // Step 2: Resolve locked teams first
-  while (lockedTeams.length > 0) {
-
-    const team1 = lockedTeams.shift();
-
-    const opponent = buildBestTeam(state, freePool);
-
-    games.push([team1, opponent]);
-
-    team1.forEach(p => used.add(p));
-    opponent.forEach(p => used.add(p));
-
-    removePlayersFromArray(freePool, opponent);
-  }
-
-  // Step 3: Pair remaining free pool
-  const tierGroups = groupByTier(state, freePool);
-
-  const remaining = [...freePool];
-
-  while (remaining.length >= 4) {
-
-    const team1 = buildBestTeam(state, remaining);
-    removePlayersFromArray(remaining, team1);
-
-    const team2 = buildBestTeam(state, remaining);
-    removePlayersFromArray(remaining, team2);
-
-    games.push([team1, team2]);
-  }
-
-  // Step 4: Update memory
-  updateAfterRound(state, games);
-
-  return {
-    games,
-    resting
-  };
-}
+// OLD CompetitiveRound removed — using competitive_algorithm.js instead
 
 function updateAfterRound(state, games) {
+  for (const game of games) {
 
-  for (const [team1, team2] of games) {
+    // Handle both [team1, team2] array format AND {pair1, pair2} object format
+    const team1 = Array.isArray(game) ? game[0] : game.pair1;
+    const team2 = Array.isArray(game) ? game[1] : game.pair2;
+
+    if (!team1 || !team2) continue;
 
     const key1 = createSortedKey(team1[0], team1[1]);
     const key2 = createSortedKey(team2[0], team2[1]);
@@ -422,22 +459,20 @@ function updateAfterRound(state, games) {
     state.pairPlayedSet.add(key1);
     state.pairPlayedSet.add(key2);
 
-    // update opponent map
+    // Update opponent map safely
     for (const p1 of team1) {
       for (const p2 of team2) {
-        state.opponentMap.get(p1).set(
-          p2,
-          state.opponentMap.get(p1).get(p2) + 1
-        );
-        state.opponentMap.get(p2).set(
-          p1,
-          state.opponentMap.get(p2).get(p1) + 1
-        );
+
+        // Ensure maps exist before accessing
+        if (!state.opponentMap.has(p1)) state.opponentMap.set(p1, new Map());
+        if (!state.opponentMap.has(p2)) state.opponentMap.set(p2, new Map());
+
+        state.opponentMap.get(p1).set(p2, (state.opponentMap.get(p1).get(p2) || 0) + 1);
+        state.opponentMap.get(p2).set(p1, (state.opponentMap.get(p2).get(p1) || 0) + 1);
       }
     }
   }
 }
-
 
 
 function RandomRound(schedulerState) {
@@ -1300,6 +1335,195 @@ function chkrenderRestingPlayers(data, index) {
 }
 
 function renderGames(data, roundIndex) {
+
+  const wrapper = document.createElement('div');
+  const playmode = getPlayMode();
+
+  // ⭐ Build previous history
+  const previousPairSet = new Set();
+  const previousGameSet = new Set();
+
+  for (let i = 0; i < roundIndex; i++) {
+    const prev = allRounds[i];
+    if (!prev?.games) continue;
+
+    prev.games.forEach(g => {
+      if (!g?.pair1 || !g?.pair2) return;
+
+      const pair1Key = getPairKey(g.pair1[0], g.pair1[1]);
+      const pair2Key = getPairKey(g.pair2[0], g.pair2[1]);
+
+      previousPairSet.add(pair1Key);
+      previousPairSet.add(pair2Key);
+
+      // ✅ FIXED — store game as pair-vs-pair (NOT 4 flattened players)
+      const gameKey = [pair1Key, pair2Key].sort().join("|");
+      previousGameSet.add(gameKey);
+    });
+  }
+
+  data.games.forEach((game, gameIndex) => {
+
+    const courtDiv = document.createElement('div');
+    courtDiv.className = 'courtcard';
+
+    const courtName = document.createElement('div');
+    courtName.classList.add('courtname');
+    courtName.textContent = `Court ${gameIndex + 1}`;
+
+    const teamsDiv = document.createElement('div');
+    teamsDiv.className = 'teams';
+
+    const makeTeamDiv = (teamSide) => {
+
+      const teamDiv = document.createElement('div');
+      teamDiv.className = 'team';
+      teamDiv.dataset.teamSide = teamSide;
+      teamDiv.dataset.gameIndex = gameIndex;
+
+      const teamPairs = teamSide === 'L' ? game.pair1 : game.pair2;
+
+      // ⭐ Pair repetition detection
+      if (teamPairs) {
+        const pairKey = getPairKey(teamPairs[0], teamPairs[1]);
+        if (previousPairSet.has(pairKey)) {
+          teamDiv.classList.add('repeated-pair');
+        }
+      }
+
+      const swapIcon = document.createElement('div');
+      swapIcon.className = 'swap-icon';
+      swapIcon.innerHTML = '🔁';
+      teamDiv.appendChild(swapIcon);
+
+      teamPairs.forEach((p, i) => {
+        teamDiv.appendChild(
+          makePlayerButton(p, teamSide, gameIndex, i, data, roundIndex)
+        );
+      });
+
+      const winCup = document.createElement('img');
+      winCup.src = 'win-cup.png';
+      winCup.className = 'win-cup blinking';
+      winCup.title = 'Mark winner';
+      winCup.style.visibility = 'hidden';
+      winCup.style.pointerEvents = 'none';
+
+      if (game.winner === teamSide) {
+        winCup.classList.add('active');
+        winCup.classList.remove('blinking');
+      }
+
+      const toggleWinner = (e) => {
+        if (currentState === "idle") return;
+        e.stopPropagation();
+        e.preventDefault();
+
+        const allCups = teamDiv.parentElement.querySelectorAll('.win-cup');
+        const allSwapIcons = teamDiv.parentElement.querySelectorAll('.swap-icon');
+        const isActive = winCup.classList.contains('active');
+
+        if (!isActive) {
+          allCups.forEach(cup => {
+            cup.classList.remove('active', 'blinking');
+            cup.style.visibility = 'hidden';
+            cup.style.pointerEvents = 'none';
+          });
+
+          winCup.classList.add('active');
+          winCup.classList.remove('blinking');
+          winCup.style.visibility = 'visible';
+          winCup.style.pointerEvents = 'auto';
+
+          allSwapIcons.forEach(icon => {
+            icon.style.visibility = 'hidden';
+            icon.style.pointerEvents = 'none';
+          });
+
+          game.winner = teamSide;
+          game.winners = teamPairs.slice();
+        } else {
+          allCups.forEach(cup => {
+            cup.classList.remove('active');
+            cup.classList.add('blinking');
+            cup.style.visibility = 'visible';
+            cup.style.pointerEvents = 'auto';
+          });
+
+          allSwapIcons.forEach(icon => {
+            icon.style.visibility = 'visible';
+            icon.style.pointerEvents = 'auto';
+          });
+
+          game.winner = undefined;
+          game.winners = [];
+        }
+      };
+
+      winCup.addEventListener('click', toggleWinner);
+      teamDiv.addEventListener('click', toggleWinner);
+
+      teamDiv.appendChild(winCup);
+
+      const isLatestRound = roundIndex === allRounds.length - 1;
+      if (isLatestRound) {
+        swapIcon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+
+          if (game.winner) return;
+
+          if (window.selectedTeam) {
+            const src = window.selectedTeam;
+            if (src.gameIndex !== gameIndex) {
+              handleTeamSwapAcrossCourts(
+                src,
+                { teamSide, gameIndex },
+                data,
+                roundIndex
+              );
+            }
+            window.selectedTeam = null;
+            document.querySelectorAll('.selected-team')
+              .forEach(b => b.classList.remove('selected-team'));
+          } else {
+            window.selectedTeam = { teamSide, gameIndex };
+            teamDiv.classList.add('selected-team');
+          }
+        });
+      }
+
+      return teamDiv;
+    };
+
+    const teamLeft = makeTeamDiv('L');
+    const teamRight = makeTeamDiv('R');
+
+    // ⭐ FIXED — Exact game repetition detection
+    if (game?.pair1 && game?.pair2) {
+
+      const pair1Key = getPairKey(game.pair1[0], game.pair1[1]);
+      const pair2Key = getPairKey(game.pair2[0], game.pair2[1]);
+
+      const currentGameKey = [pair1Key, pair2Key].sort().join("|");
+
+      if (previousGameSet.has(currentGameKey)) {
+        courtDiv.classList.add('repeated-game');
+      }
+    }
+
+    const vs = document.createElement('span');
+    vs.className = 'vs';
+    vs.innerText = '  ';
+
+    teamsDiv.append(teamLeft, vs, teamRight);
+    courtDiv.append(courtName, teamsDiv);
+    wrapper.appendChild(courtDiv);
+  });
+
+  return wrapper;
+}
+function goodrenderGames(data, roundIndex) {
   const wrapper = document.createElement('div');
   const playmode = getPlayMode();
 
@@ -2269,15 +2493,43 @@ const modeLabel  = document.getElementById("modeLabel");
 // Restore saved mode
 modeToggle.checked = localStorage.getItem("playMode") === "competitive";
 updateModeLabel();
+toggleMinRoundsVisibility(); // ← restore on load
 
 modeToggle.addEventListener("change", () => {
   localStorage.setItem("playMode", getPlayMode());
   updateModeLabel();
-  //updateWinCupVisibility(); // <-- update cups visibility when mode changes
+  toggleMinRoundsVisibility();
 });
 
+// Min Rounds value
+let minRoundsValue = parseInt(localStorage.getItem('minRounds')) || 6;
+document.getElementById('minRoundsDisplay').textContent = minRoundsValue;
 
+document.getElementById('minRoundsPlus').addEventListener('click', () => {
+  minRoundsValue = Math.min(20, minRoundsValue + 1);
+  document.getElementById('minRoundsDisplay').textContent = minRoundsValue;
+  localStorage.setItem('minRounds', minRoundsValue);
+  schedulerState.minRounds = minRoundsValue;
+});
 
+document.getElementById('minRoundsMinus').addEventListener('click', () => {
+  minRoundsValue = Math.max(1, minRoundsValue - 1);
+  document.getElementById('minRoundsDisplay').textContent = minRoundsValue;
+  localStorage.setItem('minRounds', minRoundsValue);
+  schedulerState.minRounds = minRoundsValue;
+});
+
+function toggleRoundSettings() {
+  const body    = document.getElementById('roundSettingsBody');
+  const chevron = document.getElementById('roundSettingsChevron');
+  const isOpen  = body.classList.toggle('open');
+  chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+function toggleMinRoundsVisibility() {
+  const isCompetitive = getPlayMode() === 'competitive';
+  document.getElementById('minRoundsRow').style.display = isCompetitive ? 'flex' : 'none';
+}
 
 function updateModeLabel() {
   modeLabel.textContent =
@@ -2285,5 +2537,3 @@ function updateModeLabel() {
       ? "🏆"
       : "🎲";
 }
-
-

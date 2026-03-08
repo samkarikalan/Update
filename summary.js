@@ -1,3 +1,8 @@
+/* ============================================================
+   SUMMARY TAB — Round report and HTML export
+   File: summary.js
+   ============================================================ */
+
 function renderRounds() {
   const exportRoot = document.getElementById('export');
   exportRoot.innerHTML = '';
@@ -194,10 +199,10 @@ async function createSummaryCSS() {
 
 async function exportBRR2HTML() {
   const SUMMARY_CSS = await createSummaryCSS();
-  showPage('page3');
+  showPage('summaryPage');
   await new Promise(r => setTimeout(r, 300));
 
-  const page = document.getElementById('page3');
+  const page = document.getElementById('summaryPage');
   if (!page) return alert("Export page not found");
 
   const html = `
@@ -240,11 +245,3 @@ ${page.outerHTML}
     URL.revokeObjectURL(url);
   }
 }
-
-
-
-
-
-
-
-

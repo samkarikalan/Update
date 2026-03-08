@@ -1,3 +1,8 @@
+/* ============================================================
+   HELP TAB — Load and display contextual help sections
+   File: help.js
+   ============================================================ */
+
 var helpData = null;
 var loadedLang = null;
 var currentHelpSection = 'players';

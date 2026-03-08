@@ -1,3 +1,8 @@
+/* ============================================================
+   ROUNDS TAB — Court setup, scheduling algorithm, rest queue, global state
+   File: rounds.js
+   ============================================================ */
+
 
 let allRounds = [];
 let lastRound = [];
@@ -20,11 +25,17 @@ let schedulerState = {
     fixedMap: new Map(),
     roundIndex: 0,
     pairPlayedSet: new Set(),
-	pairPlayedSet: new Set(),
-    gamesMap: new Map(), // 🆕 per-player opponent tracking
-	markingWinnerMode: false,
-	winCount: new Map(), // 🏆 Track player wins
-	pairCooldownMap: new Map(),
+    gamesMap: new Map(),
+    markingWinnerMode: false,
+    winCount: new Map(),
+    pairCooldownMap: new Map(),
+    // ── Competitive algorithm additions ──
+    minRounds:  6,
+    rankPoints: new Map(),
+    streakMap:  new Map(),
+    tierMap:    new Map(),
+    courts:     1,
+    // ─────────────────────────────────────
 };
 
 schedulerState.activeplayers = new Proxy([], {
@@ -128,6 +139,7 @@ function updateCourtButtons() {
 function goToRounds() {
   const numCourtsInput = parseInt(document.getElementById("num-courts").textContent);
   //const numCourtsInput = parseInt(document.getElementById('num-courts').value);
+  schedulerState.courts = numCourtsInput; // keep alias in sync for competitive_algorithm.js
   const totalPlayers = schedulerState.activeplayers.length;
   if (!totalPlayers) {
     alert('Please add players first!');
@@ -166,16 +178,16 @@ function goToRounds() {
        showRound(currentRoundIndex);
     }  
   /*
-  document.getElementById('page1').style.display = 'none';
-  document.getElementById('page2').style.display = 'block';
+  document.getElementById('playersPage').style.display = 'none';
+  document.getElementById('roundsPage').style.display = 'block';
   isOnPage2 = true;
   */
 }
 
 function goBack() {
   updatePlayerList();
-  document.getElementById('page1').style.display = 'block';
-  document.getElementById('page2').style.display = 'none';
+  document.getElementById('playersPage').style.display = 'block';
+  document.getElementById('roundsPage').style.display = 'none';
   isOnPage2 = false;
   const btn = document.getElementById('goToRoundsBtn');
   btn.disabled = false;
@@ -193,7 +205,8 @@ function nextRound() {
     currentRoundIndex = allRounds.length - 1;
     showRound(currentRoundIndex);
   }
-  updateSummaryPageAccess()
+  updateSummaryPageAccess();
+  // Sync ratings to GitHub silently after every round (called from updSchedule with wins/losses)
 }
 function endRounds() {  
 	sessionFinished = true;
@@ -211,7 +224,7 @@ function endRounds() {
   // Optional: also disable End to prevent double-click
   document.getElementById("endBtn").disabled = true;
 	updateSummaryPageAccess();
-	showPage('page3');
+	showPage('summaryPage');
 
 	
 }
@@ -223,10 +236,8 @@ function prevRound() {
 }
 
 function initScheduler(numCourts) {
-  schedulerState.numCourts = numCourts;  
+  schedulerState.numCourts = numCourts;
   schedulerState.restCount = new Map(schedulerState.activeplayers.map(p => [p, 0]));
- //schedulerState.restQueue = new Map(schedulerState.activeplayers.map(p => [p, 0]));
-    
   schedulerState.PlayedCount = new Map(schedulerState.activeplayers.map(p => [p, 0]));
   schedulerState.PlayerScoreMap = new Map(schedulerState.activeplayers.map(p => [p, 0]));
   schedulerState.playedTogether = new Map();
@@ -234,26 +245,32 @@ function initScheduler(numCourts) {
   schedulerState.pairPlayedSet = new Set();
   schedulerState.gamesMap = new Set();
   schedulerState.roundIndex = 0;
-  // 🆕 Initialize opponentMap — nested map for opponent counts
+
+  // ── Competitive algorithm additions ──
+  schedulerState.minRounds  = parseInt(localStorage.getItem('minRounds')) || 6;
+  schedulerState.rankPoints = new Map(schedulerState.activeplayers.map(p => [p, 100]));
+  schedulerState.streakMap  = new Map(schedulerState.activeplayers.map(p => [p, 0]));
+  schedulerState.tierMap    = new Map();
+  schedulerState.courts     = numCourts;
+  // ─────────────────────────────────────
+
+  // Initialize opponentMap
   schedulerState.opponentMap = new Map();
   for (const p1 of schedulerState.activeplayers) {
     const innerMap = new Map();
     for (const p2 of schedulerState.activeplayers) {
-      if (p1 !== p2) innerMap.set(p2, 0); // start all counts at 0
+      if (p1 !== p2) innerMap.set(p2, 0);
     }
     schedulerState.opponentMap.set(p1, innerMap);
   }
+
   // Map each fixed pair for quick lookup
   schedulerState.fixedPairs.forEach(([a, b]) => {
     schedulerState.fixedMap.set(a, b);
     schedulerState.fixedMap.set(b, a);
   });
-    schedulerState.restQueue = createRestQueue();
-	 // ✅ Competitive ranking points
-  schedulerState.rankPoints = new Map(
-    schedulerState.activeplayers.map(p => [p, 0])
-  );
-    
+
+  schedulerState.restQueue = createRestQueue();
 }
 
 
@@ -333,59 +350,9 @@ function reorder1324(queue, roundIndex = 0) {
   const offset = roundIndex % pCount;
   return [...pairs.slice(offset), ...pairs.slice(0, offset)].flat();
 }
-function old2reorder1324(queue) {
-  const total = queue.length;
 
-  // 🔹 Case: 8 or 12 players → divide by 4
-  if (total === 8 || total === 12) {
-    const size = Math.floor(total / 4);
 
-    const g1 = queue.slice(0, size);
-    const g2 = queue.slice(size, size * 2);
-    const g3 = queue.slice(size * 2, size * 3);
-    const g4 = queue.slice(size * 3);
 
-    // 1,4,2,3
-    return [...g1, ...g4, ...g2, ...g3];
-  }
-
-  // 🔹 Case: 16 or more players → divide by 8
-  if (total >= 16) {
-    const size = Math.floor(total / 8);
-    const groups = [];
-
-    for (let i = 0; i < 8; i++) {
-      groups.push(queue.slice(i * size, (i + 1) * size));
-    }
-
-    // 1,3,5,7,2,4,6,8
-    return [
-      ...groups[0],
-      ...groups[2],
-      ...groups[4],
-      ...groups[6],
-      ...groups[1],
-      ...groups[3],
-      ...groups[5],
-      ...groups[7],
-    ];
-  }
-
-  // 🔹 Default → no change
-  return queue.slice();
-}
-
-function oldreorder1324(queue) {
-  const total = queue.length;
-  const quarter = Math.floor(total / 4);
-
-  const q1 = queue.slice(0, quarter);
-  const q2 = queue.slice(quarter, quarter * 2);
-  const q3 = queue.slice(quarter * 2, quarter * 3);
-  const q4 = queue.slice(quarter * 3);
-
-  return [...q1, ...q3, ...q2, ...q4];
-}
 
 // 🔍 check if ALL pairs exhausted
 function allPairsExhausted(queue, pairPlayedSet) {
@@ -508,33 +475,52 @@ for (const game of games) {
   gamesMap.add(gameKey);
 }
 
-/// 7️⃣ 🏆 Update COMPETITIVE RANK POINTS (+2 / -2)
-if (getPlayMode() === "competitive") {
-  for (const game of games) {
-    if (!game.winner) continue;
-
-    const winners = game.winner === 'L' ? game.pair1 : game.pair2;
-    const losers  = game.winner === 'L' ? game.pair2 : game.pair1;
-
-    for (const p of winners) {
-      schedulerState.rankPoints.set(
-        p,
-        (schedulerState.rankPoints.get(p) || 0) + 2
-      );
-	  schedulerState.winCount.set(
-	    p,
-	    (schedulerState.winCount.get(p) || 0) + 1
-	  );	
-    }
-
-    for (const p of losers) {
-      schedulerState.rankPoints.set(
-        p,
-        (schedulerState.rankPoints.get(p) || 0) - 2
-      );
-    }
+/// 7️⃣ 🏆 Update WIN COUNT + RATINGS
+// Win counts always tracked regardless of mode
+for (const game of games) {
+  if (!game.winner) continue;
+  const winners = game.winner === 'L' ? game.pair1 : game.pair2;
+  for (const p of winners) {
+    schedulerState.winCount.set(p, (schedulerState.winCount.get(p) || 0) + 1);
   }
 }
+
+// Rating updates — all modes
+// Also track wins/losses per player this round
+const roundWins   = new Map();
+const roundLosses = new Map();
+
+for (const game of games) {
+  if (!game.winner) continue;
+
+  const winners = game.winner === 'L' ? game.pair1 : game.pair2;
+  const losers  = game.winner === 'L' ? game.pair2 : game.pair1;
+
+  const winAvg  = winners.reduce((s, p) => s + getRating(p), 0) / winners.length;
+  const loseAvg = losers.reduce((s, p)  => s + getRating(p), 0) / losers.length;
+  const gap = loseAvg - winAvg;
+
+  const winGain  = gap > 0.3 ? 0.4 : gap > -0.3 ? 0.2 : 0.1;
+  const loseLoss = gap < -0.3 ? 0.4 : gap < 0.3 ? 0.2 : 0.1;
+
+  for (const p of winners) {
+    setRating(p, getRating(p) + winGain);
+    roundWins.set(p, (roundWins.get(p) || 0) + 1);
+  }
+  for (const p of losers) {
+    if (getRating(p) >= 2.0) {
+      setRating(p, getRating(p) - loseLoss);
+    }
+    roundLosses.set(p, (roundLosses.get(p) || 0) + 1);
+  }
+}
+
+// Refresh all visible badges
+syncRatings();
+updatePlayerList();
+
+// Sync ratings + wins/losses to Supabase
+if (typeof githubSyncAfterRound === "function") githubSyncAfterRound(roundWins, roundLosses);
 
 // after tracking pairs & games
 checkAndResetPairCycle(schedulerState, games, roundIndex);
@@ -588,6 +574,14 @@ function RefreshRound() {
     showRound(currentRoundIndex);
 }
 
+function ratingToColor(r) {
+  if (r < 2.0) return "#9e9e9e";  // grey  — beginner
+  if (r < 3.0) return "#4a9eff";  // blue  — developing
+  if (r < 4.0) return "#2dce89";  // green — intermediate
+  if (r < 4.5) return "#f5a623";  // amber — advanced
+  return "#e63757";                // red   — elite
+}
+
 function report() {
   const container = document.getElementById("reportContainer");
   container.innerHTML = "";
@@ -598,11 +592,12 @@ function report() {
   const header = document.createElement("div");
   header.className = "report-header";
   header.innerHTML = `
-    <div class="header-rank" data-i18n="rank">Rank</div>
-    <div class="header-name" data-i18n="name">Name</div>
-    <div class="header-wins" data-i18n="wins">Wins</div>
-    <div class="header-played" data-i18n="played">Played</div>
-    <div class="header-rested" data-i18n="rested">Rested</div>
+    <div class="header-strip"></div>
+    <div class="header-rank">Rank</div>
+    <div class="header-name">Name</div>
+    <div class="header-wins">W</div>
+    <div class="header-played">P</div>
+    <div class="header-rested">R</div>
   `;
   container.appendChild(header);
 
@@ -635,14 +630,23 @@ function report() {
     const played = schedulerState.PlayedCount.get(p.name) || 0;
     const rest = schedulerState.restCount.get(p.name) || 0;
 
+    const rating   = (typeof getRating === 'function') ? getRating(p.name) : 1.0;
+    const stripColor = ratingToColor(rating);
+    const topClass = index === 0 ? "top-1" : index === 1 ? "top-2" : index === 2 ? "top-3" : "";
     const card = document.createElement("div");
-    card.className = "player-card";
+    card.className = `player-card ${topClass}`;
+    card.style.setProperty("--strip-color", stripColor);
     card.innerHTML = `
+      <div class="rating-strip"></div>
       <div class="rank">#${index + 1}</div>
       <div class="name">${p.name}</div>
       <div class="stat wins">${wins}</div>
       <div class="stat played">${played}</div>
       <div class="stat rest">${rest}</div>
+      <span class="rating-badge" data-player="${p.name}">${rating.toFixed(1)}</span>
+      <div class="stat-label lbl-wins">W</div>
+      <div class="stat-label lbl-played">P</div>
+      <div class="stat-label lbl-rest">R</div>
     `;
     container.appendChild(card);
   });
@@ -677,10 +681,12 @@ function workedreport() {
     const rest = schedulerState.restCount.get(p.name) || 0;
 
     const card = document.createElement("div");
-    card.className = "player-card";
+    const topClass = index === 0 ? "top-1" : index === 1 ? "top-2" : index === 2 ? "top-3" : "";
+    card.className = `player-card ${topClass}`;
     card.innerHTML = `
       <div class="rank">#${index + 1}</div>
       <div class="name">${p.name.replace(/^\d+\.?\s*/, "")}</div>
+      <span class="rating-badge" data-player="${p.name}">${(typeof getRating === 'function' ? getRating(p.name) : 1.0).toFixed(1)}</span>
       <div class="stat played" style="border-color:${getPlayedColor(played)}">${played}</div>
       <div class="stat rest" style="border-color:${getRestColor(rest)}">${rest}</div>
     `;
@@ -738,10 +744,3 @@ function checkAndResetPairCycle(schedulerState, games, roundIndex) {
 
   return true; // cycle reset happened
 }
-
-
-
-
-
-
- 
