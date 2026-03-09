@@ -453,6 +453,14 @@ body.app-dark .action.mid.small:hover {
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
 }
 
+/* End Session button — shares same styling as primary.end, flex: 1 */
+#endBtn {
+  flex: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
 /* Icon inside button */
 .action.right.primary .icon {
   font-size: 1rem !important;

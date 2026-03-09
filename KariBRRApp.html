@@ -43,7 +43,6 @@
       </div>
     </div>
     <span class="app-logo-premium">CLUB Scheduler</span>
-    <button class="power-btn" onclick="endSession()" aria-label="End Session" title="End Session"><img src="power.png" class="power-icon"></button>
   </div>
 
   <!-- ============================= -->
@@ -310,6 +309,10 @@
       <button id="nextBtn" class="action right primary" onclick="toggleRound()">
         <span id="btnText" data-i18n="nround"></span>
         <span class="icon"> ▶</span>
+      </button>
+      <button id="endBtn" class="action right primary end" onclick="endSession()" style="display:none;">
+        <span data-i18n="endSession">End</span>
+        <span class="icon"> ⏹</span>
       </button>
       <button class="action mid small" onclick="toggleRoundSettings()" aria-label="Settings">⚙️</button>
     </div>
