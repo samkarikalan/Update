@@ -18,6 +18,11 @@ const roundStates = {
   },
   active: {
     key: "endrounds",
+    icon: "▶",
+    class: ""
+  },
+  done: {
+    key: "endSession",
     icon: "⏹",
     class: "end"
   }
@@ -106,7 +111,13 @@ function toggleRound() {
   const textEl = document.getElementById("btnText");
   const icon = btn.querySelector(".icon");
   const playmode = getPlayMode();
-  
+
+  // End Session state — trigger power button
+  if (currentState === "done") {
+    document.getElementById("powerBtn")?.click();
+    return;
+  }
+
   if (currentState === "idle") {
     // ---- ENTER ACTIVE (BUSY) MODE ----
     if (interactionLocked ==false) {
@@ -154,9 +165,12 @@ function toggleRound() {
       updatePointsAfterRound(schedulerState);
     }
 
-    currentState = "idle";
     nextRound();
     document.getElementById("roundsPage").classList.remove("active-mode");
+
+    // Check if enough rounds played — switch to End Session state
+    const minR = schedulerState.minRounds || 6;
+    currentState = allRounds.length > minR ? "done" : "idle";
     
     // Re-enable everything previously disabled
     document.querySelectorAll(".disabled").forEach(el => {
