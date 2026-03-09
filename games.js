@@ -1513,11 +1513,11 @@ function renderGames(data, roundIndex) {
       }
     }
 
-    const vs = document.createElement('div');
-    vs.className = 'vs-badge';
-    vs.innerText = 'vs';
+    const vsDivider = document.createElement('div');
+    vsDivider.className = 'vs-divider';
+    vsDivider.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
 
-    teamsDiv.append(teamLeft, vs, teamRight);
+    teamsDiv.append(teamLeft, vsDivider, teamRight);
     courtDiv.append(courtName, teamsDiv);
     wrapper.appendChild(courtDiv);
   });
@@ -1662,11 +1662,11 @@ function goodrenderGames(data, roundIndex) {
     const teamLeft = makeTeamDiv('L');
     const teamRight = makeTeamDiv('R');
 
-    const vs = document.createElement('div');
-    vs.className = 'vs-badge';
-    vs.innerText = 'vs';
+    const vsDivider = document.createElement('div');
+    vsDivider.className = 'vs-divider';
+    vsDivider.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
 
-    teamsDiv.append(teamLeft, vs, teamRight);
+    teamsDiv.append(teamLeft, vsDivider, teamRight);
     courtDiv.append(courtName, teamsDiv);
     wrapper.appendChild(courtDiv);
   });
@@ -1820,11 +1820,11 @@ function renderGames2(data, index) {
     const teamLeft = makeTeamDiv('L');
     const teamRight = makeTeamDiv('R');
 
-    const vs = document.createElement('div');
-    vs.className = 'vs-badge';
-    vs.innerText = 'vs';
+    const vsDivider = document.createElement('div');
+    vsDivider.className = 'vs-divider';
+    vsDivider.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
 
-    teamsDiv.append(teamLeft, vs, teamRight);
+    teamsDiv.append(teamLeft, vsDivider, teamRight);
     courtDiv.append(courtName, teamsDiv);
     wrapper.appendChild(courtDiv);
 
