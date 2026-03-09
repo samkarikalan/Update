@@ -324,8 +324,15 @@ function CompetitiveRound(state) {
       isRandom:  false
     }));
   } else {
-    // Fallback to random scoped to playing players
-    const tempState = { ...state, activeplayers: playing, courts };
+    // Fallback: use full RandomRound with pair-history awareness
+    // Pass complete schedulerState so repeat-avoidance logic works,
+    // but scope activeplayers to only the playing subset this round
+    const tempState = {
+      ...schedulerState,
+      activeplayers: playing,
+      numCourts:     courts,
+      courts:        courts,
+    };
     const rr = RandomRound(tempState);
     finalGames = (rr.games || []).map((g, c) => ({
       court:     c + 1,
