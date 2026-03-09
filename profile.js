@@ -65,21 +65,42 @@ function closeProfileDrawer() {
   document.getElementById('profileDrawer').classList.remove('open');
 }
 
-/* ── Show player picker ── */
+/* ── Show player picker — loads from Supabase ── */
+let _pickerAllPlayers = []; // cache for search filtering
+
 function showProfilePicker() {
   document.getElementById('profilePicker').style.display = 'block';
   document.getElementById('profileCard').style.display   = 'none';
 
   const list = document.getElementById('profilePickerList');
+  list.innerHTML = '<div class="profile-sessions-loading">Loading players...</div>';
+
+  // Clear search box
+  const searchEl = document.getElementById('profileSearch');
+  if (searchEl) searchEl.value = '';
+
+  // Load ALL players from server (no club filter)
+  sbGet('players', 'order=name.asc&select=id,name,gender').then(players => {
+    _pickerAllPlayers = (players || []).map(p => ({
+      name:   p.name,
+      gender: p.gender || 'Male'
+    }));
+    renderPickerList(_pickerAllPlayers);
+  }).catch(() => {
+    // Fallback to session players if offline
+    _pickerAllPlayers = (typeof schedulerState !== 'undefined' && schedulerState.allPlayers.length)
+      ? schedulerState.allPlayers
+      : [];
+    renderPickerList(_pickerAllPlayers);
+  });
+}
+
+function renderPickerList(players) {
+  const list = document.getElementById('profilePickerList');
   list.innerHTML = '';
 
-  // Use active players if session started, else all players
-  const players = (typeof schedulerState !== 'undefined' && schedulerState.allPlayers.length)
-    ? schedulerState.allPlayers
-    : [];
-
   if (!players.length) {
-    list.innerHTML = '<div class="profile-picker-empty">No players found.<br>Add players first.</div>';
+    list.innerHTML = '<div class="profile-picker-empty">No players found in your club.</div>';
     return;
   }
 
@@ -97,6 +118,14 @@ function showProfilePicker() {
     };
     list.appendChild(btn);
   });
+}
+
+function filterPickerList(query) {
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? _pickerAllPlayers.filter(p => p.name.toLowerCase().includes(q))
+    : _pickerAllPlayers;
+  renderPickerList(filtered);
 }
 
 /* ── Switch player ── */

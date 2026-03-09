@@ -533,6 +533,11 @@
       <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
     </div>
     <p class="profile-picker-hint">Select your name to personalise your profile</p>
+    <div class="profile-picker-search-wrap">
+      <input type="text" id="profileSearch" class="profile-picker-search"
+        placeholder="🔍 Search player..."
+        oninput="filterPickerList(this.value)">
+    </div>
     <div id="profilePickerList" class="profile-picker-list"></div>
   </div>
 
