@@ -1513,8 +1513,8 @@ function renderGames(data, roundIndex) {
       }
     }
 
-    const vs = document.createElement('span');
-    vs.className = 'vs';
+    const vs = document.createElement('div');
+    vs.className = 'vs-badge';
     vs.innerText = 'vs';
 
     teamsDiv.append(teamLeft, vs, teamRight);
@@ -1662,8 +1662,8 @@ function goodrenderGames(data, roundIndex) {
     const teamLeft = makeTeamDiv('L');
     const teamRight = makeTeamDiv('R');
 
-    const vs = document.createElement('span');
-    vs.className = 'vs';
+    const vs = document.createElement('div');
+    vs.className = 'vs-badge';
     vs.innerText = 'vs';
 
     teamsDiv.append(teamLeft, vs, teamRight);
@@ -1820,8 +1820,8 @@ function renderGames2(data, index) {
     const teamLeft = makeTeamDiv('L');
     const teamRight = makeTeamDiv('R');
 
-    const vs = document.createElement('span');
-    vs.className = 'vs';
+    const vs = document.createElement('div');
+    vs.className = 'vs-badge';
     vs.innerText = 'vs';
 
     teamsDiv.append(teamLeft, vs, teamRight);
