@@ -156,12 +156,7 @@ async function showProfileCard(player) {
   document.getElementById('pcTier').style.background = tier.color + '22';
   document.getElementById('pcTier').style.color      = tier.color;
 
-  // Current session wins from schedulerState
-  const sessionWins = (typeof schedulerState !== 'undefined')
-    ? (schedulerState.winCount?.get(player.name) || 0)
-    : 0;
-
-  // Reset while loading
+  // Current session stats now computed inside renderSessions
   document.getElementById('pcWins').textContent    = '…';
   document.getElementById('pcLosses').textContent  = '…';
   document.getElementById('pcSessions').innerHTML  =
@@ -172,55 +167,67 @@ async function showProfileCard(player) {
     const rows = await sbGet('players',
       `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`);
 
+    console.log('[Profile] Supabase response:', JSON.stringify(rows));
+
     if (rows && rows.length) {
       const data = rows[0];
+      console.log('[Profile] wins:', data.wins, 'losses:', data.losses, 'sessions:', data.sessions);
       document.getElementById('pcWins').textContent   = (data.wins   || 0);
       document.getElementById('pcLosses').textContent = (data.losses || 0);
-      renderSessions(data.sessions || [], sessionWins);
+      renderSessions(data.sessions || [], player.name);
     } else {
-      document.getElementById('pcWins').textContent   = sessionWins;
+      document.getElementById('pcWins').textContent   = '—';
       document.getElementById('pcLosses').textContent = '—';
-      renderSessions([], sessionWins);
+      renderSessions([], player.name);
     }
   } catch (e) {
-    document.getElementById('pcWins').textContent   = sessionWins;
+    console.log('[Profile] Error:', e);
+    document.getElementById('pcWins').textContent   = '—';
     document.getElementById('pcLosses').textContent = '—';
-    renderSessions([], sessionWins);
+    renderSessions([], player.name);
   }
 }
 
 /* ── Render last 3 sessions ── */
-function renderSessions(sessions, sessionWins) {
+function renderSessions(sessions, playerName) {
   const container = document.getElementById('pcSessions');
   container.innerHTML = '';
 
-  if (!sessions.length && sessionWins === 0) {
+  // Current session stats from live schedulerState
+  const sessionWins   = (typeof schedulerState !== 'undefined')
+    ? (schedulerState.winCount?.get(playerName) || 0) : 0;
+  const sessionPlayed = (typeof schedulerState !== 'undefined')
+    ? (schedulerState.PlayedCount?.get(playerName) || 0) : 0;
+  const sessionLosses = Math.max(0, sessionPlayed - sessionWins); // approx
+
+  const hasCurrentSession = sessionPlayed > 0;
+
+  if (!sessions.length && !hasCurrentSession) {
     container.innerHTML = '<div class="profile-sessions-empty">No sessions recorded yet.</div>';
     return;
   }
 
   // Show current session at top if active
-  if (sessionWins > 0) {
-    const curr = document.createElement('div');
+  if (hasCurrentSession) {
+    const rating = (typeof getRating === 'function') ? getRating(playerName) : 1.0;
+    const tier   = ratingTierLabel(rating);
+    const curr   = document.createElement('div');
     curr.className = 'profile-session-row current';
     curr.innerHTML = `
-      <span class="session-date">Today</span>
-      <span class="session-badge win">${sessionWins}W</span>
-      <span class="session-rating" style="color:${ratingTierLabel(
-        typeof getRating === 'function'
-          ? getRating(document.getElementById('pcName').textContent)
-          : 1.0
-      ).color}">${
-        typeof getRating === 'function'
-          ? getRating(document.getElementById('pcName').textContent).toFixed(1)
-          : '—'
-      }</span>
+      <span class="session-date">Today (live)</span>
+      <div class="session-results">
+        ${sessionWins   > 0 ? `<span class="session-badge win">${sessionWins}W</span>`     : ''}
+        ${sessionLosses > 0 ? `<span class="session-badge loss">${sessionLosses}L</span>` : ''}
+        ${sessionWins === 0 && sessionLosses === 0 ? `<span class="session-badge" style="background:rgba(160,160,192,0.15);color:var(--text-dim)">${sessionPlayed}P</span>` : ''}
+      </div>
+      <span class="session-rating" style="color:${tier.color}">${rating.toFixed(1)}</span>
     `;
     container.appendChild(curr);
   }
 
+  // Past sessions from Supabase
   sessions.slice(0, 3).forEach(s => {
-    const row = document.createElement('div');
+    const row  = document.createElement('div');
     row.className = 'profile-session-row';
     const tier = ratingTierLabel(s.rating || 1.0);
     row.innerHTML = `
