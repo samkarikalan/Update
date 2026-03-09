@@ -23,6 +23,7 @@
   <script src="settings.js" defer></script>
   <script src="summary.js" defer></script>
   <script src="help.js" defer></script>
+  <script src="profile.js" defer></script>
 </head>
 <body>
 
@@ -43,6 +44,10 @@
       </div>
     </div>
     <span class="app-logo-premium">CLUB Scheduler</span>
+    <button class="profile-btn" id="profileBtn" onclick="openProfileDrawer()" aria-label="Profile" title="My Profile">
+      <img id="profileBtnAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
+      <span id="profileBtnIcon" class="profile-btn-icon">👤</span>
+    </button>
   </div>
 
   <!-- ============================= -->
@@ -310,15 +315,13 @@
         <span id="btnText" data-i18n="nround"></span>
         <span class="icon"> ▶</span>
       </button>
-      <button id="endBtn" class="action right primary end" onclick="endSession()" style="display:none;">
-        <span data-i18n="endSession">End</span>
-        <span class="icon"> ⏹</span>
-      </button>
       <button class="action mid small" onclick="toggleRoundSettings()" aria-label="Settings">⚙️</button>
     </div>
 
     <!-- Round Settings Panel -->
     <div class="round-settings-panel">
+
+
       <!-- Single roundSettingsBody — contains all settings + player slot -->
       <div class="round-settings-body" id="roundSettingsBody">
 
@@ -515,6 +518,72 @@
     <button class="stats-close-btn" onclick="closePlayerStats()">✕</button>
     <div id="playerStatsContent"></div>
   </div>
+</div>
+
+<!-- ============================= -->
+<!--       PROFILE DRAWER          -->
+<!-- ============================= -->
+<div id="profileOverlay" class="profile-overlay hidden" onclick="closeProfileDrawer()"></div>
+<div id="profileDrawer" class="profile-drawer">
+
+  <!-- Player Picker (shown when no player selected) -->
+  <div id="profilePicker" class="profile-picker">
+    <div class="profile-drawer-header">
+      <span class="profile-drawer-title">Who are you?</span>
+      <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
+    </div>
+    <p class="profile-picker-hint">Select your name to personalise your profile</p>
+    <div id="profilePickerList" class="profile-picker-list"></div>
+  </div>
+
+  <!-- Profile Card (shown when player selected) -->
+  <div id="profileCard" class="profile-card-view" style="display:none;">
+    <div class="profile-drawer-header">
+      <span class="profile-drawer-title">My Profile</span>
+      <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
+    </div>
+
+    <!-- Avatar + Name -->
+    <div class="profile-identity">
+      <img id="pcAvatar" src="male.png" class="profile-avatar">
+      <div class="profile-identity-info">
+        <div id="pcName" class="profile-name"></div>
+        <div id="pcTier" class="profile-tier"></div>
+      </div>
+      <button class="profile-switch-btn" onclick="switchProfilePlayer()">Switch</button>
+    </div>
+
+    <!-- Rating + Stats row -->
+    <div class="profile-stats-row">
+      <div class="profile-stat-box">
+        <div id="pcRating" class="profile-stat-value"></div>
+        <div class="profile-stat-label">Skill Rating</div>
+      </div>
+      <div class="profile-stat-divider"></div>
+      <div class="profile-stat-box">
+        <div id="pcWins" class="profile-stat-value wins">—</div>
+        <div class="profile-stat-label">All-time Wins</div>
+      </div>
+      <div class="profile-stat-divider"></div>
+      <div class="profile-stat-box">
+        <div id="pcLosses" class="profile-stat-value losses">—</div>
+        <div class="profile-stat-label">All-time Losses</div>
+      </div>
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="profile-sessions-title">Recent Sessions</div>
+    <div id="pcSessions" class="profile-sessions-list">
+      <div class="profile-sessions-loading">Loading...</div>
+    </div>
+
+    <!-- End Session button -->
+    <button class="profile-end-btn" onclick="closeProfileDrawer(); endSession();">
+      <img src="power.png" style="width:16px;height:16px;opacity:0.9;vertical-align:middle;margin-right:6px;">
+      End Session
+    </button>
+  </div>
+
 </div>
 
 </body>

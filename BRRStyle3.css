@@ -688,3 +688,285 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 
 /* Round wrapper spacing */
 .round-wrapper { margin-bottom: 0 !important; }
+
+/* ─────────────────────────────────────────────
+   PROFILE BUTTON (header)
+───────────────────────────────────────────── */
+.profile-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.profile-btn:hover { background: var(--surface3); }
+.profile-btn-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+}
+.profile-btn-icon { font-size: 1.3rem; }
+
+/* ─────────────────────────────────────────────
+   PROFILE OVERLAY + DRAWER
+───────────────────────────────────────────── */
+.profile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  transition: opacity 0.25s;
+}
+.profile-overlay.hidden { display: none; }
+
+.profile-drawer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.25);
+  z-index: 201;
+  padding: 0 0 32px;
+  max-height: 88vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+}
+.profile-drawer.open { transform: translateY(0); }
+
+/* ── Drawer header ── */
+.profile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-drawer-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+.profile-drawer-close {
+  background: var(--surface2);
+  border: none;
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ─────────────────────────────────────────────
+   PLAYER PICKER
+───────────────────────────────────────────── */
+.profile-picker-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  padding: 10px 20px 6px;
+}
+.profile-picker-list {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 12px;
+  gap: 4px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.profile-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.profile-picker-item:hover { background: var(--surface3); }
+.profile-picker-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.profile-picker-empty {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  padding: 24px;
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────────────
+   PROFILE CARD
+───────────────────────────────────────────── */
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent);
+  flex-shrink: 0;
+}
+.profile-identity-info { flex: 1; }
+.profile-name {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.profile-tier {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.profile-switch-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── Stats row ── */
+.profile-stats-row {
+  display: flex;
+  align-items: stretch;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 0;
+}
+.profile-stat-box {
+  flex: 1;
+  text-align: center;
+}
+.profile-stat-value {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+.profile-stat-value.wins   { color: #2dce89; }
+.profile-stat-value.losses { color: #ef4444; }
+.profile-stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.profile-stat-divider {
+  width: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* ── Sessions ── */
+.profile-sessions-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 14px 20px 6px;
+}
+.profile-sessions-list {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.profile-session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+.profile-session-row.current {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.session-date {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  flex: 1;
+}
+.session-results { display: flex; gap: 4px; }
+.session-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.session-badge.win  { background: rgba(45,206,137,0.15); color: #2dce89; }
+.session-badge.loss { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.session-rating {
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-left: 10px;
+}
+.profile-sessions-loading,
+.profile-sessions-empty {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  padding: 16px;
+}
+
+/* ── End Session button ── */
+.profile-end-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 32px);
+  margin: 16px 16px 0;
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.profile-end-btn:hover { filter: brightness(1.08); }

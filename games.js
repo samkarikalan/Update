@@ -108,29 +108,35 @@ function isGameRepeated(game) {
 
 function toggleRound() {
   const btn = document.getElementById("nextBtn");
-  const endBtn = document.getElementById("endBtn");
   const textEl = document.getElementById("btnText");
   const icon = btn.querySelector(".icon");
   const playmode = getPlayMode();
 
-  if (currentState === "idle" || currentState === "done") {
+  // End Session state — trigger power button
+  if (currentState === "done") {
+    document.getElementById("powerBtn")?.click();
+    return;
+  }
+
+  if (currentState === "idle") {
     // ---- ENTER ACTIVE (BUSY) MODE ----
-    if (interactionLocked == false) {
+    if (interactionLocked ==false) {
       lockBtn.click();
     }
     currentState = "active";
 
-    // Disable everything except #nextBtn, #endBtn and .win-cup
+    // Disable everything except #nextBtn and .win-cup
     document.querySelectorAll(
       "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
     ).forEach(el => {
-      if (el.id !== "nextBtn" && el.id !== "endBtn" && !el.classList.contains("win-cup")) {
+      if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
         el.style.pointerEvents = "none";
-        el.classList.add("disabled");
+        el.classList.add("disabled");    
       }
-    });
+    });   
 
-    // Show win cups if competitive
+    // Show win cups whenever competitive toggle is ON
+    // (even during warm-up) so winners can be marked for seeding
     document.querySelectorAll(".win-cup").forEach(cup => {
       cup.style.visibility = playmode === "competitive" ? "visible" : "hidden";
       cup.style.pointerEvents = playmode === "competitive" ? "auto" : "none";
@@ -140,36 +146,40 @@ function toggleRound() {
     document.getElementById("roundsPage").classList.add("active-mode");
 
   } else {
-    // ---- RETURN TO IDLE/DONE MODE ----
-    if (playmode === "competitive") {
+    // ---- RETURN TO IDLE MODE ----
+
+    // Require winners if competitive toggle is ON
+    // (warm-up rounds included — results seed tier rankings)
+    if (playmode === "competitive") {     
       const currentRoundGames = allRounds[allRounds.length - 1].games;
       const winnersCount = currentRoundGames.filter(game => game.winner).length;
-
+      
       if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
         alert("Please mark winners for all games");
-        return;
+        return; // ❌ stay in active mode
       }
+
+      // Always update points when competitive toggle is ON
+      // warm-up rounds → seeds tier rankings
+      // competitive rounds → drives tier rankings
       updatePointsAfterRound(schedulerState);
     }
 
     nextRound();
     document.getElementById("roundsPage").classList.remove("active-mode");
 
-    // Check if enough rounds played — show End Session button
+    // Check if enough rounds played — switch to End Session state
     const minR = schedulerState.minRounds || 6;
     currentState = allRounds.length > minR ? "done" : "idle";
-
-    // Show End Session button once min rounds reached
-    if (endBtn) endBtn.style.display = currentState === "done" ? "flex" : "none";
-
+    
     // Re-enable everything previously disabled
     document.querySelectorAll(".disabled").forEach(el => {
       el.style.pointerEvents = "";
       el.classList.remove("disabled");
-
+    
       if (el.classList.contains("menu-btn")) {
         el.onclick = function() {
-          showPage("settingsPage", this);
+          showPage('settingsPage', this);
         };
       }
     });
@@ -181,10 +191,10 @@ function toggleRound() {
     });
   }
 
-  // nextBtn is always Next Round — green (idle/done) or purple (active)
-  textEl.dataset.i18n = currentState === "active" ? "endrounds" : "nround";
-  icon.textContent = " ▶";
-  btn.classList.remove("end");
+  const state = roundStates[currentState];
+  textEl.dataset.i18n = state.key;
+  icon.textContent = state.icon;
+  btn.classList.toggle("end", state.class === "end");
   btn.classList.toggle("round-active", currentState === "active");
   setLanguage(currentLang);
 }
@@ -2518,10 +2528,10 @@ document.getElementById('minRoundsMinus').addEventListener('click', () => {
 });
 
 function toggleRoundSettings() {
-  const body   = document.getElementById('roundSettingsBody');
-  const isOpen = body.classList.toggle('open');
-  const gearBtn = document.querySelector('.action-card .action.mid.small:last-child');
-  if (gearBtn) gearBtn.classList.toggle('settings-active', isOpen);
+  const body    = document.getElementById('roundSettingsBody');
+  const chevron = document.getElementById('roundSettingsChevron');
+  const isOpen  = body.classList.toggle('open');
+  chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 
 function toggleMinRoundsVisibility() {
@@ -2534,4 +2544,13 @@ function updateModeLabel() {
     getPlayMode() === "competitive"
       ? "🏆"
       : "🎲";
+}
+
+// Patched toggleRoundSettings — no chevron ref
+var _origToggle = toggleRoundSettings;
+function toggleRoundSettings() {
+  const body = document.getElementById('roundSettingsBody');
+  const isOpen = body.classList.toggle('open');
+  const gearBtn = document.querySelector('.action-card .action.mid.small:last-child');
+  if (gearBtn) gearBtn.classList.toggle('settings-active', isOpen);
 }
