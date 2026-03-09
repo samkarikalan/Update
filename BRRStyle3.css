@@ -259,6 +259,8 @@ body.app-dark .swap-icon {
   border-color: transparent !important;
 }
 
+body.locked .swap-icon { display: none !important; }
+
 /* ─────────────────────────────────────────────
    WIN CUP
 ───────────────────────────────────────────── */
