@@ -88,7 +88,7 @@ body.app-dark .courtname {
 .team[data-team-side="L"] {
   background: var(--brr-court-green-bg) !important;
   border-radius: 0 !important;
-  padding: 8px 12px 8px 18px !important;
+  padding: 8px 12px 8px 14px !important;
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   align-items: center !important;
@@ -96,13 +96,12 @@ body.app-dark .courtname {
   box-shadow: none !important;
   position: relative !important;
   min-height: 52px !important;
-  border-left: 3px solid #2dce89 !important;
 }
 
 .team[data-team-side="R"] {
   background: var(--brr-court-blue-bg) !important;
   border-radius: 0 !important;
-  padding: 8px 12px 8px 18px !important;
+  padding: 8px 12px 8px 14px !important;
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   align-items: center !important;
@@ -110,16 +109,13 @@ body.app-dark .courtname {
   box-shadow: none !important;
   position: relative !important;
   min-height: 52px !important;
-  border-left: 3px solid #4a9eff !important;
 }
 
 body.app-dark .team[data-team-side="L"] {
   background: rgba(45,206,137,0.14) !important;
-  border-left: 3px solid rgba(45,206,137,0.5) !important;
 }
 body.app-dark .team[data-team-side="R"] {
   background: rgba(74,158,255,0.14) !important;
-  border-left: 3px solid rgba(74,158,255,0.5) !important;
 }
 
 /* ─────────────────────────────────────────────
@@ -656,9 +652,12 @@ input:checked + .slider:before { transform: translateX(20px) !important; }
 }
 
 /* ─────────────────────────────────────────────
-   COURT IDENTITY — colored left border strip
-   Court 1=teal, 2=blue, 3=amber, 4=rose, 5=purple, 6=slate
+   COURT IDENTITY — colored left strip + outer border
 ───────────────────────────────────────────── */
+.courtcard {
+  border: 1px solid #e2e8ee !important;
+}
+
 .courtcard.court-1 { border-left: 4px solid #2dce89 !important; }
 .courtcard.court-1 .courtname { color: #2dce89 !important; }
 
@@ -676,6 +675,8 @@ input:checked + .slider:before { transform: translateX(20px) !important; }
 
 .courtcard.court-6 { border-left: 4px solid #64748b !important; }
 .courtcard.court-6 .courtname { color: #64748b !important; }
+
+body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 
 /* Round wrapper spacing */
 .round-wrapper { margin-bottom: 0 !important; }
