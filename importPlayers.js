@@ -1223,8 +1223,13 @@ async function addPlayersBrowseLoad() {
       // Use already-synced history players (club members)
       players = newImportState.historyPlayers || [];
     } else {
-      // Fetch all players from Supabase
-      players = await dbGetPlayers();
+      // Fetch all players from Supabase — normalize to displayName format
+      const raw = await dbGetPlayers();
+      players = raw.map(p => ({
+        displayName: p.name,
+        gender:      p.gender || "Male",
+        rating:      parseFloat(p.rating) || 1.0
+      }));
     }
     _browseAllPlayers = players;
     addPlayersBrowseRender(_browseAllPlayers);
