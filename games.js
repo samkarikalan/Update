@@ -1380,7 +1380,7 @@ function renderGames(data, roundIndex) {
   data.games.forEach((game, gameIndex) => {
 
     const courtDiv = document.createElement('div');
-    courtDiv.className = 'courtcard';
+    courtDiv.className = `courtcard court-${gameIndex + 1}`;
 
     const courtName = document.createElement('div');
     courtName.classList.add('courtname');
@@ -1545,7 +1545,7 @@ function goodrenderGames(data, roundIndex) {
 
   data.games.forEach((game, gameIndex) => {
     const courtDiv = document.createElement('div');
-    courtDiv.className = 'courtcard';
+    courtDiv.className = `courtcard court-${gameIndex + 1}`;
 
     const courtName = document.createElement('div');
     courtName.classList.add('courtname');
@@ -1696,7 +1696,7 @@ function renderGames2(data, index) {
 
   data.games.forEach((game, gameIndex) => {
     const courtDiv = document.createElement('div');
-    courtDiv.className = 'courtcard';
+    courtDiv.className = `courtcard court-${gameIndex + 1}`;
 
     const courtName = document.createElement('div');
     courtName.classList.add('courtname');

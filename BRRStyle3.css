@@ -652,6 +652,28 @@ input:checked + .slider:before { transform: translateX(20px) !important; }
 }
 
 /* ─────────────────────────────────────────────
-   ROUND WRAPPER spacing
+   COURT IDENTITY — colored left border strip
+   Court 1=teal, 2=blue, 3=amber, 4=rose, 5=purple, 6+=grey
 ───────────────────────────────────────────── */
+.courtcard { border-left: 4px solid #cbd5e0 !important; }
+
+.courtcard.court-1 { border-left-color: #2dce89 !important; }
+.courtcard.court-1 .courtname { color: #2dce89 !important; }
+
+.courtcard.court-2 { border-left-color: #4a9eff !important; }
+.courtcard.court-2 .courtname { color: #4a9eff !important; }
+
+.courtcard.court-3 { border-left-color: #f5a623 !important; }
+.courtcard.court-3 .courtname { color: #f5a623 !important; }
+
+.courtcard.court-4 { border-left-color: #ff6584 !important; }
+.courtcard.court-4 .courtname { color: #ff6584 !important; }
+
+.courtcard.court-5 { border-left-color: #a855f7 !important; }
+.courtcard.court-5 .courtname { color: #a855f7 !important; }
+
+.courtcard.court-6 { border-left-color: #64748b !important; }
+.courtcard.court-6 .courtname { color: #64748b !important; }
+
+/* Round wrapper spacing */
 .round-wrapper { margin-bottom: 0 !important; }
