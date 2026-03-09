@@ -195,6 +195,7 @@ function toggleRound() {
   textEl.dataset.i18n = state.key;
   icon.textContent = state.icon;
   btn.classList.toggle("end", state.class === "end");
+  btn.classList.toggle("round-active", currentState === "active");
   setLanguage(currentLang);
 }
 

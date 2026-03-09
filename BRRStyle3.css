@@ -1,0 +1,659 @@
+/* =============================================
+   KariBRRApp — Redesign v3 (Court & Action Bar)
+   Matches iOS-native clean card style
+   Overrides BRRStyle2.css for rounds page
+   ============================================= */
+
+/* ── Imports for cleaner typography ── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+/* ── Override font vars ── */
+:root {
+  --brr-court-green:   #3aaa76;
+  --brr-court-green-bg: #eef7f1;
+  --brr-court-blue-bg:  #eaf4fb;
+  --brr-court-border:   #e2e8ee;
+  --brr-card-shadow:    0 3px 14px rgba(0,0,0,0.09);
+  --brr-card-radius:    16px;
+  --brr-play-green:     #2ec97a;
+  --brr-next-purple:    #7c5cfc;
+  --brr-end-red:        #e53e3e;
+  --brr-text-dark:      #1a1e2e;
+  --brr-text-muted:     #8898aa;
+  --brr-text-court:     #3aaa76;
+}
+
+/* ─────────────────────────────────────────────
+   GAME-RESULTS CONTAINER
+───────────────────────────────────────────── */
+#game-results {
+  padding: 0 10px;
+}
+
+/* ─────────────────────────────────────────────
+   COURT CARD — Main container
+───────────────────────────────────────────── */
+.courtcard {
+  background: #ffffff !important;
+  border: 1px solid var(--brr-court-border) !important;
+  border-radius: var(--brr-card-radius) !important;
+  box-shadow: var(--brr-card-shadow) !important;
+  margin: 10px 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  width: 100% !important;
+}
+
+body.app-dark .courtcard {
+  background: #1e2130 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.35) !important;
+}
+
+/* ─────────────────────────────────────────────
+   COURT NAME HEADER
+───────────────────────────────────────────── */
+.courtname {
+  font-family: 'Nunito', var(--font-display), sans-serif !important;
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  color: var(--brr-court-green) !important;
+  background: transparent !important;
+  padding: 10px 14px 6px !important;
+  margin: 0 !important;
+}
+
+body.app-dark .courtname {
+  color: #5dbb92 !important;
+  background: transparent !important;
+}
+
+/* ─────────────────────────────────────────────
+   TEAMS WRAPPER
+───────────────────────────────────────────── */
+.teams {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 0 var(--brr-card-radius) var(--brr-card-radius) !important;
+  overflow: hidden !important;
+}
+
+/* ─────────────────────────────────────────────
+   TEAM HALVES (green top / blue bottom)
+───────────────────────────────────────────── */
+.team[data-team-side="L"] {
+  background: var(--brr-court-green-bg) !important;
+  border-radius: 0 !important;
+  padding: 8px 12px 8px 14px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  align-items: center !important;
+  gap: 4px !important;
+  box-shadow: none !important;
+  position: relative !important;
+  min-height: 52px !important;
+}
+
+.team[data-team-side="R"] {
+  background: var(--brr-court-blue-bg) !important;
+  border-radius: 0 !important;
+  padding: 8px 12px 8px 14px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  align-items: center !important;
+  gap: 4px !important;
+  box-shadow: none !important;
+  position: relative !important;
+  min-height: 52px !important;
+}
+
+body.app-dark .team[data-team-side="L"] {
+  background: rgba(58,170,118,0.10) !important;
+}
+body.app-dark .team[data-team-side="R"] {
+  background: rgba(74,158,255,0.10) !important;
+}
+
+/* ─────────────────────────────────────────────
+   PLAYER BUTTONS
+───────────────────────────────────────────── */
+.Lplayer-btn, .Rplayer-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 4px 6px !important;
+  border-radius: 8px !important;
+  background: rgba(255,255,255,0.6) !important;
+  border: none !important;
+  font-family: 'Nunito', var(--font-body), sans-serif !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  color: var(--brr-text-dark) !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  transition: background 0.15s, transform 0.12s !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body.app-dark .Lplayer-btn,
+body.app-dark .Rplayer-btn {
+  background: rgba(255,255,255,0.06) !important;
+  color: #e8eaf6 !important;
+}
+
+.Lplayer-btn:hover { background: rgba(58,170,118,0.18) !important; transform: scale(1.02) !important; }
+.Rplayer-btn:hover { background: rgba(74,158,255,0.18) !important; transform: scale(1.02) !important; }
+
+.Lplayer-btn.selected, .Rplayer-btn.selected {
+  outline: 2px solid var(--amber) !important;
+  background: rgba(245,158,11,0.18) !important;
+  color: var(--amber) !important;
+}
+
+/* ─────────────────────────────────────────────
+   PLAYER NAME
+───────────────────────────────────────────── */
+.player-name {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 1.25 !important;
+}
+
+/* ─────────────────────────────────────────────
+   GENDER ICON
+───────────────────────────────────────────── */
+.gender-icon {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+  opacity: 0.85 !important;
+}
+
+/* ─────────────────────────────────────────────
+   VS DIVIDER
+───────────────────────────────────────────── */
+.vs-divider {
+  display: flex !important;
+  align-items: center !important;
+  background: #f4f6f8 !important;
+  border-top: 1px solid #e8ecf0 !important;
+  border-bottom: 1px solid #e8ecf0 !important;
+  padding: 0 14px !important;
+  gap: 8px !important;
+  height: 20px !important;
+}
+
+body.app-dark .vs-divider {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+.vs-divider .vs-line {
+  flex: 1 !important;
+  height: 1px !important;
+  background: #dde3ea !important;
+}
+
+body.app-dark .vs-divider .vs-line {
+  background: rgba(255,255,255,0.1) !important;
+}
+
+.vs-divider span {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.58rem !important;
+  font-weight: 800 !important;
+  color: #b0bac6 !important;
+  letter-spacing: 2px !important;
+}
+
+/* ─────────────────────────────────────────────
+   SWAP ICON
+───────────────────────────────────────────── */
+.swap-icon {
+  position: absolute !important;
+  top: 4px !important;
+  right: 6px !important;
+  z-index: 10 !important;
+  background: rgba(255,255,255,0.75) !important;
+  color: #8898aa !important;
+  border: 1px solid #d8e0ea !important;
+  border-radius: 50% !important;
+  padding: 3px !important;
+  font-size: 0.75rem !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  width: 22px !important;
+  height: 22px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.app-dark .swap-icon {
+  background: rgba(30,33,48,0.85) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  color: #a0a8c0 !important;
+}
+
+.swap-icon:hover {
+  transform: scale(1.15) !important;
+  background: var(--amber) !important;
+  color: #000 !important;
+  border-color: transparent !important;
+}
+
+/* ─────────────────────────────────────────────
+   WIN CUP
+───────────────────────────────────────────── */
+.win-cup {
+  position: absolute !important;
+  right: 6px !important;
+  bottom: 6px !important;
+  left: auto !important;
+  transform: none !important;
+  width: 26px !important;
+  height: 26px !important;
+  cursor: pointer !important;
+  z-index: 15 !important;
+  opacity: 0.6 !important;
+  filter: grayscale(20%) !important;
+  transition: opacity 0.2s, filter 0.2s, transform 0.2s !important;
+}
+
+.win-cup.blinking { animation: winCupBlink2 1.8s infinite !important; }
+.win-cup.active   {
+  animation: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: scale(1.25) !important;
+}
+
+@keyframes winCupBlink2 {
+  0%,100% { opacity: 0.3; transform: scale(0.85); }
+  50%     { opacity: 1;   transform: scale(1.05); }
+}
+
+/* ─────────────────────────────────────────────
+   RESTING PLAYERS
+───────────────────────────────────────────── */
+.round-header {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  color: var(--brr-text-muted) !important;
+  margin: 14px 4px 5px !important;
+  padding-left: 4px !important;
+}
+
+.rest-box {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  padding: 2px 0 8px !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.rest-box:not(:empty) {
+  display: flex !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.rest-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 5px 12px !important;
+  border-radius: 20px !important;
+  background: rgba(255,255,255,0.75) !important;
+  border: 1px solid #d8e0ea !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: #5a6577 !important;
+  cursor: pointer !important;
+  transition: transform 0.15s, background 0.15s !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+}
+
+body.app-dark .rest-btn {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: #a8b0c8 !important;
+}
+
+.rest-btn:hover { transform: scale(1.05) !important; background: #fff !important; }
+.rest-btn.selected {
+  outline: 2px solid var(--amber) !important;
+  background: rgba(245,158,11,0.15) !important;
+  color: var(--amber) !important;
+}
+
+/* ─────────────────────────────────────────────
+   ROUND TITLE
+───────────────────────────────────────────── */
+.title-card {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 12px 2px !important;
+  margin: 0 !important;
+}
+
+#roundTitle {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 2.5px !important;
+  text-transform: uppercase !important;
+  color: var(--text) !important;
+  background: transparent !important;
+  padding: 0 !important;
+  height: auto !important;
+  border-radius: 0 !important;
+}
+
+/* ─────────────────────────────────────────────
+   ACTION CARD — Play / Next Round / End Session
+───────────────────────────────────────────── */
+.action-card {
+  display: flex !important;
+  align-items: stretch !important;
+  width: calc(100% - 20px) !important;
+  margin: 8px 10px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18) !important;
+  gap: 0 !important;
+}
+
+/* Dice and gear side buttons */
+.action.mid.small {
+  flex: 0 0 52px !important;
+  background: #f0f2f5 !important;
+  font-size: 1.35rem !important;
+  border: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background 0.15s !important;
+  color: #6b7a8d !important;
+  border-radius: 0 !important;
+}
+
+body.app-dark .action.mid.small {
+  background: #252836 !important;
+  color: #8890a8 !important;
+}
+
+.action.mid.small:hover {
+  background: #e4e7ec !important;
+}
+body.app-dark .action.mid.small:hover {
+  background: #2e3245 !important;
+}
+
+/* Main centre button */
+.action.right.primary {
+  flex: 1 !important;
+  background: linear-gradient(135deg, #2dce89 0%, #23b576 100%) !important;
+  color: #ffffff !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  border: none !important;
+  padding: 14px 0 !important;
+  cursor: pointer !important;
+  transition: filter 0.15s, transform 0.1s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  letter-spacing: 0.3px !important;
+  border-radius: 0 !important;
+}
+
+.action.right.primary:hover { filter: brightness(1.08) !important; }
+.action.right.primary:active { transform: scale(0.98) !important; }
+
+/* State — active (Next Round → purple) */
+.action.right.primary.next-round-state,
+.action.right.primary.round-active {
+  background: linear-gradient(135deg, #7c5cfc 0%, #6440e8 100%) !important;
+}
+
+/* State — done (End Session → red) */
+.action.right.primary.end {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
+}
+
+/* Icon inside button */
+.action.right.primary .icon {
+  font-size: 1rem !important;
+  opacity: 0.9 !important;
+}
+
+/* ─────────────────────────────────────────────
+   ROUND SETTINGS PANEL
+───────────────────────────────────────────── */
+.round-settings-panel {
+  background: #ffffff !important;
+  border: 1px solid #e4e8f0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  margin: 0 10px 10px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+}
+
+body.app-dark .round-settings-panel {
+  background: #1e2130 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+}
+
+.round-settings-toggle {
+  display: none !important; /* hide the toggle header — panel always accessible */
+}
+
+.round-settings-body {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  transition: max-height 0.35s ease, opacity 0.25s ease !important;
+  padding: 0 !important;
+}
+
+.round-settings-body.open {
+  max-height: 300px !important;
+  opacity: 1 !important;
+}
+
+.setting-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+}
+
+.setting-label {
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.setting-divider {
+  height: 1px !important;
+  background: #f0f2f5 !important;
+  margin: 0 16px !important;
+}
+
+body.app-dark .setting-divider {
+  background: rgba(255,255,255,0.07) !important;
+}
+
+/* Stepper counter */
+.counter {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-family: 'Nunito', sans-serif !important;
+  font-size: 1.0rem !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+
+.circle-btn {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid #d0d8e4 !important;
+  background: #f4f6fa !important;
+  color: #4a5568 !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background 0.15s, transform 0.1s !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+}
+
+body.app-dark .circle-btn {
+  background: #2a2e42 !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  color: #c0c8e8 !important;
+}
+
+.circle-btn:hover {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  transform: scale(1.08) !important;
+}
+
+.circle-btn:disabled, .circle-btn.disabled-btn {
+  opacity: 0.3 !important;
+  pointer-events: none !important;
+}
+
+/* Toggle switch */
+.switch {
+  position: relative !important;
+  display: inline-block !important;
+  width: 46px !important;
+  height: 26px !important;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute !important;
+  cursor: pointer !important;
+  inset: 0 !important;
+  background: #cbd5e0 !important;
+  border-radius: 26px !important;
+  transition: background 0.3s !important;
+  border: none !important;
+}
+.slider:before {
+  content: '' !important;
+  position: absolute !important;
+  width: 20px !important;
+  height: 20px !important;
+  left: 3px !important;
+  bottom: 3px !important;
+  background: #fff !important;
+  border-radius: 50% !important;
+  transition: transform 0.3s !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+}
+
+input:checked + .slider {
+  background: #7c5cfc !important;
+  box-shadow: 0 0 10px rgba(124,92,252,0.35) !important;
+}
+input:checked + .slider:before { transform: translateX(20px) !important; }
+
+/* ─────────────────────────────────────────────
+   REPEATED PAIR / GAME WARNING
+───────────────────────────────────────────── */
+.repeated-pair {
+  outline: 1px solid rgba(239,68,68,0.35) !important;
+  background: rgba(239,68,68,0.06) !important;
+}
+.repeated-game {
+  outline: 2px solid rgba(239,68,68,0.5) !important;
+}
+
+/* ─────────────────────────────────────────────
+   SELECTED / SWAPPING STATES
+───────────────────────────────────────────── */
+.selected-team {
+  border: 2px solid var(--accent) !important;
+  box-shadow: inset 2px 0 8px var(--accent-glow) !important;
+}
+
+.team.swapping {
+  border: 3px solid rgba(245,158,11,0.8) !important;
+  background: rgba(245,158,11,0.12) !important;
+  transform: scale(1.02) !important;
+}
+
+/* ─────────────────────────────────────────────
+   PLAYED ROUND — dim older rounds
+───────────────────────────────────────────── */
+.played-round .courtcard,
+.played-round .rest-btn,
+.played-round .Lplayer-btn,
+.played-round .Rplayer-btn {
+  filter: grayscale(30%) opacity(0.6) !important;
+}
+
+/* ─────────────────────────────────────────────
+   WINNER HIGHLIGHT
+───────────────────────────────────────────── */
+.winner {
+  background: rgba(245,158,11,0.12) !important;
+  border-color: var(--amber) !important;
+}
+
+/* ─────────────────────────────────────────────
+   ACTIVE MODE (playing) — subtle bg shift
+───────────────────────────────────────────── */
+#roundsPage.active-mode {
+  background: var(--bg) !important;
+}
+
+/* ─────────────────────────────────────────────
+   ROUND WRAPPER spacing
+───────────────────────────────────────────── */
+.round-wrapper { margin-bottom: 0 !important; }
