@@ -490,7 +490,7 @@ body.app-dark .round-settings-panel {
 }
 
 .round-settings-body.open {
-  max-height: 300px !important;
+  max-height: none !important;
   opacity: 1 !important;
 }
 
