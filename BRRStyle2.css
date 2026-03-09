@@ -74,7 +74,7 @@ body:not(.locked) .lock-icon { filter: grayscale(0.6); opacity: 0.55; }
   border-color: #90caf9;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
@@ -91,7 +91,7 @@ body:not(.locked) .lock-icon { filter: grayscale(0.6); opacity: 0.55; }
   border-color: #90caf9;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
@@ -321,11 +321,11 @@ body.locked .Lplayer-btn, body.locked .Rplayer-btn, body.locked .rest-btn, body.
 .vs { display: none; }
 .vs-badge {
   display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: 50%;
+  width: 26px; height: 26px; border-radius: 50%;
   background: var(--accent, #6c63ff); color: #fff;
-  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
-  align-self: center; margin: -6px auto; z-index: 5;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px;
+  align-self: center; margin: -13px auto; z-index: 5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   flex-shrink: 0; position: relative;
 }
 
