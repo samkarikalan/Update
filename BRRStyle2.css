@@ -72,13 +72,12 @@ body:not(.locked) .lock-icon { filter: grayscale(0.6); opacity: 0.55; }
   flex: 1;
   background-color: #e9f1ed;
   border-color: #90caf9;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border-radius: 10px;
-  padding: 0.6rem 0.5rem;
-  display: flex;
-  flex-direction: row;
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  justify-content: center;
   gap: 4px;
   position: relative;
   transition: 0.2s ease;
@@ -90,13 +89,12 @@ body:not(.locked) .lock-icon { filter: grayscale(0.6); opacity: 0.55; }
   flex: 1;
   background-color: #e3f2fd;
   border-color: #90caf9;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border-radius: 10px;
-  padding: 0.6rem 0.5rem;
-  display: flex;
-  flex-direction: row;
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  justify-content: center;
   gap: 4px;
   position: relative;
   transition: 0.2s ease;
@@ -124,16 +122,17 @@ body.app-dark .team[data-team-side="R"] {
 .Lplayer-btn, .Rplayer-btn {
 border: none; border-radius: var(--r-sm);
 font-size: var(--player-font-size);
-padding: 5px 8px; margin: 0;
+padding: 4px 6px; margin: 0;
 color: var(--text); cursor: grab;
-display: flex; justify-content: center; align-items: center;
-text-align: center; flex: 1; box-sizing: border-box;
+display: flex; justify-content: flex-start; align-items: center;
+text-align: left; width: 100%; box-sizing: border-box;
 white-space: normal; overflow-wrap: break-word; word-break: break-word;
-font-weight: 500; gap: 4px;
+font-weight: 500; gap: 6px;
 touch-action: manipulation; transition: transform 0.15s;
+background: none; border: none;
 }
-.Lplayer-btn { background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.2); }
-.Rplayer-btn { background: rgba(255,101,132,0.15); border: 1px solid rgba(255,101,132,0.2); }
+.Lplayer-btn { background: none; }
+.Rplayer-btn { background: none; }
 .Lplayer-btn:hover { background: rgba(108,99,255,0.25); transform: scale(1.02); }
 .Rplayer-btn:hover { background: rgba(255,101,132,0.25); transform: scale(1.02); }
 
@@ -306,7 +305,7 @@ cursor: pointer; transition: transform 0.1s, opacity 0.15s;
 .action.right.primary.end { background: linear-gradient(135deg, var(--red), #b91c1c); }
 
 /* ── Gender icon ── */
-.gender-icon { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.gender-icon { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .gender-btn { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; pointer-events: none; flex-shrink: 0; }
 .gender-btn.male   { background: rgba(96,165,250,0.2); color: #60a5fa; }
 .gender-btn.female { background: rgba(255,101,132,0.2); color: var(--accent2); }
@@ -319,8 +318,7 @@ body.locked .swap-icon { display: none; }
 body.locked .Lplayer-btn, body.locked .Rplayer-btn, body.locked .rest-btn, body.locked .swap-icon { pointer-events: none; }
 
 /* ── VS divider ── */
-.vs { display: block; text-align: center; color: var(--muted); font-weight: 700; font-size: 0.75rem; letter-spacing: 1px; padding: 2px 0; }
-.team-separator { color: #bbb; font-weight: 300; font-size: 1.1rem; line-height: 1; pointer-events: none; flex-shrink: 0; }
+.vs { display: block; text-align: center; color: var(--muted); font-weight: 700; font-size: 0.72rem; letter-spacing: 1px; padding: 1px 0; }
 
 /* ── Confirm overlay (also here for isolation) ── */
 .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 999; }
@@ -441,9 +439,9 @@ text-align: center; font-weight: bold;
 }
 .team {
 background: var(--surface2); border-radius: var(--r-md);
-padding: 0.6rem 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-display: flex; flex-direction: row; align-items: center;
-justify-content: center; gap: 4px; flex: 1; position: relative;
+padding: 8px 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+display: grid; grid-template-columns: 1fr 1fr;
+align-items: center; gap: 4px; flex: 1; position: relative;
 }
 .team-btn {
 background: none; border: none; color: var(--text);

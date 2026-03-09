@@ -1400,14 +1400,7 @@ function renderGames(data, roundIndex) {
         teamDiv.appendChild(
           makePlayerButton(p, teamSide, gameIndex, i, data, roundIndex)
         );
-        // Add / separator between players (not after last)
-        if (i < teamPairs.length - 1) {
-          const sep = document.createElement('span');
-          sep.className = 'team-separator';
-          sep.textContent = '/';
-          sep.style.pointerEvents = 'none';
-          teamDiv.appendChild(sep);
-        }
+
       });
 
       const winCup = document.createElement('img');
@@ -2031,26 +2024,18 @@ function makePlayerButton(name, teamSide, gameIndex, playerIndex, data, index) {
     ? 'Lplayer-btn'
     : 'Rplayer-btn';
 
-  /* ───────── GENDER EMOJI (LEFT) ───────── */
-  if (IS_MIXED_SESSION && player?.gender) {
+  /* ───────── AVATAR (always shown, like fixed card) ───────── */
   const genderIcon = document.createElement('img');
   genderIcon.className = 'gender-icon';
+  genderIcon.src = (player?.gender === 'Female') ? 'female.png' : 'male.png';
+  genderIcon.alt = player?.gender || 'Male';
+  btn.appendChild(genderIcon);
 
-  genderIcon.src =
-  player.gender === 'Female'
-    ? 'female.png'
-    : 'male.png';
-
-  genderIcon.alt = player.gender;
-  btn.prepend(genderIcon);
-}
-
-  /* ───────── PLAYER NAME (TRUNCATED) ───────── */
+  /* ───────── PLAYER NAME ───────── */
   const nameSpan = document.createElement('span');
   nameSpan.className = 'player-name';
-  nameSpan.textContent = name;
-  nameSpan.title = name; // full name on long-press / hover
-
+  nameSpan.textContent = name.split('#')[0];
+  nameSpan.title = name;
   btn.appendChild(nameSpan);
 
   /* ───────────────────────────────────── */
