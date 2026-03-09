@@ -1400,6 +1400,14 @@ function renderGames(data, roundIndex) {
         teamDiv.appendChild(
           makePlayerButton(p, teamSide, gameIndex, i, data, roundIndex)
         );
+        // Add / separator between players (not after last)
+        if (i < teamPairs.length - 1) {
+          const sep = document.createElement('span');
+          sep.className = 'team-separator';
+          sep.textContent = '/';
+          sep.style.pointerEvents = 'none';
+          teamDiv.appendChild(sep);
+        }
       });
 
       const winCup = document.createElement('img');
