@@ -11,6 +11,14 @@
 //         - fewest pair repeats  (penalty 1000 per repeat)
 //         - smallest team rating difference  (balance)
 //    5. Pair history read from ALL rounds (no reset)
+//
+//  Notes:
+//    - restQueue is managed/rotated by updSchedule in rounds.js
+//      We only READ it here, never rotate it.
+//    - restQueue may be a Map (initial state) or Array (after
+//      initScheduler runs). We handle both safely.
+//    - Ratings are read via getRating(name) from main.js,
+//      which reads localStorage newImportHistory.
 // ============================================================
 
 
@@ -27,7 +35,7 @@ function rbr_buildPairHistory(rounds) {
     for (const game of round.games) {
       const t1 = game.pair1;
       const t2 = game.pair2;
-      if (!t1 || !t2) continue;
+      if (!t1 || !t2 || t1.length < 2 || t2.length < 2) continue;
       const k1 = rbr_sortedKey(t1[0], t1[1]);
       const k2 = rbr_sortedKey(t2[0], t2[1]);
       hist.set(k1, (hist.get(k1) || 0) + 1);
@@ -47,25 +55,48 @@ function rbr_shuffle(arr) {
 
 
 // ---- Rest selection ----------------------------------------
+// Reads restQueue (array) to pick who rests this round.
+// Does NOT rotate — updSchedule in rounds.js owns rotation.
 
 function rbr_chooseResting(state) {
+  const courts   = state.numCourts || state.courts || 3;
   const total    = state.activeplayers.length;
-  const perRound = (state.numCourts || state.courts || 3) * 4;
+  const perRound = courts * 4;
   const need     = total - perRound;
 
   if (need <= 0) {
     return { playing: [...state.activeplayers], resting: [] };
   }
 
-  if (!state.restQueue || state.restQueue.length !== total) {
-    state.restQueue = [...state.activeplayers];
+  // restQueue may be a Map initially — convert to array safely
+  let queue = state.restQueue;
+  if (!Array.isArray(queue)) {
+    queue = [...state.activeplayers];
+    state.restQueue = queue;
   }
 
-  const resting = state.restQueue.slice(0, need);
+  // Ensure all activeplayers are in the queue
+  if (queue.length !== total) {
+    queue = [...state.activeplayers];
+    state.restQueue = queue;
+  }
+
+  const resting = queue.slice(0, need);
   const playing = state.activeplayers.filter(p => !resting.includes(p));
-  state.restQueue = [...state.restQueue.slice(need), ...state.restQueue.slice(0, need)];
 
   return { playing, resting };
+}
+
+
+// ---- Ratings -----------------------------------------------
+// Uses getRating() from main.js which reads localStorage.
+
+function rbr_getRatings(players) {
+  const ratings = {};
+  for (const p of players) {
+    ratings[p] = getRating(p) || 2.0;
+  }
+  return ratings;
 }
 
 
@@ -92,16 +123,16 @@ function rbr_generateCandidate(playing, ratings, courts) {
   const n      = playing.length;
   const sorted = [...playing].sort((a, b) => (ratings[b] || 2) - (ratings[a] || 2));
 
-  // Small perturbation for variety
+  // Small perturbation for variety across attempts
   for (let i = 0; i < n - 1; i++) {
     if (Math.random() < 0.25) {
       const tmp = sorted[i]; sorted[i] = sorted[i + 1]; sorted[i + 1] = tmp;
     }
   }
 
-  // Snake-pair top half with shuffled bottom half
-  const top = sorted.slice(0, n / 2);
-  const bot = rbr_shuffle(sorted.slice(n / 2));
+  // Snake-pair: top half with shuffled bottom half
+  const top  = sorted.slice(0, n / 2);
+  const bot  = rbr_shuffle(sorted.slice(n / 2));
   const pairs = top.map((p, i) => [p, bot[i]]);
 
   // Sort pairs by combined rating desc, then match adjacent into courts
@@ -142,24 +173,7 @@ function rbr_findBestGames(playing, ratings, courts, pairHist) {
 }
 
 
-// ---- Rating map --------------------------------------------
-
-function rbr_getRatings(state) {
-  const ratings = {};
-  const src = state.playerRatings || state.historyPlayers || [];
-  for (const p of src) {
-    const name   = typeof p === 'string' ? p : (p.name || p.displayName || '');
-    const rating = parseFloat(p.rating) || 2.0;
-    if (name) ratings[name] = rating;
-  }
-  for (const p of (state.activeplayers || [])) {
-    if (!ratings[p]) ratings[p] = 2.0;
-  }
-  return ratings;
-}
-
-
-// ---- Rest count for display --------------------------------
+// ---- Rest count for display suffix -------------------------
 
 function rbr_getRestCounts(rounds) {
   const counts = {};
@@ -180,9 +194,21 @@ function CompetitiveRound(schedulerState) {
 
   const courts               = schedulerState.numCourts || schedulerState.courts || 3;
   const { playing, resting } = rbr_chooseResting(schedulerState);
-  const ratings              = rbr_getRatings(schedulerState);
-  const pairHist             = rbr_buildPairHistory(allRounds);
-  const games                = rbr_findBestGames(playing, ratings, courts, pairHist);
+
+  // Guard: if playing is not a valid set for courts, return empty safely
+  if (!playing || playing.length < courts * 4) {
+    console.warn('CompetitiveRound: not enough players', playing ? playing.length : 0, 'need', courts * 4);
+    schedulerState.roundIndex = (schedulerState.roundIndex || 0) + 1;
+    return {
+      round:   schedulerState.roundIndex,
+      games:   [],
+      resting: (resting || []).map(p => `${p}#1`),
+    };
+  }
+
+  const ratings  = rbr_getRatings(schedulerState.activeplayers);
+  const pairHist = rbr_buildPairHistory(allRounds);
+  const games    = rbr_findBestGames(playing, ratings, courts, pairHist);
 
   const prevCounts  = rbr_getRestCounts(allRounds);
   const restingList = resting.map(p => `${p}#${(prevCounts[p] || 0) + 1}`);
@@ -191,7 +217,7 @@ function CompetitiveRound(schedulerState) {
 
   return {
     round:   schedulerState.roundIndex,
-    games,
+    games:   games || [],
     resting: restingList,
   };
 }
