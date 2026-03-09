@@ -1223,8 +1223,8 @@ async function addPlayersBrowseLoad() {
       // Use already-synced history players (club members)
       players = newImportState.historyPlayers || [];
     } else {
-      // Fetch all players from Supabase — normalize to displayName format
-      const raw = await dbGetPlayers();
+      // Fetch ALL players globally (bypass club filter)
+      const raw = await sbGet("players", "order=name.asc");
       players = raw.map(p => ({
         displayName: p.name,
         gender:      p.gender || "Male",
