@@ -1,405 +1,197 @@
 // ============================================================
-//  COMPETITIVE ROUND ALGORITHM
-//  competitive_algorithm.js
+//  competitive_algorithm.js  —  Rating-Balanced Round
+//
+//  Strategy:
+//    1. Sort active players by rating (high to low)
+//    2. Snake-pair top half with bottom half so each pair
+//       has one stronger + one weaker player
+//    3. Match pairs into courts by similar combined rating
+//       so each court has two evenly matched teams
+//    4. Run 500 random attempts, pick best by:
+//         - fewest pair repeats  (penalty 1000 per repeat)
+//         - smallest team rating difference  (balance)
+//    5. Pair history read from ALL rounds (no reset)
 // ============================================================
 
 
-// ============================================================
-//  SECTION 1 — POINTS & STREAK HELPERS
-// ============================================================
+// ---- Utility -----------------------------------------------
 
-function buildPointsAndStreaks(allRounds, activeplayers) {
-  const rankPoints = new Map();
-  const streakMap  = new Map();
-  for (const p of activeplayers) {
-    rankPoints.set(p, 100);
-    streakMap.set(p, 0);
-  }
-  for (const round of allRounds) {
-    if (!round?.games) continue;
+function rbr_sortedKey(a, b) {
+  return a < b ? a + '&' + b : b + '&' + a;
+}
+
+function rbr_buildPairHistory(rounds) {
+  const hist = new Map();
+  for (const round of rounds) {
+    if (!round || !round.games) continue;
     for (const game of round.games) {
-      if (!game.winner || !game.pair1 || !game.pair2) continue;
-      const winners = game.winner === 'L' ? game.pair1 : game.pair2;
-      const losers  = game.winner === 'L' ? game.pair2 : game.pair1;
-      for (const p of winners) applyResult(p, true,  rankPoints, streakMap);
-      for (const p of losers)  applyResult(p, false, rankPoints, streakMap);
+      const t1 = game.pair1;
+      const t2 = game.pair2;
+      if (!t1 || !t2) continue;
+      const k1 = rbr_sortedKey(t1[0], t1[1]);
+      const k2 = rbr_sortedKey(t2[0], t2[1]);
+      hist.set(k1, (hist.get(k1) || 0) + 1);
+      hist.set(k2, (hist.get(k2) || 0) + 1);
     }
   }
-  return { rankPoints, streakMap };
+  return hist;
 }
 
-function applyResult(player, isWin, rankPoints, streakMap) {
-  const streak = streakMap.get(player) || 0;
-  let delta = 0;
-  if (isWin) {
-    delta = 2;
-    if (streak > 0) delta += 1;
-    streakMap.set(player, Math.max(streak, 0) + 1);
-  } else {
-    delta = -2;
-    if (streak < 0) delta -= 1;
-    streakMap.set(player, Math.min(streak, 0) - 1);
+function rbr_shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
   }
-  rankPoints.set(player, (rankPoints.get(player) || 100) + delta);
+  return arr;
 }
 
 
-// ============================================================
-//  SECTION 2 — TIER HELPERS
-// ============================================================
+// ---- Rest selection ----------------------------------------
 
-function calculateTiers(activeplayers, rankPoints) {
-  const sorted = [...activeplayers].sort(
-    (a, b) => (rankPoints.get(b) || 100) - (rankPoints.get(a) || 100)
+function rbr_chooseResting(state) {
+  const total    = state.activeplayers.length;
+  const perRound = (state.numCourts || state.courts || 3) * 4;
+  const need     = total - perRound;
+
+  if (need <= 0) {
+    return { playing: [...state.activeplayers], resting: [] };
+  }
+
+  if (!state.restQueue || state.restQueue.length !== total) {
+    state.restQueue = [...state.activeplayers];
+  }
+
+  const resting = state.restQueue.slice(0, need);
+  const playing = state.activeplayers.filter(p => !resting.includes(p));
+  state.restQueue = [...state.restQueue.slice(need), ...state.restQueue.slice(0, need)];
+
+  return { playing, resting };
+}
+
+
+// ---- Scoring -----------------------------------------------
+
+function rbr_scoreGames(games, ratings, pairHist) {
+  let score = 0;
+  for (const g of games) {
+    const k1 = rbr_sortedKey(g.pair1[0], g.pair1[1]);
+    const k2 = rbr_sortedKey(g.pair2[0], g.pair2[1]);
+    score += (pairHist.get(k1) || 0) * 1000;
+    score += (pairHist.get(k2) || 0) * 1000;
+    const r1 = (ratings[g.pair1[0]] || 2) + (ratings[g.pair1[1]] || 2);
+    const r2 = (ratings[g.pair2[0]] || 2) + (ratings[g.pair2[1]] || 2);
+    score += Math.abs(r1 - r2);
+  }
+  return score;
+}
+
+
+// ---- Candidate generator -----------------------------------
+
+function rbr_generateCandidate(playing, ratings, courts) {
+  const n      = playing.length;
+  const sorted = [...playing].sort((a, b) => (ratings[b] || 2) - (ratings[a] || 2));
+
+  // Small perturbation for variety
+  for (let i = 0; i < n - 1; i++) {
+    if (Math.random() < 0.25) {
+      const tmp = sorted[i]; sorted[i] = sorted[i + 1]; sorted[i + 1] = tmp;
+    }
+  }
+
+  // Snake-pair top half with shuffled bottom half
+  const top = sorted.slice(0, n / 2);
+  const bot = rbr_shuffle(sorted.slice(n / 2));
+  const pairs = top.map((p, i) => [p, bot[i]]);
+
+  // Sort pairs by combined rating desc, then match adjacent into courts
+  pairs.sort((a, b) =>
+    ((ratings[b[0]] || 2) + (ratings[b[1]] || 2)) -
+    ((ratings[a[0]] || 2) + (ratings[a[1]] || 2))
   );
-  const total     = sorted.length;
-  const topCut    = Math.ceil(total / 3);
-  const bottomCut = Math.floor((total * 2) / 3);
-  const tierMap   = new Map();
-  sorted.forEach((p, i) => {
-    if (i < topCut)         tierMap.set(p, 'strong');
-    else if (i < bottomCut) tierMap.set(p, 'inter');
-    else                    tierMap.set(p, 'weak');
-  });
-  return tierMap;
-}
 
-function getPlayerTier(player, tierMap) {
-  return tierMap.get(player) || 'inter';
-}
-
-
-// ============================================================
-//  SECTION 3 — TIER RULE CHECKER
-// ============================================================
-
-function getGameTierRule(pair1, pair2, tierMap) {
-  const [t1a, t1b] = pair1.map(p => getPlayerTier(p, tierMap));
-  const [t2a, t2b] = pair2.map(p => getPlayerTier(p, tierMap));
-  const sig1 = [t1a, t1b].sort().join('+');
-  const sig2 = [t2a, t2b].sort().join('+');
-
-  const rule1Sigs = ['strong+strong', 'inter+inter', 'weak+weak'];
-  if (rule1Sigs.includes(sig1) && sig1 === sig2) return 1;
-
-  const rule2Sigs = ['inter+strong', 'strong+weak', 'inter+weak'];
-  if (rule2Sigs.includes(sig1) && sig1 === sig2) return 2;
-
-  const isSwPair = s => s === 'strong+weak' || s === 'weak+strong';
-  const isIIPair = s => s === 'inter+inter';
-  if ((isSwPair(sig1) && isIIPair(sig2)) || (isIIPair(sig1) && isSwPair(sig2))) return 3;
-
-  return 0;
-}
-
-
-// ============================================================
-//  SECTION 4 — FULL SESSION HISTORY (never reset)
-// ============================================================
-
-/**
- * Count how many times each pair has played together in COMPETITIVE rounds only.
- * Warmup history is ignored — resets cleanly at start of competitive phase.
- * minRounds is the warmup threshold stored on state.
- */
-function buildCompetitivePairHistory(allRounds, minRounds) {
-  const pairCount = new Map();
-  for (let i = minRounds; i < allRounds.length; i++) {
-    const round = allRounds[i];
-    if (!round?.games) continue;
-    for (const game of round.games) {
-      const t1 = game.pair1;
-      const t2 = game.pair2;
-      if (!t1 || !t2) continue;
-      const k1 = createSortedKey(t1[0], t1[1]);
-      const k2 = createSortedKey(t2[0], t2[1]);
-      pairCount.set(k1, (pairCount.get(k1) || 0) + 1);
-      pairCount.set(k2, (pairCount.get(k2) || 0) + 1);
-    }
+  const games = [];
+  for (let c = 0; c < courts; c++) {
+    games.push({
+      court: c + 1,
+      pair1: [...pairs[c * 2]],
+      pair2: [...pairs[c * 2 + 1]],
+    });
   }
-  return pairCount;
-}
-
-/**
- * Count opponent history from COMPETITIVE rounds only.
- */
-function buildCompetitiveOpponentHistory(allRounds, activeplayers, minRounds) {
-  const oppMap = new Map();
-  for (const p of activeplayers) {
-    const inner = new Map();
-    for (const q of activeplayers) { if (p !== q) inner.set(q, 0); }
-    oppMap.set(p, inner);
-  }
-  for (let i = minRounds; i < allRounds.length; i++) {
-    const round = allRounds[i];
-    if (!round?.games) continue;
-    for (const game of round.games) {
-      const t1 = game.pair1;
-      const t2 = game.pair2;
-      if (!t1 || !t2) continue;
-      for (const a of t1) {
-        for (const b of t2) {
-          if (!oppMap.has(a)) oppMap.set(a, new Map());
-          if (!oppMap.has(b)) oppMap.set(b, new Map());
-          oppMap.get(a).set(b, (oppMap.get(a).get(b) || 0) + 1);
-          oppMap.get(b).set(a, (oppMap.get(b).get(a) || 0) + 1);
-        }
-      }
-    }
-  }
-  return oppMap;
-}
-
-// ============================================================
-//  SECTION 5 — SCORING
-// ============================================================
-
-/**
- * Score one candidate game.
- *
- * Priority (strictly ordered):
- *   1. Freshness tier  — 1000 if BOTH pairs are fresh, 0 if either is repeated
- *      This separates fresh combos from repeated ones absolutely.
- *   2. Tier rule score — +30/20/10/0 (Rule1/Rule2/Rule3/none)
- *      Chosen within the fresh group to maximise tier quality.
- *   3. Opponent freshness — small +/- tiebreaker within same tier rule
- *
- * Result: the solver will always prefer any fresh-pair game over any
- * repeated-pair game, AND within fresh games it picks the best tier match.
- */
-function scoreGame(pair1, pair2, tierMap, pairCount, oppMap) {
-  const k1 = createSortedKey(pair1[0], pair1[1]);
-  const k2 = createSortedKey(pair2[0], pair2[1]);
-
-  const pair1Repeats = pairCount.get(k1) || 0;
-  const pair2Repeats = pairCount.get(k2) || 0;
-
-  // Freshness bonus — large enough to always beat tier score differences
-  // If either pair is repeated, no freshness bonus (score stays in 0-40 range)
-  const freshnessBonus = (pair1Repeats === 0 && pair2Repeats === 0) ? 1000 : 0;
-
-  // Tier score — scaled up so Rule1 vs Rule0 matters within fresh group
-  const tierRule  = getGameTierRule(pair1, pair2, tierMap);
-  const tierScore = tierRule === 1 ? 30 : tierRule === 2 ? 20 : tierRule === 3 ? 10 : 0;
-
-  // Opponent freshness — small tiebreaker
-  let oppScore = 0;
-  for (const a of pair1) {
-    for (const b of pair2) {
-      const times = oppMap.get(a)?.get(b) || 0;
-      oppScore += times === 0 ? 0.5 : -(0.1 * times);
-    }
-  }
-
-  // Soft repeat penalty — only kicks in when all options are repeated
-  const repeatPenalty = (pair1Repeats + pair2Repeats) * 5;
-
-  return freshnessBonus + tierScore + oppScore - repeatPenalty;
+  return games;
 }
 
 
-// ============================================================
-//  SECTION 6 — BACKTRACKING COURT SOLVER
-// ============================================================
+// ---- Best game finder --------------------------------------
 
-function findBestCourtCombination(playing, numCourts, tierMap, pairCount, oppMap) {
-
-  let bestScore = -Infinity;
+function rbr_findBestGames(playing, ratings, courts, pairHist) {
   let bestGames = null;
-  const MAX_ITER = 8000;
-  let iterations = 0;
+  let bestScore = Infinity;
 
-  function solve(remaining, currentGames, currentScore) {
-    if (iterations++ > MAX_ITER) return;
-
-    if (currentGames.length === numCourts) {
-      if (currentScore > bestScore) {
-        bestScore = currentScore;
-        bestGames = currentGames.map(g => ({ ...g }));
-      }
-      return;
+  for (let i = 0; i < 500; i++) {
+    const candidate = rbr_generateCandidate(playing, ratings, courts);
+    const score     = rbr_scoreGames(candidate, ratings, pairHist);
+    if (score < bestScore) {
+      bestScore = score;
+      bestGames = candidate;
     }
-
-    if (remaining.length < 4) return;
-
-    for (let i = 0; i < remaining.length; i++) {
-      for (let j = i + 1; j < remaining.length; j++) {
-        const pair1 = [remaining[i], remaining[j]];
-        const rest  = remaining.filter((_, idx) => idx !== i && idx !== j);
-
-        for (let k = 0; k < rest.length; k++) {
-          for (let l = k + 1; l < rest.length; l++) {
-            const pair2    = [rest[k], rest[l]];
-            const nextRest = rest.filter((_, idx) => idx !== k && idx !== l);
-            const gs       = scoreGame(pair1, pair2, tierMap, pairCount, oppMap);
-            const tr       = getGameTierRule(pair1, pair2, tierMap);
-
-            currentGames.push({ pair1: [...pair1], pair2: [...pair2], tierRule: tr, gameScore: gs });
-            solve(nextRest, currentGames, currentScore + gs);
-            currentGames.pop();
-
-            if (iterations > MAX_ITER) return;
-          }
-        }
-      }
-    }
+    if (bestScore < 1.0) break;
   }
 
-  solve([...playing], [], 0);
   return bestGames;
 }
 
 
-// ============================================================
-//  SECTION 7 — REST SELECTION (avoids repeat rest pairs)
-// ============================================================
+// ---- Rating map --------------------------------------------
 
-function chooseRestingPlayers(state) {
-  const totalPlayers    = state.activeplayers.length;
-  const playersPerRound = state.courts * 4;
-  const needRest        = totalPlayers - playersPerRound;
-
-  if (needRest <= 0) {
-    return { playing: [...state.activeplayers], resting: [] };
+function rbr_getRatings(state) {
+  const ratings = {};
+  const src = state.playerRatings || state.historyPlayers || [];
+  for (const p of src) {
+    const name   = typeof p === 'string' ? p : (p.name || p.displayName || '');
+    const rating = parseFloat(p.rating) || 2.0;
+    if (name) ratings[name] = rating;
   }
+  for (const p of (state.activeplayers || [])) {
+    if (!ratings[p]) ratings[p] = 2.0;
+  }
+  return ratings;
+}
 
-  // Rest queue is FIXED — never rotated, same order every round (managed by RandomRound/rounds.js)
-  const resting = state.restQueue.slice(0, needRest);
-  const restSet = new Set(resting);
+
+// ---- Rest count for display --------------------------------
+
+function rbr_getRestCounts(rounds) {
+  const counts = {};
+  for (const round of rounds) {
+    if (!round || !round.resting) continue;
+    for (const entry of round.resting) {
+      const name = typeof entry === 'string' ? entry.split('#')[0] : String(entry);
+      counts[name] = (counts[name] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
+
+// ---- Main entry point --------------------------------------
+
+function CompetitiveRound(schedulerState) {
+
+  const courts               = schedulerState.numCourts || schedulerState.courts || 3;
+  const { playing, resting } = rbr_chooseResting(schedulerState);
+  const ratings              = rbr_getRatings(schedulerState);
+  const pairHist             = rbr_buildPairHistory(allRounds);
+  const games                = rbr_findBestGames(playing, ratings, courts, pairHist);
+
+  const prevCounts  = rbr_getRestCounts(allRounds);
+  const restingList = resting.map(p => `${p}#${(prevCounts[p] || 0) + 1}`);
+
+  schedulerState.roundIndex = (schedulerState.roundIndex || 0) + 1;
 
   return {
-    playing: state.activeplayers.filter(p => !restSet.has(p)),
-    resting
+    round:   schedulerState.roundIndex,
+    games,
+    resting: restingList,
   };
-}
-
-
-// ============================================================
-//  SECTION 8 — WARM UP CHECK
-// ============================================================
-
-function isWarmupComplete(state) {
-  const minRounds = state.minRounds || 3;
-  return allRounds.length >= minRounds;
-}
-
-
-// ============================================================
-//  SECTION 9 — MAIN CompetitiveRound
-// ============================================================
-
-function CompetitiveRound(state) {
-
-  const { activeplayers, courts } = state;
-
-  // 1. Rebuild points + streaks from ALL rounds
-  const { rankPoints, streakMap } = buildPointsAndStreaks(allRounds, activeplayers);
-  state.rankPoints = rankPoints;
-  state.streakMap  = streakMap;
-
-  // 2. Recalculate tiers
-  const tierMap = calculateTiers(activeplayers, rankPoints);
-  state.tierMap = tierMap;
-
-  // 3. Build competitive-only history (resets at warmup boundary)
-  const minRounds = state.minRounds || 3;
-  const pairCount = buildCompetitivePairHistory(allRounds, minRounds);
-  const oppMap    = buildCompetitiveOpponentHistory(allRounds, activeplayers, minRounds);
-
-  // 4. Choose resting players (avoids repeat rest pairs)
-  const { playing, resting } = chooseRestingPlayers(state);
-
-  // 5. Find best court combination
-  const bestGames = findBestCourtCombination(playing, courts, tierMap, pairCount, oppMap);
-
-  // 6. Build final games
-  let finalGames;
-
-  if (bestGames && bestGames.length === courts) {
-    finalGames = bestGames.map((g, c) => ({
-      court:     c + 1,
-      pair1:     g.pair1,
-      pair2:     g.pair2,
-      courtRule: g.tierRule,
-      isRandom:  false
-    }));
-  } else {
-    // Fallback: use full RandomRound with pair-history awareness
-    // Pass complete schedulerState so repeat-avoidance logic works,
-    // but scope activeplayers to only the playing subset this round
-    const tempState = {
-      ...schedulerState,
-      activeplayers: playing,
-      numCourts:     courts,
-      courts:        courts,
-    };
-    const rr = RandomRound(tempState);
-    finalGames = (rr.games || []).map((g, c) => ({
-      court:     c + 1,
-      pair1:     g.pair1,
-      pair2:     g.pair2,
-      courtRule: 0,
-      isRandom:  true
-    }));
-  }
-
-  // 7. Update state pair/opponent memory
-  updateAfterRound(state, finalGames.map(g => [g.pair1, g.pair2]));
-  state.roundIndex = (state.roundIndex || 0) + 1;
-
-  return { round: state.roundIndex, games: finalGames, resting, tierMap };
-}
-
-
-// ============================================================
-//  SECTION 10 — PARENT FUNCTION
-// ============================================================
-
-function AischedulerNextRound(schedulerState) {
-
-  const playmode   = getPlayMode();
-  const page2      = document.getElementById('roundsPage');
-  const warmupDone = isWarmupComplete(schedulerState);
-
-  let result;
-
-  if (playmode === 'random' || !warmupDone) {
-    result = RandomRound(schedulerState);
-    page2.classList.remove('competitive-mode');
-    page2.classList.add('random-mode');
-    schedulerState._lastMode = 'random';
-  } else {
-    result = CompetitiveRound(schedulerState);
-    page2.classList.remove('random-mode');
-    page2.classList.add('competitive-mode');
-    schedulerState._lastMode = 'competitive';
-  }
-
-  return result;
-}
-
-
-// ============================================================
-//  SECTION 11 — POINTS UPDATE (UI display between rounds)
-// ============================================================
-
-function updatePointsAfterRound(state) {
-  const latestRound = allRounds[allRounds.length - 1];
-  if (!latestRound?.games) return;
-  for (const game of latestRound.games) {
-    if (!game.winner || !game.pair1 || !game.pair2) continue;
-    const winners = game.winner === 'L' ? game.pair1 : game.pair2;
-    const losers  = game.winner === 'L' ? game.pair2 : game.pair1;
-    for (const p of winners) applyResult(p, true,  state.rankPoints, state.streakMap);
-    for (const p of losers)  applyResult(p, false, state.rankPoints, state.streakMap);
-  }
-}
-
-
-// ============================================================
-//  HELPER — createSortedKey
-// ============================================================
-
-function createSortedKey(a, b) {
-  return [a, b].sort().join('|');
 }
