@@ -10,8 +10,8 @@
 /* ── Override font vars ── */
 :root {
   --brr-court-green:   #3aaa76;
-  --brr-court-green-bg: #eef7f1;
-  --brr-court-blue-bg:  #eaf4fb;
+  --brr-court-green-bg: #dff5eb;
+  --brr-court-blue-bg:  #d8edfb;
   --brr-court-border:   #e2e8ee;
   --brr-card-shadow:    0 3px 14px rgba(0,0,0,0.09);
   --brr-card-radius:    16px;
@@ -96,6 +96,7 @@ body.app-dark .courtname {
   box-shadow: none !important;
   position: relative !important;
   min-height: 52px !important;
+  border-left: 3px solid #2dce89 !important;
 }
 
 .team[data-team-side="R"] {
@@ -109,13 +110,16 @@ body.app-dark .courtname {
   box-shadow: none !important;
   position: relative !important;
   min-height: 52px !important;
+  border-left: 3px solid #4a9eff !important;
 }
 
 body.app-dark .team[data-team-side="L"] {
-  background: rgba(58,170,118,0.10) !important;
+  background: rgba(45,206,137,0.14) !important;
+  border-left: 3px solid rgba(45,206,137,0.5) !important;
 }
 body.app-dark .team[data-team-side="R"] {
-  background: rgba(74,158,255,0.10) !important;
+  background: rgba(74,158,255,0.14) !important;
+  border-left: 3px solid rgba(74,158,255,0.5) !important;
 }
 
 /* ─────────────────────────────────────────────
