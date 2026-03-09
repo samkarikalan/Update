@@ -2528,11 +2528,8 @@ document.getElementById('minRoundsMinus').addEventListener('click', () => {
 });
 
 function toggleRoundSettings() {
-  const body    = document.getElementById('roundSettingsBody');
-  const chevron = document.getElementById('roundSettingsChevron');
-  const isOpen  = body.classList.toggle('open');
-  chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-  // Highlight the ⚙️ gear button when open
+  const body   = document.getElementById('roundSettingsBody');
+  const isOpen = body.classList.toggle('open');
   const gearBtn = document.querySelector('.action-card .action.mid.small:last-child');
   if (gearBtn) gearBtn.classList.toggle('settings-active', isOpen);
 }
