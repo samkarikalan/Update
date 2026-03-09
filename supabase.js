@@ -284,6 +284,40 @@ async function githubSyncAfterRound(roundWins, roundLosses) {
   } catch (e) {
     // Silent fail
   }
+  // Refresh global players cache after ratings update
+  syncGlobalPlayersCache();
+}
+
+/// ============================================================
+/// GLOBAL PLAYERS CACHE
+/// Stores all global players in localStorage so imports work
+/// offline and without repeated Supabase calls.
+/// Refreshed on app load and after every round.
+/// ============================================================
+
+const CACHE_GLOBAL_PLAYERS = "kbrr_cache_global_players";
+
+async function syncGlobalPlayersCache() {
+  try {
+    const raw = await sbGet("players", "order=name.asc");
+    const players = raw.map(p => ({
+      displayName: p.name,
+      gender:      p.gender || "Male",
+      rating:      parseFloat(p.rating) || 1.0
+    }));
+    localStorage.setItem(CACHE_GLOBAL_PLAYERS, JSON.stringify(players));
+  } catch (e) {
+    // Silent fail — cache stays as-is if offline
+  }
+}
+
+function getGlobalPlayersCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_GLOBAL_PLAYERS);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
 }
 
 /// ============================================================

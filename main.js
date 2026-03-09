@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof githubAdminInit === "function") githubAdminInit();
   // Sync GitHub players into local history (silent, background)
   syncGithubToLocal();
+  // Sync all global players into local cache (for offline import)
+  if (typeof syncGlobalPlayersCache === "function") syncGlobalPlayersCache();
 });
 
 window.addEventListener('beforeunload', () => {

@@ -839,26 +839,45 @@ function addPlayer() {
   const extractedPlayers = parsePlayerLines(text, defaultGender);
   if (!extractedPlayers.length) return;
 
-  // Filter to registered players only
+  // Check local history first
   const registered    = newImportState.historyPlayers || [];
   const registeredMap = new Map(registered.map(p => [p.displayName.trim().toLowerCase(), p]));
 
-  const skipped = [];
+  const foundLocally  = [];
+  const notFoundNames = []; // names not in local history
 
   extractedPlayers.forEach(player => {
     const key = player.displayName.trim().toLowerCase();
     const reg = registeredMap.get(key);
-
-    if (!reg) {
-      // Not registered — skip
-      skipped.push(player.displayName);
-      return;
+    if (reg) {
+      foundLocally.push(reg);
+    } else {
+      notFoundNames.push(player);
     }
+  });
 
-    // Add registered version to selected
+  // For names not in local history, check global players cache
+  // Cache is synced on app load and after every round
+  // A player can't be deleted — if they exist anywhere they're valid
+  let fromSupabase = [];
+  if (notFoundNames.length) {
+    const cached = typeof getGlobalPlayersCache === "function" ? getGlobalPlayersCache() : [];
+    const globalMap = new Map(cached.map(p => [p.displayName.trim().toLowerCase(), p]));
+    notFoundNames.forEach(player => {
+      const key = player.displayName.trim().toLowerCase();
+      const found = globalMap.get(key);
+      if (found) fromSupabase.push(found);
+    });
+  }
+
+  // Combine local + supabase found players
+  const allFound = [...foundLocally, ...fromSupabase];
+  const skipped  = notFoundNames
+    .filter(p => !fromSupabase.some(s => s.displayName.trim().toLowerCase() === p.displayName.trim().toLowerCase()))
+    .map(p => p.displayName);
+
+  allFound.forEach(reg => {
     addToListIfNotExists(newImportState.selectedPlayers, reg);
-
-    // Also add to favorites if star toggle is ON
     if (newImportState.addToFavOnAdd) {
       addToListIfNotExists(newImportState.favoritePlayers, reg);
     }
@@ -875,13 +894,14 @@ function addPlayer() {
   textarea.style.height = "";
   textarea.focus();
 
-  // Show feedback for skipped players with option to register
-  if (skipped.length) {
-    const feedback = document.getElementById("addPlayerFeedback");
-    if (feedback) {
-      // Store skipped list globally to avoid HTML quote escaping issues
-      window._lastSkippedPlayers = skipped;
+  // Clear any previous feedback
+  const feedback = document.getElementById("addPlayerFeedback");
+  if (feedback) feedback.style.display = "none";
 
+  // Show feedback only for truly unregistered players
+  if (skipped.length) {
+    if (feedback) {
+      window._lastSkippedPlayers = skipped;
       feedback.innerHTML = `
         <span>⚠️ Not registered: <strong>${skipped.join(", ")}</strong></span>
         <button class="add-player-register-btn" onclick="addPlayerSendToRegister(window._lastSkippedPlayers)">
