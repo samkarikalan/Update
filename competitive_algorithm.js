@@ -355,28 +355,7 @@ function CompetitiveRound(state) {
 //  SECTION 10 — PARENT FUNCTION
 // ============================================================
 
-function AischedulerNextRound(schedulerState) {
 
-  const playmode   = getPlayMode();
-  const page2      = document.getElementById('roundsPage');
-  const warmupDone = isWarmupComplete(schedulerState);
-
-  let result;
-
-  if (playmode === 'random' || !warmupDone) {
-    result = RandomRound(schedulerState);
-    page2.classList.remove('competitive-mode');
-    page2.classList.add('random-mode');
-    schedulerState._lastMode = 'random';
-  } else {
-    result = CompetitiveRound(schedulerState);
-    page2.classList.remove('random-mode');
-    page2.classList.add('competitive-mode');
-    schedulerState._lastMode = 'competitive';
-  }
-
-  return result;
-}
 
 
 // ============================================================

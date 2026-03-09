@@ -262,17 +262,7 @@ function updateMixedSessionFlag() {
 
 
 
-function toggleGender() {
-  const toggle = document.querySelector(".gender-toggle");
-  const hiddenInput = document.getElementById("genderValue");
 
-  toggle.classList.toggle("active");
-
-  const isFemale = toggle.classList.contains("active");
-  hiddenInput.value = isFemale ? "Female" : "Male";
-
-  console.log("Selected Gender:", hiddenInput.value);
-}
 
 
 // Page initialization
