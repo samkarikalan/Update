@@ -1515,7 +1515,7 @@ function renderGames(data, roundIndex) {
 
     const vs = document.createElement('span');
     vs.className = 'vs';
-    vs.innerText = '  ';
+    vs.innerText = 'vs';
 
     teamsDiv.append(teamLeft, vs, teamRight);
     courtDiv.append(courtName, teamsDiv);
@@ -1664,7 +1664,7 @@ function goodrenderGames(data, roundIndex) {
 
     const vs = document.createElement('span');
     vs.className = 'vs';
-    vs.innerText = '  ';
+    vs.innerText = 'vs';
 
     teamsDiv.append(teamLeft, vs, teamRight);
     courtDiv.append(courtName, teamsDiv);
@@ -1822,7 +1822,7 @@ function renderGames2(data, index) {
 
     const vs = document.createElement('span');
     vs.className = 'vs';
-    vs.innerText = '  ';
+    vs.innerText = 'vs';
 
     teamsDiv.append(teamLeft, vs, teamRight);
     courtDiv.append(courtName, teamsDiv);
