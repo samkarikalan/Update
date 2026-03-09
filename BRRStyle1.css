@@ -110,7 +110,9 @@ display: none; overflow: hidden; z-index: 1000; min-width: 130px;
   font-size: 1.3rem; cursor: pointer; color: var(--text-dim);
   transition: all 0.2s;
 }
-.power-btn:hover { background: var(--red); color: #fff; }
+.power-btn:hover { background: var(--red); }
+.power-icon { width: 20px; height: 20px; display: block; }
+.power-btn:hover .power-icon { filter: brightness(0) invert(1); }
 
 /* ── Tabs ── */
 
