@@ -305,13 +305,12 @@
     <div id="game-results"></div>
 
     <div class="action-card">
-      <button class="action mid small" id="roundShufle" onclick="RefreshRound()" aria-label="Mix round">
-        🎲
-      </button>
+      <button class="action mid small" id="roundShufle" onclick="RefreshRound()" aria-label="Mix round">🎲</button>
       <button id="nextBtn" class="action right primary" onclick="toggleRound()">
         <span id="btnText" data-i18n="nround"></span>
         <span class="icon"> ▶</span>
       </button>
+      <button class="action mid small" onclick="toggleRoundSettings()" aria-label="Settings">⚙️</button>
     </div>
 
     <!-- Round Settings Panel -->
