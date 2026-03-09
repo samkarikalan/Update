@@ -476,7 +476,14 @@ body.app-dark .round-settings-panel {
 }
 
 .round-settings-toggle {
-  display: none !important; /* hide the toggle header — panel always accessible */
+  display: none !important; /* hide the toggle header — ⚙️ in action bar is the toggle */
+}
+
+/* ⚙️ button glows when settings panel is open */
+.settings-open #roundSettingsBody ~ * ,
+.action.mid.small.settings-active {
+  background: rgba(124,92,252,0.18) !important;
+  color: var(--accent) !important;
 }
 
 .round-settings-body {
