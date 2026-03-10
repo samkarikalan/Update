@@ -93,8 +93,6 @@
                   onclick="settingsShowTab('font')">Font</button>
           <button class="newImport-subtab-btn" id="settingsTabThemeBtn"
                   onclick="settingsShowTab('theme')">Theme</button>
-          <button class="newImport-subtab-btn" id="settingsTabRatingBtn"
-                  onclick="settingsShowTab('rating')">Rating</button>
           <button class="newImport-subtab-btn" id="settingsTabResetBtn"
                   onclick="settingsShowTab('reset')">Reset</button>
         </div>
@@ -120,22 +118,6 @@
         </div>
 
         <!-- RESET tab -->
-        <!-- RATING tab -->
-        <div id="settingsTabRating" class="settings-tab-content" style="display:none">
-          <div class="rating-mode-wrap">
-            <div class="rating-mode-label">Rating Mode</div>
-            <div class="rating-mode-desc">Choose which rating updates after each session</div>
-            <div class="rating-mode-btns">
-              <button id="ratingModeGlobal" class="rating-mode-btn active" onclick="setRatingMode('global')">
-                🌐 Global
-              </button>
-              <button id="ratingModeLocal" class="rating-mode-btn" onclick="setRatingMode('local')">
-                🏠 Club
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div id="settingsTabReset" class="settings-tab-content" style="display:none">
           <div class="row">
             <div class="btn danger" onclick="showConfirm('confirmResetAll', ResetAll)" data-i18n="resetAll"></div>
@@ -180,7 +162,16 @@
           <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
             <span id="sbSyncStatus"></span>
             <button class="github-btn-save sb-sync-btn" onclick="syncGithubToLocal()">🔄 Sync</button>
+          </div>
 
+          <!-- Rating mode — shown after login for trusted clubs only -->
+          <div id="sbRatingModeWrap" style="display:none">
+            <div class="sb-rating-divider"></div>
+            <div class="sb-rating-label">Rating Mode</div>
+            <div class="sb-rating-btns">
+              <button id="sbRatingGlobal" class="sb-rating-btn" onclick="sbSetRatingMode('global')">🌐 Global</button>
+              <button id="sbRatingLocal"  class="sb-rating-btn active" onclick="sbSetRatingMode('local')">🏠 Club</button>
+            </div>
           </div>
         </div>
 

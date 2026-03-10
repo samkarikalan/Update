@@ -437,9 +437,9 @@ async function sbLoadClubs() {
 }
 
 function sbRenderClubStatus() {
-  const club = getMyClub();
-  const mode = getClubMode();
-  const el   = document.getElementById("sbClubStatus");
+  const club  = getMyClub();
+  const mode  = getClubMode();
+  const el    = document.getElementById("sbClubStatus");
   const badge = document.getElementById("sbModeBadge");
 
   if (el) el.textContent = club.name ? club.name : "No club selected";
@@ -460,7 +460,17 @@ function sbRenderClubStatus() {
     }
   }
 
-
+  // Restore rating mode UI if already logged in
+  if (club.id) {
+    const isTrusted = localStorage.getItem("kbrr_club_trusted") === "true";
+    const ratingMode = localStorage.getItem("kbrr_rating_mode") || "local";
+    const wrap = document.getElementById("sbRatingModeWrap");
+    if (wrap) {
+      wrap.style.display = isTrusted ? "block" : "none";
+      document.getElementById("sbRatingGlobal")?.classList.toggle("active", ratingMode === "global");
+      document.getElementById("sbRatingLocal")?.classList.toggle("active",  ratingMode === "local");
+    }
+  }
 }
 
 async function sbConfirmJoin() {
@@ -471,22 +481,27 @@ async function sbConfirmJoin() {
   if (!password) { sbFeedback("Enter password.", "red"); return; }
 
   try {
-    // Fetch both passwords for this club
-    const clubs = await sbGet("clubs", `id=eq.${select.value}&select=id,name,select_password,admin_password`);
+    // Fetch club including trusted flag
+    const clubs = await sbGet("clubs", `id=eq.${select.value}&select=id,name,select_password,admin_password,trusted`);
     if (!clubs.length) throw new Error("Club not found.");
     const club = clubs[0];
 
     let mode = null;
-    if (password === club.admin_password)  mode = "admin";
+    if (password === club.admin_password)       mode = "admin";
     else if (password === club.select_password) mode = "user";
     else throw new Error("Wrong password.");
 
-    // Save club + mode
+    // Save club + mode + trusted flag
     setMyClub(club.id, club.name);
-    localStorage.setItem("kbrr_club_mode", mode);
+    localStorage.setItem("kbrr_club_mode",    mode);
+    localStorage.setItem("kbrr_club_trusted", club.trusted ? "true" : "false");
+
+    // Default rating mode to "local" always — trusted clubs can switch to global
+    localStorage.setItem("kbrr_rating_mode", "local");
 
     pwInput.value = "";
     sbRenderClubStatus();
+    sbRenderRatingMode(club.trusted === true);
     sbFeedback(`✅ Joined as ${mode === "admin" ? "Admin 🔑" : "User 👤"}`, "green");
     syncGithubToLocal();
     updateRegisterTabVisibility();
@@ -495,9 +510,30 @@ async function sbConfirmJoin() {
   }
 }
 
+function sbRenderRatingMode(isTrusted) {
+  const wrap = document.getElementById("sbRatingModeWrap");
+  if (!wrap) return;
+  if (isTrusted) {
+    wrap.style.display = "block";
+    sbSetRatingMode("local"); // default to local
+  } else {
+    wrap.style.display = "none";
+    localStorage.setItem("kbrr_rating_mode", "local"); // force local silently
+  }
+}
+
+function sbSetRatingMode(mode) {
+  localStorage.setItem("kbrr_rating_mode", mode);
+  document.getElementById("sbRatingGlobal")?.classList.toggle("active", mode === "global");
+  document.getElementById("sbRatingLocal")?.classList.toggle("active",  mode === "local");
+}
+
 function sbClearClub() {
   clearMyClub();
   localStorage.removeItem("kbrr_club_mode");
+  localStorage.removeItem("kbrr_club_trusted");
+  localStorage.removeItem("kbrr_rating_mode");
+  document.getElementById("sbRatingModeWrap") && (document.getElementById("sbRatingModeWrap").style.display = "none");
   sbRenderClubStatus();
   sbFeedback("Club cleared.", "gray");
   updateRegisterTabVisibility();

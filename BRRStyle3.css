@@ -1261,3 +1261,40 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
   background: rgba(45,206,137,0.1);
   color: var(--accent);
 }
+
+/* ── Rating Mode in Join tab ── */
+.sb-rating-divider {
+  border-top: 1px solid var(--border);
+  margin: 12px 0 10px;
+}
+.sb-rating-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.sb-rating-btns {
+  display: flex;
+  gap: 8px;
+}
+.sb-rating-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sb-rating-btn.active {
+  border-color: var(--accent);
+  background: rgba(45,206,137,0.1);
+  color: var(--accent);
+}

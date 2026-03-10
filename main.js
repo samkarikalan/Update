@@ -428,18 +428,12 @@ async function endSession(fromProfile = false) {
 
 /* === SETTINGS TAB SWITCHER === */
 function settingsShowTab(tab) {
-  ["font","theme","rating","reset"].forEach(t => {
-    document.getElementById("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? "" : "none";
+  ["font","theme","reset"].forEach(t => {
+    const el = document.getElementById("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1));
+    if (el) el.style.display = t === tab ? "" : "none";
     const btn = document.getElementById("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1) + "Btn");
     if (btn) btn.classList.toggle("active", t === tab);
   });
-  if (tab === "rating") initRatingModeUI();
-}
-
-function initRatingModeUI() {
-  const mode = getRatingMode();
-  document.getElementById("ratingModeGlobal")?.classList.toggle("active", mode === "global");
-  document.getElementById("ratingModeLocal")?.classList.toggle("active",  mode === "local");
 }
 
 // Close fixed pair picker on outside click

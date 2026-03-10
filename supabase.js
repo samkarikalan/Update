@@ -182,15 +182,23 @@ async function dbAddPlayer(name, gender, _unused) {
 
 /// Sync ratings after each round — no password needed (game results are objective)
 async function dbSyncRatings(updatedRatings) {
-  const mode   = localStorage.getItem('kbrr_rating_mode') || 'global';
-  const club   = getMyClub();
+  const club    = getMyClub();
+
+  // No club logged in — skip entirely, no server updates
+  if (!club.id) return;
+
+  const isTrusted = localStorage.getItem('kbrr_club_trusted') === 'true';
+  const mode      = localStorage.getItem('kbrr_rating_mode') || 'local';
+
+  // Untrusted clubs can never update global rating — force local
+  const effectiveMode = (mode === 'global' && isTrusted) ? 'global' : 'local';
 
   for (const update of updatedRatings) {
     try {
       const roundedRating = Math.round(update.rating * 10) / 10;
       let patch = {};
 
-      if (mode === 'local' && club.id) {
+      if (effectiveMode === 'local') {
         // Update club_ratings[clubId] only
         const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`);
         if (rows && rows.length) {
@@ -203,7 +211,7 @@ async function dbSyncRatings(updatedRatings) {
           }
         }
       } else {
-        // Update global rating
+        // Global mode — trusted clubs only
         patch = { rating: roundedRating };
         if (update.wins > 0 || update.losses > 0) {
           const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses`);
