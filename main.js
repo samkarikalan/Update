@@ -451,7 +451,7 @@ document.addEventListener("click", function(e) {
    ============================================================ */
 
 function getRatingMode() {
-  return localStorage.getItem('kbrr_rating_mode') || 'global';
+  return localStorage.getItem('kbrr_rating_mode') || 'local';
 }
 
 function setRatingMode(mode) {
