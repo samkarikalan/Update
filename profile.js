@@ -188,7 +188,7 @@ async function showProfileCard(player) {
 
   // Rating + tier — both global and club
   const club         = (typeof getMyClub === 'function') ? getMyClub() : {};
-  const globalRating = parseFloat(player.rating) || 1.0;
+  const globalRating = (typeof getRating === 'function') ? getRating(player.name) : 1.0;
   const clubRatings  = player.club_ratings || {};
   const clubRating   = club.id ? (parseFloat(clubRatings[club.id]) || 1.0) : 1.0;
   const activeRating = (localStorage.getItem('kbrr_rating_mode') === 'local') ? clubRating : globalRating;
