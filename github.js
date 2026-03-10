@@ -302,7 +302,7 @@ async function githubSyncAfterRound() {
     const updatedRatings = schedulerState.allPlayers.map(p => ({
       name: p.name,
       homeClub: p.homeClub || myClub,
-      rating: getRating(p.name)
+      rating: (typeof getActiveRating === "function" ? getActiveRating(p.name) : getRating(p.name))
     }));
     await dbSyncRatings(updatedRatings);
   } catch (e) {

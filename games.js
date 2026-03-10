@@ -428,7 +428,7 @@ function groupByTier(state, players) {
   const weak   = [];
 
   for (const p of players) {
-    const rating = getRating(p);
+    const rating = (typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p));
     if (rating >= 3.6)      strong.push(p);
     else if (rating >= 2.1) inter.push(p);
     else                    weak.push(p);

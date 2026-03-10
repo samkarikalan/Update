@@ -293,7 +293,7 @@ function newImportRefreshSelectCards() {
                 data-gender="${p.gender}"
                 title="Tap to toggle gender">
               <span class="newImport-set-player-name">${p.displayName}</span>
-              <span class="rating-badge" style="font-size:0.68rem;padding:2px 5px;" data-player="${p.displayName}">${getRating(p.displayName).toFixed(1)}</span>
+              <span class="rating-badge" style="font-size:0.68rem;padding:2px 5px;" data-player="${p.displayName}">${(typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1)}</span>
               <button class="newImport-set-player-remove-btn"
                 data-setname="${safeName}"
                 data-name="${p.displayName.replace(/"/g, '&quot;')}">×</button>
@@ -342,7 +342,7 @@ function newImportRefreshSelectCards() {
 
       const card = document.createElement("div");
       card.className = "newImport-player-card";
-      const rating1 = getRating(p.displayName).toFixed(1);
+      const rating1 = (typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
       card.innerHTML = `
         <div class="newImport-player-top">
           <img src="${p.gender === "Male" ? "male.png" : "female.png"}"
@@ -673,7 +673,7 @@ function newImportRefreshSelectedCards() {
   newImportState.selectedPlayers.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = "newImport-player-card";
-    const rating2 = getRating(p.displayName).toFixed(1);
+    const rating2 = (typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
     const fav2 = newImportState.favoritePlayers.some(fp => fp.displayName.trim().toLowerCase() === p.displayName.trim().toLowerCase());
     card.innerHTML = `
       <div class="newImport-player-top">

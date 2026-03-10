@@ -313,7 +313,7 @@ async function playerMgmtRenderList() {
              title="Tap to toggle gender">
         <span class="player-mgmt-name player-mgmt-name-link" onclick="showPlayerStats('${safeName}')">${p.displayName}</span>
         <input type="number" class="rating-edit-input"
-          value="${getRating(p.displayName).toFixed(1)}"
+          value="${(typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1)}"
           min="1.0" max="5.0" step="0.1"
           onchange="playerMgmtSaveRating('${safeName}', this.value)">
         <button class="player-mgmt-del-btn"
@@ -324,7 +324,7 @@ async function playerMgmtRenderList() {
         <img src="${p.gender === 'Female' ? 'female.png' : 'male.png'}"
              class="player-mgmt-avatar" style="cursor:default">
         <span class="player-mgmt-name player-mgmt-name-link" onclick="showPlayerStats('${safeName}')">${p.displayName}</span>
-        <span class="rating-badge" style="font-size:0.8rem;padding:2px 7px">${getRating(p.displayName).toFixed(1)}</span>
+        <span class="rating-badge" style="font-size:0.8rem;padding:2px 7px">${(typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1)}</span>
       `;
     }
     container.appendChild(row);

@@ -468,7 +468,7 @@ function createPlayerCard(player, index) {
     </div>
     <div class="pec-col pec-name" onclick="editPlayerName(${index})">${player.name}</div>
     <div class="pec-col pec-rating">
-      <span class="rating-badge" data-player="${player.name}">${(typeof getRating === 'function' ? getRating(player.name) : 1.0).toFixed(1)}</span>
+      <span class="rating-badge" data-player="${player.name}">${(typeof getActiveRating === 'function' ? getActiveRating(player.name) : getRating(player.name)).toFixed(1)}</span>
     </div>
     <div class="pec-col pec-delete">
       <button class="pec-btn delete" onclick="deletePlayer(${index})">🗑</button>

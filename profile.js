@@ -190,7 +190,7 @@ async function showProfileCard(player) {
   const club         = (typeof getMyClub === 'function') ? getMyClub() : {};
   const globalRating = (typeof getRating === 'function') ? getRating(player.name) : 1.0;
   const clubRatings  = player.club_ratings || {};
-  const clubRating   = club.id ? (parseFloat(clubRatings[club.id]) || 1.0) : 1.0;
+  const clubRating   = club.id ? (parseFloat(clubRatings[club.id] ?? clubRatings[String(club.id)] ?? clubRatings[Number(club.id)]) || 1.0) : 1.0;
   const activeRating = (localStorage.getItem('kbrr_rating_mode') === 'local') ? clubRating : globalRating;
   const tier         = ratingTierLabel(activeRating);
 
@@ -319,7 +319,7 @@ function renderSessions(sessions, playerName) {
   if (hasLive) {
     const liveWins   = liveMatches.filter(m => m.result === 'W').length;
     const liveLosses = liveMatches.filter(m => m.result === 'L').length;
-    const rating     = (typeof getRating === 'function') ? getRating(playerName) : 1.0;
+    const rating     = (typeof getActiveRating === 'function') ? getActiveRating(playerName) : getRating(playerName);
     const tier       = ratingTierLabel(rating);
 
     const block = document.createElement('div');

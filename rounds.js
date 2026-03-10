@@ -496,20 +496,20 @@ for (const game of games) {
   const winners = game.winner === 'L' ? game.pair1 : game.pair2;
   const losers  = game.winner === 'L' ? game.pair2 : game.pair1;
 
-  const winAvg  = winners.reduce((s, p) => s + getRating(p), 0) / winners.length;
-  const loseAvg = losers.reduce((s, p)  => s + getRating(p), 0) / losers.length;
+  const winAvg  = winners.reduce((s, p) => s + (typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)), 0) / winners.length;
+  const loseAvg = losers.reduce((s, p)  => s + (typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)), 0) / losers.length;
   const gap = loseAvg - winAvg;
 
   const winGain  = gap > 0.3 ? 0.4 : gap > -0.3 ? 0.2 : 0.1;
   const loseLoss = gap < -0.3 ? 0.4 : gap < 0.3 ? 0.2 : 0.1;
 
   for (const p of winners) {
-    setRating(p, getRating(p) + winGain);
+    setRating(p, (typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)) + winGain);
     roundWins.set(p, (roundWins.get(p) || 0) + 1);
   }
   for (const p of losers) {
-    if (getRating(p) >= 2.0) {
-      setRating(p, getRating(p) - loseLoss);
+    if ((typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)) >= 2.0) {
+      setRating(p, (typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)) - loseLoss);
     }
     roundLosses.set(p, (roundLosses.get(p) || 0) + 1);
   }
@@ -630,7 +630,7 @@ function report() {
     const played = schedulerState.PlayedCount.get(p.name) || 0;
     const rest = schedulerState.restCount.get(p.name) || 0;
 
-    const rating   = (typeof getRating === 'function') ? getRating(p.name) : 1.0;
+    const rating   = (typeof getRating === 'function') ? (typeof getActiveRating === "function" ? getActiveRating(p.name) : getRating(p.name)) : 1.0;
     const stripColor = ratingToColor(rating);
     const topClass = index === 0 ? "top-1" : index === 1 ? "top-2" : index === 2 ? "top-3" : "";
     const card = document.createElement("div");
@@ -686,7 +686,7 @@ function workedreport() {
     card.innerHTML = `
       <div class="rank">#${index + 1}</div>
       <div class="name">${p.name.replace(/^\d+\.?\s*/, "")}</div>
-      <span class="rating-badge" data-player="${p.name}">${(typeof getRating === 'function' ? getRating(p.name) : 1.0).toFixed(1)}</span>
+      <span class="rating-badge" data-player="${p.name}">${(typeof getRating === 'function' ? (typeof getActiveRating === "function" ? getActiveRating(p.name) : getRating(p.name)) : 1.0).toFixed(1)}</span>
       <div class="stat played" style="border-color:${getPlayedColor(played)}">${played}</div>
       <div class="stat rest" style="border-color:${getRestColor(rest)}">${rest}</div>
     `;
