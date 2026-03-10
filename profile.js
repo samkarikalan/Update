@@ -179,83 +179,122 @@ async function showProfileCard(player) {
   document.getElementById('pcSessions').innerHTML  =
     '<div class="profile-sessions-loading">Loading...</div>';
 
-  // Fetch from Supabase (player_sessions table) + merge with localStorage
+  // Fetch from Supabase players.sessions column + merge with localStorage
   try {
-    const localSessions  = getLocalSessions(player.name);
-    const remoteSessions = await getPlayerSessions(player.name);
-    const merged         = mergeSessions(localSessions, remoteSessions);
+    const rows = await sbGet('players',
+      `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`);
 
-    // Also fetch wins/losses totals from players table
-    try {
-      const rows = await sbGet('players',
-        `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses`);
-      if (rows && rows.length) {
-        document.getElementById('pcWins').textContent   = (rows[0].wins   || 0);
-        document.getElementById('pcLosses').textContent = (rows[0].losses || 0);
-      }
-    } catch (e) { /* silent */ }
+    const lsKey       = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
+    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
 
-    renderSessions(merged, player.name);
+    if (rows && rows.length) {
+      const data           = rows[0];
+      const remoteSessions = data.sessions || [];
+      const merged         = mergeSessions(localSessions, remoteSessions);
+      document.getElementById('pcWins').textContent   = (data.wins   || 0);
+      document.getElementById('pcLosses').textContent = (data.losses || 0);
+      renderSessions(merged, player.name);
+    } else {
+      document.getElementById('pcWins').textContent   = '—';
+      document.getElementById('pcLosses').textContent = '—';
+      renderSessions(localSessions, player.name);
+    }
   } catch (e) {
-    // Full fallback — localStorage only
-    const localSessions = getLocalSessions(player.name);
+    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
+    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
     document.getElementById('pcWins').textContent   = '—';
     document.getElementById('pcLosses').textContent = '—';
     renderSessions(localSessions, player.name);
   }
 }
 
-/* ── Render last 3 sessions ── */
+/* ── Render sessions with individual match history ── */
 function renderSessions(sessions, playerName) {
   const container = document.getElementById('pcSessions');
   container.innerHTML = '';
 
-  // Current session stats from live schedulerState
-  const sessionWins   = (typeof schedulerState !== 'undefined')
-    ? (schedulerState.winCount?.get(playerName) || 0) : 0;
-  const sessionPlayed = (typeof schedulerState !== 'undefined')
-    ? (schedulerState.PlayedCount?.get(playerName) || 0) : 0;
-  const sessionLosses = Math.max(0, sessionPlayed - sessionWins); // approx
+  // ── Live current session from allRounds ──
+  let liveMatches = [];
+  if (typeof allRounds !== 'undefined' && allRounds.length) {
+    for (const round of allRounds) {
+      const games = round.games || round;
+      for (const game of games) {
+        if (!game.winner) continue;
+        const pair1   = game.pair1 || [];
+        const pair2   = game.pair2 || [];
+        const leftWon = game.winner === 'L';
+        const inPair1 = pair1.some(p => p.toLowerCase() === playerName.toLowerCase());
+        const inPair2 = pair2.some(p => p.toLowerCase() === playerName.toLowerCase());
+        if (!inPair1 && !inPair2) continue;
+        liveMatches.push({
+          opponents: inPair1 ? pair2 : pair1,
+          result:    (inPair1 && leftWon) || (inPair2 && !leftWon) ? 'W' : 'L'
+        });
+      }
+    }
+  }
 
-  const hasCurrentSession = sessionPlayed > 0;
+  const hasLive     = liveMatches.length > 0;
+  const hasPast     = sessions.length > 0;
 
-  if (!sessions.length && !hasCurrentSession) {
+  if (!hasLive && !hasPast) {
     container.innerHTML = '<div class="profile-sessions-empty">No sessions recorded yet.</div>';
     return;
   }
 
-  // Show current session at top if active
-  if (hasCurrentSession) {
-    const rating = (typeof getRating === 'function') ? getRating(playerName) : 1.0;
-    const tier   = ratingTierLabel(rating);
-    const curr   = document.createElement('div');
-    curr.className = 'profile-session-row current';
-    curr.innerHTML = `
-      <span class="session-date">Today (live)</span>
-      <div class="session-results">
-        ${sessionWins   > 0 ? `<span class="session-badge win">${sessionWins}W</span>`     : ''}
-        ${sessionLosses > 0 ? `<span class="session-badge loss">${sessionLosses}L</span>` : ''}
-        ${sessionWins === 0 && sessionLosses === 0 ? `<span class="session-badge" style="background:rgba(160,160,192,0.15);color:var(--text-dim)">${sessionPlayed}P</span>` : ''}
+  // ── Current session block ──
+  if (hasLive) {
+    const liveWins   = liveMatches.filter(m => m.result === 'W').length;
+    const liveLosses = liveMatches.filter(m => m.result === 'L').length;
+    const rating     = (typeof getRating === 'function') ? getRating(playerName) : 1.0;
+    const tier       = ratingTierLabel(rating);
+
+    const block = document.createElement('div');
+    block.className = 'profile-session-block current';
+    block.innerHTML = `
+      <div class="session-block-header">
+        <span class="session-block-date">Today (live)</span>
+        <span class="session-block-summary">
+          ${liveWins   > 0 ? `<span class="session-badge win">${liveWins}W</span>`   : ''}
+          ${liveLosses > 0 ? `<span class="session-badge loss">${liveLosses}L</span>` : ''}
+        </span>
+        <span class="session-block-rating" style="color:${tier.color}">${rating.toFixed(1)}</span>
       </div>
-      <span class="session-rating" style="color:${tier.color}">${rating.toFixed(1)}</span>
-    `;
-    container.appendChild(curr);
+      <div class="session-match-list">
+        ${liveMatches.map(m => `
+          <div class="session-match-row">
+            <span class="match-result-badge ${m.result === 'W' ? 'win' : 'loss'}">${m.result}</span>
+            <span class="match-opponents">vs ${m.opponents.join(' & ')}</span>
+          </div>`).join('')}
+      </div>`;
+    container.appendChild(block);
   }
 
-  // Past sessions from Supabase
+  // ── Past sessions ──
   sessions.slice(0, 3).forEach(s => {
-    const row  = document.createElement('div');
-    row.className = 'profile-session-row';
-    const tier = ratingTierLabel(s.rating || 1.0);
-    row.innerHTML = `
-      <span class="session-date">${s.date || '—'}</span>
-      <div class="session-results">
-        ${s.wins   > 0 ? `<span class="session-badge win">${s.wins}W</span>`   : ''}
-        ${s.losses > 0 ? `<span class="session-badge loss">${s.losses}L</span>` : ''}
+    const tier    = ratingTierLabel(s.rating || 1.0);
+    const matches = s.matches || [];
+
+    const block = document.createElement('div');
+    block.className = 'profile-session-block';
+    block.innerHTML = `
+      <div class="session-block-header">
+        <span class="session-block-date">${s.date || '—'}</span>
+        <span class="session-block-summary">
+          ${s.wins   > 0 ? `<span class="session-badge win">${s.wins}W</span>`   : ''}
+          ${s.losses > 0 ? `<span class="session-badge loss">${s.losses}L</span>` : ''}
+        </span>
+        <span class="session-block-rating" style="color:${tier.color}">${(s.rating || 1.0).toFixed(1)}</span>
       </div>
-      <span class="session-rating" style="color:${tier.color}">${(s.rating || 1.0).toFixed(1)}</span>
-    `;
-    container.appendChild(row);
+      ${matches.length ? `
+      <div class="session-match-list">
+        ${matches.map(m => `
+          <div class="session-match-row">
+            <span class="match-result-badge ${m.result === 'W' ? 'win' : 'loss'}">${m.result}</span>
+            <span class="match-opponents">vs ${m.opponents.join(' & ')}</span>
+          </div>`).join('')}
+      </div>` : ''}`;
+    container.appendChild(block);
   });
 }
 

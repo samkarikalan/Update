@@ -339,39 +339,73 @@ async function endSession() {
     try {
       const today = new Date().toISOString().split("T")[0];
 
-      // Collect total wins/losses per player across all rounds
-      const totalWins   = new Map();
-      const totalLosses = new Map();
+      // Build per-player match history from allRounds
+      // playerMatches: Map<playerName, [{opponents, partner, result}]>
+      const playerMatches = new Map();
 
       for (const round of allRounds) {
-        for (const game of round) {
+        const games = round.games || round;
+        for (const game of games) {
           if (!game.winner) continue;
-          const winners = game.winner === "L" ? game.pair1 : game.pair2;
-          const losers  = game.winner === "L" ? game.pair2 : game.pair1;
-          winners.forEach(p => totalWins.set(p,   (totalWins.get(p)   || 0) + 1));
-          losers.forEach(p  => totalLosses.set(p, (totalLosses.get(p) || 0) + 1));
+
+          const leftWon  = game.winner === "L";
+          const pair1    = game.pair1 || [];
+          const pair2    = game.pair2 || [];
+
+          // For each player in pair1
+          for (const p of pair1) {
+            if (!playerMatches.has(p)) playerMatches.set(p, []);
+            playerMatches.get(p).push({
+              opponents: pair2,
+              partner:   pair1.filter(x => x !== p),
+              result:    leftWon ? "W" : "L"
+            });
+          }
+          // For each player in pair2
+          for (const p of pair2) {
+            if (!playerMatches.has(p)) playerMatches.set(p, []);
+            playerMatches.get(p).push({
+              opponents: pair1,
+              partner:   pair2.filter(x => x !== p),
+              result:    leftWon ? "L" : "W"
+            });
+          }
         }
       }
 
+      // Save for every player who played
       const players = schedulerState.allPlayers || [];
       for (const p of players) {
-        const wins   = totalWins.get(p.name)   || 0;
-        const losses = totalLosses.get(p.name) || 0;
-        if (wins === 0 && losses === 0) continue;
+        const matches = playerMatches.get(p.name) || [];
+        if (!matches.length) continue;
 
-        const newEntry = { date: today, wins, losses, rating: getRating(p.name) };
+        const wins   = matches.filter(m => m.result === "W").length;
+        const losses = matches.filter(m => m.result === "L").length;
 
-        // ── LAYER 1: localStorage (immediate, offline-safe) ──
+        const newEntry = {
+          date:    today,
+          wins,
+          losses,
+          rating:  getRating(p.name),
+          matches  // full match details
+        };
+
+        // ── LAYER 1: localStorage ──
         try {
           const lsKey    = `kbrr_sessions_${p.name.toLowerCase().replace(/\s+/g, "_")}`;
           const existing = JSON.parse(localStorage.getItem(lsKey) || "[]");
-          const updated  = [newEntry, ...existing].slice(0, 10);
+          const updated  = [newEntry, ...existing].slice(0, 3);
           localStorage.setItem(lsKey, JSON.stringify(updated));
         } catch (e) { /* silent */ }
 
-        // ── LAYER 2: Supabase player_sessions table ──
+        // ── LAYER 2: Supabase players.sessions column ──
         try {
-          await savePlayerSession(p.name, newEntry);
+          const rows = await sbGet("players", `name=ilike.${encodeURIComponent(p.name)}&select=id,sessions`);
+          if (rows && rows.length) {
+            const existing = rows[0].sessions || [];
+            const updated  = [newEntry, ...existing].slice(0, 3);
+            await sbPatch("players", `name=ilike.${encodeURIComponent(p.name)}`, { sessions: updated });
+          }
         } catch (e) { /* silent */ }
       }
     } catch (e) { /* silent */ }

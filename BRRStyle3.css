@@ -991,3 +991,65 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 .profile-picker-search:focus {
   border-color: var(--accent);
 }
+
+/* ── Session blocks with match history ── */
+.profile-session-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.profile-session-block.current {
+  border-color: var(--accent);
+  background: var(--accent-dim, rgba(45,206,137,0.06));
+}
+.session-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+.session-block-date {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  flex: 1;
+}
+.session-block-summary {
+  display: flex;
+  gap: 4px;
+}
+.session-block-rating {
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-left: 10px;
+}
+.session-match-list {
+  border-top: 1px solid var(--border);
+  padding: 6px 0;
+}
+.session-match-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+}
+.match-result-badge {
+  font-size: 0.7rem;
+  font-weight: 900;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.match-result-badge.win  { background: rgba(45,206,137,0.15); color: #2dce89; }
+.match-result-badge.loss { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.match-opponents {
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 500;
+}
