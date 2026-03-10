@@ -116,7 +116,6 @@ async function dbGetPlayers(forceFresh = false) {
     }
 
     // Normalize to local format
-    const club       = getMyClub();
     const normalized = players.map(p => {
       const clubRatings = p.club_ratings || {};
       const clubRating  = club.id ? (parseFloat(clubRatings[club.id]) || 1.0) : 1.0;
@@ -164,13 +163,14 @@ async function dbAddPlayer(name, gender, _unused) {
   }
 
   // Link to club if not already linked
-  try {
+  const alreadyLinked = await sbGet("club_members", `player_id=eq.${player.id}&club_id=eq.${club.id}`);
+  if (!alreadyLinked.length) {
     await sbPost("club_members", {
       player_id: player.id,
       club_id:   club.id
     });
-  } catch (e) {
-    // Already linked — ignore
+  } else {
+    throw new Error("Player already exists in this club.");
   }
 
   // Invalidate cache
