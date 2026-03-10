@@ -44,6 +44,26 @@ function updateProfileBtn() {
   }
 }
 
+/* ── End Session from profile drawer ── */
+async function profileEndSession() {
+  const btn     = document.getElementById('profileEndBtn');
+  const btnText = document.getElementById('profileEndBtnText');
+
+  // Show busy state — drawer stays open
+  btn.disabled      = true;
+  btnText.textContent = 'Saving...';
+  btn.style.opacity = '0.7';
+
+  try {
+    await endSession(true); // pass flag to skip drawer close logic
+  } catch(e) {
+    // endSession reloads page on success, so if we get here something went wrong
+    btn.disabled        = false;
+    btnText.textContent = 'End Session';
+    btn.style.opacity   = '1';
+  }
+}
+
 /* ── Open drawer ── */
 function openProfileDrawer() {
   const overlay = document.getElementById('profileOverlay');
@@ -221,19 +241,29 @@ function getPlayerGender(name) {
 
 /* ── Render PDF-style match rows ── */
 function renderMatchRow(m) {
-  // m = { opponents: [], opponentGenders: [], result: 'W'|'L' }
-  const isWin    = m.result === 'W';
-  const genders  = m.opponentGenders || m.opponents.map(() => 'Male');
-  const avatars  = m.opponents.map((name, i) => `
-    <div class="match-opponent-chip">
-      <img src="${genders[i] === 'Female' ? 'female.png' : 'male.png'}" class="match-avatar">
-      <span class="match-opponent-name">${name}</span>
-    </div>`).join('');
+  const isWin          = m.result === 'W';
+  const partner        = m.partner        || [];
+  const partnerGenders = m.partnerGenders || partner.map(() => 'Male');
+  const opponents      = m.opponents      || [];
+  const oppGenders     = m.opponentGenders || opponents.map(() => 'Male');
+
+  const makeChip = (name, gender) =>
+    `<div class="match-player-chip">
+      <img src="${gender === 'Female' ? 'female.png' : 'male.png'}" class="match-avatar">
+      <span class="match-player-name">${name}</span>
+    </div>`;
+
+  const myPair  = [makeChip('Me', 'Me'), ...partner.map((n, i) => makeChip(n, partnerGenders[i]))].join('');
+  const oppPair = opponents.map((n, i) => makeChip(n, oppGenders[i])).join('');
 
   return `
     <div class="match-row ${isWin ? 'win' : 'loss'}">
-      <div class="match-opponents-col">${avatars}</div>
-      <span class="match-result-pill ${isWin ? 'win' : 'loss'}">${isWin ? 'WIN' : 'LOSS'}</span>
+      <div class="match-pair">${myPair}</div>
+      <div class="match-vs-col">
+        <span class="match-vs">vs</span>
+        <span class="match-result-pill ${isWin ? 'win' : 'loss'}">${isWin ? 'WIN' : 'LOSS'}</span>
+      </div>
+      <div class="match-pair">${oppPair}</div>
     </div>`;
 }
 
@@ -256,7 +286,11 @@ function renderSessions(sessions, playerName) {
         const inPair2 = pair2.some(p => p.toLowerCase() === playerName.toLowerCase());
         if (!inPair1 && !inPair2) continue;
         const opponents = inPair1 ? pair2 : pair1;
+        const partner   = inPair1 ? pair1.filter(p => p.toLowerCase() !== playerName.toLowerCase())
+                                  : pair2.filter(p => p.toLowerCase() !== playerName.toLowerCase());
         liveMatches.push({
+          partner,
+          partnerGenders:  partner.map(n => getPlayerGender(n)),
           opponents,
           opponentGenders: opponents.map(n => getPlayerGender(n)),
           result: (inPair1 && leftWon) || (inPair2 && !leftWon) ? 'W' : 'L'
@@ -316,13 +350,16 @@ function renderSessions(sessions, playerName) {
         <div class="session-header-badges">
           ${s.wins   > 0 ? `<span class="session-badge win">${s.wins}W</span>`   : ''}
           ${s.losses > 0 ? `<span class="session-badge loss">${s.losses}L</span>` : ''}
-          ${matches.length ? `<span class="session-chevron">›</span>` : ''}
+          ${matches.length ? `<span class="session-chevron">›</span>` : `<span class="session-chevron">›</span>`}
         </div>
       </div>
       ${matches.length ? `
       <div class="session-matches collapsed">
         ${matches.map(renderMatchRow).join('<div class="match-divider"></div>')}
-      </div>` : ''}`;
+      </div>` : `
+      <div class="session-matches collapsed">
+        <div class="session-no-matches">Match details available from next session onwards</div>
+      </div>`}`;
     container.appendChild(block);
   });
 }

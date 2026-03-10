@@ -1176,3 +1176,49 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
   background: var(--border);
   margin: 0 14px;
 }
+
+.session-no-matches {
+  padding: 12px 14px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ── Two-pair match row layout ── */
+.match-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 12px !important;
+  gap: 6px !important;
+}
+.match-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+.match-player-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.match-player-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.match-vs-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+.match-vs {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}

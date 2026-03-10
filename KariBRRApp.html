@@ -583,9 +583,9 @@
     </div>
 
     <!-- End Session button -->
-    <button class="profile-end-btn" onclick="closeProfileDrawer(); setTimeout(endSession, 350);">
+    <button class="profile-end-btn" id="profileEndBtn" onclick="profileEndSession()">
       <img src="power.png" style="width:16px;height:16px;opacity:0.9;vertical-align:middle;margin-right:6px;">
-      End Session
+      <span id="profileEndBtnText">End Session</span>
     </button>
   </div>
 

@@ -323,10 +323,10 @@ async function syncGithubToLocal() {
 /* =============================================================
    POWER BUTTON — End Session
 ============================================================= */
-async function endSession() {
+async function endSession(fromProfile = false) {
   // Check if any games were played this session
   const gamesPlayed = (typeof allRounds !== "undefined") &&
-    allRounds.some(round => round.some(game => game.winner));
+    allRounds.some(round => (round.games || round).some(game => game.winner));
 
   const msg = gamesPlayed
     ? "End session?\n\nGame results will be saved before resetting."
@@ -360,6 +360,8 @@ async function endSession() {
           for (const p of pair1) {
             if (!playerMatches.has(p)) playerMatches.set(p, []);
             playerMatches.get(p).push({
+              partner:          pair1.filter(x => x !== p),
+              partnerGenders:   pair1.filter(x => x !== p).map(n => genderMap.get(n) || "Male"),
               opponents:        pair2,
               opponentGenders:  pair2.map(n => genderMap.get(n) || "Male"),
               result:           leftWon ? "W" : "L"
@@ -369,6 +371,8 @@ async function endSession() {
           for (const p of pair2) {
             if (!playerMatches.has(p)) playerMatches.set(p, []);
             playerMatches.get(p).push({
+              partner:          pair2.filter(x => x !== p),
+              partnerGenders:   pair2.filter(x => x !== p).map(n => genderMap.get(n) || "Male"),
               opponents:        pair1,
               opponentGenders:  pair1.map(n => genderMap.get(n) || "Male"),
               result:           leftWon ? "L" : "W"
