@@ -100,10 +100,12 @@ function showProfilePicker() {
   if (searchEl) searchEl.value = '';
 
   // Load ALL players from server (no club filter)
-  sbGet('players', 'order=name.asc&select=id,name,gender').then(players => {
+  sbGet('players', 'order=name.asc&select=id,name,gender,rating,club_ratings').then(players => {
     _pickerAllPlayers = (players || []).map(p => ({
-      name:   p.name,
-      gender: p.gender || 'Male'
+      name:        p.name,
+      gender:      p.gender || 'Male',
+      rating:      p.rating || 1.0,
+      club_ratings: p.club_ratings || {}
     }));
     renderPickerList(_pickerAllPlayers);
   }).catch(() => {
@@ -185,9 +187,11 @@ async function showProfileCard(player) {
   document.getElementById('pcName').textContent = player.name;
 
   // Rating + tier — both global and club
-  const globalRating = (typeof getRating      === 'function') ? getRating(player.name)      : 1.0;
-  const clubRating   = (typeof getClubRating  === 'function') ? getClubRating(player.name)  : 1.0;
-  const activeRating = (typeof getActiveRating === 'function') ? getActiveRating(player.name) : globalRating;
+  const club         = (typeof getMyClub === 'function') ? getMyClub() : {};
+  const globalRating = parseFloat(player.rating) || 1.0;
+  const clubRatings  = player.club_ratings || {};
+  const clubRating   = club.id ? (parseFloat(clubRatings[club.id]) || 1.0) : 1.0;
+  const activeRating = (localStorage.getItem('kbrr_rating_mode') === 'local') ? clubRating : globalRating;
   const tier         = ratingTierLabel(activeRating);
 
   document.getElementById('pcRating').textContent     = globalRating.toFixed(1);
@@ -243,12 +247,13 @@ function getPlayerGender(name) {
 }
 
 /* ── Render PDF-style match rows ── */
-function renderMatchRow(m) {
+function renderMatchRow(m, playerName) {
   const isWin          = m.result === 'W';
   const partner        = m.partner        || [];
   const partnerGenders = m.partnerGenders || partner.map(() => 'Male');
   const opponents      = m.opponents      || [];
   const oppGenders     = m.opponentGenders || opponents.map(() => 'Male');
+  const myGender       = m.myGender || 'Male';
 
   const makeChip = (name, gender) =>
     `<div class="match-player-chip">
@@ -256,7 +261,7 @@ function renderMatchRow(m) {
       <span class="match-player-name">${name}</span>
     </div>`;
 
-  const myPair  = [makeChip('Me', 'Me'), ...partner.map((n, i) => makeChip(n, partnerGenders[i]))].join('');
+  const myPair  = [makeChip(playerName, myGender), ...partner.map((n, i) => makeChip(n, partnerGenders[i]))].join('');
   const oppPair = opponents.map((n, i) => makeChip(n, oppGenders[i])).join('');
 
   return `
@@ -332,7 +337,7 @@ function renderSessions(sessions, playerName) {
         </div>
       </div>
       <div class="session-matches">
-        ${liveMatches.map(renderMatchRow).join('<div class="match-divider"></div>')}
+        ${liveMatches.map(m => renderMatchRow(m, playerName)).join('<div class="match-divider"></div>')}
       </div>`;
     container.appendChild(block);
   }
@@ -358,7 +363,7 @@ function renderSessions(sessions, playerName) {
       </div>
       ${matches.length ? `
       <div class="session-matches collapsed">
-        ${matches.map(renderMatchRow).join('<div class="match-divider"></div>')}
+        ${matches.map(m => renderMatchRow(m, playerName)).join('<div class="match-divider"></div>')}
       </div>` : `
       <div class="session-matches collapsed">
         <div class="session-no-matches">Match details available from next session onwards</div>

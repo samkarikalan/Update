@@ -820,36 +820,32 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 .profile-identity {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px 12px;
+  gap: 14px;
+  padding: 16px 20px 12px;
   border-bottom: 1px solid var(--border);
 }
 .profile-avatar {
-  width: 48px; height: 48px;
+  width: 56px; height: 56px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--accent);
+  border: 3px solid var(--accent);
   flex-shrink: 0;
-  padding: 3px;
 }
-.profile-identity-info { flex: 1; min-width: 0; }
+.profile-identity-info { flex: 1; }
 .profile-name {
   font-family: 'Nunito', sans-serif;
-  font-size: 1rem;
-  font-weight: 900;
+  font-size: 1.1rem;
+  font-weight: 800;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .profile-tier {
   display: inline-block;
-  margin-top: 5px;
-  padding: 2px 9px;
+  margin-top: 4px;
+  padding: 2px 10px;
   border-radius: 20px;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 .profile-switch-btn {
   background: var(--surface2);
@@ -867,7 +863,7 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 .profile-stats-row {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border);
   gap: 0;
 }
@@ -877,11 +873,11 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 .profile-stat-value {
   font-family: 'Nunito', sans-serif;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 900;
   color: var(--text);
   line-height: 1;
@@ -889,15 +885,15 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 .profile-stat-value.wins   { color: #2dce89; }
 .profile-stat-value.losses { color: #ef4444; }
 .profile-stat-label {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--text-dim);
 }
 .profile-stat-divider {
   width: 1px;
-  height: 32px;
+  height: 36px;
   background: var(--border);
   flex-shrink: 0;
 }
@@ -1344,68 +1340,3 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 .inline-rating-value.global { color: #5e9ef4; }
 .inline-rating-value.club   { color: #2dce89; }
 
-/* ── Profile polish overrides ── */
-
-/* Tighter match rows */
-.match-row {
-  padding: 8px 12px !important;
-  gap: 4px !important;
-  border-top: 1px solid var(--border);
-}
-.match-pair { gap: 4px; }
-.match-player-chip { gap: 5px; }
-.match-player-name {
-  font-size: 0.76rem !important;
-  font-weight: 700 !important;
-  color: var(--text) !important;
-}
-.match-avatar {
-  width: 22px !important;
-  height: 22px !important;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid var(--border2);
-}
-.match-vs {
-  font-size: 0.62rem !important;
-  font-weight: 800 !important;
-  color: var(--text-dim) !important;
-}
-.match-result-pill {
-  font-size: 0.6rem !important;
-  padding: 2px 7px !important;
-  border-radius: 8px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.4px !important;
-}
-.match-vs-col { gap: 3px; padding: 0 6px; }
-
-/* Session block tighter */
-.profile-session-block {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface2);
-  margin-bottom: 6px;
-}
-.profile-session-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 13px;
-  cursor: pointer;
-}
-.profile-session-header .session-date {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-/* Stat divider height fix */
-.profile-stat-divider {
-  height: 30px !important;
-  width: 1px !important;
-  background: var(--border) !important;
-  align-self: center;
-  margin: 0 4px;
-}
