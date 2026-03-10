@@ -109,10 +109,9 @@ async function dbGetPlayers(forceFresh = false) {
       const ids = members.map(m => m.player_id);
       if (!ids.length) return [];
       const inList = `(${ids.map(id => `"${id}"`).join(",")})`;
-      players = await sbGet("players", `id=in.${inList}&order=name.asc`);
+      players = await sbGet("players", `id=in.${inList}&order=name.asc&select=id,name,gender,rating,registered_date,club_ratings`);
     } else {
-      // No club selected — get all players
-      players = await sbGet("players", "order=name.asc");
+      players = await sbGet("players", "order=name.asc&select=id,name,gender,rating,registered_date,club_ratings");
     }
 
     // Normalize to local format
