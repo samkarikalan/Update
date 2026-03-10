@@ -1222,3 +1222,42 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
   color: var(--text-dim);
   letter-spacing: 0.5px;
 }
+
+/* ── Rating Mode Settings ── */
+.rating-mode-wrap {
+  padding: 16px;
+}
+.rating-mode-label {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.rating-mode-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.rating-mode-btns {
+  display: flex;
+  gap: 8px;
+}
+.rating-mode-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rating-mode-btn.active {
+  border-color: var(--accent);
+  background: rgba(45,206,137,0.1);
+  color: var(--accent);
+}

@@ -93,6 +93,8 @@
                   onclick="settingsShowTab('font')">Font</button>
           <button class="newImport-subtab-btn" id="settingsTabThemeBtn"
                   onclick="settingsShowTab('theme')">Theme</button>
+          <button class="newImport-subtab-btn" id="settingsTabRatingBtn"
+                  onclick="settingsShowTab('rating')">Rating</button>
           <button class="newImport-subtab-btn" id="settingsTabResetBtn"
                   onclick="settingsShowTab('reset')">Reset</button>
         </div>
@@ -118,6 +120,22 @@
         </div>
 
         <!-- RESET tab -->
+        <!-- RATING tab -->
+        <div id="settingsTabRating" class="settings-tab-content" style="display:none">
+          <div class="rating-mode-wrap">
+            <div class="rating-mode-label">Rating Mode</div>
+            <div class="rating-mode-desc">Choose which rating updates after each session</div>
+            <div class="rating-mode-btns">
+              <button id="ratingModeGlobal" class="rating-mode-btn active" onclick="setRatingMode('global')">
+                🌐 Global
+              </button>
+              <button id="ratingModeLocal" class="rating-mode-btn" onclick="setRatingMode('local')">
+                🏠 Club
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div id="settingsTabReset" class="settings-tab-content" style="display:none">
           <div class="row">
             <div class="btn danger" onclick="showConfirm('confirmResetAll', ResetAll)" data-i18n="resetAll"></div>
@@ -562,7 +580,7 @@
     <div class="profile-stats-row">
       <div class="profile-stat-box">
         <div id="pcRating" class="profile-stat-value"></div>
-        <div class="profile-stat-label">Skill Rating</div>
+        <div class="profile-stat-label">Global Rating</div>
       </div>
       <div class="profile-stat-divider"></div>
       <div class="profile-stat-box">

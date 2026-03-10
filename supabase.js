@@ -116,13 +116,20 @@ async function dbGetPlayers(forceFresh = false) {
     }
 
     // Normalize to local format
-    const normalized = players.map(p => ({
-      id:           p.id,
-      name:         p.name,
-      gender:       p.gender,
-      rating:       parseFloat(p.rating) || 1.0,
-      registeredDate: p.registered_date
-    }));
+    const club       = getMyClub();
+    const normalized = players.map(p => {
+      const clubRatings = p.club_ratings || {};
+      const clubRating  = club.id ? (parseFloat(clubRatings[club.id]) || 1.0) : 1.0;
+      return {
+        id:           p.id,
+        name:         p.name,
+        gender:       p.gender,
+        rating:       parseFloat(p.rating) || 1.0,
+        clubRating,
+        club_ratings: clubRatings,
+        registeredDate: p.registered_date
+      };
+    });
 
     localStorage.setItem(CACHE_PLAYERS,   JSON.stringify(normalized));
     localStorage.setItem(CACHE_TIMESTAMP, String(Date.now()));
@@ -175,31 +182,43 @@ async function dbAddPlayer(name, gender, _unused) {
 
 /// Sync ratings after each round — no password needed (game results are objective)
 async function dbSyncRatings(updatedRatings) {
+  const mode   = localStorage.getItem('kbrr_rating_mode') || 'global';
+  const club   = getMyClub();
+
   for (const update of updatedRatings) {
     try {
-      // Build patch payload — always update rating
-      const patch = { rating: Math.round(update.rating * 10) / 10 };
+      const roundedRating = Math.round(update.rating * 10) / 10;
+      let patch = {};
 
-      // Increment wins/losses using Supabase RPC if player had games this round
-      if (update.wins > 0 || update.losses > 0) {
-        // Fetch current wins/losses first then increment
-        const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses`);
+      if (mode === 'local' && club.id) {
+        // Update club_ratings[clubId] only
+        const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`);
         if (rows && rows.length) {
-          patch.wins   = (rows[0].wins   || 0) + (update.wins   || 0);
-          patch.losses = (rows[0].losses || 0) + (update.losses || 0);
+          const existing    = rows[0].club_ratings || {};
+          existing[club.id] = roundedRating;
+          patch.club_ratings = existing;
+          if (update.wins > 0 || update.losses > 0) {
+            patch.wins   = (rows[0].wins   || 0) + (update.wins   || 0);
+            patch.losses = (rows[0].losses || 0) + (update.losses || 0);
+          }
+        }
+      } else {
+        // Update global rating
+        patch = { rating: roundedRating };
+        if (update.wins > 0 || update.losses > 0) {
+          const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses`);
+          if (rows && rows.length) {
+            patch.wins   = (rows[0].wins   || 0) + (update.wins   || 0);
+            patch.losses = (rows[0].losses || 0) + (update.losses || 0);
+          }
         }
       }
 
-      await sbPatch(
-        "players",
-        `name=ilike.${encodeURIComponent(update.name)}`,
-        patch
-      );
-    } catch (e) {
-      // Silent fail per player
-    }
+      if (Object.keys(patch).length) {
+        await sbPatch("players", `name=ilike.${encodeURIComponent(update.name)}`, patch);
+      }
+    } catch (e) { /* silent fail per player */ }
   }
-  // Invalidate cache
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
 }
@@ -276,7 +295,7 @@ async function githubSyncAfterRound(roundWins, roundLosses) {
   try {
     const updatedRatings = schedulerState.allPlayers.map(p => ({
       name:   p.name,
-      rating: getRating(p.name),
+      rating: (typeof getActiveRating === 'function') ? getActiveRating(p.name) : getRating(p.name),
       wins:   (roundWins   && roundWins.get(p.name))   || 0,
       losses: (roundLosses && roundLosses.get(p.name)) || 0
     }));

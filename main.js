@@ -428,11 +428,18 @@ async function endSession(fromProfile = false) {
 
 /* === SETTINGS TAB SWITCHER === */
 function settingsShowTab(tab) {
-  ["font","theme","reset"].forEach(t => {
+  ["font","theme","rating","reset"].forEach(t => {
     document.getElementById("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1)).style.display = t === tab ? "" : "none";
     const btn = document.getElementById("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1) + "Btn");
     if (btn) btn.classList.toggle("active", t === tab);
   });
+  if (tab === "rating") initRatingModeUI();
+}
+
+function initRatingModeUI() {
+  const mode = getRatingMode();
+  document.getElementById("ratingModeGlobal")?.classList.toggle("active", mode === "global");
+  document.getElementById("ratingModeLocal")?.classList.toggle("active",  mode === "local");
 }
 
 // Close fixed pair picker on outside click
@@ -443,3 +450,47 @@ document.addEventListener("click", function(e) {
     }
   }
 });
+
+/* ============================================================
+   RATING MODE — global vs local (club)
+   kbrr_rating_mode: "global" | "local"
+   ============================================================ */
+
+function getRatingMode() {
+  return localStorage.getItem('kbrr_rating_mode') || 'global';
+}
+
+function setRatingMode(mode) {
+  localStorage.setItem('kbrr_rating_mode', mode);
+  syncRatings();
+}
+
+/* getActiveRating — returns club rating or global rating based on mode */
+function getActiveRating(name) {
+  if (getRatingMode() === 'local') {
+    return getClubRating(name);
+  }
+  return getRating(name);
+}
+
+/* getClubRating — reads from in-memory allPlayers clubRating field */
+function getClubRating(name) {
+  try {
+    const p = schedulerState.allPlayers.find(
+      p => p.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    return (p && p.clubRating !== undefined) ? p.clubRating : 1.0;
+  } catch(e) { return 1.0; }
+}
+
+/* setClubRating — writes club rating to in-memory allPlayers */
+function setClubRating(name, rating) {
+  try {
+    const p = schedulerState.allPlayers.find(
+      p => p.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    if (p) {
+      p.clubRating = Math.min(5.0, Math.max(1.0, Math.round(rating * 10) / 10));
+    }
+  } catch(e) {}
+}
