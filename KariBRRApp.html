@@ -554,7 +554,11 @@
   <div id="profileCard" class="profile-card-view" style="display:none;">
     <div class="profile-drawer-header">
       <span class="profile-drawer-title">My Profile</span>
-      <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="profile-switch-btn" onclick="switchProfilePlayer()">Switch</button>
+        <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
+      </div>
+    </div>
     </div>
 
     <!-- Avatar + Name + Ratings -->
@@ -576,7 +580,6 @@
         </div>
         <div id="pcTier" class="profile-tier"></div>
       </div>
-      <button class="profile-switch-btn" onclick="switchProfilePlayer()">Switch</button>
     </div>
 
     <!-- Stats row -->
