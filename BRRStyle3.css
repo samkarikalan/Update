@@ -1053,3 +1053,126 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
   color: var(--text);
   font-weight: 500;
 }
+
+/* ─────────────────────────────────────────────
+   PDF-STYLE MATCH HISTORY
+───────────────────────────────────────────── */
+.session-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.session-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  cursor: pointer;
+}
+.session-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.session-block-date {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.session-block-rating {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.session-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.session-live-dot {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  color: #2dce89;
+  background: rgba(45,206,137,0.12);
+  padding: 2px 6px;
+  border-radius: 20px;
+}
+.session-chevron {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Match list */
+.session-matches {
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 600px;
+}
+.session-matches.collapsed {
+  max-height: 0;
+  border-top: none;
+}
+
+/* Individual match row — PDF style */
+.match-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-left: 3px solid transparent;
+}
+.match-row.win  { border-left-color: #2dce89; }
+.match-row.loss { border-left-color: #ef4444; }
+
+.match-opponents-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+.match-opponent-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.match-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--border2);
+}
+.match-opponent-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.match-result-pill {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+.match-result-pill.win  {
+  background: rgba(45,206,137,0.15);
+  color: #2dce89;
+}
+.match-result-pill.loss {
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+}
+.match-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 14px;
+}

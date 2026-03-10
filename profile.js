@@ -208,7 +208,36 @@ async function showProfileCard(player) {
   }
 }
 
-/* ── Render sessions with individual match history ── */
+/* ── Helper: get gender of a player ── */
+function getPlayerGender(name) {
+  if (typeof schedulerState !== 'undefined' && schedulerState.allPlayers) {
+    const p = schedulerState.allPlayers.find(
+      p => p.name.toLowerCase() === name.toLowerCase()
+    );
+    if (p) return p.gender || 'Male';
+  }
+  return 'Male';
+}
+
+/* ── Render PDF-style match rows ── */
+function renderMatchRow(m) {
+  // m = { opponents: [], opponentGenders: [], result: 'W'|'L' }
+  const isWin    = m.result === 'W';
+  const genders  = m.opponentGenders || m.opponents.map(() => 'Male');
+  const avatars  = m.opponents.map((name, i) => `
+    <div class="match-opponent-chip">
+      <img src="${genders[i] === 'Female' ? 'female.png' : 'male.png'}" class="match-avatar">
+      <span class="match-opponent-name">${name}</span>
+    </div>`).join('');
+
+  return `
+    <div class="match-row ${isWin ? 'win' : 'loss'}">
+      <div class="match-opponents-col">${avatars}</div>
+      <span class="match-result-pill ${isWin ? 'win' : 'loss'}">${isWin ? 'WIN' : 'LOSS'}</span>
+    </div>`;
+}
+
+/* ── Render sessions with PDF-style match history ── */
 function renderSessions(sessions, playerName) {
   const container = document.getElementById('pcSessions');
   container.innerHTML = '';
@@ -226,23 +255,25 @@ function renderSessions(sessions, playerName) {
         const inPair1 = pair1.some(p => p.toLowerCase() === playerName.toLowerCase());
         const inPair2 = pair2.some(p => p.toLowerCase() === playerName.toLowerCase());
         if (!inPair1 && !inPair2) continue;
+        const opponents = inPair1 ? pair2 : pair1;
         liveMatches.push({
-          opponents: inPair1 ? pair2 : pair1,
-          result:    (inPair1 && leftWon) || (inPair2 && !leftWon) ? 'W' : 'L'
+          opponents,
+          opponentGenders: opponents.map(n => getPlayerGender(n)),
+          result: (inPair1 && leftWon) || (inPair2 && !leftWon) ? 'W' : 'L'
         });
       }
     }
   }
 
-  const hasLive     = liveMatches.length > 0;
-  const hasPast     = sessions.length > 0;
+  const hasLive = liveMatches.length > 0;
+  const hasPast = sessions.length > 0;
 
   if (!hasLive && !hasPast) {
     container.innerHTML = '<div class="profile-sessions-empty">No sessions recorded yet.</div>';
     return;
   }
 
-  // ── Current session block ──
+  // ── Current session ──
   if (hasLive) {
     const liveWins   = liveMatches.filter(m => m.result === 'W').length;
     const liveLosses = liveMatches.filter(m => m.result === 'L').length;
@@ -250,52 +281,58 @@ function renderSessions(sessions, playerName) {
     const tier       = ratingTierLabel(rating);
 
     const block = document.createElement('div');
-    block.className = 'profile-session-block current';
+    block.className = 'session-block';
     block.innerHTML = `
       <div class="session-block-header">
-        <span class="session-block-date">Today (live)</span>
-        <span class="session-block-summary">
+        <div class="session-header-left">
+          <span class="session-block-date">Today</span>
+          <span class="session-block-rating" style="color:${tier.color}">${rating.toFixed(1)}</span>
+        </div>
+        <div class="session-header-badges">
           ${liveWins   > 0 ? `<span class="session-badge win">${liveWins}W</span>`   : ''}
           ${liveLosses > 0 ? `<span class="session-badge loss">${liveLosses}L</span>` : ''}
-        </span>
-        <span class="session-block-rating" style="color:${tier.color}">${rating.toFixed(1)}</span>
+          <span class="session-live-dot">LIVE</span>
+        </div>
       </div>
-      <div class="session-match-list">
-        ${liveMatches.map(m => `
-          <div class="session-match-row">
-            <span class="match-result-badge ${m.result === 'W' ? 'win' : 'loss'}">${m.result}</span>
-            <span class="match-opponents">vs ${m.opponents.join(' & ')}</span>
-          </div>`).join('')}
+      <div class="session-matches">
+        ${liveMatches.map(renderMatchRow).join('<div class="match-divider"></div>')}
       </div>`;
     container.appendChild(block);
   }
 
   // ── Past sessions ──
-  sessions.slice(0, 3).forEach(s => {
+  sessions.slice(0, 3).forEach((s, idx) => {
     const tier    = ratingTierLabel(s.rating || 1.0);
     const matches = s.matches || [];
 
     const block = document.createElement('div');
-    block.className = 'profile-session-block';
+    block.className = 'session-block past';
     block.innerHTML = `
-      <div class="session-block-header">
-        <span class="session-block-date">${s.date || '—'}</span>
-        <span class="session-block-summary">
+      <div class="session-block-header" onclick="toggleSessionMatches(this)">
+        <div class="session-header-left">
+          <span class="session-block-date">${s.date || '—'}</span>
+          <span class="session-block-rating" style="color:${tier.color}">${(s.rating || 1.0).toFixed(1)}</span>
+        </div>
+        <div class="session-header-badges">
           ${s.wins   > 0 ? `<span class="session-badge win">${s.wins}W</span>`   : ''}
           ${s.losses > 0 ? `<span class="session-badge loss">${s.losses}L</span>` : ''}
-        </span>
-        <span class="session-block-rating" style="color:${tier.color}">${(s.rating || 1.0).toFixed(1)}</span>
+          ${matches.length ? `<span class="session-chevron">›</span>` : ''}
+        </div>
       </div>
       ${matches.length ? `
-      <div class="session-match-list">
-        ${matches.map(m => `
-          <div class="session-match-row">
-            <span class="match-result-badge ${m.result === 'W' ? 'win' : 'loss'}">${m.result}</span>
-            <span class="match-opponents">vs ${m.opponents.join(' & ')}</span>
-          </div>`).join('')}
+      <div class="session-matches collapsed">
+        ${matches.map(renderMatchRow).join('<div class="match-divider"></div>')}
       </div>` : ''}`;
     container.appendChild(block);
   });
+}
+
+function toggleSessionMatches(header) {
+  const matchList = header.nextElementSibling;
+  if (!matchList) return;
+  const isOpen = matchList.classList.toggle('collapsed');
+  const chevron = header.querySelector('.session-chevron');
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
 /* ── Init on load ── */

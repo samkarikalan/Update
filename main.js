@@ -339,8 +339,12 @@ async function endSession() {
     try {
       const today = new Date().toISOString().split("T")[0];
 
+      // Build gender lookup for avatar display
+      const genderMap = new Map();
+      (schedulerState.allPlayers || []).forEach(p => genderMap.set(p.name, p.gender || "Male"));
+
       // Build per-player match history from allRounds
-      // playerMatches: Map<playerName, [{opponents, partner, result}]>
+      // playerMatches: Map<playerName, [{opponents, opponentGenders, result}]>
       const playerMatches = new Map();
 
       for (const round of allRounds) {
@@ -356,18 +360,18 @@ async function endSession() {
           for (const p of pair1) {
             if (!playerMatches.has(p)) playerMatches.set(p, []);
             playerMatches.get(p).push({
-              opponents: pair2,
-              partner:   pair1.filter(x => x !== p),
-              result:    leftWon ? "W" : "L"
+              opponents:        pair2,
+              opponentGenders:  pair2.map(n => genderMap.get(n) || "Male"),
+              result:           leftWon ? "W" : "L"
             });
           }
           // For each player in pair2
           for (const p of pair2) {
             if (!playerMatches.has(p)) playerMatches.set(p, []);
             playerMatches.get(p).push({
-              opponents: pair1,
-              partner:   pair2.filter(x => x !== p),
-              result:    leftWon ? "L" : "W"
+              opponents:        pair1,
+              opponentGenders:  pair1.map(n => genderMap.get(n) || "Male"),
+              result:           leftWon ? "L" : "W"
             });
           }
         }
