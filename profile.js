@@ -135,6 +135,23 @@ function switchProfilePlayer() {
   showProfilePicker();
 }
 
+/* ── Get sessions for a player — localStorage first, then Supabase ── */
+function getLocalSessions(playerName) {
+  try {
+    const lsKey = `kbrr_sessions_${playerName.toLowerCase().replace(/\s+/g, '_')}`;
+    return JSON.parse(localStorage.getItem(lsKey) || '[]');
+  } catch { return []; }
+}
+
+function mergeSessions(local, remote) {
+  // Merge by date, prefer local (more up to date), deduplicate
+  const map = new Map();
+  [...remote, ...local].forEach(s => map.set(s.date, s)); // local overwrites remote
+  return Array.from(map.values())
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 10);
+}
+
 /* ── Show profile card ── */
 async function showProfileCard(player) {
   document.getElementById('profilePicker').style.display = 'none';
@@ -162,29 +179,29 @@ async function showProfileCard(player) {
   document.getElementById('pcSessions').innerHTML  =
     '<div class="profile-sessions-loading">Loading...</div>';
 
-  // Fetch from Supabase
+  // Fetch from Supabase (player_sessions table) + merge with localStorage
   try {
-    const rows = await sbGet('players',
-      `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`);
+    const localSessions  = getLocalSessions(player.name);
+    const remoteSessions = await getPlayerSessions(player.name);
+    const merged         = mergeSessions(localSessions, remoteSessions);
 
-    console.log('[Profile] Supabase response:', JSON.stringify(rows));
+    // Also fetch wins/losses totals from players table
+    try {
+      const rows = await sbGet('players',
+        `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses`);
+      if (rows && rows.length) {
+        document.getElementById('pcWins').textContent   = (rows[0].wins   || 0);
+        document.getElementById('pcLosses').textContent = (rows[0].losses || 0);
+      }
+    } catch (e) { /* silent */ }
 
-    if (rows && rows.length) {
-      const data = rows[0];
-      console.log('[Profile] wins:', data.wins, 'losses:', data.losses, 'sessions:', data.sessions);
-      document.getElementById('pcWins').textContent   = (data.wins   || 0);
-      document.getElementById('pcLosses').textContent = (data.losses || 0);
-      renderSessions(data.sessions || [], player.name);
-    } else {
-      document.getElementById('pcWins').textContent   = '—';
-      document.getElementById('pcLosses').textContent = '—';
-      renderSessions([], player.name);
-    }
+    renderSessions(merged, player.name);
   } catch (e) {
-    console.log('[Profile] Error:', e);
+    // Full fallback — localStorage only
+    const localSessions = getLocalSessions(player.name);
     document.getElementById('pcWins').textContent   = '—';
     document.getElementById('pcLosses').textContent = '—';
-    renderSessions([], player.name);
+    renderSessions(localSessions, player.name);
   }
 }
 

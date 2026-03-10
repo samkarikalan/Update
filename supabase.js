@@ -341,3 +341,47 @@ async function dbDeleteClub(clubId) {
   // Then delete the club
   await sbDelete("clubs", `id=eq.${clubId}`);
 }
+
+/// ============================================================
+/// PLAYER SESSIONS — stored in player_sessions table
+/// Table: player_sessions (player_name text, date text, wins int, losses int, rating float)
+/// ============================================================
+
+async function savePlayerSession(playerName, entry) {
+  // Upsert by player_name + date (same day = overwrite)
+  // First check if row exists for this player+date
+  const existing = await sbGet(
+    "player_sessions",
+    `player_name=ilike.${encodeURIComponent(playerName)}&date=eq.${entry.date}&select=id`
+  );
+
+  if (existing && existing.length) {
+    // Update existing row
+    await sbPatch(
+      "player_sessions",
+      `player_name=ilike.${encodeURIComponent(playerName)}&date=eq.${entry.date}`,
+      { wins: entry.wins, losses: entry.losses, rating: entry.rating }
+    );
+  } else {
+    // Insert new row
+    await sbPost("player_sessions", {
+      player_name: playerName,
+      date:        entry.date,
+      wins:        entry.wins,
+      losses:      entry.losses,
+      rating:      entry.rating
+    });
+  }
+}
+
+async function getPlayerSessions(playerName) {
+  try {
+    const rows = await sbGet(
+      "player_sessions",
+      `player_name=ilike.${encodeURIComponent(playerName)}&order=date.desc&limit=10`
+    );
+    return rows || [];
+  } catch (e) {
+    return [];
+  }
+}

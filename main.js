@@ -353,22 +353,25 @@ async function endSession() {
         }
       }
 
-      // Update sessions JSON for each player
       const players = schedulerState.allPlayers || [];
       for (const p of players) {
         const wins   = totalWins.get(p.name)   || 0;
         const losses = totalLosses.get(p.name) || 0;
         if (wins === 0 && losses === 0) continue;
 
+        const newEntry = { date: today, wins, losses, rating: getRating(p.name) };
+
+        // ── LAYER 1: localStorage (immediate, offline-safe) ──
         try {
-          const rows = await sbGet("players", `name=ilike.${encodeURIComponent(p.name)}&select=id,sessions`);
-          if (!rows || !rows.length) continue;
+          const lsKey    = `kbrr_sessions_${p.name.toLowerCase().replace(/\s+/g, "_")}`;
+          const existing = JSON.parse(localStorage.getItem(lsKey) || "[]");
+          const updated  = [newEntry, ...existing].slice(0, 10);
+          localStorage.setItem(lsKey, JSON.stringify(updated));
+        } catch (e) { /* silent */ }
 
-          const existing = rows[0].sessions || [];
-          const newEntry = { date: today, wins, losses, rating: getRating(p.name) };
-          const updated  = [newEntry, ...existing].slice(0, 3); // keep last 3
-
-          await sbPatch("players", `name=ilike.${encodeURIComponent(p.name)}`, { sessions: updated });
+        // ── LAYER 2: Supabase player_sessions table ──
+        try {
+          await savePlayerSession(p.name, newEntry);
         } catch (e) { /* silent */ }
       }
     } catch (e) { /* silent */ }
