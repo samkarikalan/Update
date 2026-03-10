@@ -557,23 +557,30 @@
       <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
     </div>
 
-    <!-- Avatar + Name -->
+    <!-- Avatar + Name + Ratings -->
     <div class="profile-identity">
       <img id="pcAvatar" src="male.png" class="profile-avatar">
       <div class="profile-identity-info">
-        <div id="pcName" class="profile-name"></div>
+        <div class="profile-name-row">
+          <div id="pcName" class="profile-name"></div>
+          <div class="profile-ratings-inline">
+            <div class="inline-rating">
+              <span class="inline-rating-label">Global Rating</span>
+              <span id="pcRating" class="inline-rating-value global"></span>
+            </div>
+            <div class="inline-rating">
+              <span class="inline-rating-label">Club Rating</span>
+              <span id="pcClubRating" class="inline-rating-value club">—</span>
+            </div>
+          </div>
+        </div>
         <div id="pcTier" class="profile-tier"></div>
       </div>
       <button class="profile-switch-btn" onclick="switchProfilePlayer()">Switch</button>
     </div>
 
-    <!-- Rating + Stats row -->
+    <!-- Stats row -->
     <div class="profile-stats-row">
-      <div class="profile-stat-box">
-        <div id="pcRating" class="profile-stat-value"></div>
-        <div class="profile-stat-label">Global Rating</div>
-      </div>
-      <div class="profile-stat-divider"></div>
       <div class="profile-stat-box">
         <div id="pcWins" class="profile-stat-value wins">—</div>
         <div class="profile-stat-label">All-time Wins</div>

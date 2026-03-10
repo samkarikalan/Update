@@ -184,38 +184,17 @@ async function showProfileCard(player) {
   // Name
   document.getElementById('pcName').textContent = player.name;
 
-  // Rating + tier — show both global and club
-  const globalRating = (typeof getRating === 'function') ? getRating(player.name) : 1.0;
-  const clubRating   = (typeof getClubRating === 'function') ? getClubRating(player.name) : 1.0;
+  // Rating + tier — both global and club
+  const globalRating = (typeof getRating      === 'function') ? getRating(player.name)      : 1.0;
+  const clubRating   = (typeof getClubRating  === 'function') ? getClubRating(player.name)  : 1.0;
   const activeRating = (typeof getActiveRating === 'function') ? getActiveRating(player.name) : globalRating;
   const tier         = ratingTierLabel(activeRating);
 
-  document.getElementById('pcRating').textContent    = globalRating.toFixed(1);
-  document.getElementById('pcRating').style.color    = ratingTierLabel(globalRating).color;
-  document.getElementById('pcTier').textContent      = tier.label;
-  document.getElementById('pcTier').style.background = tier.color + '22';
-  document.getElementById('pcTier').style.color      = tier.color;
-
-  // Club rating — update or create element
-  let clubRatingEl = document.getElementById('pcClubRating');
-  if (!clubRatingEl) {
-    const statsRow = document.querySelector('.profile-stats-row');
-    if (statsRow) {
-      const divider = document.createElement('div');
-      divider.className = 'profile-stat-divider';
-      const box = document.createElement('div');
-      box.className = 'profile-stat-box';
-      box.innerHTML = `<div id="pcClubRating" class="profile-stat-value" style="color:${ratingTierLabel(clubRating).color}">${clubRating.toFixed(1)}</div>
-                       <div class="profile-stat-label">Club Rating</div>`;
-      statsRow.appendChild(divider);
-      statsRow.appendChild(box);
-      clubRatingEl = document.getElementById('pcClubRating');
-    }
-  }
-  if (clubRatingEl) {
-    clubRatingEl.textContent  = clubRating.toFixed(1);
-    clubRatingEl.style.color  = ratingTierLabel(clubRating).color;
-  }
+  document.getElementById('pcRating').textContent     = globalRating.toFixed(1);
+  document.getElementById('pcClubRating').textContent = clubRating.toFixed(1);
+  document.getElementById('pcTier').textContent       = tier.label;
+  document.getElementById('pcTier').style.background  = tier.color + '22';
+  document.getElementById('pcTier').style.color       = tier.color;
 
   // Current session stats now computed inside renderSessions
   document.getElementById('pcWins').textContent    = '…';
