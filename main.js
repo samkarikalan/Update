@@ -184,6 +184,8 @@ function syncRatings() {
 
 // Keep syncPlayersFromMaster as alias for backwards compatibility
 function syncPlayersFromMaster() { syncRatings(); }
+
+function updateRoundsPageAccess() {
   const block = schedulerState.activeplayers.length < 4;
   const tabs = document.querySelectorAll('.tab-btn');
   const roundsTab = tabs[2]; // ← was 1, now 2 (Settings added at 0)

@@ -79,10 +79,11 @@ function parsePlayerLines(text, defaultGender) {
    STATE
 ========================= */
 const newImportState = {
-  historyPlayers:  [],
-  favoritePlayers: [],
-  selectedPlayers: [],
-  currentSelectMode: "history"
+  historyPlayers:     [],
+  favoritePlayers:    [],
+  selectedPlayers:    [],
+  currentSelectMode:  "history",
+  unavailablePlayers: new Set()
 };
 
 let newImportModal;

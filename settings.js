@@ -526,6 +526,7 @@ function sbSetRatingMode(mode) {
   localStorage.setItem("kbrr_rating_mode", mode);
   document.getElementById("sbRatingGlobal")?.classList.toggle("active", mode === "global");
   document.getElementById("sbRatingLocal")?.classList.toggle("active",  mode === "local");
+  if (typeof syncRatings === "function") syncRatings(); // refresh all badges immediately
 }
 
 function sbClearClub() {
