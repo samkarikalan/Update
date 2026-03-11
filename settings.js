@@ -166,9 +166,9 @@ function updateRoundTitle(round) {
 function setFontSize(size) {
   const root = document.documentElement;
 
-  if (size === "small") root.style.setProperty("--base-font-size", "12px");
-  if (size === "medium") root.style.setProperty("--base-font-size", "14px");
-  if (size === "large") root.style.setProperty("--base-font-size", "17px");
+  if (size === "small") root.style.setProperty("--base-font-size", "14px");
+  if (size === "medium") root.style.setProperty("--base-font-size", "16px");
+  if (size === "large") root.style.setProperty("--base-font-size", "19px");
 
   localStorage.setItem("appFontSize", size); // 👈 SAVE (ADD THIS)
 
