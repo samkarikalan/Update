@@ -660,31 +660,43 @@ input:checked + .slider:before { transform: translateX(20px) !important; }
 }
 
 /* ─────────────────────────────────────────────
-   COURT IDENTITY — colored left strip + outer border
+   COURT IDENTITY — colored full border + left strip
 ───────────────────────────────────────────── */
 .courtcard {
-  border: 1px solid #e2e8ee !important;
+  border: 1.5px solid #e2e8ee !important;
+}
+.courtname {
+  padding: 3px 10px !important;
+  font-size: 0.58rem !important;
+}
+.team {
+  padding: 7px 12px !important;
 }
 
-.courtcard.court-1 { border-left: 4px solid #2dce89 !important; }
-.courtcard.court-1 .courtname { color: #2dce89 !important; }
+.courtcard.court-1 { border: 1.5px solid #2dce89 !important; border-left: 4px solid #2dce89 !important; }
+.courtcard.court-1 .courtname { color: #2dce89 !important; background: rgba(45,206,137,0.07) !important; }
 
-.courtcard.court-2 { border-left: 4px solid #4a9eff !important; }
-.courtcard.court-2 .courtname { color: #4a9eff !important; }
+.courtcard.court-2 { border: 1.5px solid #4a9eff !important; border-left: 4px solid #4a9eff !important; }
+.courtcard.court-2 .courtname { color: #4a9eff !important; background: rgba(74,158,255,0.07) !important; }
 
-.courtcard.court-3 { border-left: 4px solid #f5a623 !important; }
-.courtcard.court-3 .courtname { color: #f5a623 !important; }
+.courtcard.court-3 { border: 1.5px solid #f5a623 !important; border-left: 4px solid #f5a623 !important; }
+.courtcard.court-3 .courtname { color: #f5a623 !important; background: rgba(245,166,35,0.07) !important; }
 
-.courtcard.court-4 { border-left: 4px solid #ff6584 !important; }
-.courtcard.court-4 .courtname { color: #ff6584 !important; }
+.courtcard.court-4 { border: 1.5px solid #ff6584 !important; border-left: 4px solid #ff6584 !important; }
+.courtcard.court-4 .courtname { color: #ff6584 !important; background: rgba(255,101,132,0.07) !important; }
 
-.courtcard.court-5 { border-left: 4px solid #a855f7 !important; }
-.courtcard.court-5 .courtname { color: #a855f7 !important; }
+.courtcard.court-5 { border: 1.5px solid #a855f7 !important; border-left: 4px solid #a855f7 !important; }
+.courtcard.court-5 .courtname { color: #a855f7 !important; background: rgba(168,85,247,0.07) !important; }
 
-.courtcard.court-6 { border-left: 4px solid #64748b !important; }
-.courtcard.court-6 .courtname { color: #64748b !important; }
+.courtcard.court-6 { border: 1.5px solid #64748b !important; border-left: 4px solid #64748b !important; }
+.courtcard.court-6 .courtname { color: #64748b !important; background: rgba(100,116,139,0.07) !important; }
 
-body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
+body.app-dark .courtcard.court-1 { border-color: #2dce89 !important; }
+body.app-dark .courtcard.court-2 { border-color: #4a9eff !important; }
+body.app-dark .courtcard.court-3 { border-color: #f5a623 !important; }
+body.app-dark .courtcard.court-4 { border-color: #ff6584 !important; }
+body.app-dark .courtcard.court-5 { border-color: #a855f7 !important; }
+body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
 
 /* Round wrapper spacing */
 .round-wrapper { margin-bottom: 0 !important; }
