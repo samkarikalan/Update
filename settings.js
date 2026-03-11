@@ -637,15 +637,17 @@ async function showPlayerStats(name) {
   try {
     const rows = await sbGet(
       "players",
-      `name=ilike.${encodeURIComponent(name)}&select=name,gender,rating,wins,losses,sessions`
+      `name=ilike.${encodeURIComponent(name)}&select=name,gender,wins,losses,sessions`
     );
     if (!rows || !rows.length) {
       content.innerHTML = "<div class='stats-loading'>Player not found.</div>";
       return;
     }
-    const p        = rows[0];
-    const gender   = p.gender || "Male";
-    const rating   = parseFloat(p.rating || 1.0).toFixed(1);
+    const p      = rows[0];
+    const gender = p.gender || "Male";
+    // Single gate — sync first, then read activeRating
+    await syncGithubToLocal();
+    const rating = getActiveRating(name).toFixed(1);
     const wins     = p.wins   || 0;
     const losses   = p.losses || 0;
     const sessions = Array.isArray(p.sessions) ? p.sessions : [];

@@ -186,31 +186,13 @@ async function showProfileCard(player) {
   // Name
   document.getElementById('pcName').textContent = player.name;
 
-  // Rating + tier — fetch fresh from Supabase so post-session sync is reflected
-  const club = (typeof getMyClub === 'function') ? getMyClub() : {};
-
-  let globalRating = 1.0;
-  let clubRating   = 1.0;
-  try {
-    const freshRows = await sbGet('players',
-      `name=ilike.${encodeURIComponent(player.name)}&select=rating,club_ratings`);
-    if (freshRows && freshRows.length) {
-      const fp = freshRows[0];
-      globalRating = parseFloat(fp.rating) || 1.0;
-      const clubRatings = fp.club_ratings || {};
-      clubRating = club.id ? (parseFloat(clubRatings[String(club.id)]) || 1.0) : 1.0;
-    }
-  } catch(e) {
-    // Fallback to in-memory if offline
-    globalRating = parseFloat(player.rating) || 1.0;
-    const clubRatings = player.club_ratings || {};
-    clubRating = club.id ? (parseFloat(clubRatings[String(club.id)]) || 1.0) : 1.0;
-  }
-  const activeRating = (localStorage.getItem('kbrr_rating_mode') === 'local') ? clubRating : globalRating;
+  // Single gate — sync first, then read activeRating
+  await syncGithubToLocal();
+  const activeRating = getActiveRating(player.name);
   const tier         = ratingTierLabel(activeRating);
 
-  document.getElementById('pcRating').textContent     = globalRating.toFixed(1);
-  document.getElementById('pcClubRating').textContent = clubRating.toFixed(1);
+  document.getElementById('pcRating').textContent     = activeRating.toFixed(1);
+  document.getElementById('pcClubRating').textContent = activeRating.toFixed(1);
   document.getElementById('pcTier').textContent       = tier.label;
   document.getElementById('pcTier').style.background  = tier.color + '22';
   document.getElementById('pcTier').style.color       = tier.color;
