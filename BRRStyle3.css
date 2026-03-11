@@ -1405,3 +1405,15 @@ body.app-dark .newImport-player-card.player-added {
 .team[data-team-side="L"] {
   margin-top: 18px !important;
 }
+
+/* ── +2px font size for player cards and team cards ── */
+.Lplayer-btn,
+.Rplayer-btn {
+  font-size: 1.0rem !important;
+}
+.player-name {
+  font-size: 1.0rem !important;
+}
+.newImport-player-name {
+  font-size: 1.0rem !important;
+}
