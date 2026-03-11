@@ -233,9 +233,21 @@ async function dbSyncRatings(updatedRatings) {
 
 /// Override rating manually — requires admin session
 async function dbOverrideRating(playerId, newRating) {
-  await sbPatch("players", `id=eq.${playerId}`, {
-    rating: Math.round(newRating * 10) / 10
-  });
+  const club   = getMyClub();
+  const rounded = Math.round(newRating * 10) / 10;
+
+  // Always write to global rating
+  const patch = { rating: rounded };
+
+  // Also write to club_ratings[clubId] so club mode sees the starting rating
+  if (club.id) {
+    const rows = await sbGet("players", `id=eq.${playerId}&select=club_ratings`);
+    const existing = (rows && rows[0] && rows[0].club_ratings) || {};
+    existing[String(club.id)] = rounded;
+    patch.club_ratings = existing;
+  }
+
+  await sbPatch("players", `id=eq.${playerId}`, patch);
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
 }

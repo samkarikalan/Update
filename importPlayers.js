@@ -994,7 +994,7 @@ function addPlayerSendToRegister(names) {
         id:     Date.now() + Math.random(),
         name:   name.trim(),
         gender: "Male",
-        rating: 0,
+        rating: 1.0,
         status: "pending"
       });
     }
@@ -1085,7 +1085,7 @@ function regAddToStaging() {
         id:     Date.now() + Math.random(),
         name:   p.displayName,
         gender: p.gender,
-        rating: 0,
+        rating: 1.0,
         status: "pending" // pending | success | duplicate | error
       });
     }
@@ -1143,7 +1143,7 @@ function regRenderStaging() {
         </div>
         <div class="newImport-player-actions">
           <input class="reg-rating-badge-input" type="number"
-                 value="${p.rating}" min="0" max="5" step="0.1"
+                 value="${p.rating}" min="1.0" max="5.0" step="0.1"
                  title="Starting rating"
                  onchange="regUpdateRating(${i}, this.value)"
                  ${done ? "disabled" : ""}>

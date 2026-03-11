@@ -269,20 +269,11 @@ async function playerMgmtRenderList() {
   const container = document.getElementById("playerMgmtList");
   container.innerHTML = "<p style='color:#aaa;font-size:0.85rem'>Loading...</p>";
 
-  // If local cache is empty, fetch fresh from Supabase
-  let players = newImportState.historyPlayers || [];
-  if (!players.length) {
-    try {
-      const fresh = await dbGetPlayers(true);
-      players = (fresh || []).map(p => ({
-        displayName: p.name,
-        gender: p.gender || "Male",
-        rating: parseFloat(p.rating) || 1.0
-      }));
-      newImportState.historyPlayers = players;
-      localStorage.setItem("newImportHistory", JSON.stringify(players));
-    } catch(e) { /* offline */ }
+  // Always use syncGithubToLocal as single source of truth — never fetch directly
+  if (!newImportState.historyPlayers || !newImportState.historyPlayers.length) {
+    await syncGithubToLocal();
   }
+  let players = newImportState.historyPlayers || [];
 
   container.innerHTML = "";
 
@@ -387,7 +378,7 @@ function playerMgmtAddNew() {
   if (newImportState.historyPlayers.some(p => p.displayName.trim().toLowerCase() === key)) {
     alert("Player already exists."); return;
   }
-  newImportState.historyPlayers.unshift({ displayName: trimmed, gender: "Male", rating: 1.0 });
+  newImportState.historyPlayers.unshift({ displayName: trimmed, gender: "Male", rating: 1.0, clubRating: 1.0, activeRating: 1.0 });
   localStorage.setItem("newImportHistory", JSON.stringify(newImportState.historyPlayers));
   playerMgmtRenderList();
 }
