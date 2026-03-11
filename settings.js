@@ -511,15 +511,10 @@ async function sbConfirmJoin() {
 }
 
 function sbRenderRatingMode(isTrusted) {
+  // global mode blocked until fully tested — hide UI always
   const wrap = document.getElementById("sbRatingModeWrap");
-  if (!wrap) return;
-  if (isTrusted) {
-    wrap.style.display = "block";
-    sbSetRatingMode("local"); // default to local
-  } else {
-    wrap.style.display = "none";
-    localStorage.setItem("kbrr_rating_mode", "local"); // force local silently
-  }
+  if (wrap) wrap.style.display = "none";
+  localStorage.setItem("kbrr_rating_mode", "local");
 }
 
 function sbSetRatingMode(mode) {

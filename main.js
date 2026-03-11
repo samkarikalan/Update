@@ -102,7 +102,7 @@ function consolidateMasterDB() {
    ============================================================ */
 
 function getRatingMode() {
-  return localStorage.getItem('kbrr_rating_mode') || 'local';
+  return 'local'; // global mode blocked until fully tested
 }
 
 function setRatingMode(mode) {
@@ -329,13 +329,9 @@ async function syncGithubToLocal() {
       return;
     }
 
-    const mode = getRatingMode(); // 'local' or 'global'
-
+    // mode hardcoded to local until global is fully tested
     const synced = players.map(gp => {
-      // Pick activeRating based on mode — this is the ONLY place this decision is made
-      const activeRating = (mode === 'global')
-        ? (parseFloat(gp.rating)      || 1.0)
-        : (parseFloat(gp.clubRating)  || 1.0);
+      const activeRating = parseFloat(gp.clubRating) || 1.0;
       return {
         displayName:  gp.name.trim(),
         gender:       gp.gender || "Male",

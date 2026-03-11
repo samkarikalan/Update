@@ -191,10 +191,8 @@ async function dbSyncRatings(updatedRatings) {
   const club = getMyClub();
   if (!club.id) return;
 
-  const isTrusted   = localStorage.getItem('kbrr_club_trusted') === 'true';
-  const mode        = getRatingMode();
-  // Untrusted clubs can never write global — force local
-  const effectiveMode = (mode === 'global' && isTrusted) ? 'global' : 'local';
+  // global mode blocked until fully tested — always local
+  const effectiveMode = 'local';
 
   for (const update of updatedRatings) {
     try {
