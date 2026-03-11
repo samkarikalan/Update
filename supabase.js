@@ -117,7 +117,15 @@ async function dbGetPlayers(forceFresh = false) {
     // Normalize to local format
     const normalized = players.map(p => {
       const clubRatings = p.club_ratings || {};
-      const clubRating  = club.id ? (parseFloat(clubRatings[club.id]) || 1.0) : 1.0;
+      // club.id from localStorage is a string, but Supabase JSONB keys may be int — try both
+      const clubKey    = club.id;
+      const clubRating = club.id
+        ? (parseFloat(
+            clubRatings[clubKey] ??
+            clubRatings[String(clubKey)] ??
+            clubRatings[Number(clubKey)]
+          ) || 1.0)
+        : 1.0;
       return {
         id:           p.id,
         name:         p.name,
@@ -197,28 +205,28 @@ async function dbSyncRatings(updatedRatings) {
       const roundedRating = Math.round(update.rating * 10) / 10;
       let patch = {};
 
+      // Single fetch for both modes — get everything in one call
+      const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`);
+      if (!rows || !rows.length) continue;
+      const row = rows[0];
+
       if (effectiveMode === 'local') {
-        // Update club_ratings[clubId] only
-        const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`);
-        if (rows && rows.length) {
-          const existing    = rows[0].club_ratings || {};
-          existing[club.id] = roundedRating;
-          patch.club_ratings = existing;
-          if (update.wins > 0 || update.losses > 0) {
-            patch.wins   = (rows[0].wins   || 0) + (update.wins   || 0);
-            patch.losses = (rows[0].losses || 0) + (update.losses || 0);
-          }
-        }
+        // Club mode — mirrors global exactly, writes into club_ratings[clubId]
+        const existing = row.club_ratings || {};
+        const keyStr   = String(club.id);
+        delete existing[keyStr];
+        delete existing[Number(club.id)];
+        existing[keyStr]   = roundedRating;
+        patch.club_ratings = existing;
       } else {
-        // Global mode — trusted clubs only
-        patch = { rating: roundedRating };
-        if (update.wins > 0 || update.losses > 0) {
-          const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses`);
-          if (rows && rows.length) {
-            patch.wins   = (rows[0].wins   || 0) + (update.wins   || 0);
-            patch.losses = (rows[0].losses || 0) + (update.losses || 0);
-          }
-        }
+        // Global mode — trusted clubs only — direct write same as club
+        patch.rating = roundedRating;
+      }
+
+      // Wins/losses — identical for both modes
+      if (update.wins > 0 || update.losses > 0) {
+        patch.wins   = (row.wins   || 0) + (update.wins   || 0);
+        patch.losses = (row.losses || 0) + (update.losses || 0);
       }
 
       if (Object.keys(patch).length) {
