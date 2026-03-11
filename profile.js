@@ -186,20 +186,27 @@ async function showProfileCard(player) {
   // Name
   document.getElementById('pcName').textContent = player.name;
 
-  // Rating + tier — both global and club
+  // Rating + tier — fetch fresh from Supabase so post-session sync is reflected
   const club = (typeof getMyClub === 'function') ? getMyClub() : {};
 
-  // Global rating — read directly from newImportHistory.rating (raw global field)
-  const master = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
-  const hp = master.find(h => h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase());
-  const globalRating = parseFloat(hp && hp.rating) || 1.0;
-
-  // Club rating — read from club_ratings[clubId] on the player object from Supabase
-  const clubRatings = player.club_ratings || {};
-  const clubRating  = club.id ? (parseFloat(clubRatings[String(club.id)]) || 1.0) : 1.0;
-
-  // Active rating — what the rest of the session uses
-  const activeRating = getActiveRating(player.name);
+  let globalRating = 1.0;
+  let clubRating   = 1.0;
+  try {
+    const freshRows = await sbGet('players',
+      `name=ilike.${encodeURIComponent(player.name)}&select=rating,club_ratings`);
+    if (freshRows && freshRows.length) {
+      const fp = freshRows[0];
+      globalRating = parseFloat(fp.rating) || 1.0;
+      const clubRatings = fp.club_ratings || {};
+      clubRating = club.id ? (parseFloat(clubRatings[String(club.id)]) || 1.0) : 1.0;
+    }
+  } catch(e) {
+    // Fallback to in-memory if offline
+    globalRating = parseFloat(player.rating) || 1.0;
+    const clubRatings = player.club_ratings || {};
+    clubRating = club.id ? (parseFloat(clubRatings[String(club.id)]) || 1.0) : 1.0;
+  }
+  const activeRating = (localStorage.getItem('kbrr_rating_mode') === 'local') ? clubRating : globalRating;
   const tier         = ratingTierLabel(activeRating);
 
   document.getElementById('pcRating').textContent     = globalRating.toFixed(1);
