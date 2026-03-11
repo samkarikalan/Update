@@ -341,6 +341,10 @@ function addPlayersFromInputUI() {
   showPage('playersPage', playersBtn);
   updatePlayerList();
   syncRatings();
+
+  // Claim session slots for all active players
+  const names = schedulerState.allPlayers.filter(p => p.active).map(p => p.name);
+  if (typeof dbClaimSessionSlots === "function") dbClaimSessionSlots(names);
 }
 
 /* =========================

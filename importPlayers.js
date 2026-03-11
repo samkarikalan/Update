@@ -132,6 +132,13 @@ function newImportShowModal() {
   newImportLoadFavorites();
   newImportRefreshSelectCards();
   newImportRefreshSelectedCards();
+  // Load availability status in background — refresh cards when done
+  if (typeof dbGetUnavailablePlayers === "function") {
+    dbGetUnavailablePlayers().then(unavailable => {
+      newImportState.unavailablePlayers = unavailable;
+      newImportRefreshSelectCards();
+    });
+  }
 }
 
 function newImportHideModal() {
@@ -329,35 +336,44 @@ function newImportRefreshSelectCards() {
 
   const search = newImportSearch.value.toLowerCase();
 
+  // Get unavailable players from cache (populated on modal open)
+  const unavailable = newImportState.unavailablePlayers || new Set();
+
   source
     .filter(p => p.displayName.toLowerCase().includes(search))
     .forEach(p => {
-      const nameNorm = p.displayName.trim().toLowerCase();
-      // Case-insensitive match for both checks
-      const added = newImportState.selectedPlayers.some(sp => sp.displayName.trim().toLowerCase() === nameNorm);
-      // In Favorites tab the player is already a favourite by definition — always orange
-      const fav = newImportState.currentSelectMode === "favorites"
+      const nameNorm  = p.displayName.trim().toLowerCase();
+      const added     = newImportState.selectedPlayers.some(sp => sp.displayName.trim().toLowerCase() === nameNorm);
+      const fav       = newImportState.currentSelectMode === "favorites"
         ? true
         : newImportState.favoritePlayers.some(fp => fp.displayName.trim().toLowerCase() === nameNorm);
+      const busy      = unavailable.has(nameNorm);
 
       const card = document.createElement("div");
-      card.className = "newImport-player-card";
-      const rating1 = (typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
+      card.className = "newImport-player-card" + (busy ? " player-busy" : "");
+      const rating1 = getActiveRating(p.displayName).toFixed(1);
+      const statusDot = busy
+        ? `<span class="avail-dot busy" title="Already playing in another session">🔴</span>`
+        : `<span class="avail-dot free" title="Available">🟢</span>`;
+
       card.innerHTML = `
         <div class="newImport-player-top">
           <img src="${p.gender === "Male" ? "male.png" : "female.png"}"
-               data-action="gender" data-player="${p.displayName}">
-          <div class="newImport-player-name">${p.displayName}</div>
+               data-action="${busy ? "" : "gender"}" data-player="${p.displayName}"
+               style="${busy ? "opacity:0.4" : ""}">
+          <div class="newImport-player-name" style="${busy ? "opacity:0.5" : ""}">${p.displayName}</div>
+          ${statusDot}
         </div>
         <div class="newImport-player-actions">
-          <span class="rating-badge" data-player="${p.displayName}">${rating1}</span>
+          <span class="rating-badge" data-player="${p.displayName}" style="${busy ? "opacity:0.4" : ""}">${rating1}</span>
           <button class="circle-btn favorite ${fav ? 'active-favorite' : ''}"
             data-action="favorite" data-player="${p.displayName}">
             ${fav ? "★" : "☆"}
           </button>
           <button class="circle-btn delete" data-action="delete" data-player="${p.displayName}">×</button>
-          <button class="circle-btn add ${added ? 'active-added' : ''}"
-            data-action="add" data-player="${p.displayName}">
+          <button class="circle-btn add ${added ? 'active-added' : ''} ${busy ? 'disabled-btn' : ''}"
+            data-action="${busy ? '' : 'add'}" data-player="${p.displayName}"
+            ${busy ? "disabled title='Already playing in another session'" : ""}>
             ${added ? "−" : "+"}
           </button>
         </div>

@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('beforeunload', () => {
   consolidateMasterDB();   // merge any new players added during session on close
+  if (typeof dbReleaseMySession === "function") dbReleaseMySession();
 });
 
 /* =========================
@@ -94,53 +95,95 @@ function consolidateMasterDB() {
    syncRatings updates every visible badge — called on tab change + after any write.
 ========================= */
 
-function getRating(name) {
+/* ============================================================
+   RATING — SINGLE DOOR
+   getActiveRating(name)      — only way to READ a rating
+   setActiveRating(name, val) — only way to WRITE a rating
+   All mode + trusted logic lives here and nowhere else.
+   ============================================================ */
+
+function getRatingMode() {
+  return localStorage.getItem('kbrr_rating_mode') || 'local';
+}
+
+function setRatingMode(mode) {
+  localStorage.setItem('kbrr_rating_mode', mode);
+  syncRatings();
+}
+
+/* READ — returns club rating (local mode) or global rating (global mode) */
+function getActiveRating(name) {
   try {
-    const master = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
-    const hp = master.find(h => h.displayName.trim().toLowerCase() === name.trim().toLowerCase());
-    return (hp && hp.rating !== undefined) ? hp.rating : 1.0;
+    const key = name.trim().toLowerCase();
+    if (getRatingMode() === 'local') {
+      // 1. Check allPlayers in-memory first (most current during session)
+      const ap = schedulerState.allPlayers.find(p => p.name.trim().toLowerCase() === key);
+      if (ap && ap.clubRating !== undefined) return ap.clubRating;
+      // 2. Fallback to newImportHistory (last sync)
+      const master = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
+      const hp = master.find(h => h.displayName.trim().toLowerCase() === key);
+      return (hp && hp.clubRating !== undefined) ? hp.clubRating : 1.0;
+    } else {
+      // Global mode — read from newImportHistory.rating
+      const master = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
+      const hp = master.find(h => h.displayName.trim().toLowerCase() === key);
+      return (hp && hp.rating !== undefined) ? hp.rating : 1.0;
+    }
   } catch(e) { return 1.0; }
 }
 
-function setRating(name, rating) {
+/* WRITE — writes to correct field based on mode */
+function setActiveRating(name, rating) {
   try {
-    const clampedRating = Math.min(5.0, Math.max(1.0, Math.round(rating * 10) / 10));
-    const mode = (typeof getRatingMode === 'function') ? getRatingMode() : 'local';
+    const key     = name.trim().toLowerCase();
+    const clamped = Math.min(5.0, Math.max(1.0, Math.round(rating * 10) / 10));
 
-    if (mode === 'local') {
-      // Write to clubRating in memory (allPlayers)
-      if (typeof setClubRating === 'function') setClubRating(name, clampedRating);
-    } else {
-      // Write to global rating in localStorage
+    if (getRatingMode() === 'local') {
+      // Write clubRating to allPlayers in-memory
+      const ap = schedulerState.allPlayers.find(p => p.name.trim().toLowerCase() === key);
+      if (ap) ap.clubRating = clamped;
+      // Also persist to newImportHistory
       const master = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
-      const hp = master.find(h => h.displayName.trim().toLowerCase() === name.trim().toLowerCase());
+      const hp = master.find(h => h.displayName.trim().toLowerCase() === key);
       if (hp) {
-        hp.rating = clampedRating;
+        hp.clubRating = clamped;
         localStorage.setItem("newImportHistory", JSON.stringify(master));
         if (newImportState && newImportState.historyPlayers) {
-          const mp = newImportState.historyPlayers.find(h => h.displayName.trim().toLowerCase() === name.trim().toLowerCase());
-          if (mp) mp.rating = hp.rating;
+          const mp = newImportState.historyPlayers.find(h => h.displayName.trim().toLowerCase() === key);
+          if (mp) mp.clubRating = clamped;
+        }
+      }
+    } else {
+      // Global mode — write rating to newImportHistory
+      const master = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
+      const hp = master.find(h => h.displayName.trim().toLowerCase() === key);
+      if (hp) {
+        hp.rating = clamped;
+        localStorage.setItem("newImportHistory", JSON.stringify(master));
+        if (newImportState && newImportState.historyPlayers) {
+          const mp = newImportState.historyPlayers.find(h => h.displayName.trim().toLowerCase() === key);
+          if (mp) mp.rating = clamped;
         }
       }
     }
-  } catch(e) { console.error("setRating error", e); }
+  } catch(e) { console.error("setActiveRating error", e); }
 }
 
+/* Legacy aliases — kept for any remaining callers */
+function getRating(name)          { return getActiveRating(name); }
+function setRating(name, rating)  { setActiveRating(name, rating); }
+function getClubRating(name)      { return getActiveRating(name); }
+function setClubRating(name, r)   { setActiveRating(name, r); }
+
 function syncRatings() {
-  // Update every rating badge currently in the DOM by player name
   document.querySelectorAll(".rating-badge[data-player]").forEach(badge => {
     const name = badge.getAttribute("data-player");
-    if (name) badge.textContent = (typeof getActiveRating === 'function' ? getActiveRating(name) : getRating(name)).toFixed(1);
+    if (name) badge.textContent = getActiveRating(name).toFixed(1);
   });
 }
 
 // Keep syncPlayersFromMaster as alias for backwards compatibility
-function syncPlayersFromMaster() {
-  syncRatings();
-}
-
-
-function updateRoundsPageAccess() {
+function syncPlayersFromMaster() { syncRatings(); }
   const block = schedulerState.activeplayers.length < 4;
   const tabs = document.querySelectorAll('.tab-btn');
   const roundsTab = tabs[2]; // ← was 1, now 2 (Settings added at 0)
@@ -282,47 +325,57 @@ function initPage() {
 }
 
 /* =========================
-   SYNC GITHUB → LOCAL
-   Pulls all players from GitHub and merges into newImportHistory.
-   Preserves local ratings. Silent fail if offline.
+   SYNC — Server is master.
+   Pull fresh from Supabase → write to local.
+   Called on app load, after round, and manually.
+   Safe: never overwrites in-session ratings (allPlayers memory).
 ========================= */
 async function syncGithubToLocal() {
   const club = (typeof getMyClub === "function") ? getMyClub() : { id: null };
-
-  // Show syncing indicator if element exists
   const indicator = document.getElementById("sbSyncStatus");
   if (indicator) { indicator.textContent = "🔄 Syncing..."; indicator.style.color = "#aaa"; }
 
-  try {
-    const players = await dbGetPlayers(true);
+  if (!club.id) {
+    if (indicator) { indicator.textContent = "⚠️ No club selected"; indicator.style.color = "#e6a817"; }
+    return;
+  }
 
-    if (!club.id) {
-      // No club selected — clear local history
-      if (indicator) { indicator.textContent = "⚠️ No club selected"; indicator.style.color = "#e6a817"; }
+  try {
+    // Pull fresh from server
+    const players = await dbGetPlayers(true);
+    if (!players || !players.length) {
+      if (indicator) { indicator.textContent = "⚠️ No players found"; indicator.style.color = "#e6a817"; }
       return;
     }
 
-    // Supabase is single source of truth — replace local history completely
-    const synced = (players || []).map(gp => ({
+    const synced = players.map(gp => ({
       displayName: gp.name.trim(),
       gender:      gp.gender || "Male",
-      rating:      parseFloat(gp.rating) || 1.0,
-      clubRating:  parseFloat(gp.clubRating) || 1.0
+      rating:      parseFloat(gp.rating)      || 1.0,
+      clubRating:  parseFloat(gp.clubRating)  || 1.0,
+      id:          gp.id
     }));
 
+    // Write to local cache — server wins
     localStorage.setItem("newImportHistory", JSON.stringify(synced));
+
+    // Update in-memory state
     if (newImportState) {
       newImportState.historyPlayers = synced;
-      newImportRefreshSelectCards();
+      if (typeof newImportRefreshSelectCards === "function") newImportRefreshSelectCards();
     }
 
-    // Update allPlayers club ratings from DB so rating calc uses correct values
+    // Update allPlayers in-memory club ratings (don't reset active session)
     if (schedulerState && schedulerState.allPlayers) {
       synced.forEach(sp => {
-        const ap = schedulerState.allPlayers.find(p => p.name.trim().toLowerCase() === sp.displayName.trim().toLowerCase());
+        const ap = schedulerState.allPlayers.find(
+          p => p.name.trim().toLowerCase() === sp.displayName.trim().toLowerCase()
+        );
         if (ap) ap.clubRating = sp.clubRating;
       });
     }
+
+    syncRatings();
 
     if (indicator) {
       const count = synced.length;
@@ -332,7 +385,7 @@ async function syncGithubToLocal() {
     }
 
   } catch (e) {
-    // Silent fail — offline, keep existing local cache
+    console.warn("syncGithubToLocal failed:", e.message);
     if (indicator) { indicator.textContent = "⚠️ Offline — using cache"; indicator.style.color = "#e6a817"; }
   }
 }
@@ -436,6 +489,9 @@ async function endSession(fromProfile = false) {
     } catch (e) { /* silent */ }
   }
 
+  // Release session slots before reset
+  if (typeof dbReleaseMySession === "function") await dbReleaseMySession();
+
   // Reset app
   localStorage.removeItem("schedulerState");
   localStorage.removeItem("allRounds");
@@ -465,53 +521,5 @@ document.addEventListener("click", function(e) {
 /* ============================================================
    RATING MODE — global vs local (club)
    kbrr_rating_mode: "global" | "local"
+   Handled by single door getActiveRating / setActiveRating above.
    ============================================================ */
-
-function getRatingMode() {
-  return localStorage.getItem('kbrr_rating_mode') || 'local';
-}
-
-function setRatingMode(mode) {
-  localStorage.setItem('kbrr_rating_mode', mode);
-  syncRatings();
-}
-
-/* getActiveRating — returns club rating or global rating based on mode */
-function getActiveRating(name) {
-  if (getRatingMode() === 'local') {
-    return getClubRating(name);
-  }
-  return getRating(name);
-}
-
-/* getClubRating — reads from in-memory allPlayers clubRating field */
-function getClubRating(name) {
-  try {
-    const key = name.trim().toLowerCase();
-    // First check allPlayers (in-memory, most current)
-    const ap = schedulerState.allPlayers.find(p => p.name.trim().toLowerCase() === key);
-    if (ap && ap.clubRating !== undefined) return ap.clubRating;
-    // Fallback to newImportHistory (from last sync)
-    const master = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
-    const hp = master.find(h => h.displayName.trim().toLowerCase() === key);
-    return (hp && hp.clubRating !== undefined) ? hp.clubRating : 1.0;
-  } catch(e) { return 1.0; }
-}
-
-/* setClubRating — writes club rating to in-memory allPlayers and newImportHistory */
-function setClubRating(name, rating) {
-  try {
-    const key = name.trim().toLowerCase();
-    const clamped = Math.min(5.0, Math.max(1.0, Math.round(rating * 10) / 10));
-    // Update allPlayers in memory
-    const ap = schedulerState.allPlayers.find(p => p.name.trim().toLowerCase() === key);
-    if (ap) ap.clubRating = clamped;
-    // Also update newImportHistory so it persists within session
-    const master = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
-    const hp = master.find(h => h.displayName.trim().toLowerCase() === key);
-    if (hp) {
-      hp.clubRating = clamped;
-      localStorage.setItem("newImportHistory", JSON.stringify(master));
-    }
-  } catch(e) {}
-}

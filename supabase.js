@@ -224,8 +224,17 @@ async function dbSyncRatings(updatedRatings) {
       if (Object.keys(patch).length) {
         await sbPatch("players", `name=ilike.${encodeURIComponent(update.name)}`, patch);
       }
-    } catch (e) { /* silent fail per player */ }
+    } catch (e) { console.error("dbSyncRatings error for", update.name, e.message); }
   }
+  localStorage.removeItem(CACHE_PLAYERS);
+  localStorage.removeItem(CACHE_TIMESTAMP);
+}
+
+/// Override rating manually — requires admin session
+async function dbOverrideRating(playerId, newRating) {
+  await sbPatch("players", `id=eq.${playerId}`, {
+    rating: Math.round(newRating * 10) / 10
+  });
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
 }
@@ -300,18 +309,27 @@ async function dbVerifyClubAccess(clubId, selectPassword) {
 
 async function githubSyncAfterRound(roundWins, roundLosses) {
   try {
-    const updatedRatings = schedulerState.allPlayers.map(p => ({
-      name:   p.name,
-      rating: (typeof getActiveRating === 'function') ? getActiveRating(p.name) : getRating(p.name),
-      wins:   (roundWins   && roundWins.get(p.name))   || 0,
-      losses: (roundLosses && roundLosses.get(p.name)) || 0
-    }));
+    // STEP 1 — Push: send updated ratings + wins/losses to Supabase
+    const playedNames = new Set([...roundWins.keys(), ...roundLosses.keys()]);
+    const updatedRatings = schedulerState.allPlayers
+      .filter(p => playedNames.has(p.name))
+      .map(p => ({
+        name:   p.name,
+        rating: (typeof getActiveRating === 'function') ? getActiveRating(p.name) : getRating(p.name),
+        wins:   (roundWins   && roundWins.get(p.name))   || 0,
+        losses: (roundLosses && roundLosses.get(p.name)) || 0
+      }));
+
     await dbSyncRatings(updatedRatings);
+
+    // STEP 2 — Pull: get fresh data from server
+    // STEP 3 — Write: update local cache to match server exactly
+    // syncGithubToLocal does both steps 2 and 3
+    await syncGithubToLocal();
+
   } catch (e) {
-    // Silent fail
+    console.error("githubSyncAfterRound error:", e.message);
   }
-  // Refresh global players cache after ratings update
-  syncGlobalPlayersCache();
 }
 
 /// ============================================================
@@ -366,6 +384,74 @@ async function dbDeleteClub(clubId) {
   await sbDelete("club_members", `club_id=eq.${clubId}`);
   // Then delete the club
   await sbDelete("clubs", `id=eq.${clubId}`);
+}
+
+/// ============================================================
+/// SESSION SLOT TRACKING — Update 3
+/// Marks players as is_playing when they join a session.
+/// Released on session end or after SESSION_TIMEOUT_HOURS.
+/// ============================================================
+
+const SESSION_ID         = `session_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+const SESSION_TIMEOUT_MS = 6 * 60 * 60 * 1000; // 6 hours auto-release
+
+/// Mark a list of players as playing in this session
+async function dbClaimSessionSlots(playerNames) {
+  const club = getMyClub();
+  if (!club.id) return;
+  const now = new Date().toISOString();
+  for (const name of playerNames) {
+    try {
+      await sbPatch("players", `name=ilike.${encodeURIComponent(name)}`, {
+        is_playing:          true,
+        session_id:          SESSION_ID,
+        session_started_at:  now
+      });
+    } catch(e) { /* silent per player */ }
+  }
+  localStorage.removeItem(CACHE_PLAYERS);
+  localStorage.removeItem(CACHE_TIMESTAMP);
+}
+
+/// Release session slots for a list of players
+async function dbReleaseSessionSlots(playerNames) {
+  for (const name of playerNames) {
+    try {
+      await sbPatch("players", `name=ilike.${encodeURIComponent(name)}`, {
+        is_playing:         false,
+        session_id:         null,
+        session_started_at: null
+      });
+    } catch(e) { /* silent per player */ }
+  }
+  localStorage.removeItem(CACHE_PLAYERS);
+  localStorage.removeItem(CACHE_TIMESTAMP);
+}
+
+/// Release only slots owned by this session (safe cleanup on unload)
+async function dbReleaseMySession() {
+  try {
+    await sbPatch("players", `session_id=eq.${SESSION_ID}`, {
+      is_playing:         false,
+      session_id:         null,
+      session_started_at: null
+    });
+  } catch(e) { /* silent */ }
+}
+
+/// Check which players are currently available (not playing elsewhere)
+/// Returns a Set of names that are unavailable (playing in another session)
+async function dbGetUnavailablePlayers() {
+  try {
+    const cutoff = new Date(Date.now() - SESSION_TIMEOUT_MS).toISOString();
+    // Players marked as playing, not in our session, and not timed out
+    const rows = await sbGet("players",
+      `is_playing=eq.true&session_id=neq.${SESSION_ID}&session_started_at=gte.${cutoff}&select=name,session_id`
+    );
+    return new Set((rows || []).map(r => r.name.trim().toLowerCase()));
+  } catch(e) {
+    return new Set(); // fail open — don't block if offline
+  }
 }
 
 /// ============================================================

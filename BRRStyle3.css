@@ -1340,3 +1340,18 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
 .inline-rating-value.global { color: #5e9ef4; }
 .inline-rating-value.club   { color: #2dce89; }
 
+
+/* ── Update 3: Player availability badges ── */
+.avail-dot {
+  font-size: 0.6rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.newImport-player-card.player-busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.newImport-player-card.player-busy .circle-btn.add {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
