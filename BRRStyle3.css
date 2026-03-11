@@ -1417,3 +1417,34 @@ body.app-dark .newImport-player-card.player-added {
 .newImport-player-name {
   font-size: 1.0rem !important;
 }
+
+/* ── Fixed pair card inline pickers ── */
+.fixed-card-inline {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 8px 10px !important;
+  gap: 0 !important;
+}
+.fixed-card-pickers {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+.fixed-card-pickers .fc-field {
+  flex: 1 !important;
+  min-height: 40px !important;
+  padding: 6px 8px !important;
+}
+.fc-delete-btn {
+  all: unset !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  color: var(--muted) !important;
+  transition: color 0.2s !important;
+  flex-shrink: 0 !important;
+  padding: 4px !important;
+}
+.fc-delete-btn:hover { color: var(--red) !important; }
+.fc-dropdown {
+  margin-top: 4px !important;
+}

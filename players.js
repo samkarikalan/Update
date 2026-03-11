@@ -164,20 +164,126 @@ function getGenderImg(playerName) {
   return `<img src="${src}" class="fixed-pair-avatar">`;
 }
 
+function fpCardGetAvail(excludeNames) {
+  const pairedPlayers = new Set(schedulerState.fixedPairs.flat());
+  return schedulerState.activeplayers.filter(p => !excludeNames.includes(p) || !pairedPlayers.has(p));
+}
+
 function addFixedCard(p1, p2, key) {
   const list = document.getElementById('fixed-pair-list');
   const card = document.createElement("div");
-  card.className = "fixed-card";
+  card.className = "fixed-card fixed-card-inline";
   card.setAttribute("data-key", key);
-  const img1 = getGenderImg(p1);
-  const img2 = getGenderImg(p2);
+
+  const src1 = fpGetImgSrc(p1);
+  const src2 = fpGetImgSrc(p2);
+
   card.innerHTML = `
-    <div class="fixed-name">${img1} ${p1} &amp; ${img2} ${p2}</div>
-    <div class="fixed-delete">
-      <button class="pec-btn delete" onclick="modifyFixedPair('${p1}', '${p2}')">🗑</button>
+    <div class="fixed-card-pickers">
+      <div class="fp-picker-field fp-selected fc-field" id="fcField_${key}_1" onclick="fcTogglePicker('${key}',1)">
+        <img src="${src1}" class="fp-avatar-img" id="fcAvatar_${key}_1">
+        <span class="fp-label fp-label-chosen" id="fcLabel_${key}_1">${p1}</span>
+        <span class="fp-chevron">▼</span>
+      </div>
+      <div class="fp-picker-field fp-selected fc-field" id="fcField_${key}_2" onclick="fcTogglePicker('${key}',2)">
+        <img src="${src2}" class="fp-avatar-img" id="fcAvatar_${key}_2">
+        <span class="fp-label fp-label-chosen" id="fcLabel_${key}_2">${p2}</span>
+        <span class="fp-chevron">▼</span>
+      </div>
+      <button class="pec-btn delete fc-delete-btn" onclick="fcDeletePair('${key}')">🗑</button>
     </div>
+    <div id="fcDropdown_${key}_1" class="fp-dropdown fc-dropdown" style="display:none"></div>
+    <div id="fcDropdown_${key}_2" class="fp-dropdown fc-dropdown" style="display:none"></div>
   `;
   list.appendChild(card);
+}
+
+let fcOpenPicker = null;
+
+function fcTogglePicker(key, n) {
+  const id = key + '_' + n;
+  if (fcOpenPicker === id) { fcClosePicker(key, n); return; }
+  // close any open
+  if (fcOpenPicker) {
+    const [ck, cn] = fcOpenPicker.split('_');
+    fcClosePicker(ck, parseInt(cn));
+  }
+  fcOpenPicker = id;
+  document.getElementById('fcField_' + id).classList.add('fp-open');
+  fcRenderDropdown(key, n);
+  document.getElementById('fcDropdown_' + id).style.display = 'block';
+}
+
+function fcClosePicker(key, n) {
+  const id = key + '_' + n;
+  const field = document.getElementById('fcField_' + id);
+  if (field) field.classList.remove('fp-open');
+  const dd = document.getElementById('fcDropdown_' + id);
+  if (dd) dd.style.display = 'none';
+  if (fcOpenPicker === id) fcOpenPicker = null;
+}
+
+function fcRenderDropdown(key, n) {
+  const id = key + '_' + n;
+  const otherId = key + '_' + (n === 1 ? 2 : 1);
+  const otherName = document.getElementById('fcLabel_' + otherId)?.textContent || '';
+
+  const pairedPlayers = new Set(schedulerState.fixedPairs.flat());
+  const currentName = document.getElementById('fcLabel_' + id)?.textContent || '';
+
+  const available = schedulerState.activeplayers.filter(p =>
+    p !== otherName && (p === currentName || !pairedPlayers.has(p))
+  );
+
+  const dd = document.getElementById('fcDropdown_' + id);
+  dd.innerHTML = '';
+  const inner = document.createElement('div');
+  inner.className = 'fp-dropdown-inner';
+
+  if (!available.length) {
+    inner.innerHTML = '<div class="fp-option-empty">No players available</div>';
+  } else {
+    available.forEach(name => {
+      const row = document.createElement('div');
+      row.className = 'fp-option' + (name === currentName ? ' fp-highlighted' : '');
+      row.innerHTML = `
+        <img src="${fpGetImgSrc(name)}" class="fp-option-avatar">
+        <span class="fp-option-name">${name}</span>
+        <span class="fp-option-rating">★ ${fpGetRating(name)}</span>
+      `;
+      row.onclick = (e) => { e.stopPropagation(); fcSelectPlayer(key, n, name); };
+      inner.appendChild(row);
+    });
+  }
+  dd.appendChild(inner);
+}
+
+function fcSelectPlayer(key, n, newName) {
+  const id = key + '_' + n;
+  const otherId = key + '_' + (n === 1 ? 2 : 1);
+  const oldName = document.getElementById('fcLabel_' + id).textContent;
+  const otherName = document.getElementById('fcLabel_' + otherId).textContent;
+
+  // Update fixedPairs state
+  const pairIdx = schedulerState.fixedPairs.findIndex(pair =>
+    (pair[0] === oldName && pair[1] === otherName) ||
+    (pair[1] === oldName && pair[0] === otherName)
+  );
+  if (pairIdx !== -1) {
+    schedulerState.fixedPairs[pairIdx] = n === 1 ? [newName, otherName] : [otherName, newName];
+  }
+
+  // Update card UI
+  const src = fpGetImgSrc(newName);
+  document.getElementById('fcAvatar_' + id).src = src;
+  document.getElementById('fcLabel_' + id).textContent = newName;
+  fcClosePicker(key, n);
+}
+
+function fcDeletePair(key) {
+  const p1 = document.getElementById('fcLabel_' + key + '_1')?.textContent;
+  const p2 = document.getElementById('fcLabel_' + key + '_2')?.textContent;
+  if (p1 && p2) modifyFixedPair(p1, p2);
 }
 
 function modifyFixedPair(p1 = null, p2 = null) {
