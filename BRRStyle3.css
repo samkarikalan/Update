@@ -1418,33 +1418,72 @@ body.app-dark .newImport-player-card.player-added {
   font-size: 1.0rem !important;
 }
 
-/* ── Fixed pair card inline pickers ── */
+/* ── Fixed pair card — looks identical to fp-picker-row ── */
 .fixed-card-inline {
-  display: flex !important;
-  flex-direction: column !important;
-  padding: 8px 10px !important;
-  gap: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 6px 0 !important;
+  box-shadow: none !important;
 }
 .fixed-card-pickers {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 8px !important;
 }
 .fixed-card-pickers .fc-field {
+  flex: 1 1 0 !important;
+  width: 0 !important;
+  background: var(--surface2) !important;
+  border: 1.5px solid var(--accent) !important;
+  border-radius: var(--r-md) !important;
+  padding: 9px 10px !important;
+  min-height: 46px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  cursor: pointer !important;
+  transition: border-color 0.2s !important;
+  overflow: hidden !important;
+}
+.fixed-card-pickers .fc-field:hover {
+  border-color: var(--accent) !important;
+  filter: brightness(0.97) !important;
+}
+.fixed-card-pickers .fc-field.fp-open {
+  background: var(--surface3) !important;
+}
+.fixed-card-pickers .fc-field .fp-label {
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
   flex: 1 !important;
-  min-height: 40px !important;
-  padding: 6px 8px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.fixed-card-pickers .fc-field .fp-avatar-img {
+  width: 26px !important;
+  height: 26px !important;
+  flex-shrink: 0 !important;
+}
+.fixed-card-pickers .fc-field .fp-chevron {
+  font-size: 0.65rem !important;
+  color: var(--muted) !important;
+  flex-shrink: 0 !important;
 }
 .fc-delete-btn {
   all: unset !important;
   font-size: 18px !important;
   cursor: pointer !important;
   color: var(--muted) !important;
-  transition: color 0.2s !important;
+  transition: color 0.2s, opacity 0.2s !important;
   flex-shrink: 0 !important;
   padding: 4px !important;
+  opacity: 0.45 !important;
 }
-.fc-delete-btn:hover { color: var(--red) !important; }
+.fc-delete-btn:hover { color: var(--red) !important; opacity: 1 !important; }
 .fc-dropdown {
-  margin-top: 4px !important;
+  margin-top: 3px !important;
 }
+
