@@ -369,7 +369,7 @@ function newImportRefreshSelectCards() {
       const busy      = unavailable.has(nameNorm);
 
       const card = document.createElement("div");
-      card.className = "newImport-player-card" + (busy ? " player-busy" : "");
+      card.className = "newImport-player-card" + (busy ? " player-busy" : "") + (added ? " player-added" : "");
       const rating1 = getActiveRating(p.displayName).toFixed(1);
       const statusDot = busy
         ? `<span class="avail-dot busy" title="Already playing in another session">🔴</span>`
@@ -1340,7 +1340,7 @@ function addPlayersBrowseRender(players) {
     const nameSafe   = name.replace(/'/g, "\\'");
     const busy       = playerIsBusy(name);
     return `
-      <div class="newImport-player-card${busy ? ' player-busy' : ''}">
+      <div class="newImport-player-card${busy ? ' player-busy' : ''}${isSelected ? ' player-added' : ''}">
         <div class="newImport-player-top">
           <img src="${genderImg}" data-browse-action="${busy ? '' : 'gender'}" data-browse-player="${nameSafe}"
                style="${busy ? 'opacity:0.4' : ''}">

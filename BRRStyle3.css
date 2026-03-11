@@ -1355,3 +1355,22 @@ body.app-dark .courtcard { border-color: rgba(255,255,255,0.1) !important; }
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* ── Added player row highlight ── */
+.newImport-player-card.player-added {
+  background: linear-gradient(135deg, rgba(108,99,255,0.08) 0%, rgba(108,99,255,0.04) 100%) !important;
+  border-color: rgba(108,99,255,0.3) !important;
+}
+body.app-dark .newImport-player-card.player-added {
+  background: linear-gradient(135deg, rgba(108,99,255,0.15) 0%, rgba(108,99,255,0.08) 100%) !important;
+  border-color: rgba(108,99,255,0.4) !important;
+}
+.circle-btn.add.active-added {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+.circle-btn.add.active-added:hover {
+  background: #5a52d5 !important;
+  border-color: #5a52d5 !important;
+}
