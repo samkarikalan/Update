@@ -187,11 +187,19 @@ async function showProfileCard(player) {
   document.getElementById('pcName').textContent = player.name;
 
   // Rating + tier — both global and club
-  const club         = (typeof getMyClub === 'function') ? getMyClub() : {};
-  const globalRating = (typeof getRating === 'function') ? getRating(player.name) : 1.0;
-  const clubRatings  = player.club_ratings || {};
-  const clubRating   = club.id ? (parseFloat(clubRatings[club.id] ?? clubRatings[String(club.id)] ?? clubRatings[Number(club.id)]) || 1.0) : 1.0;
-  const activeRating = (localStorage.getItem('kbrr_rating_mode') === 'local') ? clubRating : globalRating;
+  const club = (typeof getMyClub === 'function') ? getMyClub() : {};
+
+  // Global rating — read directly from newImportHistory.rating (raw global field)
+  const master = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
+  const hp = master.find(h => h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase());
+  const globalRating = parseFloat(hp && hp.rating) || 1.0;
+
+  // Club rating — read from club_ratings[clubId] on the player object from Supabase
+  const clubRatings = player.club_ratings || {};
+  const clubRating  = club.id ? (parseFloat(clubRatings[String(club.id)]) || 1.0) : 1.0;
+
+  // Active rating — what the rest of the session uses
+  const activeRating = getActiveRating(player.name);
   const tier         = ratingTierLabel(activeRating);
 
   document.getElementById('pcRating').textContent     = globalRating.toFixed(1);
