@@ -1374,3 +1374,14 @@ body.app-dark .newImport-player-card.player-added {
   background: #5a52d5 !important;
   border-color: #5a52d5 !important;
 }
+
+/* ── Favorite star — stays amber when active ── */
+.circle-btn.favorite.active-favorite {
+  background: var(--amber, #f59e0b) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+.circle-btn.favorite.active-favorite:hover {
+  background: #d97706 !important;
+  border-color: transparent !important;
+}
