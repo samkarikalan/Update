@@ -86,6 +86,19 @@ const newImportState = {
   unavailablePlayers: new Set()
 };
 
+/* ── Availability helper — used by ALL card renderers ── */
+function playerAvailDot(displayName) {
+  const busy = (newImportState.unavailablePlayers || new Set())
+    .has((displayName || "").trim().toLowerCase());
+  return busy
+    ? `<span class="avail-dot busy" title="Already playing in another session">🔴</span>`
+    : `<span class="avail-dot free" title="Available">🟢</span>`;
+}
+function playerIsBusy(displayName) {
+  return (newImportState.unavailablePlayers || new Set())
+    .has((displayName || "").trim().toLowerCase());
+}
+
 let newImportModal;
 let newImportSelectCards;
 let newImportSelectedCards;
@@ -291,25 +304,30 @@ function newImportRefreshSelectCards() {
           </div>
         </div>
         <div class="newImport-set-players" style="display:none">
-          ${set.players.map(p => `
-            <div class="newImport-set-player-row">
+          ${set.players.map(p => {
+            const busy = playerIsBusy(p.displayName);
+            return `
+            <div class="newImport-set-player-row${busy ? ' player-busy' : ''}">
               <img src="${p.gender === 'Male' ? 'male.png' : 'female.png'}"
                 class="newImport-set-player-img"
                 data-action="set-gender"
                 data-setname="${safeName}"
                 data-name="${p.displayName.replace(/"/g, '&quot;')}"
                 data-gender="${p.gender}"
-                title="Tap to toggle gender">
-              <span class="newImport-set-player-name">${p.displayName}</span>
-              <span class="rating-badge" style="font-size:0.68rem;padding:2px 5px;" data-player="${p.displayName}">${(typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1)}</span>
+                title="Tap to toggle gender"
+                style="${busy ? 'opacity:0.4' : ''}">
+              <span class="newImport-set-player-name" style="${busy ? 'opacity:0.5' : ''}">${p.displayName}</span>
+              ${playerAvailDot(p.displayName)}
+              <span class="rating-badge" style="font-size:0.68rem;padding:2px 5px;" data-player="${p.displayName}">${getActiveRating(p.displayName).toFixed(1)}</span>
               <button class="newImport-set-player-remove-btn"
                 data-setname="${safeName}"
                 data-name="${p.displayName.replace(/"/g, '&quot;')}">×</button>
-              <button class="newImport-set-player-add-btn"
+              <button class="newImport-set-player-add-btn ${busy ? 'disabled-btn' : ''}"
                 data-name="${p.displayName.replace(/"/g, '&quot;')}"
-                data-gender="${p.gender}">+</button>
-            </div>
-          `).join("")}
+                data-gender="${p.gender}"
+                ${busy ? "disabled title='Already playing in another session'" : ""}>+</button>
+            </div>`;
+          }).join("")}
           <div class="newImport-set-addplayer-row" style="position:relative">
             <input type="text"
               class="newImport-set-addplayer-input"
@@ -690,13 +708,16 @@ function newImportRefreshSelectedCards() {
   newImportState.selectedPlayers.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = "newImport-player-card";
-    const rating2 = (typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
+    const rating2 = getActiveRating(p.displayName).toFixed(1);
     const fav2 = newImportState.favoritePlayers.some(fp => fp.displayName.trim().toLowerCase() === p.displayName.trim().toLowerCase());
+    const busy2 = playerIsBusy(p.displayName);
     card.innerHTML = `
       <div class="newImport-player-top">
         <img src="${p.gender === "Male" ? "male.png" : "female.png"}"
-             data-action="gender" data-player="${p.displayName}">
-        <div class="newImport-player-name">${p.displayName}</div>
+             data-action="gender" data-player="${p.displayName}"
+             style="${busy2 ? "opacity:0.4" : ""}">
+        <div class="newImport-player-name" style="${busy2 ? "opacity:0.5" : ""}">${p.displayName}</div>
+        ${playerAvailDot(p.displayName)}
       </div>
       <div class="newImport-player-actions">
         <span class="rating-badge" data-player="${p.displayName}">${rating2}</span>
@@ -1100,6 +1121,9 @@ function regRenderStaging() {
 
     const cardClass = done ? "newImport-player-card reg-card-done" : "newImport-player-card";
     const genderImg = p.gender === "Female" ? "female.png" : "male.png";
+    const busyNote  = (!done && playerIsBusy(p.name))
+      ? `<span class="avail-dot busy" title="Currently playing in another session">🔴</span>`
+      : "";
 
     return `
       <div class="${cardClass}" id="regCard-${i}">
@@ -1115,6 +1139,7 @@ function regRenderStaging() {
                         onchange="regUpdateName(${i}, this.value)">`
             }
           </div>
+          ${busyNote}
         </div>
         <div class="newImport-player-actions">
           <input class="reg-rating-badge-input" type="number"
@@ -1269,7 +1294,15 @@ async function addPlayersBrowseLoad() {
       }));
     }
     _browseAllPlayers = players;
-    addPlayersBrowseRender(_browseAllPlayers);
+    // Refresh availability before rendering
+    if (typeof dbGetUnavailablePlayers === "function") {
+      dbGetUnavailablePlayers().then(unavailable => {
+        newImportState.unavailablePlayers = unavailable;
+        addPlayersBrowseRender(_browseAllPlayers);
+      });
+    } else {
+      addPlayersBrowseRender(_browseAllPlayers);
+    }
   } catch (e) {
     listEl.innerHTML = "<div style='padding:10px;color:red'>Failed to load players.</div>";
   }
@@ -1305,11 +1338,14 @@ function addPlayersBrowseRender(players) {
     const fav        = (newImportState.favoritePlayers || []).some(fp => fp.displayName.trim().toLowerCase() === name.toLowerCase());
     const rating     = (p.rating || 0).toFixed(1);
     const nameSafe   = name.replace(/'/g, "\\'");
+    const busy       = playerIsBusy(name);
     return `
-      <div class="newImport-player-card">
+      <div class="newImport-player-card${busy ? ' player-busy' : ''}">
         <div class="newImport-player-top">
-          <img src="${genderImg}" data-browse-action="gender" data-browse-player="${nameSafe}">
-          <div class="newImport-player-name">${name}</div>
+          <img src="${genderImg}" data-browse-action="${busy ? '' : 'gender'}" data-browse-player="${nameSafe}"
+               style="${busy ? 'opacity:0.4' : ''}">
+          <div class="newImport-player-name" style="${busy ? 'opacity:0.5' : ''}">${name}</div>
+          ${playerAvailDot(name)}
         </div>
         <div class="newImport-player-actions">
           <span class="rating-badge">${rating}</span>
@@ -1318,8 +1354,9 @@ function addPlayersBrowseRender(players) {
             ${fav ? "★" : "☆"}
           </button>
           <button class="circle-btn delete" data-browse-action="delete" data-browse-player="${nameSafe}">×</button>
-          <button class="circle-btn add ${isSelected ? 'active-added' : ''}"
-            data-browse-action="add" data-browse-player="${nameSafe}">
+          <button class="circle-btn add ${isSelected ? 'active-added' : ''} ${busy ? 'disabled-btn' : ''}"
+            data-browse-action="${busy ? '' : 'add'}" data-browse-player="${nameSafe}"
+            ${busy ? "disabled title='Already playing in another session'" : ""}>
             ${isSelected ? "−" : "+"}
           </button>
         </div>
