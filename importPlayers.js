@@ -1336,7 +1336,7 @@ function addPlayersBrowseRender(players) {
     const genderImg  = gender === "Female" ? "female.png" : "male.png";
     const isSelected = selectedNames.has(name.toLowerCase());
     const fav        = (newImportState.favoritePlayers || []).some(fp => fp.displayName.trim().toLowerCase() === name.toLowerCase());
-    const rating     = (p.rating || 0).toFixed(1);
+    const rating     = getActiveRating(name).toFixed(1);
     const nameSafe   = name.replace(/'/g, "\\'");
     const busy       = playerIsBusy(name);
     return `

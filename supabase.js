@@ -117,14 +117,9 @@ async function dbGetPlayers(forceFresh = false) {
     // Normalize to local format
     const normalized = players.map(p => {
       const clubRatings = p.club_ratings || {};
-      // club.id from localStorage is a string, but Supabase JSONB keys may be int — try both
-      const clubKey    = club.id;
+      // club.id from localStorage is always a string — keys written as String(club.id)
       const clubRating = club.id
-        ? (parseFloat(
-            clubRatings[clubKey] ??
-            clubRatings[String(clubKey)] ??
-            clubRatings[Number(clubKey)]
-          ) || 1.0)
+        ? (parseFloat(clubRatings[String(club.id)]) || 1.0)
         : 1.0;
       return {
         id:           p.id,
@@ -187,43 +182,41 @@ async function dbAddPlayer(name, gender, _unused) {
   return player;
 }
 
-/// Sync ratings after each round — no password needed (game results are objective)
+/* ============================================================
+   dbSyncRatings — THIS is the only place mode logic runs for WRITING.
+   Writes to the correct Supabase column based on mode.
+   Everything else is mode-blind.
+============================================================ */
 async function dbSyncRatings(updatedRatings) {
-  const club    = getMyClub();
-
-  // No club logged in — skip entirely, no server updates
+  const club = getMyClub();
   if (!club.id) return;
 
-  const isTrusted = localStorage.getItem('kbrr_club_trusted') === 'true';
-  const mode      = localStorage.getItem('kbrr_rating_mode') || 'local';
-
-  // Untrusted clubs can never update global rating — force local
+  const isTrusted   = localStorage.getItem('kbrr_club_trusted') === 'true';
+  const mode        = getRatingMode();
+  // Untrusted clubs can never write global — force local
   const effectiveMode = (mode === 'global' && isTrusted) ? 'global' : 'local';
 
   for (const update of updatedRatings) {
     try {
-      const roundedRating = Math.round(update.rating * 10) / 10;
-      let patch = {};
+      const rounded = Math.round(update.activeRating * 10) / 10;
 
-      // Single fetch for both modes — get everything in one call
-      const rows = await sbGet("players", `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`);
+      // Single fetch — wins/losses + club_ratings in one call
+      const rows = await sbGet("players",
+        `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`
+      );
       if (!rows || !rows.length) continue;
-      const row = rows[0];
+      const row   = rows[0];
+      const patch = {};
 
-      if (effectiveMode === 'local') {
-        // Club mode — mirrors global exactly, writes into club_ratings[clubId]
-        const existing = row.club_ratings || {};
-        const keyStr   = String(club.id);
-        delete existing[keyStr];
-        delete existing[Number(club.id)];
-        existing[keyStr]   = roundedRating;
-        patch.club_ratings = existing;
+      if (effectiveMode === 'global') {
+        patch.rating = rounded;
       } else {
-        // Global mode — trusted clubs only — direct write same as club
-        patch.rating = roundedRating;
+        // Write into club_ratings[clubId] — string key, consistent with localStorage
+        const existing      = row.club_ratings || {};
+        existing[String(club.id)] = rounded;
+        patch.club_ratings  = existing;
       }
 
-      // Wins/losses — identical for both modes
       if (update.wins > 0 || update.losses > 0) {
         patch.wins   = (row.wins   || 0) + (update.wins   || 0);
         patch.losses = (row.losses || 0) + (update.losses || 0);
@@ -232,11 +225,13 @@ async function dbSyncRatings(updatedRatings) {
       if (Object.keys(patch).length) {
         await sbPatch("players", `name=ilike.${encodeURIComponent(update.name)}`, patch);
       }
-    } catch (e) { console.error("dbSyncRatings error for", update.name, e.message); }
+    } catch(e) { console.error("dbSyncRatings error for", update.name, e.message); }
   }
+
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
 }
+
 
 /// Override rating manually — requires admin session
 async function dbOverrideRating(playerId, newRating) {
@@ -322,10 +317,10 @@ async function githubSyncAfterRound(roundWins, roundLosses) {
     const updatedRatings = schedulerState.allPlayers
       .filter(p => playedNames.has(p.name))
       .map(p => ({
-        name:   p.name,
-        rating: (typeof getActiveRating === 'function') ? getActiveRating(p.name) : getRating(p.name),
-        wins:   (roundWins   && roundWins.get(p.name))   || 0,
-        losses: (roundLosses && roundLosses.get(p.name)) || 0
+        name:         p.name,
+        activeRating: getActiveRating(p.name),  // single door — mode-blind
+        wins:         (roundWins   && roundWins.get(p.name))   || 0,
+        losses:       (roundLosses && roundLosses.get(p.name)) || 0
       }));
 
     await dbSyncRatings(updatedRatings);
