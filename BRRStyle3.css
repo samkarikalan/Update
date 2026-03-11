@@ -1474,13 +1474,14 @@ body.app-dark .newImport-player-card.player-added {
 }
 .fc-delete-btn {
   all: unset !important;
-  font-size: 18px !important;
+  font-size: 13px !important;
   cursor: pointer !important;
   color: var(--muted) !important;
   transition: color 0.2s, opacity 0.2s !important;
   flex-shrink: 0 !important;
-  padding: 4px !important;
-  opacity: 0.45 !important;
+  width: 20px !important;
+  text-align: center !important;
+  opacity: 0.4 !important;
 }
 .fc-delete-btn:hover { color: var(--red) !important; opacity: 1 !important; }
 .fc-dropdown {
