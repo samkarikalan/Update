@@ -331,7 +331,11 @@ async function syncGithubToLocal() {
 
     // mode hardcoded to local until global is fully tested
     const synced = players.map(gp => {
-      const activeRating = parseFloat(gp.clubRating) || 1.0;
+      // Use clubRating if it has been set (>1.0), otherwise fall back to global rating
+      // club_ratings starts empty — players see their global rating until club play updates it
+      const clubR  = parseFloat(gp.clubRating);
+      const globalR = parseFloat(gp.rating) || 1.0;
+      const activeRating = (clubR && clubR > 1.0) ? clubR : globalR;
       return {
         displayName:  gp.name.trim(),
         gender:       gp.gender || "Male",
