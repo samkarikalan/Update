@@ -210,10 +210,22 @@
 
         <!-- PLAYERS tab -->
         <div id="clubTabPlayers" class="club-tab-content" style="display:none">
-          <div class="player-mgmt-toolbar" id="playerMgmtToolbar" style="display:none">
-            <button class="player-mgmt-add-btn" onclick="playerMgmtAddNew()">+ Add Player</button>
+          <!-- All / Playing subtabs -->
+          <div class="player-subtab-bar">
+            <button class="player-subtab-btn active" id="playerSubtabAllBtn" onclick="playerSubtabShow('all')">All</button>
+            <button class="player-subtab-btn" id="playerSubtabPlayingBtn" onclick="playerSubtabShow('playing')">🔴 Playing</button>
           </div>
-          <div id="playerMgmtList" class="player-mgmt-list"></div>
+          <!-- All players panel -->
+          <div id="playerSubtabAll">
+            <div class="player-mgmt-toolbar" id="playerMgmtToolbar" style="display:none">
+              <button class="player-mgmt-add-btn" onclick="playerMgmtAddNew()">+ Add Player</button>
+            </div>
+            <div id="playerMgmtList" class="player-mgmt-list"></div>
+          </div>
+          <!-- Playing players panel -->
+          <div id="playerSubtabPlaying" style="display:none">
+            <div id="playerPlayingList" class="player-mgmt-list"></div>
+          </div>
         </div>
 
         <div id="sbClubFeedback"></div>

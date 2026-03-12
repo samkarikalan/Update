@@ -264,6 +264,86 @@ function adminVerifyPassword() {
   }
 }
 
+// ── Player subtabs: All / Playing ──
+function playerSubtabShow(tab) {
+  document.getElementById('playerSubtabAll').style.display     = tab === 'all'     ? '' : 'none';
+  document.getElementById('playerSubtabPlaying').style.display = tab === 'playing' ? '' : 'none';
+  document.getElementById('playerSubtabAllBtn').classList.toggle('active',     tab === 'all');
+  document.getElementById('playerSubtabPlayingBtn').classList.toggle('active', tab === 'playing');
+  if (tab === 'all')     playerMgmtRenderList();
+  if (tab === 'playing') playerPlayingRenderList();
+}
+
+async function playerPlayingRenderList() {
+  const container = document.getElementById('playerPlayingList');
+  container.innerHTML = "<p style='color:#aaa;font-size:0.85rem'>Loading...</p>";
+  const admin = isAdminMode();
+
+  try {
+    const rows = await sbGet('players',
+      `is_playing=eq.true&select=name,gender,session_id,session_started_at&order=name.asc`
+    );
+
+    if (!rows || !rows.length) {
+      container.innerHTML = "<p class='player-mgmt-empty'>No players currently locked.</p>";
+      return;
+    }
+
+    container.innerHTML = '';
+
+    // Release All button — admin only
+    if (admin && rows.length) {
+      const bar = document.createElement('div');
+      bar.style.cssText = 'padding:8px 0 12px;';
+      bar.innerHTML = `<button class="player-mgmt-add-btn" style="background:#e63757"
+        onclick="playerPlayingReleaseAll()">🔓 Release All (${rows.length})</button>`;
+      container.appendChild(bar);
+    }
+
+    rows.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'player-mgmt-row';
+      const started = p.session_started_at
+        ? new Date(p.session_started_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+        : '—';
+      const genderImg = p.gender === 'Female' ? 'female.png' : 'male.png';
+      row.innerHTML = `
+        <img src="${genderImg}" class="player-mgmt-avatar" style="cursor:default">
+        <span class="player-mgmt-name">${p.name}</span>
+        <span style="font-size:0.75rem;color:var(--muted);margin-right:8px">since ${started}</span>
+        ${admin
+          ? `<button class="player-mgmt-del-btn" style="background:#e63757;color:#fff;border:none;border-radius:20px;padding:4px 10px;font-size:0.8rem"
+              onclick="playerPlayingRelease('${p.name.replace(/'/g,"\'")}')">🔓</button>`
+          : ''}
+      `;
+      container.appendChild(row);
+    });
+
+  } catch(e) {
+    container.innerHTML = "<p class='player-mgmt-empty'>Failed to load. Check connection.</p>";
+  }
+}
+
+async function playerPlayingRelease(name) {
+  if (!confirm(\`Release "\${name}" from active session?\`)) return;
+  try {
+    await sbPatch('players', \`name=ilike.\${encodeURIComponent(name)}\`, {
+      is_playing: false, session_id: null, session_started_at: null
+    });
+    playerPlayingRenderList();
+  } catch(e) { alert('Failed to release: ' + e.message); }
+}
+
+async function playerPlayingReleaseAll() {
+  if (!confirm('Release ALL locked players?')) return;
+  try {
+    await sbPatch('players', 'is_playing=eq.true', {
+      is_playing: false, session_id: null, session_started_at: null
+    });
+    playerPlayingRenderList();
+  } catch(e) { alert('Failed: ' + e.message); }
+}
+
 // ── Render master player list ──
 async function playerMgmtRenderList() {
   const container = document.getElementById("playerMgmtList");
@@ -406,7 +486,7 @@ function sbShowClubTab(tab) {
     if (content) content.style.display = t === tab ? "block" : "none";
     if (btn) btn.classList.toggle("active", t === tab);
   });
-  if (tab === "players") playerMgmtRenderList();
+  if (tab === "players") { playerSubtabShow('all'); }
   if (tab === "create") sbPopulateDeleteDropdown();
 }
 
