@@ -206,6 +206,7 @@ function newImportShowSelectMode(mode) {
     if (mode === "register") newImportRenderRegister();
     if (typeof vaultSyncStatus === "function") vaultSyncStatus();
     if (typeof restoreSyncIndicator === "function") restoreSyncIndicator();
+    if (typeof playerSubtabShow === "function") playerSubtabShow("all");
     return;
   }
 
