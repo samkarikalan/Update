@@ -276,58 +276,80 @@ function playerSubtabShow(tab) {
 
 async function playerPlayingRenderList() {
   const container = document.getElementById('playerPlayingList');
-  container.innerHTML = "<p style='color:#aaa;font-size:0.85rem'>Loading...</p>";
+  container.innerHTML = '<p style="color:#aaa;font-size:0.85rem">Loading...</p>';
   const admin = isAdminMode();
 
   try {
     const rows = await sbGet('players',
-      `is_playing=eq.true&select=name,gender,session_id,session_started_at&order=name.asc`
+      'is_playing=eq.true&select=name,gender,session_id,session_started_at&order=name.asc'
     );
 
     if (!rows || !rows.length) {
-      container.innerHTML = "<p class='player-mgmt-empty'>No players currently locked.</p>";
+      container.innerHTML = '<p class="player-mgmt-empty">No players currently locked.</p>';
       return;
     }
 
     container.innerHTML = '';
 
     // Release All button — admin only
-    if (admin && rows.length) {
+    if (admin) {
       const bar = document.createElement('div');
       bar.style.cssText = 'padding:8px 0 12px;';
-      bar.innerHTML = `<button class="player-mgmt-add-btn" style="background:#e63757"
-        onclick="playerPlayingReleaseAll()">🔓 Release All (${rows.length})</button>`;
+      const releaseAllBtn = document.createElement('button');
+      releaseAllBtn.className = 'player-mgmt-add-btn';
+      releaseAllBtn.style.background = '#e63757';
+      releaseAllBtn.textContent = '🔓 Release All (' + rows.length + ')';
+      releaseAllBtn.onclick = playerPlayingReleaseAll;
+      bar.appendChild(releaseAllBtn);
       container.appendChild(bar);
     }
 
-    rows.forEach(p => {
+    rows.forEach(function(p) {
       const row = document.createElement('div');
       row.className = 'player-mgmt-row';
       const started = p.session_started_at
         ? new Date(p.session_started_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
         : '—';
-      const genderImg = p.gender === 'Female' ? 'female.png' : 'male.png';
-      row.innerHTML = `
-        <img src="${genderImg}" class="player-mgmt-avatar" style="cursor:default">
-        <span class="player-mgmt-name">${p.name}</span>
-        <span style="font-size:0.75rem;color:var(--muted);margin-right:8px">since ${started}</span>
-        ${admin
-          ? `<button class="player-mgmt-del-btn" style="background:#e63757;color:#fff;border:none;border-radius:20px;padding:4px 10px;font-size:0.8rem"
-              onclick="playerPlayingRelease('${p.name.replace(/'/g,"\'")}')">🔓</button>`
-          : ''}
-      `;
+
+      const img = document.createElement('img');
+      img.src = p.gender === 'Female' ? 'female.png' : 'male.png';
+      img.className = 'player-mgmt-avatar';
+      img.style.cursor = 'default';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'player-mgmt-name';
+      nameSpan.textContent = p.name;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.style.cssText = 'font-size:0.75rem;color:var(--muted);margin-right:8px';
+      timeSpan.textContent = 'since ' + started;
+
+      row.appendChild(img);
+      row.appendChild(nameSpan);
+      row.appendChild(timeSpan);
+
+      if (admin) {
+        const btn = document.createElement('button');
+        btn.className = 'player-mgmt-del-btn';
+        btn.style.cssText = 'background:#e63757;color:#fff;border:none;border-radius:20px;padding:4px 10px;font-size:0.8rem';
+        btn.textContent = '🔓';
+        btn.onclick = function() { playerPlayingRelease(p.name); };
+        row.appendChild(btn);
+      }
+
       container.appendChild(row);
     });
 
   } catch(e) {
-    container.innerHTML = "<p class='player-mgmt-empty'>Failed to load. Check connection.</p>";
+    container.innerHTML = '<p class="player-mgmt-empty">Failed to load. Check connection.</p>';
+    console.error('playerPlayingRenderList error:', e);
   }
 }
 
 async function playerPlayingRelease(name) {
-  if (!confirm(\`Release "\${name}" from active session?\`)) return;
+  if (!confirm('Release "' + name + '" from active session?')) return;
   try {
-    await sbPatch('players', \`name=ilike.\${encodeURIComponent(name)}\`, {
+    await sbPatch('players', 'name=ilike.' + encodeURIComponent(name), {
       is_playing: false, session_id: null, session_started_at: null
     });
     playerPlayingRenderList();
