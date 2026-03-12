@@ -472,15 +472,16 @@ async function endSession(fromProfile = false) {
           wins,
           losses,
           rating:  (typeof getActiveRating === "function" ? getActiveRating(p.name) : getRating(p.name)),
-          matches  // full match details
+          matches, // full match details
+          live:    false  // session complete
         };
 
         // ── LAYER 1: localStorage ──
         try {
           const lsKey    = `kbrr_sessions_${p.name.toLowerCase().replace(/\s+/g, "_")}`;
           const existing = JSON.parse(localStorage.getItem(lsKey) || "[]");
-          const updated  = [newEntry, ...existing].slice(0, 3);
-          localStorage.setItem(lsKey, JSON.stringify(updated));
+          const filtered = existing.filter(s => s.date !== today); // replace today's live entry
+          localStorage.setItem(lsKey, JSON.stringify([newEntry, ...filtered].slice(0, 3)));
         } catch (e) { /* silent */ }
 
         // ── LAYER 2: Supabase players.sessions column ──
@@ -488,7 +489,8 @@ async function endSession(fromProfile = false) {
           const rows = await sbGet("players", `name=ilike.${encodeURIComponent(p.name)}&select=id,sessions`);
           if (rows && rows.length) {
             const existing = rows[0].sessions || [];
-            const updated  = [newEntry, ...existing].slice(0, 3);
+            const filtered = existing.filter(s => s.date !== today); // replace today's live entry
+            const updated  = [newEntry, ...filtered].slice(0, 3);
             await sbPatch("players", `name=ilike.${encodeURIComponent(p.name)}`, { sessions: updated });
           }
         } catch (e) { /* silent */ }

@@ -481,7 +481,8 @@ async function syncSessionAfterRound(playedNames) {
         wins,
         losses,
         rating:  getActiveRating(p.name),
-        matches
+        matches,
+        live:    true   // marks in-progress — cleared to false on End Session
       };
 
       // localStorage — upsert today's entry

@@ -308,8 +308,14 @@ function renderSessions(sessions, playerName) {
     }
   }
 
-  const hasLive = liveMatches.length > 0;
-  const hasPast = sessions.length > 0;
+  // ── Past sessions — skip today's live entry only if LIVE card is showing ──
+  // If no live matches (e.g. app reloaded after crash), show the live:true entry as past
+  const today = new Date().toISOString().split('T')[0];
+  const pastSessions = sessions.filter(s =>
+    !(s.live === true && s.date === today && hasLive)
+  );
+
+  const hasPast = pastSessions.length > 0;
 
   if (!hasLive && !hasPast) {
     container.innerHTML = '<div class="profile-sessions-empty">No sessions recorded yet.</div>';
@@ -344,7 +350,7 @@ function renderSessions(sessions, playerName) {
   }
 
   // ── Past sessions ──
-  sessions.slice(0, 3).forEach((s, idx) => {
+  pastSessions.slice(0, 3).forEach((s, idx) => {
     const tier    = ratingTierLabel(s.rating || 1.0);
     const matches = s.matches || [];
 
