@@ -28,6 +28,34 @@
 <body>
 
   <!-- ============================= -->
+  <!--        CLUB JOIN OVERLAY      -->
+  <!-- ============================= -->
+  <div id="clubJoinOverlay" class="club-join-overlay" style="display:none">
+    <div class="club-join-card">
+      <div class="club-join-logo">🏸 CLUB Scheduler</div>
+      <div class="club-join-title">Select your club to continue</div>
+      <select id="sbClubSelect" class="github-club-select club-join-select">
+        <option value="">— Select club —</option>
+      </select>
+      <input type="password" id="sbPasswordInput"
+             class="github-token-input club-join-input" placeholder="Enter password">
+      <button class="github-btn-save club-join-btn" onclick="sbConfirmJoin()">Join Club</button>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <span id="sbSyncStatus" style="font-size:0.8rem"></span>
+      </div>
+      <div id="sbClubFeedback" style="font-size:0.8rem;margin-top:4px"></div>
+      <div id="sbRatingModeWrap" style="display:none">
+        <div class="sb-rating-divider"></div>
+        <div class="sb-rating-label">Rating Mode</div>
+        <div class="sb-rating-btns">
+          <button id="sbRatingGlobal" class="sb-rating-btn" onclick="sbSetRatingMode('global')">🌐 Global</button>
+          <button id="sbRatingLocal"  class="sb-rating-btn active" onclick="sbSetRatingMode('local')">🏠 Club</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= -->
   <!--           TOP BAR             -->
   <!-- ============================= -->
   <div class="top-bar">
@@ -127,108 +155,52 @@
 
       </div>
 
-      <!-- Club Card with 3 tabs -->
-      <div class="settings-card card-github-admin">
-
-        <!-- Status row -->
-        <div class="github-admin-status-row">
-          <span id="sbClubStatus">No club selected</span>
-          <span id="sbModeBadge" style="display:none"></span>
-          <button class="github-btn-clear" onclick="sbClearClub()">Logout</button>
-        </div>
-
-        <!-- Tab buttons -->
-        <div class="newImport-subtabs">
-          <button class="newImport-subtab-btn active" id="clubTabJoinBtn"
-                  onclick="sbShowClubTab('join')">Join</button>
-          <button class="newImport-subtab-btn" id="clubTabCreateBtn"
-                  onclick="sbShowClubTab('create')">Manage</button>
-          <button class="newImport-subtab-btn" id="clubTabPlayersBtn"
-                  onclick="sbShowClubTab('players')">Players</button>
-        </div>
-
-        <!-- JOIN tab -->
-        <div id="clubTabJoin" class="club-tab-content">
-          <div class="github-club-row">
-            <select id="sbClubSelect" class="github-club-select">
-              <option value="">— Select club —</option>
-            </select>
-          </div>
-          <div class="github-club-row">
-            <input type="password" id="sbPasswordInput"
-                   class="github-token-input" placeholder="Enter password">
-            <button class="github-btn-save" onclick="sbConfirmJoin()">Join</button>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-            <span id="sbSyncStatus"></span>
-            <button class="github-btn-save sb-sync-btn" onclick="syncGithubToLocal()">🔄 Sync</button>
-          </div>
-
-          <!-- Rating mode — shown after login for trusted clubs only -->
-          <div id="sbRatingModeWrap" style="display:none">
-            <div class="sb-rating-divider"></div>
-            <div class="sb-rating-label">Rating Mode</div>
-            <div class="sb-rating-btns">
-              <button id="sbRatingGlobal" class="sb-rating-btn" onclick="sbSetRatingMode('global')">🌐 Global</button>
-              <button id="sbRatingLocal"  class="sb-rating-btn active" onclick="sbSetRatingMode('local')">🏠 Club</button>
+      <!-- Club Management — password protected, collapsed by default -->
+      <div class="settings-card" style="padding:0;overflow:hidden;margin-top:10px">
+        <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
+          🏢 Club Management <span id="clubMgmtArrow">▶</span>
+        </button>
+        <div id="clubMgmtPanel" style="display:none;padding:14px">
+          <!-- Lock screen -->
+          <div id="clubMgmtLock">
+            <div class="github-club-row">
+              <input type="password" id="clubMgmtPassword"
+                     class="github-token-input" placeholder="Platform admin password"
+                     onkeydown="if(event.key==='Enter')unlockClubMgmt()">
+              <button class="github-btn-save" onclick="unlockClubMgmt()">Unlock</button>
             </div>
+            <div id="clubMgmtLockFeedback" style="font-size:0.78rem;color:var(--red);margin-top:4px"></div>
           </div>
-        </div>
-
-        <!-- CREATE tab -->
-        <div id="clubTabCreate" class="club-tab-content" style="display:none">
-
-          <!-- CREATE section -->
-          <div class="manage-section-title">Create New Club</div>
-          <div class="github-club-row">
-            <input type="text" id="sbNewClubName"
-                   class="github-token-input" placeholder="Club name">
-          </div>
-          <div class="github-club-row">
-            <input type="password" id="sbNewClubSelectPw"
-                   class="github-token-input" placeholder="User password">
-          </div>
-          <div class="github-club-row">
-            <input type="password" id="sbNewClubAdminPw"
-                   class="github-token-input" placeholder="Admin password">
-            <button class="github-btn-save" onclick="sbCreateClub()">Create</button>
-          </div>
-
-          <!-- DELETE section -->
-          <div class="manage-section-title manage-section-danger" style="margin-top:16px">Delete Club</div>
-          <div class="github-club-row">
-            <select id="sbDeleteClubSelect" class="github-club-select">
-              <option value="">— Select club to delete —</option>
-            </select>
-          </div>
-          <div class="github-club-row">
-            <input type="password" id="sbDeleteAdminPw"
-                   class="github-token-input" placeholder="Admin password">
-            <button class="github-btn-clear" onclick="sbDeleteClub()">Delete</button>
-          </div>
-        </div>
-
-        <!-- PLAYERS tab -->
-        <div id="clubTabPlayers" class="club-tab-content" style="display:none">
-          <!-- All / Playing subtabs -->
-          <div class="player-subtab-bar">
-            <button class="player-subtab-btn active" id="playerSubtabAllBtn" onclick="playerSubtabShow('all')">All</button>
-            <button class="player-subtab-btn" id="playerSubtabPlayingBtn" onclick="playerSubtabShow('playing')">🔴 Playing</button>
-          </div>
-          <!-- All players panel -->
-          <div id="playerSubtabAll">
-            <div class="player-mgmt-toolbar" id="playerMgmtToolbar" style="display:none">
-              <button class="player-mgmt-add-btn" onclick="playerMgmtAddNew()">+ Add Player</button>
+          <!-- Unlocked content -->
+          <div id="clubMgmtUnlocked" style="display:none">
+            <div class="manage-section-title">Create New Club</div>
+            <div class="github-club-row">
+              <input type="text" id="sbNewClubName"
+                     class="github-token-input" placeholder="Club name">
             </div>
-            <div id="playerMgmtList" class="player-mgmt-list"></div>
-          </div>
-          <!-- Playing players panel -->
-          <div id="playerSubtabPlaying" style="display:none">
-            <div id="playerPlayingList" class="player-mgmt-list"></div>
+            <div class="github-club-row">
+              <input type="password" id="sbNewClubSelectPw"
+                     class="github-token-input" placeholder="User password">
+            </div>
+            <div class="github-club-row">
+              <input type="password" id="sbNewClubAdminPw"
+                     class="github-token-input" placeholder="Admin password">
+              <button class="github-btn-save" onclick="sbCreateClub()">Create</button>
+            </div>
+            <div class="manage-section-title manage-section-danger" style="margin-top:16px">Delete Club</div>
+            <div class="github-club-row">
+              <select id="sbDeleteClubSelect" class="github-club-select">
+                <option value="">— Select club to delete —</option>
+              </select>
+            </div>
+            <div class="github-club-row">
+              <input type="password" id="sbDeleteAdminPw"
+                     class="github-token-input" placeholder="Admin password">
+              <button class="github-btn-clear" onclick="sbDeleteClub()">Delete</button>
+            </div>
+            <button class="github-btn-clear" style="margin-top:12px;width:100%" onclick="lockClubMgmt()">🔒 Lock</button>
           </div>
         </div>
-
-        <div id="sbClubFeedback"></div>
       </div>
 
     </div>
@@ -449,10 +421,9 @@
           <button class="newImport-subtab-btn"
                   id="newImportAddplayersBtn"
                   onclick="newImportShowSelectMode('addplayers')">Add Players</button>
-          <button class="newImport-subtab-btn"
-                  id="newImportRegisterBtn"
-                  onclick="newImportShowSelectMode('register')"
-                  style="display:none">📋 Register</button>
+          <button class="newImport-subtab-btn vault-tab-btn"
+                  id="newImportVaultBtn"
+                  onclick="newImportShowSelectMode('vault')">⚡ Vault</button>
         </div>
 
         <input type="text"
@@ -526,6 +497,37 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- ⚡ VAULT SECTION — replaces Register tab -->
+        <div id="newImportVaultSection" style="display:none">
+
+          <!-- Status strip -->
+          <div class="vault-status-strip" id="vaultStatusStrip">
+            <div class="vault-status-dot" id="vaultStatusDot"></div>
+            <span class="vault-status-name" id="vaultStatusName">No club selected</span>
+            <span class="vault-status-role" id="vaultStatusRole" style="display:none"></span>
+            <button class="vault-logout-btn" onclick="sbClearClub()">Logout</button>
+          </div>
+
+          <!-- PLAYERS — only content in Vault -->
+          <div id="vaultTabPlayers">
+            <div class="player-subtab-bar">
+              <button class="player-subtab-btn active" id="playerSubtabAllBtn" onclick="playerSubtabShow('all')">All</button>
+              <button class="player-subtab-btn" id="playerSubtabPlayingBtn" onclick="playerSubtabShow('playing')">🔴 Playing</button>
+            </div>
+            <div id="playerSubtabAll">
+              <div class="player-mgmt-toolbar" id="playerMgmtToolbar" style="display:none">
+                <button class="player-mgmt-add-btn" onclick="playerMgmtAddNew()">+ Add Player</button>
+              </div>
+              <div id="playerMgmtList" class="player-mgmt-list"></div>
+            </div>
+            <div id="playerSubtabPlaying" style="display:none">
+              <div id="playerPlayingList" class="player-mgmt-list"></div>
+            </div>
+          </div>
+
+          <div id="vaultFeedback"></div>
         </div>
 
       </div>

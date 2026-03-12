@@ -975,3 +975,106 @@ display: block;
   color: var(--accent, #5e72e4);
   border-bottom-color: var(--accent, #5e72e4);
 }
+
+/* ── ⚡ Vault Tab ── */
+.vault-tab-btn {
+  color: var(--amber) !important;
+}
+.vault-tab-btn.active {
+  color: var(--amber) !important;
+  border-bottom-color: var(--amber) !important;
+}
+.vault-status-strip {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(45,206,137,0.08);
+  border: 1px solid rgba(45,206,137,0.15);
+  border-radius: var(--r-lg); padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.vault-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--muted); flex-shrink: 0;
+}
+.vault-status-name { font-size: 0.88rem; font-weight: 600; flex: 1; }
+.vault-status-role {
+  font-size: 0.6rem; font-weight: 700;
+  border-radius: 10px; padding: 2px 8px;
+  display: none;
+}
+.vault-logout-btn {
+  padding: 5px 12px; border-radius: 20px; border: none;
+  background: rgba(239,68,68,0.12); color: var(--red);
+  font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  font-family: var(--font-body);
+}
+.vault-inner-tabs {
+  display: flex; gap: 4px;
+  background: var(--surface3);
+  border-radius: var(--r-xl); padding: 4px;
+  margin-bottom: 12px;
+}
+.vault-inner-tab {
+  flex: 1; border: none; background: none;
+  padding: 7px 4px; border-radius: var(--r-lg);
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--muted); cursor: pointer;
+  transition: all 0.15s; font-family: var(--font-body);
+}
+.vault-inner-tab.active {
+  background: var(--amber);
+  color: #000;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+}
+.vault-inner-content { display: none; }
+.vault-inner-content.active { display: block; }
+
+/* ── Club Join Overlay ── */
+.club-join-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.club-join-card {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-xl);
+  padding: 28px 24px;
+  width: 100%; max-width: 360px;
+  box-shadow: var(--shadow);
+}
+.club-join-logo {
+  font-family: var(--font-display);
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--accent); text-align: center;
+  margin-bottom: 6px;
+}
+.club-join-title {
+  font-size: 0.85rem; color: var(--muted);
+  text-align: center; margin-bottom: 20px;
+}
+.club-join-select {
+  width: 100%; margin-bottom: 10px;
+}
+.club-join-input {
+  width: 100%; margin-bottom: 10px;
+}
+.club-join-btn {
+  width: 100%; padding: 11px;
+  border-radius: var(--r-xl); border: none;
+  background: var(--accent); color: #fff;
+  font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; font-family: var(--font-body);
+}
+
+/* ── Club Management toggle in Settings ── */
+.club-mgmt-toggle {
+  width: 100%; padding: 13px 16px;
+  background: none; border: none;
+  color: var(--text-dim); font-size: 0.88rem; font-weight: 600;
+  cursor: pointer; text-align: left;
+  font-family: var(--font-body);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: color 0.15s;
+}
+.club-mgmt-toggle:hover { color: var(--text); }

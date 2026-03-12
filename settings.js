@@ -498,7 +498,21 @@ function githubAdminInit() {
   sbLoadClubs();
   sbRenderClubStatus();
   updateRegisterTabVisibility();
-  sbShowClubTab("join");
+  // Show join overlay if no club selected yet
+  const club = getMyClub();
+  if (!club.id) {
+    showClubJoinOverlay();
+  }
+}
+
+function showClubJoinOverlay() {
+  const overlay = document.getElementById('clubJoinOverlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function hideClubJoinOverlay() {
+  const overlay = document.getElementById('clubJoinOverlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
 function sbShowClubTab(tab) {
@@ -564,6 +578,80 @@ function sbRenderClubStatus() {
       document.getElementById("sbRatingLocal")?.classList.toggle("active",  ratingMode === "local");
     }
   }
+
+  // Also sync Vault status strip
+  vaultSyncStatus();
+}
+
+/* ── Vault tab functions ── */
+function vaultShowTab(tab, btn) {
+  document.querySelectorAll('.vault-inner-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.vault-inner-tab').forEach(b => b.classList.remove('active'));
+  const content = document.getElementById('vaultTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (content) content.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tab === 'players') playerSubtabShow('all');
+}
+
+// ── Club Management in Settings — password protected ──
+const PLATFORM_ADMIN_PW = 'kbrr2024admin'; // change to your platform password
+
+function toggleClubMgmt() {
+  const panel = document.getElementById('clubMgmtPanel');
+  const arrow = document.getElementById('clubMgmtArrow');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  arrow.textContent   = open ? '▼' : '▶';
+  // Reset lock on close
+  if (!open) lockClubMgmt();
+}
+
+function unlockClubMgmt() {
+  const pw  = document.getElementById('clubMgmtPassword');
+  const fb  = document.getElementById('clubMgmtLockFeedback');
+  if (pw.value === PLATFORM_ADMIN_PW) {
+    document.getElementById('clubMgmtLock').style.display     = 'none';
+    document.getElementById('clubMgmtUnlocked').style.display = 'block';
+    pw.value = '';
+    sbPopulateDeleteDropdown();
+  } else {
+    fb.textContent = 'Wrong password.';
+    pw.value = '';
+    setTimeout(() => { fb.textContent = ''; }, 2000);
+  }
+}
+
+function lockClubMgmt() {
+  document.getElementById('clubMgmtLock').style.display     = 'block';
+  document.getElementById('clubMgmtUnlocked').style.display = 'none';
+  document.getElementById('clubMgmtPassword').value = '';
+}
+
+function vaultSyncStatus() {
+  const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null, name: null };
+  const mode = (typeof getClubMode === 'function') ? getClubMode() : null;
+
+  const dot   = document.getElementById('vaultStatusDot');
+  const name  = document.getElementById('vaultStatusName');
+  const role  = document.getElementById('vaultStatusRole');
+  const strip = document.getElementById('vaultStatusStrip');
+
+  if (!name) return; // vault section not yet in DOM
+
+  if (club.name) {
+    if (name)  name.textContent  = club.name;
+    if (dot)   { dot.style.background = '#2dce89'; dot.style.boxShadow = '0 0 0 3px rgba(45,206,137,0.2)'; }
+    if (strip) strip.style.borderColor = 'rgba(45,206,137,0.2)';
+    if (role) {
+      role.style.display = 'inline-block';
+      if (mode === 'admin') { role.textContent = 'ADMIN'; role.style.background = '#2dce89'; role.style.color = '#000'; }
+      else                  { role.textContent = 'USER';  role.style.background = 'var(--accent)'; role.style.color = '#fff'; }
+    }
+  } else {
+    if (name)  name.textContent  = 'No club selected';
+    if (dot)   { dot.style.background = 'var(--muted)'; dot.style.boxShadow = 'none'; }
+    if (role)  role.style.display = 'none';
+  }
 }
 
 async function sbConfirmJoin() {
@@ -600,6 +688,7 @@ async function sbConfirmJoin() {
     sbRenderClubStatus();
     sbRenderRatingMode(club.trusted === true);
     sbFeedback(`✅ Joined as ${mode === "admin" ? "Admin 🔑" : "User 👤"}`, "green");
+    hideClubJoinOverlay();
     syncGithubToLocal();
     updateRegisterTabVisibility();
   } catch (e) {
@@ -631,8 +720,8 @@ function sbClearClub() {
   localStorage.removeItem("kbrr_rating_field");
   document.getElementById("sbRatingModeWrap") && (document.getElementById("sbRatingModeWrap").style.display = "none");
   sbRenderClubStatus();
-  sbFeedback("Club cleared.", "gray");
   updateRegisterTabVisibility();
+  showClubJoinOverlay();
 }
 
 async function sbDeleteClub() {
@@ -726,9 +815,10 @@ function sbFeedback(msg, color) {
 }
 
 function updateRegisterTabVisibility() {
-  const tab = document.getElementById("newImportRegisterBtn");
+  const tab = document.getElementById("newImportVaultBtn");
   if (!tab) return;
-  tab.style.display = isAdminMode() ? "inline-block" : "none";
+  // Vault tab always visible — all users need access to Join
+  tab.style.display = "inline-block";
 }
 
 /* =============================================================
