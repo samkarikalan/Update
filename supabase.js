@@ -432,37 +432,76 @@ async function syncAfterRound(roundWins, roundLosses) {
 
 async function syncSessionAfterRound(playedNames) {
   try {
-    const today   = new Date().toISOString().split("T")[0];
-    const players = schedulerState.allPlayers || [];
+    const today     = new Date().toISOString().split("T")[0];
+    const players   = schedulerState.allPlayers || [];
+    const genderMap = new Map();
+    players.forEach(p => genderMap.set(p.name, p.gender || "Male"));
+
+    // Build per-player match history from ALL rounds so far this session
+    const playerMatches = new Map();
+    for (const round of (allRounds || [])) {
+      const games = round.games || round;
+      for (const game of (games || [])) {
+        if (!game.winner) continue;
+        const leftWon = game.winner === "L";
+        const pair1   = game.pair1 || [];
+        const pair2   = game.pair2 || [];
+        for (const p of pair1) {
+          if (!playerMatches.has(p)) playerMatches.set(p, []);
+          playerMatches.get(p).push({
+            partner:         pair1.filter(x => x !== p),
+            partnerGenders:  pair1.filter(x => x !== p).map(n => genderMap.get(n) || "Male"),
+            opponents:       pair2,
+            opponentGenders: pair2.map(n => genderMap.get(n) || "Male"),
+            result:          leftWon ? "W" : "L"
+          });
+        }
+        for (const p of pair2) {
+          if (!playerMatches.has(p)) playerMatches.set(p, []);
+          playerMatches.get(p).push({
+            partner:         pair2.filter(x => x !== p),
+            partnerGenders:  pair2.filter(x => x !== p).map(n => genderMap.get(n) || "Male"),
+            opponents:       pair1,
+            opponentGenders: pair1.map(n => genderMap.get(n) || "Male"),
+            result:          leftWon ? "L" : "W"
+          });
+        }
+      }
+    }
 
     for (const p of players) {
       if (!playedNames.has(p.name)) continue;
+      const matches = playerMatches.get(p.name) || [];
+      if (!matches.length) continue;
 
-      // Accumulate wins/losses from allRounds so far this session
-      let totalWins = 0, totalLosses = 0;
-      for (const round of (allRounds || [])) {
-        const games = round.games || round;
-        for (const game of (games || [])) {
-          if (!game.winner) continue;
-          const inLeft  = (game.pair1 || []).includes(p.name);
-          const inRight = (game.pair2 || []).includes(p.name);
-          if (!inLeft && !inRight) continue;
-          const won = (game.winner === "L" && inLeft) || (game.winner === "R" && inRight);
-          if (won) totalWins++; else totalLosses++;
-        }
-      }
-
-      const entry = {
-        date:   today,
-        wins:   totalWins,
-        losses: totalLosses,
-        rating: getActiveRating(p.name)
+      const wins   = matches.filter(m => m.result === "W").length;
+      const losses = matches.filter(m => m.result === "L").length;
+      const entry  = {
+        date:    today,
+        wins,
+        losses,
+        rating:  getActiveRating(p.name),
+        matches
       };
 
-      // Upsert to player_sessions (today's row)
-      if (typeof savePlayerSession === "function") {
-        savePlayerSession(p.name, entry).catch(() => {});
-      }
+      // localStorage — upsert today's entry
+      try {
+        const lsKey    = `kbrr_sessions_${p.name.toLowerCase().replace(/\s+/g, "_")}`;
+        const existing = JSON.parse(localStorage.getItem(lsKey) || "[]");
+        const filtered = existing.filter(s => s.date !== today);
+        localStorage.setItem(lsKey, JSON.stringify([entry, ...filtered].slice(0, 3)));
+      } catch(e) {}
+
+      // Supabase players.sessions — upsert today's entry
+      try {
+        const rows = await sbGet("players", `name=ilike.${encodeURIComponent(p.name)}&select=id,sessions`);
+        if (rows && rows.length) {
+          const existing = rows[0].sessions || [];
+          const filtered = existing.filter(s => s.date !== today);
+          const updated  = [entry, ...filtered].slice(0, 3);
+          await sbPatch("players", `name=ilike.${encodeURIComponent(p.name)}`, { sessions: updated });
+        }
+      } catch(e) {}
     }
   } catch (e) {
     console.warn("syncSessionAfterRound error:", e.message);
