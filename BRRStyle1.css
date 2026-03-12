@@ -258,7 +258,8 @@ height: 44px; min-height: 44px; box-sizing: border-box;
   background: var(--accent-dim); color: var(--accent);
   border: 1px solid var(--accent); white-space: nowrap;
   letter-spacing: 0.02em; flex-shrink: 0;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px;
 }
 .pec-delete { text-align: right; }
 .pec-delete .delete { all: unset; font-size: 22px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
@@ -337,10 +338,11 @@ height: 44px; min-height: 44px; box-sizing: border-box;
 .newImport-search::placeholder { color: var(--muted); }
 .newImport-list-actions { display: flex; gap: 8px; margin-bottom: 8px; }
 .newImport-player-card { width: 100%; border: 1px solid var(--border2); border-radius: var(--r-xl); padding: 0 14px; height: 44px; min-height: 44px; box-sizing: border-box; background: var(--surface2); display: flex; align-items: center; gap: 10px; }
-.newImport-player-top { display: flex; align-items: center; gap: 8px; flex: 1; }
-.newImport-player-top img { width: 26px; height: 26px; cursor: pointer; border-radius: 50%; }
-.newImport-player-name { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); font-weight: 500; }
-.newImport-player-actions { display: flex; align-items: center; gap: 6px; }
+.newImport-player-top { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.newImport-player-top img { width: 26px; height: 26px; flex-shrink: 0; cursor: pointer; border-radius: 50%; }
+.newImport-player-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); font-weight: 500; }
+.avail-dot { flex-shrink: 0; font-size: 0.6rem; line-height: 1; }
+.newImport-player-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; width: 148px; justify-content: flex-end; }
 .circle-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border2); background: var(--surface3); color: var(--text-dim); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; line-height: 1; padding: 0; }
 .circle-btn:hover { transform: scale(1.08); }
 .circle-btn.active-favorite { background: var(--amber); color: #fff; border-color: transparent; }
