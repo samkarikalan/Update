@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
   consolidateMasterDB();
   updateRoundsPageAccess();
   updateSummaryPageAccess();
-  // Init GitHub admin state (token + club)
-  if (typeof githubAdminInit === "function") githubAdminInit();
-  // Sync GitHub players into local history (silent, background)
-  syncGithubToLocal();
+  // Init Supabase admin state (token + club)
+  if (typeof clubAdminInit === "function") clubAdminInit();
+  // Sync Supabase players into local history (silent, background)
+  syncToLocal();
   // Sync all global players into local cache (for offline import)
   if (typeof syncGlobalPlayersCache === "function") syncGlobalPlayersCache();
 });
@@ -91,14 +91,14 @@ function consolidateMasterDB() {
 /* ============================================================
    RATING — SINGLE DOOR
    
-   Rule: activeRating is computed ONCE at sync time in syncGithubToLocal.
+   Rule: activeRating is computed ONCE at sync time in syncToLocal.
    Everything else reads newImportHistory[].activeRating — mode-blind.
 
    getActiveRating(name)     — only READ path
    setActiveRating(name,val) — only WRITE path (in-memory + localStorage)
    syncRatings()             — refreshes all visible badges
    
-   Mode logic lives ONLY in syncGithubToLocal (read) and dbSyncRatings (write).
+   Mode logic lives ONLY in syncToLocal (read) and dbSyncRatings (write).
    ============================================================ */
 
 function getRatingMode() {
@@ -312,7 +312,7 @@ function initPage() {
    Pulls from Supabase → picks correct field based on mode → 
    writes as activeRating → everything else is mode-blind.
 ============================================================ */
-async function syncGithubToLocal() {
+async function syncToLocal() {
   const club = (typeof getMyClub === "function") ? getMyClub() : { id: null };
   setSyncIndicator("🔄 Syncing...", "#aaa");
 
@@ -374,7 +374,7 @@ async function syncGithubToLocal() {
     setSyncIndicator(msg, "#2dce89");
 
   } catch (e) {
-    console.warn("syncGithubToLocal failed:", e.message);
+    console.warn("syncToLocal failed:", e.message);
     const msg = "⚠️ Offline — using cache";
     localStorage.setItem("kbrr_last_sync", JSON.stringify({ msg, color: "#e6a817" }));
     setSyncIndicator(msg, "#e6a817");

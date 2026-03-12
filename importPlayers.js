@@ -206,7 +206,7 @@ function newImportShowSelectMode(mode) {
     if (mode === "register") newImportRenderRegister();
     if (typeof vaultSyncStatus === "function") vaultSyncStatus();
     if (typeof restoreSyncIndicator === "function") restoreSyncIndicator();
-    if (typeof playerSubtabShow === "function") playerSubtabShow("all");
+    if (typeof playerPlayingRenderList === "function") playerPlayingRenderList();
     return;
   }
 
@@ -861,7 +861,7 @@ function newImportLoadSetToSelected(setName) {
   set.players.forEach(p => {
     const key = (p.displayName || p.name || "").trim().toLowerCase();
     if (registeredKeys.has(key)) {
-      // Use the registered version (correct name/gender/rating from GitHub)
+      // Use the registered version (correct name/gender/rating from Supabase)
       const reg = registered.find(r => r.displayName.trim().toLowerCase() === key);
       addToListIfNotExists(newImportState.selectedPlayers, reg || p);
     }
@@ -1020,7 +1020,7 @@ function newImportAddPlayers() {
 }
 
 /* =============================================================
-   REGISTER TAB — GitHub DB player registration
+   REGISTER TAB — Supabase DB player registration
    Added: step82
 ============================================================= */
 

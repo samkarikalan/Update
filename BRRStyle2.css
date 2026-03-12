@@ -731,12 +731,12 @@ margin: 4px 0; color: var(--text);
    CLUB CARD — Professional redesign
 ============================================================= */
 
-.card-github-admin {
+.card-club-admin {
   padding: 18px 16px 14px;
 }
 
 /* Status bar at top */
-.github-admin-status-row {
+.club-status-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -761,7 +761,7 @@ margin: 4px 0; color: var(--text);
 }
 
 /* Change button */
-.github-btn-clear {
+.btn-clear {
   margin-left: auto;
   padding: 6px 16px;
   background: #e63757;
@@ -774,10 +774,10 @@ margin: 4px 0; color: var(--text);
   letter-spacing: 0.02em;
   transition: opacity 0.15s;
 }
-.github-btn-clear:hover { opacity: 0.85; }
+.btn-clear:hover { opacity: 0.85; }
 
 /* Input fields */
-.github-token-input {
+.club-input {
   flex: 1;
   padding: 10px 14px;
   border: 1.5px solid var(--border);
@@ -788,13 +788,13 @@ margin: 4px 0; color: var(--text);
   min-width: 0;
   transition: border-color 0.15s;
 }
-.github-token-input:focus {
+.club-input:focus {
   outline: none;
   border-color: var(--accent);
 }
 
 /* Action buttons (Join, Create) */
-.github-btn-save {
+.btn-save {
   padding: 10px 18px;
   background: var(--accent);
   color: #fff;
@@ -807,10 +807,10 @@ margin: 4px 0; color: var(--text);
   transition: opacity 0.15s;
   letter-spacing: 0.02em;
 }
-.github-btn-save:hover { opacity: 0.85; }
+.btn-save:hover { opacity: 0.85; }
 
 /* Row layout for input + button */
-.github-club-row {
+.club-row {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -818,7 +818,7 @@ margin: 4px 0; color: var(--text);
 }
 
 /* Club select dropdown */
-.github-club-select {
+.club-select {
   flex: 1;
   padding: 10px 14px;
   border: 1.5px solid var(--border);
@@ -829,13 +829,13 @@ margin: 4px 0; color: var(--text);
   min-width: 0;
   cursor: pointer;
 }
-.github-club-select:focus {
+.club-select:focus {
   outline: none;
   border-color: var(--accent);
 }
 
 /* Sync button */
-#clubTabJoin .github-btn-save[onclick*="sync"],
+#clubTabJoin .btn-save[onclick*="sync"],
 #clubTabJoin button[onclick*="sync"] {
   padding: 7px 14px;
   font-size: 0.8rem;
@@ -873,10 +873,10 @@ margin: 4px 0; color: var(--text);
 .club-tab-content {
   padding-top: 12px;
 }
-.club-tab-content .github-club-row {
+.club-tab-content .club-row {
   margin-bottom: 10px;
 }
-.club-tab-content .github-club-row:last-of-type {
+.club-tab-content .club-row:last-of-type {
   margin-bottom: 0;
 }
 
@@ -893,8 +893,8 @@ margin: 4px 0; color: var(--text);
 .sb-sync-btn:hover { opacity: 0.8; }
 
 /* Unused legacy */
-.github-token-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.github-my-club-label { display: none; }
+.club-token-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.club-my-club-label { display: none; }
 
 /* =============================================================
    REGISTER TAB — Browse Players modal

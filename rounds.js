@@ -206,7 +206,7 @@ function nextRound() {
     showRound(currentRoundIndex);
   }
   updateSummaryPageAccess();
-  // Sync ratings to GitHub silently after every round (called from updSchedule with wins/losses)
+  // Sync ratings to Supabase silently after every round (called from updSchedule with wins/losses)
 }
 function endRounds() {  
 	sessionFinished = true;
@@ -520,7 +520,7 @@ syncRatings();
 updatePlayerList();
 
 // Sync ratings + wins/losses to Supabase
-if (typeof githubSyncAfterRound === "function") githubSyncAfterRound(roundWins, roundLosses);
+if (typeof syncAfterRound === "function") syncAfterRound(roundWins, roundLosses);
 
 // after tracking pairs & games
 checkAndResetPairCycle(schedulerState, games, roundIndex);

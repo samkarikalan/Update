@@ -187,7 +187,7 @@ async function showProfileCard(player) {
   document.getElementById('pcName').textContent = player.name;
 
   // Single gate — sync first, then read both raw values from cache
-  await syncGithubToLocal();
+  await syncToLocal();
   const master       = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
   const hp           = master.find(h => h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase());
   const globalRating = parseFloat(hp && hp.rating)      || 1.0;  // players.rating — only updated in global mode

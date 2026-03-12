@@ -371,9 +371,9 @@ async function playerMgmtRenderList() {
   const container = document.getElementById("playerMgmtList");
   container.innerHTML = "<p style='color:#aaa;font-size:0.85rem'>Loading...</p>";
 
-  // Always use syncGithubToLocal as single source of truth — never fetch directly
+  // Always use syncToLocal as single source of truth — never fetch directly
   if (!newImportState.historyPlayers || !newImportState.historyPlayers.length) {
-    await syncGithubToLocal();
+    await syncToLocal();
   }
   let players = newImportState.historyPlayers || [];
 
@@ -494,7 +494,7 @@ function playerMgmtAddNew() {
 
 // ── Club Admin (Supabase) ────────────────────────────────────
 
-function githubAdminInit() {
+function clubAdminInit() {
   sbLoadClubs();
   sbRenderClubStatus();
   updateRegisterTabVisibility();
@@ -590,7 +590,7 @@ function vaultShowTab(tab, btn) {
   const content = document.getElementById('vaultTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
   if (content) content.classList.add('active');
   if (btn) btn.classList.add('active');
-  if (tab === 'players') playerSubtabShow('all');
+  if (tab === 'players') playerPlayingRenderList();
   if (tab === 'register') vaultRenderRegister();
 }
 
@@ -705,7 +705,7 @@ async function sbConfirmJoin() {
     sbRenderRatingMode(club.trusted === true);
     sbFeedback(`✅ Joined as ${mode === "admin" ? "Admin 🔑" : "User 👤"}`, "green");
     hideClubJoinOverlay();
-    syncGithubToLocal();
+    syncToLocal();
     updateRegisterTabVisibility();
   } catch (e) {
     sbFeedback("❌ " + e.message, "red");
@@ -724,7 +724,7 @@ function sbSetRatingMode(mode) {
   document.getElementById("sbRatingGlobal")?.classList.toggle("active", mode === "global");
   document.getElementById("sbRatingLocal")?.classList.toggle("active",  mode === "local");
   // Re-sync so activeRating is recomputed from the correct field for the new mode
-  if (typeof syncGithubToLocal === "function") syncGithubToLocal();
+  if (typeof syncToLocal === "function") syncToLocal();
 }
 
 function sbClearClub() {
@@ -860,7 +860,7 @@ async function showPlayerStats(name) {
     const p      = rows[0];
     const gender = p.gender || "Male";
     // Single gate — sync first, then read activeRating
-    await syncGithubToLocal();
+    await syncToLocal();
     const rating = getActiveRating(name).toFixed(1);
     const wins     = p.wins   || 0;
     const losses   = p.losses || 0;

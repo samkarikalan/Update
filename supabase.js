@@ -1,6 +1,6 @@
 /* ============================================================
    SUPABASE SERVICE LAYER
-   Replaces github.js — same public API, Supabase backend
+   Replaces supabase.js — same public API, Supabase backend
    ============================================================ */
 
 const SUPABASE_URL = "https://utdpcqolkslzuqgiqmde.supabase.co";
@@ -178,7 +178,7 @@ async function dbAddPlayer(name, gender, _unused) {
   // Invalidate cache + refresh immediately
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
-  if (typeof syncGithubToLocal === "function") await syncGithubToLocal();
+  if (typeof syncToLocal === "function") await syncToLocal();
 
   return player;
 }
@@ -332,7 +332,7 @@ async function dbOverrideRating(playerId, newRating) {
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
   // Refresh immediately so all displays show new value
-  if (typeof syncGithubToLocal === "function") await syncGithubToLocal();
+  if (typeof syncToLocal === "function") await syncToLocal();
 }
 
 /// Edit player — requires club admin password
@@ -362,7 +362,7 @@ async function dbDeletePlayer(playerId, clubAdminPassword) {
   await sbDelete("club_members", `player_id=eq.${playerId}&club_id=eq.${club.id}`);
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
-  if (typeof syncGithubToLocal === "function") await syncGithubToLocal();
+  if (typeof syncToLocal === "function") await syncToLocal();
 }
 
 /// ============================================================
@@ -404,7 +404,7 @@ async function dbVerifyClubAccess(clubId, selectPassword) {
 /// SYNC AFTER ROUND
 /// ============================================================
 
-async function githubSyncAfterRound(roundWins, roundLosses) {
+async function syncAfterRound(roundWins, roundLosses) {
   try {
     // STEP 1 — Push: send updated ratings + wins/losses to Supabase
     const playedNames = new Set([...roundWins.keys(), ...roundLosses.keys()]);
@@ -418,11 +418,54 @@ async function githubSyncAfterRound(roundWins, roundLosses) {
       }));
 
     await dbSyncRatings(updatedRatings);
-    // Pull fresh — syncGithubToLocal will also flush any queued items
-    await syncGithubToLocal();
+
+    // STEP 2 — Sync running session totals after every round
+    await syncSessionAfterRound(playedNames);
+
+    // Pull fresh — syncToLocal will also flush any queued items
+    await syncToLocal();
 
   } catch (e) {
-    console.error("githubSyncAfterRound error:", e.message);
+    console.error("syncAfterRound error:", e.message);
+  }
+}
+
+async function syncSessionAfterRound(playedNames) {
+  try {
+    const today   = new Date().toISOString().split("T")[0];
+    const players = schedulerState.allPlayers || [];
+
+    for (const p of players) {
+      if (!playedNames.has(p.name)) continue;
+
+      // Accumulate wins/losses from allRounds so far this session
+      let totalWins = 0, totalLosses = 0;
+      for (const round of (allRounds || [])) {
+        const games = round.games || round;
+        for (const game of (games || [])) {
+          if (!game.winner) continue;
+          const inLeft  = (game.pair1 || []).includes(p.name);
+          const inRight = (game.pair2 || []).includes(p.name);
+          if (!inLeft && !inRight) continue;
+          const won = (game.winner === "L" && inLeft) || (game.winner === "R" && inRight);
+          if (won) totalWins++; else totalLosses++;
+        }
+      }
+
+      const entry = {
+        date:   today,
+        wins:   totalWins,
+        losses: totalLosses,
+        rating: getActiveRating(p.name)
+      };
+
+      // Upsert to player_sessions (today's row)
+      if (typeof savePlayerSession === "function") {
+        savePlayerSession(p.name, entry).catch(() => {});
+      }
+    }
+  } catch (e) {
+    console.warn("syncSessionAfterRound error:", e.message);
   }
 }
 
