@@ -591,6 +591,7 @@ function vaultShowTab(tab, btn) {
   if (content) content.classList.add('active');
   if (btn) btn.classList.add('active');
   if (tab === 'players') playerSubtabShow('all');
+  if (tab === 'register') vaultRenderRegister();
 }
 
 // ── Club Management in Settings — password protected ──
@@ -625,6 +626,21 @@ function lockClubMgmt() {
   document.getElementById('clubMgmtLock').style.display     = 'block';
   document.getElementById('clubMgmtUnlocked').style.display = 'none';
   document.getElementById('clubMgmtPassword').value = '';
+}
+
+function vaultRenderRegister() {
+  const container = document.getElementById('vaultRegisterContainer');
+  if (!container) return;
+  const club = (typeof getMyClub === 'function') ? getMyClub() : { name: null };
+  if (typeof newImportRenderRegister === 'function') {
+    // Temporarily swap the render target so register renders into vault container
+    const original = document.getElementById('newImportSelectCards');
+    if (original) original.id = '_newImportSelectCards_hidden';
+    container.id = 'newImportSelectCards';
+    newImportRenderRegister();
+    container.id = 'vaultRegisterContainer';
+    if (original) original.id = 'newImportSelectCards';
+  }
 }
 
 function vaultSyncStatus() {

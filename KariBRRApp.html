@@ -511,8 +511,14 @@
             <button class="vault-sync-btn" onclick="syncGithubToLocal()">🔄 Sync</button>
           </div>
 
-          <!-- PLAYERS — only content in Vault -->
-          <div id="vaultTabPlayers">
+          <!-- Vault inner tabs -->
+          <div class="vault-inner-tabs">
+            <button class="vault-inner-tab active" id="vaultTabPlayersBtn" onclick="vaultShowTab('players',this)">Players</button>
+            <button class="vault-inner-tab" id="vaultTabRegisterBtn" onclick="vaultShowTab('register',this)">📋 Register</button>
+          </div>
+
+          <!-- PLAYERS inner tab -->
+          <div class="vault-inner-content active" id="vaultTabPlayers">
             <div class="player-subtab-bar">
               <button class="player-subtab-btn active" id="playerSubtabAllBtn" onclick="playerSubtabShow('all')">All</button>
               <button class="player-subtab-btn" id="playerSubtabPlayingBtn" onclick="playerSubtabShow('playing')">🔴 Playing</button>
@@ -526,6 +532,11 @@
             <div id="playerSubtabPlaying" style="display:none">
               <div id="playerPlayingList" class="player-mgmt-list"></div>
             </div>
+          </div>
+
+          <!-- REGISTER inner tab -->
+          <div class="vault-inner-content" id="vaultTabRegister">
+            <div id="vaultRegisterContainer"></div>
           </div>
 
           <div id="vaultFeedback"></div>
