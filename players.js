@@ -190,7 +190,7 @@ function addFixedCard(p1, p2, key) {
         <span class="fp-label fp-label-chosen" id="fcLabel_${key}_2">${p2}</span>
         <span class="fp-chevron">▼</span>
       </div>
-      <button class="pec-btn delete fc-delete-btn" onclick="fcDeletePair('${key}')">✕</button>
+      <button class="pec-btn delete fc-delete-btn" onclick="fcDeletePair('${key}')">🗑</button>
     </div>
     <div id="fcDropdown_${key}_1" class="fp-dropdown fc-dropdown" style="display:none"></div>
     <div id="fcDropdown_${key}_2" class="fp-dropdown fc-dropdown" style="display:none"></div>

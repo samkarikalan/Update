@@ -1430,8 +1430,6 @@ body.app-dark .newImport-player-card.player-added {
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  position: relative !important;
-  padding-right: 28px !important;
 }
 .fixed-card-pickers .fc-field {
   flex: 1 1 0 !important;
@@ -1447,7 +1445,6 @@ body.app-dark .newImport-player-card.player-added {
   cursor: pointer !important;
   transition: border-color 0.2s !important;
   overflow: hidden !important;
-  box-sizing: border-box !important;
 }
 .fixed-card-pickers .fc-field:hover {
   border-color: var(--accent) !important;
@@ -1477,20 +1474,13 @@ body.app-dark .newImport-player-card.player-added {
 }
 .fc-delete-btn {
   all: unset !important;
-  position: absolute !important;
-  right: 0 !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  font-size: 13px !important;
+  font-size: 18px !important;
   cursor: pointer !important;
   color: var(--muted) !important;
   transition: color 0.2s, opacity 0.2s !important;
-  width: 22px !important;
-  height: 22px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  opacity: 0.4 !important;
+  flex-shrink: 0 !important;
+  padding: 4px !important;
+  opacity: 0.45 !important;
 }
 .fc-delete-btn:hover { color: var(--red) !important; opacity: 1 !important; }
 .fc-dropdown {
