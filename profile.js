@@ -186,13 +186,17 @@ async function showProfileCard(player) {
   // Name
   document.getElementById('pcName').textContent = player.name;
 
-  // Single gate — sync first, then read activeRating
+  // Single gate — sync first, then read both raw values from cache
   await syncGithubToLocal();
-  const activeRating = getActiveRating(player.name);
+  const master       = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
+  const hp           = master.find(h => h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase());
+  const globalRating = parseFloat(hp && hp.rating)      || 1.0;  // players.rating — only updated in global mode
+  const clubRating   = parseFloat(hp && hp.clubRating)  || 1.0;  // club_ratings[clubId] — only updated in local mode
+  const activeRating = parseFloat(hp && hp.activeRating)|| 1.0;  // what session uses
   const tier         = ratingTierLabel(activeRating);
 
-  document.getElementById('pcRating').textContent     = activeRating.toFixed(1);
-  document.getElementById('pcClubRating').textContent = activeRating.toFixed(1);
+  document.getElementById('pcRating').textContent     = globalRating.toFixed(1);
+  document.getElementById('pcClubRating').textContent = clubRating.toFixed(1);
   document.getElementById('pcTier').textContent       = tier.label;
   document.getElementById('pcTier').style.background  = tier.color + '22';
   document.getElementById('pcTier').style.color       = tier.color;

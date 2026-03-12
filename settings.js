@@ -487,8 +487,12 @@ async function sbConfirmJoin() {
     localStorage.setItem("kbrr_club_mode",    mode);
     localStorage.setItem("kbrr_club_trusted", club.trusted ? "true" : "false");
 
-    // Default rating mode to "local" always — trusted clubs can switch to global
-    localStorage.setItem("kbrr_rating_mode", "local");
+    // Set rating field at login — single gate decision made here, used everywhere
+    // 'club_ratings' = local mode (default). 'rating' = global mode (future)
+    localStorage.setItem('kbrr_rating_field', 'club_ratings');
+    localStorage.setItem('kbrr_rating_mode',  'local');
+    // Single gate decision — which field to read/write for ratings
+    localStorage.setItem("kbrr_rating_field", "club_ratings");
 
     pwInput.value = "";
     sbRenderClubStatus();
@@ -518,9 +522,11 @@ function sbSetRatingMode(mode) {
 
 function sbClearClub() {
   clearMyClub();
-  localStorage.removeItem("kbrr_club_mode");
-  localStorage.removeItem("kbrr_club_trusted");
-  localStorage.removeItem("kbrr_rating_mode");
+  localStorage.removeItem('kbrr_club_mode');
+  localStorage.removeItem('kbrr_club_trusted');
+  localStorage.removeItem('kbrr_rating_mode');
+  localStorage.removeItem('kbrr_rating_field');
+  localStorage.removeItem("kbrr_rating_field");
   document.getElementById("sbRatingModeWrap") && (document.getElementById("sbRatingModeWrap").style.display = "none");
   sbRenderClubStatus();
   sbFeedback("Club cleared.", "gray");
