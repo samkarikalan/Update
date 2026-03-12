@@ -70,7 +70,7 @@ async function sbUpsert(table, body, onConflict) {
   const url = `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${encodeURIComponent(onConflict)}`;
   const res = await fetch(url, {
     method:  "POST",
-    headers: { ...SB_HEADERS, "Prefer": "resolution=merge-duplicates" },
+    headers: { ...SB_HEADERS, "Prefer": "resolution=merge-duplicates,return=minimal" },
     body:    JSON.stringify(body)
   });
   if (!res.ok) {
@@ -496,28 +496,26 @@ async function syncLiveSession(playedNames) {
       }
     }
 
-    for (const p of players) {
-      if (!playedNames.has(p.name)) continue;
-      const matches = playerMatches.get(p.name) || [];
-      if (!matches.length) continue;
-
-      const wins   = matches.filter(m => m.result === "W").length;
-      const losses = matches.filter(m => m.result === "L").length;
-
-      const row = {
-        player_name: p.name,
-        club_id:     club.id,
-        date:        today,
-        wins,
-        losses,
-        rating:      getActiveRating(p.name),
-        matches:     matches,  // jsonb — pass object directly
-        updated_at:  new Date().toISOString()
-      };
-
-      // Upsert — unique on (player_name, club_id, date)
-      await sbUpsert("live_sessions", row, "player_name,club_id,date");
-    }
+    // Upsert all played players in parallel
+    const upserts = players
+      .filter(p => playedNames.has(p.name) && (playerMatches.get(p.name) || []).length)
+      .map(p => {
+        const matches = playerMatches.get(p.name);
+        const wins    = matches.filter(m => m.result === "W").length;
+        const losses  = matches.filter(m => m.result === "L").length;
+        const row = {
+          player_name: p.name,
+          club_id:     club.id,
+          date:        today,
+          wins,
+          losses,
+          rating:      getActiveRating(p.name),
+          matches,
+          updated_at:  new Date().toISOString()
+        };
+        return sbUpsert("live_sessions", row, "player_name,club_id,date").catch(() => {});
+      });
+    await Promise.all(upserts);
   } catch (e) {
     console.warn("syncLiveSession error:", e.message);
   }
@@ -534,10 +532,11 @@ async function flushLiveSession() {
       `club_id=eq.${club.id}&date=eq.${today}`);
     if (!rows || !rows.length) return;
 
-    for (const row of rows) {
+    // Write all players in parallel — no sequential awaits
+    const writes = rows.map(async row => {
       const matches = typeof row.matches === "string"
         ? JSON.parse(row.matches) : (row.matches || []);
-      if (!matches.length) continue;
+      if (!matches.length) return;
 
       const entry = {
         date:    row.date,
@@ -558,7 +557,7 @@ async function flushLiveSession() {
           await sbPatch("players",
             `name=ilike.${encodeURIComponent(row.player_name)}`, { sessions: updated });
         }
-      } catch(e) { /* continue flushing others */ }
+      } catch(e) { /* continue */ }
 
       // Write to localStorage
       try {
@@ -567,9 +566,15 @@ async function flushLiveSession() {
         const filtered = existing.filter(s => s.date !== today);
         localStorage.setItem(lsKey, JSON.stringify([entry, ...filtered].slice(0, 3)));
       } catch(e) {}
-    }
+    });
 
-    // Delete live rows for this club today
+    // Wait for all writes with a 10s timeout — never hang End Session
+    await Promise.race([
+      Promise.allSettled(writes),
+      new Promise(resolve => setTimeout(resolve, 10000))
+    ]);
+
+    // Delete live rows regardless of write success
     await sbDelete("live_sessions", `club_id=eq.${club.id}&date=eq.${today}`);
 
   } catch (e) {
