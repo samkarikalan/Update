@@ -508,9 +508,9 @@ for (const game of games) {
     roundWins.set(p, (roundWins.get(p) || 0) + 1);
   }
   for (const p of losers) {
-    if ((typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)) >= 2.0) {
-      setRating(p, (typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)) - loseLoss);
-    }
+    const current = typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p);
+    const updated = Math.max(1.0, current - loseLoss);
+    setRating(p, updated);
     roundLosses.set(p, (roundLosses.get(p) || 0) + 1);
   }
 }
