@@ -66,6 +66,19 @@ async function sbDelete(table, query) {
   if (!res.ok) throw new Error(`DELETE ${table} failed: ${res.status}`);
 }
 
+async function sbUpsert(table, body, onConflict) {
+  const url = `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${encodeURIComponent(onConflict)}`;
+  const res = await fetch(url, {
+    method:  "POST",
+    headers: { ...SB_HEADERS, "Prefer": "resolution=merge-duplicates" },
+    body:    JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `UPSERT ${table} failed: ${res.status}`);
+  }
+}
+
 /// ============================================================
 /// CLUB SESSION — which club is active
 /// ============================================================
@@ -419,8 +432,8 @@ async function syncAfterRound(roundWins, roundLosses) {
 
     await dbSyncRatings(updatedRatings);
 
-    // STEP 2 — Sync running session totals after every round
-    await syncSessionAfterRound(playedNames);
+    // STEP 2 — Write live session to Supabase live_sessions table
+    await syncLiveSession(playedNames);
 
     // Pull fresh — syncToLocal will also flush any queued items
     await syncToLocal();
@@ -431,13 +444,27 @@ async function syncAfterRound(roundWins, roundLosses) {
 }
 
 async function syncSessionAfterRound(playedNames) {
+  // Session data saved on End Session only
+}
+
+/// ============================================================
+/// LIVE SESSIONS
+/// Temporary per-round session data stored in live_sessions table.
+/// Flushed to players.sessions on End Session or after 1hr idle.
+/// Visible to all club members in real time via profile card.
+/// ============================================================
+
+async function syncLiveSession(playedNames) {
   try {
+    const club = getMyClub();
+    if (!club.id) return;
+
     const today     = new Date().toISOString().split("T")[0];
     const players   = schedulerState.allPlayers || [];
     const genderMap = new Map();
     players.forEach(p => genderMap.set(p.name, p.gender || "Male"));
 
-    // Build per-player match history from ALL rounds so far this session
+    // Build per-player match history from ALL rounds this session
     const playerMatches = new Map();
     for (const round of (allRounds || [])) {
       const games = round.games || round;
@@ -476,38 +503,93 @@ async function syncSessionAfterRound(playedNames) {
 
       const wins   = matches.filter(m => m.result === "W").length;
       const losses = matches.filter(m => m.result === "L").length;
-      const entry  = {
-        date:    today,
+
+      const row = {
+        player_name: p.name,
+        club_id:     club.id,
+        date:        today,
         wins,
         losses,
-        rating:  getActiveRating(p.name),
-        matches,
-        live:    true   // marks in-progress — cleared to false on End Session
+        rating:      getActiveRating(p.name),
+        matches:     matches,  // jsonb — pass object directly
+        updated_at:  new Date().toISOString()
       };
 
-      // localStorage — upsert today's entry
+      // Upsert — unique on (player_name, club_id, date)
+      await sbUpsert("live_sessions", row, "player_name,club_id,date");
+    }
+  } catch (e) {
+    console.warn("syncLiveSession error:", e.message);
+  }
+}
+
+// Flush live_sessions → players.sessions for all players in this club, then delete
+async function flushLiveSession() {
+  try {
+    const club = getMyClub();
+    if (!club.id) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    const rows  = await sbGet("live_sessions",
+      `club_id=eq.${club.id}&date=eq.${today}`);
+    if (!rows || !rows.length) return;
+
+    for (const row of rows) {
+      const matches = typeof row.matches === "string"
+        ? JSON.parse(row.matches) : (row.matches || []);
+      if (!matches.length) continue;
+
+      const entry = {
+        date:    row.date,
+        wins:    row.wins   || 0,
+        losses:  row.losses || 0,
+        rating:  parseFloat(row.rating) || 1.0,
+        matches
+      };
+
+      // Write to players.sessions
       try {
-        const lsKey    = `kbrr_sessions_${p.name.toLowerCase().replace(/\s+/g, "_")}`;
+        const playerRows = await sbGet("players",
+          `name=ilike.${encodeURIComponent(row.player_name)}&select=id,sessions`);
+        if (playerRows && playerRows.length) {
+          const existing = playerRows[0].sessions || [];
+          const filtered = existing.filter(s => s.date !== today);
+          const updated  = [entry, ...filtered].slice(0, 3);
+          await sbPatch("players",
+            `name=ilike.${encodeURIComponent(row.player_name)}`, { sessions: updated });
+        }
+      } catch(e) { /* continue flushing others */ }
+
+      // Write to localStorage
+      try {
+        const lsKey    = `kbrr_sessions_${row.player_name.toLowerCase().replace(/\s+/g, "_")}`;
         const existing = JSON.parse(localStorage.getItem(lsKey) || "[]");
         const filtered = existing.filter(s => s.date !== today);
         localStorage.setItem(lsKey, JSON.stringify([entry, ...filtered].slice(0, 3)));
       } catch(e) {}
-
-      // Supabase players.sessions — upsert today's entry
-      try {
-        const rows = await sbGet("players", `name=ilike.${encodeURIComponent(p.name)}&select=id,sessions`);
-        if (rows && rows.length) {
-          const existing = rows[0].sessions || [];
-          const filtered = existing.filter(s => s.date !== today);
-          const updated  = [entry, ...filtered].slice(0, 3);
-          await sbPatch("players", `name=ilike.${encodeURIComponent(p.name)}`, { sessions: updated });
-        }
-      } catch(e) {}
     }
+
+    // Delete live rows for this club today
+    await sbDelete("live_sessions", `club_id=eq.${club.id}&date=eq.${today}`);
+
   } catch (e) {
-    console.warn("syncSessionAfterRound error:", e.message);
+    console.warn("flushLiveSession error:", e.message);
   }
 }
+
+// Delete stale live_sessions rows older than today for this club
+async function cleanupLiveSessions() {
+  try {
+    const club  = getMyClub();
+    if (!club.id) return;
+    const today = new Date().toISOString().split("T")[0];
+    await sbDelete("live_sessions", `club_id=eq.${club.id}&date=lt.${today}`);
+  } catch (e) {
+    console.warn("cleanupLiveSessions error:", e.message);
+  }
+}
+
+
 
 /// ============================================================
 /// GLOBAL PLAYERS CACHE

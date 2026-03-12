@@ -207,32 +207,46 @@ async function showProfileCard(player) {
   document.getElementById('pcSessions').innerHTML  =
     '<div class="profile-sessions-loading">Loading...</div>';
 
-  // Fetch from Supabase players.sessions column + merge with localStorage
+  // Fetch players.sessions + live_sessions in parallel
   try {
-    const rows = await sbGet('players',
-      `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`);
+    const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+    const today = new Date().toISOString().split('T')[0];
 
-    const lsKey       = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
+    const [playerRows, liveRows] = await Promise.all([
+      sbGet('players', `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`),
+      club.id
+        ? sbGet('live_sessions',
+            `player_name=ilike.${encodeURIComponent(player.name)}&club_id=eq.${club.id}&date=eq.${today}`)
+        : Promise.resolve([])
+    ]);
+
+    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
     const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
 
-    if (rows && rows.length) {
-      const data           = rows[0];
+    // Live session row from DB (visible from any device)
+    const liveRow     = liveRows && liveRows.length ? liveRows[0] : null;
+    const liveMatches = liveRow
+      ? (typeof liveRow.matches === 'string' ? JSON.parse(liveRow.matches) : (liveRow.matches || []))
+      : null;
+
+    if (playerRows && playerRows.length) {
+      const data           = playerRows[0];
       const remoteSessions = data.sessions || [];
       const merged         = mergeSessions(localSessions, remoteSessions);
       document.getElementById('pcWins').textContent   = (data.wins   || 0);
       document.getElementById('pcLosses').textContent = (data.losses || 0);
-      renderSessions(merged, player.name);
+      renderSessions(merged, player.name, liveMatches);
     } else {
       document.getElementById('pcWins').textContent   = '—';
       document.getElementById('pcLosses').textContent = '—';
-      renderSessions(localSessions, player.name);
+      renderSessions(localSessions, player.name, liveMatches);
     }
   } catch (e) {
     const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
     const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
     document.getElementById('pcWins').textContent   = '—';
     document.getElementById('pcLosses').textContent = '—';
-    renderSessions(localSessions, player.name);
+    renderSessions(localSessions, player.name, null);
   }
 }
 
@@ -277,13 +291,13 @@ function renderMatchRow(m, playerName) {
 }
 
 /* ── Render sessions with PDF-style match history ── */
-function renderSessions(sessions, playerName) {
+function renderSessions(sessions, playerName, liveMatches) {
   const container = document.getElementById('pcSessions');
   container.innerHTML = '';
 
-  // ── Live current session from allRounds ──
-  let liveMatches = [];
-  if (typeof allRounds !== 'undefined' && allRounds.length) {
+  // liveMatches comes from live_sessions DB (any device) or allRounds (local fallback)
+  if (!liveMatches && typeof allRounds !== 'undefined' && allRounds.length) {
+    liveMatches = [];
     for (const round of allRounds) {
       const games = round.games || round;
       for (const game of games) {
@@ -308,16 +322,8 @@ function renderSessions(sessions, playerName) {
     }
   }
 
-  const hasLive = liveMatches.length > 0;
-
-  // ── Past sessions — skip today's live entry only if LIVE card is showing ──
-  // If no live matches (e.g. app reloaded after crash), show the live:true entry as past
-  const today = new Date().toISOString().split('T')[0];
-  const pastSessions = sessions.filter(s =>
-    !(s.live === true && s.date === today && hasLive)
-  );
-
-  const hasPast = pastSessions.length > 0;
+  const hasLive = Array.isArray(liveMatches) && liveMatches.length > 0;
+  const hasPast = sessions.length > 0;
 
   if (!hasLive && !hasPast) {
     container.innerHTML = '<div class="profile-sessions-empty">No sessions recorded yet.</div>';
@@ -352,7 +358,7 @@ function renderSessions(sessions, playerName) {
   }
 
   // ── Past sessions ──
-  pastSessions.slice(0, 3).forEach((s, idx) => {
+  sessions.slice(0, 3).forEach((s, idx) => {
     const tier    = ratingTierLabel(s.rating || 1.0);
     const matches = s.matches || [];
 
