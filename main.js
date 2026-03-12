@@ -323,20 +323,26 @@ async function syncGithubToLocal() {
   }
 
   try {
+    // Flush any offline-queued writes first
+    if (typeof flushSyncQueue === "function") await flushSyncQueue();
+
     const players = await dbGetPlayers(true);
     if (!players || !players.length) {
       if (indicator) { indicator.textContent = "⚠️ No players found"; indicator.style.color = "#e6a817"; }
       return;
     }
 
-    // mode hardcoded to local until global is fully tested
+    // kbrr_rating_field set at login — single decision point for READ
+    const ratingField = localStorage.getItem("kbrr_rating_field") || "club_ratings";
     const synced = players.map(gp => {
-      const activeRating = parseFloat(gp.clubRating) || 1.0;
+      const activeRating = ratingField === "club_ratings"
+        ? (parseFloat(gp.clubRating) || 1.0)
+        : (parseFloat(gp.rating)     || 1.0);
       return {
         displayName:  gp.name.trim(),
         gender:       gp.gender || "Male",
-        rating:       parseFloat(gp.rating)     || 1.0,  // kept for profile display
-        clubRating:   parseFloat(gp.clubRating) || 1.0,  // kept for profile display
+        rating:       parseFloat(gp.rating)     || 1.0,  // raw global — for profile display only
+        clubRating:   parseFloat(gp.clubRating) || 1.0,  // raw club   — for profile display only
         activeRating,                                     // what everything else reads
         id:           gp.id
       };

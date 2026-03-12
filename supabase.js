@@ -175,30 +175,53 @@ async function dbAddPlayer(name, gender, _unused) {
     throw new Error("Player already exists in this club.");
   }
 
-  // Invalidate cache
+  // Invalidate cache + refresh immediately
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
+  if (typeof syncGithubToLocal === "function") await syncGithubToLocal();
 
   return player;
 }
 
 /* ============================================================
-   dbSyncRatings — THIS is the only place mode logic runs for WRITING.
-   Writes to the correct Supabase column based on mode.
-   Everything else is mode-blind.
+   OFFLINE SYNC QUEUE
+   When DB write fails, push to queue. Flush on next online sync.
+   Key: kbrr_sync_queue — array of pending rating updates.
 ============================================================ */
-async function dbSyncRatings(updatedRatings) {
+const SYNC_QUEUE_KEY = "kbrr_sync_queue";
+
+function queuePush(updates) {
+  try {
+    const q = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || "[]");
+    updates.forEach(u => q.push({ ...u, timestamp: Date.now() }));
+    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q));
+  } catch(e) { console.error("queuePush error", e); }
+}
+
+function queueClear() {
+  localStorage.removeItem(SYNC_QUEUE_KEY);
+}
+
+function queueGet() {
+  try {
+    return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || "[]");
+  } catch(e) { return []; }
+}
+
+/* Flush pending queue to Supabase — called at start of every sync */
+async function flushSyncQueue() {
+  const pending = queueGet();
+  if (!pending.length) return;
+
   const club = getMyClub();
   if (!club.id) return;
 
-  // global mode blocked until fully tested — always local
-  const effectiveMode = 'local';
+  const ratingField = localStorage.getItem("kbrr_rating_field") || "club_ratings";
+  const failed = [];
 
-  for (const update of updatedRatings) {
+  for (const update of pending) {
     try {
       const rounded = Math.round(update.activeRating * 10) / 10;
-
-      // Single fetch — wins/losses + club_ratings in one call
       const rows = await sbGet("players",
         `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`
       );
@@ -206,13 +229,12 @@ async function dbSyncRatings(updatedRatings) {
       const row   = rows[0];
       const patch = {};
 
-      if (effectiveMode === 'global') {
-        patch.rating = rounded;
-      } else {
-        // Write into club_ratings[clubId] — string key, consistent with localStorage
-        const existing      = row.club_ratings || {};
+      if (ratingField === "club_ratings") {
+        const existing = row.club_ratings || {};
         existing[String(club.id)] = rounded;
-        patch.club_ratings  = existing;
+        patch.club_ratings = existing;
+      } else {
+        patch.rating = rounded;
       }
 
       if (update.wins > 0 || update.losses > 0) {
@@ -223,33 +245,94 @@ async function dbSyncRatings(updatedRatings) {
       if (Object.keys(patch).length) {
         await sbPatch("players", `name=ilike.${encodeURIComponent(update.name)}`, patch);
       }
-    } catch(e) { console.error("dbSyncRatings error for", update.name, e.message); }
+    } catch(e) {
+      failed.push(update); // keep failed items for next retry
+    }
   }
+
+  // Replace queue with only failed items
+  if (failed.length) {
+    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(failed));
+    console.warn(`flushSyncQueue: ${failed.length} item(s) still pending`);
+  } else {
+    queueClear();
+  }
+}
+
+/* ============================================================
+   dbSyncRatings — ONLY write gate for ratings.
+   Reads kbrr_rating_field — writes to one column only.
+   On failure — pushes to offline queue for retry.
+============================================================ */
+async function dbSyncRatings(updatedRatings) {
+  const club = getMyClub();
+  if (!club.id) return;
+
+  // kbrr_rating_field set at login — "club_ratings" or "rating"
+  const ratingField = localStorage.getItem("kbrr_rating_field") || "club_ratings";
+  const failed = [];
+
+  for (const update of updatedRatings) {
+    try {
+      const rounded = Math.round(update.activeRating * 10) / 10;
+
+      const rows = await sbGet("players",
+        `name=ilike.${encodeURIComponent(update.name)}&select=id,wins,losses,club_ratings`
+      );
+      if (!rows || !rows.length) continue;
+      const row   = rows[0];
+      const patch = {};
+
+      if (ratingField === "club_ratings") {
+        const existing = row.club_ratings || {};
+        existing[String(club.id)] = rounded;
+        patch.club_ratings = existing;
+      } else {
+        patch.rating = rounded;
+      }
+
+      if (update.wins > 0 || update.losses > 0) {
+        patch.wins   = (row.wins   || 0) + (update.wins   || 0);
+        patch.losses = (row.losses || 0) + (update.losses || 0);
+      }
+
+      if (Object.keys(patch).length) {
+        await sbPatch("players", `name=ilike.${encodeURIComponent(update.name)}`, patch);
+      }
+    } catch(e) {
+      console.warn("dbSyncRatings offline for", update.name, "— queued");
+      failed.push(update);
+    }
+  }
+
+  if (failed.length) queuePush(failed);
 
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
 }
 
 
-/// Override rating manually — requires admin session
+/// Override rating — writes to correct field based on kbrr_rating_field
 async function dbOverrideRating(playerId, newRating) {
-  const club   = getMyClub();
-  const rounded = Math.round(newRating * 10) / 10;
+  const club        = getMyClub();
+  const rounded     = Math.round(newRating * 10) / 10;
+  const ratingField = localStorage.getItem("kbrr_rating_field") || "club_ratings";
+  const patch       = {};
 
-  // Always write to global rating
-  const patch = { rating: rounded };
-
-  // Also write to club_ratings[clubId] so club mode sees the starting rating
-  if (club.id) {
+  if (ratingField === "club_ratings" && club.id) {
     const rows = await sbGet("players", `id=eq.${playerId}&select=club_ratings`);
     const existing = (rows && rows[0] && rows[0].club_ratings) || {};
     existing[String(club.id)] = rounded;
     patch.club_ratings = existing;
+  } else {
+    patch.rating = rounded;
   }
 
   await sbPatch("players", `id=eq.${playerId}`, patch);
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
+  // Refresh immediately so all displays show new value
+  if (typeof syncGithubToLocal === "function") await syncGithubToLocal();
 }
 
 /// Edit player — requires club admin password
@@ -279,6 +362,7 @@ async function dbDeletePlayer(playerId, clubAdminPassword) {
   await sbDelete("club_members", `player_id=eq.${playerId}&club_id=eq.${club.id}`);
   localStorage.removeItem(CACHE_PLAYERS);
   localStorage.removeItem(CACHE_TIMESTAMP);
+  if (typeof syncGithubToLocal === "function") await syncGithubToLocal();
 }
 
 /// ============================================================
@@ -334,10 +418,7 @@ async function githubSyncAfterRound(roundWins, roundLosses) {
       }));
 
     await dbSyncRatings(updatedRatings);
-
-    // STEP 2 — Pull: get fresh data from server
-    // STEP 3 — Write: update local cache to match server exactly
-    // syncGithubToLocal does both steps 2 and 3
+    // Pull fresh — syncGithubToLocal will also flush any queued items
     await syncGithubToLocal();
 
   } catch (e) {
