@@ -40,9 +40,6 @@
       <input type="password" id="sbPasswordInput"
              class="github-token-input club-join-input" placeholder="Enter password">
       <button class="github-btn-save club-join-btn" onclick="sbConfirmJoin()">Join Club</button>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-        <span id="sbSyncStatus" style="font-size:0.8rem"></span>
-      </div>
       <div id="sbClubFeedback" style="font-size:0.8rem;margin-top:4px"></div>
       <div id="sbRatingModeWrap" style="display:none">
         <div class="sb-rating-divider"></div>
@@ -508,6 +505,10 @@
             <span class="vault-status-name" id="vaultStatusName">No club selected</span>
             <span class="vault-status-role" id="vaultStatusRole" style="display:none"></span>
             <button class="vault-logout-btn" onclick="sbClearClub()">Logout</button>
+          </div>
+          <div class="vault-sync-row">
+            <span id="sbSyncStatus" class="vault-sync-text"></span>
+            <button class="vault-sync-btn" onclick="syncGithubToLocal()">🔄 Sync</button>
           </div>
 
           <!-- PLAYERS — only content in Vault -->

@@ -204,8 +204,8 @@ function newImportShowSelectMode(mode) {
     clearFavorites.style.display = "none";
     if (vaultSection) vaultSection.style.display = "block";
     if (mode === "register") newImportRenderRegister();
-    // Sync vault status strip with current club
     if (typeof vaultSyncStatus === "function") vaultSyncStatus();
+    if (typeof restoreSyncIndicator === "function") restoreSyncIndicator();
     return;
   }
 

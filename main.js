@@ -313,12 +313,11 @@ function initPage() {
    writes as activeRating → everything else is mode-blind.
 ============================================================ */
 async function syncGithubToLocal() {
-  const club      = (typeof getMyClub === "function") ? getMyClub() : { id: null };
-  const indicator = document.getElementById("sbSyncStatus");
-  if (indicator) { indicator.textContent = "🔄 Syncing..."; indicator.style.color = "#aaa"; }
+  const club = (typeof getMyClub === "function") ? getMyClub() : { id: null };
+  setSyncIndicator("🔄 Syncing...", "#aaa");
 
   if (!club.id) {
-    if (indicator) { indicator.textContent = "⚠️ No club selected"; indicator.style.color = "#e6a817"; }
+    setSyncIndicator("⚠️ No club selected", "#e6a817");
     return;
   }
 
@@ -328,7 +327,7 @@ async function syncGithubToLocal() {
 
     const players = await dbGetPlayers(true);
     if (!players || !players.length) {
-      if (indicator) { indicator.textContent = "⚠️ No players found"; indicator.style.color = "#e6a817"; }
+      setSyncIndicator("⚠️ No players found", "#e6a817");
       return;
     }
 
@@ -369,17 +368,32 @@ async function syncGithubToLocal() {
 
     syncRatings();
 
-    if (indicator) {
-      const count = synced.length;
-      indicator.textContent = `✅ ${count} player${count !== 1 ? "s" : ""} synced`;
-      indicator.style.color = "#2dce89";
-      setTimeout(() => { if (indicator) indicator.textContent = ""; }, 4000);
-    }
+    const count = synced.length;
+    const msg   = `✅ ${count} player${count !== 1 ? "s" : ""} synced · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+    localStorage.setItem("kbrr_last_sync", JSON.stringify({ msg, color: "#2dce89" }));
+    setSyncIndicator(msg, "#2dce89");
 
   } catch (e) {
     console.warn("syncGithubToLocal failed:", e.message);
-    if (indicator) { indicator.textContent = "⚠️ Offline — using cache"; indicator.style.color = "#e6a817"; }
+    const msg = "⚠️ Offline — using cache";
+    localStorage.setItem("kbrr_last_sync", JSON.stringify({ msg, color: "#e6a817" }));
+    setSyncIndicator(msg, "#e6a817");
   }
+}
+
+function setSyncIndicator(msg, color) {
+  const indicator = document.getElementById("sbSyncStatus");
+  if (indicator) { indicator.textContent = msg; indicator.style.color = color; }
+}
+
+function restoreSyncIndicator() {
+  try {
+    const saved = localStorage.getItem("kbrr_last_sync");
+    if (saved) {
+      const { msg, color } = JSON.parse(saved);
+      setSyncIndicator(msg, color);
+    }
+  } catch(e) {}
 }
 
 
