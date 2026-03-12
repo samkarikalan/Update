@@ -179,6 +179,10 @@ function newImportShowSelectMode(mode) {
   const addSection     = document.getElementById("newImportAddPlayersSection");
   const searchInput    = document.getElementById("newImportSearch");
 
+  // Always hide vault section first — shown only when mode === 'vault'
+  const vaultSection = document.getElementById("newImportVaultSection");
+  if (vaultSection) vaultSection.style.display = "none";
+
   if (mode === "addplayers") {
     listContainer.style.display  = "none";
     addSection.style.display     = "block";
@@ -198,16 +202,12 @@ function newImportShowSelectMode(mode) {
     searchInput.style.display    = "none";
     clearHistory.style.display   = "none";
     clearFavorites.style.display = "none";
-    const vaultSection = document.getElementById("newImportVaultSection");
     if (vaultSection) vaultSection.style.display = "block";
     if (mode === "register") newImportRenderRegister();
     // Sync vault status strip with current club
     if (typeof vaultSyncStatus === "function") vaultSyncStatus();
     return;
   }
-  // Hide vault section when switching away
-  const vaultSection = document.getElementById("newImportVaultSection");
-  if (vaultSection) vaultSection.style.display = "none";
 
   // Leaving addplayers tab — reset star toggle state
   newImportResetFavToggle();
