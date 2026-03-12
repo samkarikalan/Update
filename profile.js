@@ -308,6 +308,8 @@ function renderSessions(sessions, playerName) {
     }
   }
 
+  const hasLive = liveMatches.length > 0;
+
   // ── Past sessions — skip today's live entry only if LIVE card is showing ──
   // If no live matches (e.g. app reloaded after crash), show the live:true entry as past
   const today = new Date().toISOString().split('T')[0];
