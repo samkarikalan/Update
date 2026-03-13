@@ -42,14 +42,29 @@ let currentLang = "en";
 
 function toggleLangMenu() {
   const menu = document.getElementById('langMenu');
-  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';  
+  const isOpen = menu.style.display === 'block';
+  menu.style.display = isOpen ? 'none' : 'block';
+  // Close on outside click
+  if (!isOpen) {
+    setTimeout(() => {
+      document.addEventListener('click', _closeLangMenu, { once: true, capture: true });
+    }, 10);
+  }
 }
 
-document.querySelectorAll('.lang-menu div').forEach(item => {
-  item.addEventListener('click', () => {
-    document.getElementById('currentFlag').textContent = item.dataset.flag;
-    setLanguage(item.dataset.lang);
-    document.getElementById('langMenu').style.display = 'none';
+function _closeLangMenu(e) {
+  const wrapper = document.querySelector('.lang-wrapper');
+  if (wrapper && wrapper.contains(e.target)) return;
+  document.getElementById('langMenu').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.lang-menu div').forEach(item => {
+    item.addEventListener('click', () => {
+      document.getElementById('currentFlag').textContent = item.dataset.flag;
+      setLanguage(item.dataset.lang);
+      document.getElementById('langMenu').style.display = 'none';
+    });
   });
 });
 
@@ -388,38 +403,22 @@ async function playerMgmtRenderList() {
     a.displayName.localeCompare(b.displayName)
   );
 
-  const admin = (typeof isAdminMode === "function") && isAdminMode();
-
-  // Show toolbar only in admin mode
+  // Toolbar hidden — all edits are in the Players tab
   const toolbar = document.getElementById("playerMgmtToolbar");
-  if (toolbar) toolbar.style.display = admin ? "flex" : "none";
+  if (toolbar) toolbar.style.display = "none";
 
   sorted.forEach((p, i) => {
     const row = document.createElement("div");
     row.className = "player-mgmt-row";
     const safeName = p.displayName.replace(/'/g, "\'");
-    if (admin) {
-      row.innerHTML = `
-        <img src="${p.gender === 'Female' ? 'female.png' : 'male.png'}"
-             class="player-mgmt-avatar"
-             onclick="playerMgmtToggleGender('${safeName}')"
-             title="Tap to toggle gender">
-        <span class="player-mgmt-name player-mgmt-name-link" onclick="showPlayerStats('${safeName}')">${p.displayName}</span>
-        <input type="number" class="rating-edit-input"
-          value="${(typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1)}"
-          min="1.0" max="5.0" step="0.1"
-          onchange="playerMgmtSaveRating('${safeName}', this.value)">
-        <button class="player-mgmt-del-btn"
-          onclick="playerMgmtDelete('${safeName}')">🗑</button>
-      `;
-    } else {
-      row.innerHTML = `
-        <img src="${p.gender === 'Female' ? 'female.png' : 'male.png'}"
-             class="player-mgmt-avatar" style="cursor:default">
-        <span class="player-mgmt-name player-mgmt-name-link" onclick="showPlayerStats('${safeName}')">${p.displayName}</span>
-        <span class="rating-badge" style="font-size:0.8rem;padding:2px 7px">${(typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1)}</span>
-      `;
-    }
+    const rating = (typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
+    // Settings is read-only — all edits happen in the Players tab
+    row.innerHTML = `
+      <img src="${p.gender === 'Female' ? 'female.png' : 'male.png'}"
+           class="player-mgmt-avatar" style="cursor:default">
+      <span class="player-mgmt-name player-mgmt-name-link" onclick="showPlayerStats('${safeName}')">${p.displayName}</span>
+      <span class="rating-badge" style="font-size:0.8rem;padding:2px 7px">${rating}</span>
+    `;
     container.appendChild(row);
   });
 }
@@ -590,8 +589,108 @@ function vaultShowTab(tab, btn) {
   const content = document.getElementById('vaultTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
   if (content) content.classList.add('active');
   if (btn) btn.classList.add('active');
-  if (tab === 'players') playerPlayingRenderList();
+  if (tab === 'players')  playerPlayingRenderList();
   if (tab === 'register') vaultRenderRegister();
+  if (tab === 'modify')   vaultRenderModify();
+}
+
+/* ── Vault Modify tab — admin-only player edits ── */
+async function vaultRenderModify() {
+  const container = document.getElementById('vaultModifyList');
+  if (!container) return;
+
+  if (!(typeof isAdminMode === 'function' && isAdminMode())) {
+    container.innerHTML = '<p class="player-mgmt-empty">🔒 Admin access required.</p>';
+    return;
+  }
+
+  container.innerHTML = '<p style="color:#aaa;font-size:0.85rem">Loading...</p>';
+
+  if (!newImportState.historyPlayers || !newImportState.historyPlayers.length) {
+    await syncToLocal();
+  }
+  const players = [...(newImportState.historyPlayers || [])].sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
+
+  if (!players.length) {
+    container.innerHTML = '<p class="player-mgmt-empty">No players in club yet.</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+  players.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player-mgmt-row';
+    const safeName = p.displayName.replace(/'/g, "\\'");
+    const genderImg = p.gender === 'Female' ? 'female.png' : 'male.png';
+    row.innerHTML = `
+      <img src="${genderImg}" class="player-mgmt-avatar vault-gender-toggle"
+           onclick="vaultToggleGender('${safeName}', this)"
+           title="Tap to toggle gender">
+      <span class="player-mgmt-name vault-name-edit"
+            onclick="vaultEditName('${safeName}')"
+            title="Tap to edit name">${p.displayName}</span>
+      <button class="player-mgmt-del-btn"
+              onclick="vaultDeletePlayer('${safeName}')">🗑</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+async function vaultEditName(displayName) {
+  const newName = prompt('Edit player name:', displayName);
+  if (!newName || !newName.trim() || newName.trim() === displayName) return;
+  const trimmed = newName.trim();
+  const dup = (newImportState.historyPlayers || []).some(
+    p => p.displayName.trim().toLowerCase() === trimmed.toLowerCase() &&
+         p.displayName.trim().toLowerCase() !== displayName.trim().toLowerCase()
+  );
+  if (dup) { alert('Name already exists!'); return; }
+  try {
+    await sbPatch('players', `name=ilike.${encodeURIComponent(displayName.trim())}`, { name: trimmed });
+    const hp = (newImportState.historyPlayers || []).find(
+      p => p.displayName.trim().toLowerCase() === displayName.trim().toLowerCase()
+    );
+    if (hp) hp.displayName = trimmed;
+    localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
+    syncPlayersFromMaster();
+    updatePlayerList();
+    vaultRenderModify();
+  } catch(e) { alert('Failed to save. Check connection.'); }
+}
+
+async function vaultToggleGender(displayName, imgEl) {
+  const hp = (newImportState.historyPlayers || []).find(
+    p => p.displayName.trim().toLowerCase() === displayName.trim().toLowerCase()
+  );
+  if (!hp) return;
+  hp.gender = hp.gender === 'Female' ? 'Male' : 'Female';
+  imgEl.src = hp.gender === 'Female' ? 'female.png' : 'male.png';
+  localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
+  try {
+    await sbPatch('players', `name=ilike.${encodeURIComponent(displayName.trim())}`, { gender: hp.gender });
+    syncPlayersFromMaster();
+    updatePlayerList();
+  } catch(e) { /* silent — local already updated */ }
+}
+
+async function vaultDeletePlayer(displayName) {
+  if (!confirm(`Remove "${displayName}" from this club?`)) return;
+  try {
+    const players = await sbGet('players', `name=ilike.${encodeURIComponent(displayName.trim())}&select=id`);
+    if (players.length) {
+      const club = getMyClub();
+      await sbDelete('club_members', `player_id=eq.${players[0].id}&club_id=eq.${club.id}`);
+    }
+  } catch(e) { /* silent */ }
+  newImportState.historyPlayers = (newImportState.historyPlayers || []).filter(
+    p => p.displayName.trim().toLowerCase() !== displayName.trim().toLowerCase()
+  );
+  localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
+  syncPlayersFromMaster();
+  updatePlayerList();
+  vaultRenderModify();
 }
 
 // ── Club Management in Settings — password protected ──
@@ -663,6 +762,9 @@ function vaultSyncStatus() {
       if (mode === 'admin') { role.textContent = 'ADMIN'; role.style.background = '#2dce89'; role.style.color = '#000'; }
       else                  { role.textContent = 'USER';  role.style.background = 'var(--accent)'; role.style.color = '#fff'; }
     }
+    // Modify tab — admin only
+    const modifyBtn = document.getElementById('vaultTabModifyBtn');
+    if (modifyBtn) modifyBtn.style.display = mode === 'admin' ? '' : 'none';
   } else {
     if (name)  name.textContent  = 'No club selected';
     if (dot)   { dot.style.background = 'var(--muted)'; dot.style.boxShadow = 'none'; }

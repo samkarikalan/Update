@@ -574,14 +574,11 @@ function createPlayerCard(player, index) {
     </div>
     <div class="pec-col pec-sl">${index + 1}</div>
     <div class="pec-col pec-gender">
-      <img src="${genderImg}" class="gender-icon pec-gender-img" onclick="toggleGender(${index}, this)" title="Tap to toggle gender">
+      <img src="${genderImg}" class="gender-icon pec-gender-img" style="cursor:default">
     </div>
-    <div class="pec-col pec-name" onclick="editPlayerName(${index})">${player.name}</div>
+    <div class="pec-col pec-name">${player.name}</div>
     <div class="pec-col pec-rating">
       <span class="rating-badge" data-player="${player.name}">${(typeof getActiveRating === 'function' ? getActiveRating(player.name) : getRating(player.name)).toFixed(1)}</span>
-    </div>
-    <div class="pec-col pec-delete">
-      <button class="pec-btn delete" onclick="deletePlayer(${index})">🗑</button>
     </div>
   `;
   return card;

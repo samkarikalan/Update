@@ -524,6 +524,7 @@
           <div class="vault-inner-tabs">
             <button class="vault-inner-tab active" id="vaultTabPlayersBtn" onclick="vaultShowTab('players',this)">🔴 Playing</button>
             <button class="vault-inner-tab" id="vaultTabRegisterBtn" onclick="vaultShowTab('register',this)">📋 Register</button>
+            <button class="vault-inner-tab" id="vaultTabModifyBtn" onclick="vaultShowTab('modify',this)">✏️ Modify</button>
           </div>
 
           <!-- PLAYING inner tab -->
@@ -534,6 +535,11 @@
           <!-- REGISTER inner tab -->
           <div class="vault-inner-content" id="vaultTabRegister">
             <div id="vaultRegisterContainer"></div>
+          </div>
+
+          <!-- MODIFY inner tab — admin only player edits -->
+          <div class="vault-inner-content" id="vaultTabModify">
+            <div id="vaultModifyList" class="player-mgmt-list"></div>
           </div>
 
           <div id="vaultFeedback"></div>

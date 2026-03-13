@@ -1805,3 +1805,13 @@ body.app-dark .newImport-player-card.player-added {
   animation: helpSpin 0.7s linear infinite;
 }
 @keyframes helpSpin { to { transform: rotate(360deg); } }
+
+/* Vault Modify tab */
+.vault-gender-toggle { cursor: pointer; transition: opacity 0.15s; }
+.vault-gender-toggle:active { opacity: 0.6; }
+.vault-name-edit {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.vault-name-edit:active { opacity: 0.6; }
