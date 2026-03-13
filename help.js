@@ -46,12 +46,12 @@ function loadHelpData(callback) {
 
   _setHelpContainer(`<div class="help-loading"><div class="help-spinner"></div><p>${getI18n('loading')}</p></div>`);
 
-  fetch(`https://samkarikalan.github.io/APP/help_${lang}.json?v=${Date.now()}`)
+  fetch(`./help_${lang}.json?v=${Date.now()}`)
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => { helpData = data; loadedLang = lang; callback(data); })
     .catch(() => {
       if (lang !== 'en') {
-        fetch(`https://samkarikalan.github.io/APP/help_en.json?v=${Date.now()}`)
+        fetch(`./help_en.json?v=${Date.now()}`)
           .then(r => r.json())
           .then(data => { helpData = data; loadedLang = 'en'; callback(data); })
           .catch(showHelpError);
