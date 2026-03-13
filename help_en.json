@@ -1,130 +1,304 @@
 {
+  "getting_started": {
+    "welcome": {
+      "title": "🏸 Welcome to CLUB Scheduler",
+      "content": "CLUB Scheduler helps badminton clubs organise fair, balanced sessions. It tracks your ratings, match history, and lets you manage multiple clubs.",
+      "tip": "Start by setting up your profile — tap the person icon at the top right."
+    },
+    "set_profile": {
+      "title": "👤 Set Your Profile",
+      "list": [
+        "Tap the profile icon (top right)",
+        "Find your name in the player list",
+        "First time — set a 4-digit PIN and a recovery word",
+        "Next time — just enter your PIN"
+      ],
+      "note": "Your profile is required to use the app. You cannot proceed without selecting your name."
+    },
+    "join_club": {
+      "title": "🏟️ Join or Create a Club",
+      "list": [
+        "Go to Settings tab",
+        "Tap 'Join Club' and enter the club password",
+        "Or tap 'Create Club' to start your own",
+        "You can belong to multiple clubs"
+      ],
+      "tip": "Club admins get extra controls — end sessions, manage players."
+    },
+    "first_session": {
+      "title": "🚀 Running Your First Session",
+      "list": [
+        "1. Go to Players tab — activate players who are present today",
+        "2. Go to Rounds tab — tap 'New Round' to generate courts",
+        "3. After each game, tap W or L to record the result",
+        "4. Tap 'New Round' again for the next rotation",
+        "5. When done, tap 'End Session' from your profile"
+      ]
+    },
+    "rating_explained": {
+      "title": "⭐ How Ratings Work",
+      "content": "Every player starts at rating 1.0. Ratings go up when you win and down when you lose. The change depends on opponent strength.",
+      "list": [
+        "1.0 – 1.9 → Beginner",
+        "2.0 – 2.9 → Developing",
+        "3.0 – 3.9 → Intermediate",
+        "4.0 – 4.4 → Advanced",
+        "4.5+ → Elite"
+      ],
+      "tip": "You have a Global Rating (across all clubs) and a Club Rating (for this club only)."
+    }
+  },
   "players": {
-    "male": {
-      "title": "🔵👨 Blue Player Row (Male)",
+    "player_rows": {
+      "title": "👥 Player List",
+      "content": "Each row shows one player. Blue background = Male, Pink background = Female.",
       "list": [
-        "Blue background + man icon = Male player",
-        "Example: Alan",
-        "If the checkbox is checked → the player is active",
-        "Active male players are included in scheduling"
+        "Checkbox ticked → player is active (will be scheduled)",
+        "Checkbox unticked → player is resting (skipped this session)",
+        "Tap the trash icon to remove a player from the list"
       ]
     },
-    "female": {
-      "title": "🌸👩 Pink Player Row (Female)",
-      "list": [
-        "Pink background + woman icon = Female player",
-        "Example: Rose",
-        "If the checkbox is checked → the player is active",
-        "Active female players are included in scheduling"
-      ]
-    },
-    "checkbox": {
-      "title": "✅ Checkbox Meaning",
-      "list": [
-        "Checked → Player is active",
-        "Unchecked → Player is inactive (not scheduled)"
-      ]
-    },
-    "trash": {
-      "title": "🗑️ Trash Icon",
-      "content": "Click the trash bin to remove the player from the list"
-    },
-    "rules": {
-      "title": "📊 Important Rules",
+    "courts_rule": {
+      "title": "🎾 Courts & Player Count",
       "list": [
         "4 active players = 1 court",
         "8 active players = 2 courts",
-        "Gender does not affect court count"
-      ]
+        "12 active players = 3 courts",
+        "Every 4 players = 1 additional court"
+      ],
+      "note": "Gender does not affect the number of courts."
     },
-    "tips": {
-      "title": "⭐ Quick Tips",
+    "import_players": {
+      "title": "📥 Importing Players",
+      "content": "Tap the import button to add players from your club database.",
       "list": [
-        "Can’t add more courts? Activate more players",
-        "Player not scheduled? Check the checkbox",
-        "Blue / Pink color is visual only"
+        "Search by name to find players",
+        "Select multiple players at once",
+        "Players are added with their current ratings"
+      ],
+      "tip": "Import only the players present today — inactive players slow down round generation."
+    },
+    "adding_players": {
+      "title": "➕ Adding New Players",
+      "content": "New players can be added directly from the Players tab. They start at rating 1.0 and are automatically registered to your club.",
+      "tip": "Make sure to enter the correct gender — it affects mixed doubles pairing."
+    },
+    "troubleshooting": {
+      "title": "🔧 Common Issues",
+      "list": [
+        "Can't add a court? — You need at least 4 more active players",
+        "Player not being scheduled? — Check their checkbox is ticked",
+        "Wrong gender shown? — Edit the player and correct it"
       ]
     }
   },
   "rounds": {
-    "lock": {
-      "title": "🔒 Lock",
+    "generating_rounds": {
+      "title": "🔄 Generating Rounds",
+      "content": "Tap 'New Round' to automatically generate fair court assignments. The system balances player pairings so everyone plays with different partners over time.",
+      "tip": "The scheduler tracks who has played with and against whom to keep matchups fresh."
+    },
+    "courts_layout": {
+      "title": "🏸 Court Layout",
       "list": [
-        "Prevents swapping teams or players"
+        "Each row = one court",
+        "Each court has 2 teams of 2 players",
+        "Left team vs Right team",
+        "Players not on a court are resting this round"
       ]
     },
-    "unlock": {
-      "title": "🔒 Unlock",
+    "recording_results": {
+      "title": "✅ Recording Results",
+      "content": "After each game, tap W (Win) or L (Loss) for each court. This updates ratings immediately.",
       "list": [
-        "Enables swapping teams or players"
-      ]
+        "W = the left team won",
+        "L = the right team won",
+        "Results sync to all club members in real time"
+      ],
+      "tip": "Record results before generating the next round — results affect how the next round is balanced."
     },
-    "courts": {
-      "title": "🎾 Courts & Teams",
+    "lock_unlock": {
+      "title": "🔒 Lock / Unlock Round",
       "list": [
-        "Each row represents one court",
-        "Each court has 2 teams (2 players per team)",
-        "4 active players are required per court"
-      ]
+        "Locked — no manual player swaps allowed",
+        "Unlocked — you can swap players between courts",
+        "Auto-rotation still works even when locked"
+      ],
+      "note": "Lock the round once you are happy with the court assignments."
     },
-    "swap_icon": {
-      "title": "🔄 Swap Icon",
+    "swapping_players": {
+      "title": "🔄 Swapping Players",
       "list": [
-        "Swap players between teams or courts",
-        "Used for balancing matches"
-      ]
+        "1. Unlock the round first",
+        "2. Tap the player you want to move",
+        "3. Tap the player to swap with (another court or from resting)",
+        "4. Swap happens immediately"
+      ],
+      "tip": "Use swaps to balance a lopsided court or handle last-minute player changes."
     },
-    "swap_players": {
-      "title": "Swap Players",
-      "list": [
-        "Unlock the rounds<br>Rounds must be unlocked before any changes can be made.",
-        "Select the player to swap<br>Tap or click the player you want to replace on a court.",
-        "Choose a replacement player<br>- From another court (active player)<br>- From the resting / sitting-out players list",
-        "Confirm the swap<br>The selected players will be exchanged instantly.",
-        "Used for balancing matches, fixing last-minute changes, or handling injuries."
-      ]
-    },
-    "resting": {
+    "resting_players": {
       "title": "💤 Resting Players",
+      "content": "Players not on a court this round are resting. The number next to their name shows how many rounds they have rested.",
+      "tip": "The scheduler prioritises resting players in the next round to keep things fair."
+    }
+  },
+  "profile": {
+    "your_profile": {
+      "title": "👤 Your Profile Card",
+      "content": "Your profile shows your current ratings, all-time wins and losses, and recent session history.",
       "list": [
-        "Players not playing this round",
-        "#1, #2 = number of rested rounds",
-        "Gender color is preserved"
+        "Global Rating — your rating across all clubs",
+        "Club Rating — your rating in this specific club",
+        "All-Time Wins / Losses — total career record",
+        "Recent Sessions — last 3 sessions with match details"
       ]
+    },
+    "pin_setup": {
+      "title": "🔐 PIN & Recovery Word",
+      "list": [
+        "First time — set a 4-digit PIN and a secret recovery word",
+        "Next time — just enter your PIN to log in",
+        "Forgot PIN? — tap 'Forgot PIN?' and enter your recovery word",
+        "Your PIN protects your profile from others"
+      ]
+    },
+    "switching_profiles": {
+      "title": "🔁 Switching Profiles",
+      "content": "Tap 'Switch' in your profile card to select a different player. You will need that player's PIN.",
+      "tip": "Useful if you share a device with another club member."
+    },
+    "end_session": {
+      "title": "🏁 End Session",
+      "content": "When the session is over, tap 'End Session' from your profile. This saves all match data and updates ratings.",
+      "list": [
+        "The player who started the session can end it",
+        "Club admins can always end the session",
+        "Data is saved to your profile history"
+      ],
+      "note": "If the app is idle for 1 hour, the session ends automatically."
+    },
+    "session_history": {
+      "title": "📅 Session History",
+      "content": "Your last 3 sessions appear in your profile. Tap to expand and see individual match results.",
+      "tip": "Today's live session always shows at the top with a LIVE badge."
+    }
+  },
+  "clubs": {
+    "creating_club": {
+      "title": "🏟️ Creating a Club",
+      "list": [
+        "Go to Settings tab → tap 'Create Club'",
+        "Set a club name, select password, and admin password",
+        "Share the select password with members to let them join",
+        "Keep the admin password private"
+      ],
+      "note": "The admin password cannot be recovered if lost. Keep it safe."
+    },
+    "joining_club": {
+      "title": "🤝 Joining a Club",
+      "list": [
+        "Go to Settings tab → tap 'Join Club'",
+        "Enter the club name and select password",
+        "You are now a member of that club"
+      ],
+      "tip": "You can join multiple clubs and switch between them in Settings."
+    },
+    "admin_controls": {
+      "title": "🛡️ Admin Controls",
+      "content": "Club admins have extra powers:",
+      "list": [
+        "End the session for everyone",
+        "View all player profiles",
+        "Manage club membership",
+        "Access admin vault in Settings"
+      ]
+    },
+    "multiple_clubs": {
+      "title": "🌐 Multiple Clubs",
+      "content": "You can belong to as many clubs as you like. Each club has its own separate Club Rating.",
+      "tip": "Global Rating is shared across all clubs. Club Rating is specific to each club."
     }
   },
   "summary": {
-    "ranking": {
-      "title": "📊 Player Ranking Table",
+    "rankings_table": {
+      "title": "📊 Player Rankings",
+      "content": "The Summary tab shows fairness rankings for the current session.",
       "list": [
-        "Shows all players sorted by play fairness",
-        "<b>Rank</b> indicates priority order",
-        "<b>Played</b> = number of rounds played",
-        "<b>Rested</b> = number of rounds rested"
-      ]
+        "Rank — priority order for next round",
+        "Played — rounds played this session",
+        "Rested — rounds sat out",
+        "Higher rank = more rounds played = lower priority next"
+      ],
+      "tip": "Use this to quickly check if the session has been fair to everyone."
     },
     "match_details": {
-      "title": "🏸 Round Match Details",
+      "title": "🏸 Match Details",
       "list": [
-        "Shows team matchups for each round",
-        "Each box represents one team",
-        "VS indicates competing teams"
+        "Each box = one team",
+        "VS = the two teams facing each other",
+        "W / L shown after result is recorded"
       ]
     },
     "resting_summary": {
-      "title": "💤 Resting Summary",
+      "title": "💤 Resting Players",
       "list": [
-        "Shows players resting in that round",
-        "<b>#1</b>, <b>#2</b> indicate rest count",
-        "Gender color is preserved"
+        "Shows who rested in each round",
+        "#1, #2 = number of rounds rested",
+        "Colours match gender (blue = male, pink = female)"
       ]
     },
-    "tips": {
-      "title": "⭐ Summary Tips",
+    "using_summary": {
+      "title": "💡 How to Use Summary",
       "list": [
-        "Higher rank = more play priority",
-        "Used to verify fair rotation",
-        "No manual changes here"
+        "Check before each new round to spot unfairness",
+        "If someone has rested too many times, they will be prioritised",
+        "Use it to settle disputes about who has played how much"
+      ],
+      "note": "Summary is read-only. Changes must be made in the Rounds tab."
+    }
+  },
+  "faq": {
+    "forgot_pin": {
+      "title": "🔑 I Forgot My PIN",
+      "list": [
+        "On the PIN screen, tap 'Forgot PIN?'",
+        "Enter your recovery word",
+        "Set a new 4-digit PIN",
+        "You are logged in immediately"
+      ],
+      "note": "If you also forgot your recovery word, ask your club admin for help."
+    },
+    "offline": {
+      "title": "📶 Does It Work Offline?",
+      "content": "Partial offline support is available. You can view imported players and current rounds offline. Syncing ratings and saving session history requires internet.",
+      "tip": "Always ensure you have a connection before ending a session."
+    },
+    "ratings_not_updating": {
+      "title": "⭐ My Rating Is Not Updating",
+      "list": [
+        "Make sure you recorded W or L for the round",
+        "Check your internet connection",
+        "Ratings update after each round is scored",
+        "Re-open the app to force a refresh"
+      ]
+    },
+    "session_lost": {
+      "title": "😟 I Closed the App Mid-Session",
+      "content": "Don't worry — live session data is saved to the cloud every round. When you reopen and end the session, your match data and ratings are recovered automatically.",
+      "tip": "This is why setting your profile before playing matters — so the system knows who you are."
+    },
+    "auto_end": {
+      "title": "⏱️ Session Ended Automatically",
+      "content": "If no rounds are scored for 1 hour, the session ends automatically. All data is saved before it closes.",
+      "note": "This prevents sessions from being accidentally left open overnight."
+    },
+    "multiple_devices": {
+      "title": "📱 Using Multiple Devices",
+      "content": "The app works across multiple devices in the same club.",
+      "list": [
+        "Live session visible from any device",
+        "Only the session starter or admin can End Session",
+        "Ratings sync automatically after each round"
       ]
     }
   }

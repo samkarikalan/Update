@@ -374,12 +374,21 @@
   <!--           HELP PAGE           -->
   <!-- ============================= -->
   <div id="helpPage" class="page" style="display:none;">
-    <div class="help-buttons">
-      <button class="help-btn active" onclick="loadHelp('players')" data-i18n="players"></button>
-      <button class="help-btn" onclick="loadHelp('rounds')" data-i18n="rounds"></button>
-      <button class="help-btn" onclick="loadHelp('summary')" data-i18n="summary"></button>
+
+    <!-- Search bar -->
+    <div class="help-search-wrap">
+      <span class="help-search-icon">🔍</span>
+      <input type="text" id="helpSearch" class="help-search-input"
+        placeholder="Search help..."
+        oninput="helpSearch(this.value)">
     </div>
-    <div id="helpContainer"></div>
+
+    <!-- Section navigation -->
+    <div id="helpNav" class="help-nav"></div>
+
+    <!-- Content -->
+    <div id="helpContainer" class="help-container"></div>
+
   </div>
 
   <!-- ============================= -->

@@ -289,7 +289,9 @@ function showPage(pageID, el) {
     renderRounds();
   }
 
-  if (pageID === "helpPage") {}
+  if (pageID === "helpPage") {
+    if (typeof onHelpTabOpen === "function") onHelpTabOpen();
+  }
 
   // Update last visited page
   lastPage = pageID;
