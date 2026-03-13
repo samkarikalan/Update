@@ -496,6 +496,10 @@ async function syncLiveSession(playedNames) {
       }
     }
 
+    // started_by — same for all rows, resolve once outside the map
+    const myPlayer  = (typeof getMyPlayer === "function") ? getMyPlayer() : null;
+    const startedBy = myPlayer ? myPlayer.name : null;
+
     // Upsert all played players in parallel
     const upserts = players
       .filter(p => playedNames.has(p.name) && (playerMatches.get(p.name) || []).length)
@@ -503,6 +507,7 @@ async function syncLiveSession(playedNames) {
         const matches = playerMatches.get(p.name);
         const wins    = matches.filter(m => m.result === "W").length;
         const losses  = matches.filter(m => m.result === "L").length;
+
         const row = {
           player_name: p.name,
           club_id:     club.id,
@@ -511,6 +516,7 @@ async function syncLiveSession(playedNames) {
           losses,
           rating:      getActiveRating(p.name),
           matches,
+          started_by:  startedBy,
           updated_at:  new Date().toISOString()
         };
         return sbUpsert("live_sessions", row, "player_name,club_id,date").catch(() => {});
@@ -538,34 +544,42 @@ async function flushLiveSession() {
         ? JSON.parse(row.matches) : (row.matches || []);
       if (!matches.length) return;
 
-      const entry = {
-        date:    row.date,
-        wins:    row.wins   || 0,
-        losses:  row.losses || 0,
-        rating:  parseFloat(row.rating) || 1.0,
-        matches
-      };
-
-      // Write to players.sessions
+      // Write to players.sessions — merge with existing today entry if present
       try {
         const playerRows = await sbGet("players",
           `name=ilike.${encodeURIComponent(row.player_name)}&select=id,sessions`);
         if (playerRows && playerRows.length) {
-          const existing = playerRows[0].sessions || [];
-          const filtered = existing.filter(s => s.date !== today);
-          const updated  = [entry, ...filtered].slice(0, 3);
+          const existing   = playerRows[0].sessions || [];
+          const todayEntry = existing.find(s => s.date === today);
+          const otherDays  = existing.filter(s => s.date !== today);
+
+          // Merge matches — append new ones, avoiding exact duplicates
+          const prevMatches = todayEntry ? (todayEntry.matches || []) : [];
+          const allMatches  = [...prevMatches, ...matches];
+          const mergedWins   = allMatches.filter(m => m.result === "W").length;
+          const mergedLosses = allMatches.filter(m => m.result === "L").length;
+
+          const entry = {
+            date:    row.date,
+            wins:    mergedWins,
+            losses:  mergedLosses,
+            rating:  parseFloat(row.rating) || 1.0,  // latest rating
+            matches: allMatches
+          };
+
+          const updated = [entry, ...otherDays].slice(0, 3);
           await sbPatch("players",
             `name=ilike.${encodeURIComponent(row.player_name)}`, { sessions: updated });
+
+          // Mirror to localStorage
+          try {
+            const lsKey = `kbrr_sessions_${row.player_name.toLowerCase().replace(/\s+/g, "_")}`;
+            const lsExisting  = JSON.parse(localStorage.getItem(lsKey) || "[]");
+            const lsOtherDays = lsExisting.filter(s => s.date !== today);
+            localStorage.setItem(lsKey, JSON.stringify([entry, ...lsOtherDays].slice(0, 3)));
+          } catch(e) {}
         }
       } catch(e) { /* continue */ }
-
-      // Write to localStorage
-      try {
-        const lsKey    = `kbrr_sessions_${row.player_name.toLowerCase().replace(/\s+/g, "_")}`;
-        const existing = JSON.parse(localStorage.getItem(lsKey) || "[]");
-        const filtered = existing.filter(s => s.date !== today);
-        localStorage.setItem(lsKey, JSON.stringify([entry, ...filtered].slice(0, 3)));
-      } catch(e) {}
     });
 
     // Wait for all writes with a 10s timeout — never hang End Session

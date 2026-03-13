@@ -34,6 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Clean up stale live_sessions from previous days
   if (typeof cleanupLiveSessions === "function") cleanupLiveSessions();
 
+  // ── Profile gate — must select profile before using app ──
+  setTimeout(() => {
+    const player = (typeof getMyPlayer === "function") ? getMyPlayer() : null;
+    if (!player) {
+      if (typeof openProfileDrawer === "function") openProfileDrawer();
+    }
+  }, 800); // slight delay so club join overlay takes priority if needed
+
   // Auto end session if no round activity for 1 hour
   const AUTO_END_MS = 60 * 60 * 1000; // 1 hour
   setInterval(async () => {

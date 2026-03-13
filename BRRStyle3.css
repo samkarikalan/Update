@@ -1486,3 +1486,70 @@ body.app-dark .newImport-player-card.player-added {
   margin-top: 3px !important;
 }
 
+
+/* ── PIN Flow ── */
+.pin-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px 32px;
+  gap: 12px;
+}
+.pin-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.pin-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin: 0 0 4px;
+}
+.pin-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: 'Nunito', sans-serif;
+  text-align: center;
+  outline: none;
+  box-sizing: border-box;
+}
+.pin-input:focus { border-color: var(--accent); }
+.pin-error {
+  font-size: 0.82rem;
+  color: #e63757;
+  min-height: 18px;
+  text-align: center;
+}
+.pin-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  border: none;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.pin-btn:active { opacity: 0.85; }
+.pin-btn-secondary {
+  width: 100%;
+  padding: 11px;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+}

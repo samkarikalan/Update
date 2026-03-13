@@ -65,11 +65,48 @@ async function profileEndSession() {
 }
 
 /* ── Open drawer ── */
-function openProfileDrawer() {
+async function openProfileDrawer() {
   const overlay = document.getElementById('profileOverlay');
   const drawer  = document.getElementById('profileDrawer');
   overlay.classList.remove('hidden');
   drawer.classList.add('open');
+
+  // Determine if End Session button should be visible:
+  // — Admin: always
+  // — The player who started the rounds (started_by in live_sessions): always
+  // — Anyone else: hidden
+  const endBtn = document.getElementById('profileEndBtn');
+  if (endBtn) {
+    const isAdmin = (typeof isAdminMode === 'function') && isAdminMode();
+    if (isAdmin) {
+      endBtn.style.display = '';
+    } else {
+      // Check live_sessions for today to see who started rounds
+      try {
+        const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+        const today = new Date().toISOString().split('T')[0];
+        const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+        let canEnd = false;
+
+        if (club.id && myPlayer) {
+          const rows = await sbGet('live_sessions',
+            `club_id=eq.${club.id}&date=eq.${today}&order=updated_at.desc&limit=1`);
+          if (rows && rows.length) {
+            const startedBy = rows[0].started_by;
+            // Allow if: name matches started_by, OR started_by not set, OR has local active rounds
+            const nameMatch  = startedBy &&
+              startedBy.trim().toLowerCase() === myPlayer.name.trim().toLowerCase();
+            const hasRounds  = typeof allRounds !== 'undefined' &&
+              allRounds.some(r => (r.games || r).some(g => g.winner));
+            canEnd = nameMatch || hasRounds;
+          }
+        }
+        endBtn.style.display = canEnd ? '' : 'none';
+      } catch(e) {
+        endBtn.style.display = 'none';
+      }
+    }
+  }
 
   const player = getMyPlayer();
   if (player) {
@@ -81,6 +118,9 @@ function openProfileDrawer() {
 
 /* ── Close drawer ── */
 function closeProfileDrawer() {
+  // Block closing if no profile selected — app requires a profile
+  const player = getMyPlayer();
+  if (!player) return;
   document.getElementById('profileOverlay').classList.add('hidden');
   document.getElementById('profileDrawer').classList.remove('open');
 }
@@ -100,12 +140,14 @@ function showProfilePicker() {
   if (searchEl) searchEl.value = '';
 
   // Load ALL players from server (no club filter)
-  sbGet('players', 'order=name.asc&select=id,name,gender,rating,club_ratings').then(players => {
+  sbGet('players', 'order=name.asc&select=id,name,gender,rating,club_ratings,pin,recovery_word').then(players => {
     _pickerAllPlayers = (players || []).map(p => ({
-      name:        p.name,
-      gender:      p.gender || 'Male',
-      rating:      p.rating || 1.0,
-      club_ratings: p.club_ratings || {}
+      name:          p.name,
+      gender:        p.gender || 'Male',
+      rating:        p.rating || 1.0,
+      club_ratings:  p.club_ratings || {},
+      pin:           p.pin || null,
+      recovery_word: p.recovery_word || null
     }));
     renderPickerList(_pickerAllPlayers);
   }).catch(() => {
@@ -133,11 +175,7 @@ function renderPickerList(players) {
       <img src="${p.gender === 'Female' ? 'female.png' : 'male.png'}" class="profile-picker-avatar">
       <span>${p.name}</span>
     `;
-    btn.onclick = () => {
-      setMyPlayer({ name: p.name, gender: p.gender || 'Male' });
-      updateProfileBtn();
-      showProfileCard({ name: p.name, gender: p.gender || 'Male' });
-    };
+    btn.onclick = () => profileSelectPlayer(p);
     list.appendChild(btn);
   });
 }
@@ -148,6 +186,147 @@ function filterPickerList(query) {
     ? _pickerAllPlayers.filter(p => p.name.toLowerCase().includes(q))
     : _pickerAllPlayers;
   renderPickerList(filtered);
+}
+
+/* ── PIN FLOW ── */
+
+// Entry point when player name tapped
+function profileSelectPlayer(p) {
+  if (!p.pin) {
+    // No PIN yet — show setup screen
+    showPinSetup(p);
+  } else {
+    // PIN exists — show login screen
+    showPinLogin(p);
+  }
+}
+
+// Render a PIN screen inside the picker area
+function _showPinScreen(html) {
+  const picker = document.getElementById('profilePicker');
+  picker.innerHTML = `
+    <div class="profile-drawer-header">
+      <span class="profile-drawer-title">Who are you?</span>
+      <button class="profile-drawer-close" onclick="showProfilePicker()">✕</button>
+    </div>
+    <div class="pin-screen">${html}</div>`;
+}
+
+// ── Setup: first time — set PIN + recovery word ──
+function showPinSetup(p) {
+  _showPinScreen(`
+    <div class="pin-name">${p.name}</div>
+    <p class="pin-hint">First time? Set a 4-digit PIN and a recovery word.</p>
+    <input id="pinSetupPin" type="password" inputmode="numeric" maxlength="4"
+      class="pin-input" placeholder="Set PIN (4 digits)">
+    <input id="pinSetupConfirm" type="password" inputmode="numeric" maxlength="4"
+      class="pin-input" placeholder="Confirm PIN">
+    <input id="pinSetupRecovery" type="text" class="pin-input"
+      placeholder="Recovery word (secret)">
+    <div id="pinSetupError" class="pin-error"></div>
+    <button class="pin-btn" onclick="confirmPinSetup('${p.name.replace(/'/g,"\\'")}')">Save & Continue</button>
+  `);
+}
+
+async function confirmPinSetup(name) {
+  const pin     = document.getElementById('pinSetupPin').value.trim();
+  const confirm = document.getElementById('pinSetupConfirm').value.trim();
+  const recovery = document.getElementById('pinSetupRecovery').value.trim().toLowerCase();
+  const err     = document.getElementById('pinSetupError');
+
+  if (!/^\d{4}$/.test(pin))       { err.textContent = 'PIN must be exactly 4 digits.'; return; }
+  if (pin !== confirm)             { err.textContent = 'PINs do not match.'; return; }
+  if (recovery.length < 3)        { err.textContent = 'Recovery word too short.'; return; }
+
+  err.textContent = '⏳ Saving...';
+  try {
+    await sbPatch('players', `name=ilike.${encodeURIComponent(name)}`, {
+      pin, recovery_word: recovery
+    });
+    const p = _pickerAllPlayers.find(x => x.name === name);
+    if (p) { p.pin = pin; p.recovery_word = recovery; }
+    _completeProfileSelection(name);
+  } catch(e) {
+    err.textContent = 'Failed to save. Try again.';
+  }
+}
+
+// ── Login: enter PIN ──
+function showPinLogin(p) {
+  _showPinScreen(`
+    <div class="pin-name">${p.name}</div>
+    <p class="pin-hint">Enter your PIN to continue.</p>
+    <input id="pinLoginPin" type="password" inputmode="numeric" maxlength="4"
+      class="pin-input" placeholder="Enter PIN">
+    <div id="pinLoginError" class="pin-error"></div>
+    <button class="pin-btn" onclick="confirmPinLogin('${p.name.replace(/'/g,"\\'")}')">Continue</button>
+    <button class="pin-btn-secondary" onclick="showPinRecovery('${p.name.replace(/'/g,"\\'")}')">Forgot PIN?</button>
+  `);
+  // Allow Enter key
+  setTimeout(() => {
+    const el = document.getElementById('pinLoginPin');
+    if (el) el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirmPinLogin(p.name);
+    });
+  }, 50);
+}
+
+function confirmPinLogin(name) {
+  const entered = document.getElementById('pinLoginPin').value.trim();
+  const err     = document.getElementById('pinLoginError');
+  const p       = _pickerAllPlayers.find(x => x.name === name);
+  if (!p) { err.textContent = 'Player not found.'; return; }
+  if (entered !== p.pin) { err.textContent = '❌ Wrong PIN. Try again.'; return; }
+  _completeProfileSelection(name);
+}
+
+// ── Recovery: enter recovery word → reset PIN ──
+function showPinRecovery(name) {
+  _showPinScreen(`
+    <div class="pin-name">${name}</div>
+    <p class="pin-hint">Enter your recovery word to reset your PIN.</p>
+    <input id="pinRecoveryWord" type="text" class="pin-input" placeholder="Recovery word">
+    <input id="pinRecoveryNew" type="password" inputmode="numeric" maxlength="4"
+      class="pin-input" placeholder="New PIN (4 digits)">
+    <input id="pinRecoveryConfirm" type="password" inputmode="numeric" maxlength="4"
+      class="pin-input" placeholder="Confirm new PIN">
+    <div id="pinRecoveryError" class="pin-error"></div>
+    <button class="pin-btn" onclick="confirmPinRecovery('${name.replace(/'/g,"\\'")}')">Reset PIN</button>
+    <button class="pin-btn-secondary" onclick="showProfilePicker()">Back</button>
+  `);
+}
+
+async function confirmPinRecovery(name) {
+  const word    = document.getElementById('pinRecoveryWord').value.trim().toLowerCase();
+  const newPin  = document.getElementById('pinRecoveryNew').value.trim();
+  const confirm = document.getElementById('pinRecoveryConfirm').value.trim();
+  const err     = document.getElementById('pinRecoveryError');
+  const p       = _pickerAllPlayers.find(x => x.name === name);
+
+  if (!p) { err.textContent = 'Player not found.'; return; }
+  if (word !== (p.recovery_word || '').toLowerCase()) {
+    err.textContent = '❌ Wrong recovery word.'; return;
+  }
+  if (!/^\d{4}$/.test(newPin))    { err.textContent = 'PIN must be 4 digits.'; return; }
+  if (newPin !== confirm)          { err.textContent = 'PINs do not match.'; return; }
+
+  err.textContent = '⏳ Saving...';
+  try {
+    await sbPatch('players', `name=ilike.${encodeURIComponent(name)}`, { pin: newPin });
+    p.pin = newPin;
+    _completeProfileSelection(name);
+  } catch(e) {
+    err.textContent = 'Failed to save. Try again.';
+  }
+}
+
+// ── Final step: set profile and open card ──
+function _completeProfileSelection(name) {
+  const p = _pickerAllPlayers.find(x => x.name === name);
+  const player = { name, gender: (p && p.gender) || 'Male' };
+  setMyPlayer(player);
+  updateProfileBtn();
+  showProfileCard(player);
 }
 
 /* ── Switch player ── */
