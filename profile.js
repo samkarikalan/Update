@@ -245,6 +245,7 @@ async function confirmPinSetup(name) {
     });
     const p = _pickerAllPlayers.find(x => x.name === name);
     if (p) { p.pin = pin; p.recovery_word = recovery; }
+    err.textContent = '';
     _completeProfileSelection(name);
   } catch(e) {
     err.textContent = 'Failed to save. Try again.';
@@ -314,6 +315,7 @@ async function confirmPinRecovery(name) {
   try {
     await sbPatch('players', `name=ilike.${encodeURIComponent(name)}`, { pin: newPin });
     p.pin = newPin;
+    err.textContent = '';
     _completeProfileSelection(name);
   } catch(e) {
     err.textContent = 'Failed to save. Try again.';
