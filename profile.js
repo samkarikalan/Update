@@ -4,6 +4,8 @@
    ============================================================ */
 
 const PROFILE_KEY = 'kbrr_my_player';
+let _profileSwitching = false; // true while user is mid-switch
+let _previousPlayer   = null;  // saved before switch so cancel can restore
 
 function getMyPlayer() {
   try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || null; }
@@ -118,9 +120,19 @@ async function openProfileDrawer() {
 
 /* ── Close drawer ── */
 function closeProfileDrawer() {
-  // Block closing if no profile selected — app requires a profile
   const player = getMyPlayer();
-  if (!player) return;
+  if (!player) {
+    if (_profileSwitching && _previousPlayer) {
+      // Cancel switch — restore previous player and close
+      _profileSwitching = false;
+      setMyPlayer(_previousPlayer);
+      updateProfileBtn();
+      _previousPlayer = null;
+    } else {
+      // No profile at all — block closing
+      return;
+    }
+  }
   document.getElementById('profileOverlay').classList.add('hidden');
   document.getElementById('profileDrawer').classList.remove('open');
 }
@@ -129,8 +141,10 @@ function closeProfileDrawer() {
 let _pickerAllPlayers = []; // cache for search filtering
 
 function showProfilePicker() {
-  document.getElementById('profilePicker').style.display = 'block';
-  document.getElementById('profileCard').style.display   = 'none';
+  document.getElementById('profilePicker').style.display    = 'block';
+  document.getElementById('profileCard').style.display      = 'none';
+  document.getElementById('pickerListView').style.display   = 'block';
+  document.getElementById('pinScreenView').style.display    = 'none';
 
   const list = document.getElementById('profilePickerList');
   list.innerHTML = '<div class="profile-sessions-loading">Loading players...</div>';
@@ -203,8 +217,10 @@ function profileSelectPlayer(p) {
 
 // Render a PIN screen inside the picker area
 function _showPinScreen(html) {
-  const picker = document.getElementById('profilePicker');
-  picker.innerHTML = `
+  document.getElementById('pickerListView').style.display  = 'none';
+  const pinView = document.getElementById('pinScreenView');
+  pinView.style.display = 'block';
+  pinView.innerHTML = `
     <div class="profile-drawer-header">
       <span class="profile-drawer-title">Who are you?</span>
       <button class="profile-drawer-close" onclick="showProfilePicker()">✕</button>
@@ -324,6 +340,8 @@ async function confirmPinRecovery(name) {
 
 // ── Final step: set profile and open card ──
 function _completeProfileSelection(name) {
+  _profileSwitching = false;
+  _previousPlayer   = null;
   const p = _pickerAllPlayers.find(x => x.name === name);
   const player = { name, gender: (p && p.gender) || 'Male' };
   setMyPlayer(player);
@@ -333,6 +351,8 @@ function _completeProfileSelection(name) {
 
 /* ── Switch player ── */
 function switchProfilePlayer() {
+  _previousPlayer   = getMyPlayer(); // save so cancel can restore
+  _profileSwitching = true;
   clearMyPlayer();
   updateProfileBtn();
   showProfilePicker();

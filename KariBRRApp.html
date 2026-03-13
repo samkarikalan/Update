@@ -551,17 +551,22 @@
 
   <!-- Player Picker (shown when no player selected) -->
   <div id="profilePicker" class="profile-picker">
-    <div class="profile-drawer-header">
-      <span class="profile-drawer-title">Who are you?</span>
-      <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
+    <!-- Player list view -->
+    <div id="pickerListView">
+      <div class="profile-drawer-header">
+        <span class="profile-drawer-title">Who are you?</span>
+        <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
+      </div>
+      <p class="profile-picker-hint">Select your name to personalise your profile</p>
+      <div class="profile-picker-search-wrap">
+        <input type="text" id="profileSearch" class="profile-picker-search"
+          placeholder="🔍 Search player..."
+          oninput="filterPickerList(this.value)">
+      </div>
+      <div id="profilePickerList" class="profile-picker-list"></div>
     </div>
-    <p class="profile-picker-hint">Select your name to personalise your profile</p>
-    <div class="profile-picker-search-wrap">
-      <input type="text" id="profileSearch" class="profile-picker-search"
-        placeholder="🔍 Search player..."
-        oninput="filterPickerList(this.value)">
-    </div>
-    <div id="profilePickerList" class="profile-picker-list"></div>
+    <!-- PIN screen view (shown instead of list) -->
+    <div id="pinScreenView" style="display:none;"></div>
   </div>
 
   <!-- Profile Card (shown when player selected) -->
