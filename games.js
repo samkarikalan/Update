@@ -1281,11 +1281,11 @@ function showAllRounds() {
         // Winner highlight
         if (game.winner === side) {
           teamDiv.classList.add('winner');
-          // Show trophy icon
           const cup = document.createElement('img');
           cup.src = 'win-cup.png';
           cup.className = 'win-cup active';
           cup.style.pointerEvents = 'none';
+          cup.style.visibility = 'visible';
           teamDiv.appendChild(cup);
         }
 

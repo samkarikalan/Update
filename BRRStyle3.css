@@ -1991,10 +1991,20 @@ body.viewer-mode .Rplayer-btn {
   pointer-events: none !important;
 }
 body.viewer-mode .win-cup {
-  opacity: 0.3 !important;
+  opacity: 0 !important;
+}
+body.viewer-mode .win-cup.active {
+  opacity: 1 !important;
 }
 body.viewer-mode .swap-icon {
   opacity: 0 !important;
+}
+/* Hide action buttons in viewer mode */
+body.viewer-mode .action-card {
+  display: none !important;
+}
+body.viewer-mode .round-settings-panel {
+  display: none !important;
 }
 /* Read-only banner on rounds page in viewer mode */
 body.viewer-mode #roundsPage::before {
