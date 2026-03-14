@@ -24,8 +24,38 @@
   <script src="summary.js" defer></script>
   <script src="help.js" defer></script>
   <script src="profile.js" defer></script>
+  <script src="dashboard.js" defer></script>
 </head>
 <body>
+
+  <!-- ============================= -->
+  <!--       MODE SELECT OVERLAY     -->
+  <!-- ============================= -->
+  <div id="modeSelectOverlay" class="mode-select-overlay">
+    <div class="mode-select-card">
+      <div class="mode-select-logo">🏸</div>
+      <div class="mode-select-title">CLUB Scheduler</div>
+      <div class="mode-select-subtitle">How are you joining today?</div>
+      <div class="mode-select-options">
+        <button class="mode-select-btn viewer" onclick="selectMode('viewer')">
+          <span class="mode-select-btn-icon">👁</span>
+          <div class="mode-select-btn-info">
+            <div class="mode-select-btn-name">Viewer</div>
+            <div class="mode-select-btn-desc">Watch live rounds &amp; scores</div>
+          </div>
+          <span class="mode-select-btn-arrow">›</span>
+        </button>
+        <button class="mode-select-btn organiser" onclick="selectMode('organiser')">
+          <span class="mode-select-btn-icon">⚙️</span>
+          <div class="mode-select-btn-info">
+            <div class="mode-select-btn-name">Organiser</div>
+            <div class="mode-select-btn-desc">Run session, score games, manage players</div>
+          </div>
+          <span class="mode-select-btn-arrow">›</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================= -->
   <!--        CLUB JOIN OVERLAY      -->
@@ -84,17 +114,21 @@
         <span class="tab-icon">⚙️</span>
         <span class="tab-label">Settings</span>
       </button>
-      <button class="tab-btn active" onclick="showPage('playersPage', this)">
+      <button class="tab-btn active" onclick="showPage('playersPage', this)" id="tabBtnPlayers">
         <span class="tab-icon">👥</span>
         <span class="tab-label" data-i18n="players">Players</span>
       </button>
-      <button class="tab-btn" onclick="showPage('roundsPage', this)">
+      <button class="tab-btn" onclick="showPage('roundsPage', this)" id="tabBtnRounds">
         <span class="tab-icon">🏸</span>
         <span class="tab-label" data-i18n="rounds">Rounds</span>
       </button>
-      <button class="tab-btn" onclick="showPage('summaryPage', this)">
+      <button class="tab-btn" onclick="showPage('summaryPage', this)" id="tabBtnSummary">
         <span class="tab-icon">📊</span>
         <span class="tab-label" data-i18n="summary">Summary</span>
+      </button>
+      <button class="tab-btn" onclick="showPage('dashboardPage', this)" id="tabBtnDashboard">
+        <span class="tab-icon">📡</span>
+        <span class="tab-label">Dashboard</span>
       </button>
       <button class="tab-btn" onclick="showPage('helpPage', this)">
         <span class="tab-icon">❓</span>
@@ -108,6 +142,19 @@
   <!-- ============================= -->
   <div id="settingsPage" class="page" style="display:none;">
     <div class="settings-wrap">
+
+      <!-- Mode switch card -->
+      <div class="settings-card mode-switch-card" id="settingsModeSwitchCard">
+        <div class="mode-switch-card-label">Current Mode</div>
+        <div class="mode-switch-card-row">
+          <button class="mode-switch-card-btn viewer" id="modeCardViewer" onclick="switchMode('viewer')">
+            <span>👁</span> Viewer
+          </button>
+          <button class="mode-switch-card-btn organiser" id="modeCardOrganiser" onclick="switchMode('organiser')">
+            <span>⚙️</span> Organiser
+          </button>
+        </div>
+      </div>
 
       <!-- Compact settings card with 3 tabs -->
       <div class="settings-card" style="padding:0;overflow:hidden">
@@ -368,6 +415,15 @@
     <div class="exp_btn" onclick="exportBRR2HTML()" data-i18n="exporthtml">📄</div>
     <div id="reportContainer"></div>
     <div id="export"></div>
+  </div>
+
+  <!-- ============================= -->
+  <!--        DASHBOARD PAGE         -->
+  <!-- ============================= -->
+  <div id="dashboardPage" class="page" style="display:none;">
+    <div id="dashboardContainer" class="dashboard-container">
+      <div class="dashboard-loading"><div class="help-spinner"></div></div>
+    </div>
   </div>
 
   <!-- ============================= -->

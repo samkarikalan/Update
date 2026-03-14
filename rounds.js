@@ -166,6 +166,10 @@ function goToRounds() {
     allRounds = [AischedulerNextRound(schedulerState)];
     currentRoundIndex = 0;
     showRound(0);
+    // Start session in DB then sync rounds
+    if (typeof dbStartSession === 'function') dbStartSession().then(() => {
+      if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
+    });
   } else {   
       schedulerState.numCourts = numCourts;      
       schedulerState.fixedMap = new Map();
@@ -204,6 +208,7 @@ function nextRound() {
     allRounds.push(newRound);
     currentRoundIndex = allRounds.length - 1;
     showRound(currentRoundIndex);
+    if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
   }
   updateSummaryPageAccess();
   // Sync ratings to Supabase silently after every round (called from updSchedule with wins/losses)

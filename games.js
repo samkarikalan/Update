@@ -1227,6 +1227,122 @@ function clearPreviousRound() {
 
 
 // Show a round
+
+// ============================================================
+// SHOW ALL ROUNDS — viewer mode: renders every round stacked
+// Latest round at top, finished rounds below (dimmed)
+// Read-only: no swap, no winner marking
+// ============================================================
+function showAllRounds() {
+  const resultsDiv = document.getElementById('game-results');
+  if (!resultsDiv) return;
+  resultsDiv.innerHTML = '';
+
+  if (!allRounds || !allRounds.length) {
+    resultsDiv.innerHTML = '<div class="dash-empty-inline" style="padding:20px;text-align:center;color:var(--muted)">No rounds yet</div>';
+    return;
+  }
+
+  // Render rounds latest-first
+  const reversed = [...allRounds].map((r, i) => ({ round: r, origIndex: i })).reverse();
+
+  reversed.forEach(({ round: data, origIndex }) => {
+    const isLatest = origIndex === allRounds.length - 1;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = isLatest ? 'round-wrapper latest-round' : 'round-wrapper played-round';
+
+    // Round header label
+    const header = document.createElement('div');
+    header.className = 'round-header';
+    header.textContent = (translations[currentLang]?.roundno || 'Round') + ' ' + data.round;
+    wrapper.appendChild(header);
+
+    // Courts
+    data.games.forEach((game, gameIndex) => {
+      const courtDiv = document.createElement('div');
+      courtDiv.className = `courtcard court-${gameIndex + 1}`;
+
+      const courtName = document.createElement('div');
+      courtName.className = 'courtname';
+      courtName.textContent = `Court ${gameIndex + 1}`;
+      courtDiv.appendChild(courtName);
+
+      const teamsDiv = document.createElement('div');
+      teamsDiv.className = 'teams';
+
+      ['L', 'R'].forEach((side, si) => {
+        const teamDiv = document.createElement('div');
+        teamDiv.className = 'team';
+        teamDiv.dataset.teamSide = side;
+
+        const pairs = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
+
+        // Winner highlight
+        if (game.winner === side) {
+          teamDiv.classList.add('winner');
+          // Show trophy icon
+          const cup = document.createElement('img');
+          cup.src = 'win-cup.png';
+          cup.className = 'win-cup active';
+          cup.style.pointerEvents = 'none';
+          teamDiv.appendChild(cup);
+        }
+
+        pairs.forEach(p => {
+          const btn = document.createElement('button');
+          btn.className = 'team-btn';
+          btn.textContent = p;
+          btn.style.pointerEvents = 'none';
+          teamDiv.appendChild(btn);
+        });
+
+        teamsDiv.appendChild(teamDiv);
+
+        // VS divider between teams
+        if (si === 0) {
+          const vs = document.createElement('div');
+          vs.className = 'vs-divider';
+          vs.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+          teamsDiv.appendChild(vs);
+        }
+      });
+
+      courtDiv.appendChild(teamsDiv);
+      wrapper.appendChild(courtDiv);
+    });
+
+    // Resting players (read-only)
+    if (data.resting && data.resting.length) {
+      const restSection = document.createElement('div');
+      restSection.className = 'round-header';
+      restSection.style.paddingLeft = '12px';
+      const label = document.createElement('div');
+      label.textContent = t('sittingOut') || 'Sitting Out';
+      restSection.appendChild(label);
+      const restBox = document.createElement('div');
+      restBox.className = 'rest-box';
+      data.resting.forEach(name => {
+        const btn = document.createElement('span');
+        btn.className = 'rest-btn';
+        btn.textContent = name.split('#')[0];
+        btn.style.pointerEvents = 'none';
+        restBox.appendChild(btn);
+      });
+      restSection.appendChild(restBox);
+      wrapper.appendChild(restSection);
+    }
+
+    resultsDiv.appendChild(wrapper);
+  });
+
+  // Update round title to show total rounds
+  const roundTitle = document.getElementById('roundTitle');
+  if (roundTitle) {
+    roundTitle.textContent = allRounds.length + ' ' + (translations[currentLang]?.rounds || 'Rounds');
+  }
+}
+
 function showRound(index) {
   clearPreviousRound();
   const resultsDiv = document.getElementById('game-results');
@@ -1431,6 +1547,7 @@ function renderGames(data, roundIndex) {
       }
 
       const toggleWinner = (e) => {
+        if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
         if (currentState === "idle") return;
         e.stopPropagation();
         e.preventDefault();
@@ -1458,6 +1575,7 @@ function renderGames(data, roundIndex) {
 
           game.winner = teamSide;
           game.winners = teamPairs.slice();
+          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
         } else {
           allCups.forEach(cup => {
             cup.classList.remove('active');
@@ -1473,6 +1591,7 @@ function renderGames(data, roundIndex) {
 
           game.winner = undefined;
           game.winners = [];
+          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
         }
       };
 
@@ -1590,6 +1709,7 @@ function goodrenderGames(data, roundIndex) {
 
       // 🏆 Winner toggle logic (minimal, correct)
       const toggleWinner = (e) => {
+        if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
         if (currentState === "idle") return;
         e.stopPropagation();
         e.preventDefault();
@@ -1618,6 +1738,7 @@ function goodrenderGames(data, roundIndex) {
 
           game.winner = teamSide;
           game.winners = teamPairs.slice();
+          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
         } else {
           // 👉 Unmark → show BOTH cups again
           allCups.forEach(cup => {
@@ -1634,6 +1755,7 @@ function goodrenderGames(data, roundIndex) {
 
           game.winner = undefined;
           game.winners = [];
+          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
         }
       };
 
@@ -1773,6 +1895,7 @@ function renderGames2(data, index) {
 
             game.winner = teamSide;
             game.winners = teamPairs.slice();
+            if (typeof saveRoundsToDb === "function") saveRoundsToDb();
           } else {
             // ---- RESET TO IDLE ----
             allCups.forEach(cup => {
@@ -1790,6 +1913,7 @@ function renderGames2(data, index) {
 
             game.winner = undefined;
             game.winners = [];
+            if (typeof saveRoundsToDb === "function") saveRoundsToDb();
           }
         });
       }
@@ -2472,6 +2596,7 @@ document.body.classList.add('locked');
 const lockBtn = document.getElementById('lockToggleBtn');
 
 lockBtn.addEventListener('click', () => {
+  if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
   interactionLocked = !interactionLocked;
 
   // Toggle body class

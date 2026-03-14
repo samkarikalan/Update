@@ -624,6 +624,7 @@ async function vaultRenderModify() {
     row.className = 'player-mgmt-row';
     const safeName = p.displayName.replace(/'/g, "\\'");
     const genderImg = p.gender === 'Female' ? 'female.png' : 'male.png';
+    const currentRating = (typeof getActiveRating === 'function' ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
     row.innerHTML = `
       <img src="${genderImg}" class="player-mgmt-avatar vault-gender-toggle"
            onclick="vaultToggleGender('${safeName}', this)"
@@ -631,11 +632,23 @@ async function vaultRenderModify() {
       <span class="player-mgmt-name vault-name-edit"
             onclick="vaultEditName('${safeName}')"
             title="Tap to edit name">${p.displayName}</span>
+      <input type="number" class="rating-edit-input vault-rating-input"
+             value="${currentRating}" min="1.0" max="5.0" step="0.1"
+             onchange="vaultSaveRating('${safeName}', this.value)"
+             title="Edit rating">
       <button class="player-mgmt-del-btn"
               onclick="vaultDeletePlayer('${safeName}')">🗑</button>
     `;
     container.appendChild(row);
   });
+}
+
+function vaultSaveRating(displayName, value) {
+  const rating = parseFloat(value);
+  if (isNaN(rating) || rating < 1.0 || rating > 5.0) return;
+  if (typeof setRating === 'function') setRating(displayName, rating);
+  if (typeof syncRatings === 'function') syncRatings();
+  if (typeof updatePlayerList === 'function') updatePlayerList();
 }
 
 async function vaultEditName(displayName) {
