@@ -33,6 +33,27 @@ async function renderDashboard() {
 
     container.innerHTML = '';
 
+    // ── End Session button — organiser only, no active local rounds ──
+    if (typeof isAdminMode === 'function' && isAdminMode()) {
+      const hasLocalRounds = typeof allRounds !== 'undefined' && allRounds.length > 1;
+      if (!hasLocalRounds) {
+        // Check if there's a live session in DB belonging to this organiser
+        const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+        const myName = myPlayer ? myPlayer.name : null;
+        const mySession = myName ? liveSessions.find(s => s.started_by === myName) : null;
+        if (mySession) {
+          const endBar = document.createElement('div');
+          endBar.style.cssText = 'padding:8px 0 4px;';
+          const endBtn = document.createElement('button');
+          endBtn.style.cssText = 'width:100%;padding:10px;background:#e63757;color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;';
+          endBtn.innerHTML = '⏹ End Session';
+          endBtn.onclick = () => { if (typeof endSession === 'function') endSession(); };
+          endBar.appendChild(endBtn);
+          container.appendChild(endBar);
+        }
+      }
+    }
+
     // ── Live Section ──
     const liveSection = document.createElement('div');
     liveSection.className = 'dash-section';
@@ -66,14 +87,14 @@ async function renderDashboard() {
     if (pastSessions.length) {
       pastSessions.forEach(sess => {
         const card = _buildSessionCard({
-          clubName:   club.name,
-          starter:    sess.started_by,
-          players:    sess.players || [],
-          totalRounds: null,
-          isLive:     false,
-          sessionId:  sess.id,
-          date:       sess.date,
-          updatedAt:  sess.updated_at
+          clubName:    club.name,
+          starter:     sess.started_by,
+          players:     sess.players || [],
+          totalRounds: (sess.rounds_data || []).length || null,
+          isLive:      false,
+          sessionId:   sess.id,
+          date:        sess.date,
+          updatedAt:   sess.updated_at
         });
         pastSection.appendChild(card);
       });
@@ -158,8 +179,8 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
   }
   card.appendChild(chips);
 
-  // Tap → open rounds view
-  if (isLive) {
+  // Tap → open rounds view (both live and past)
+  if (sessionId) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => _openSessionRounds(sessionId));
   }

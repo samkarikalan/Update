@@ -1,297 +1,167 @@
 /* ============================================================
-   VIEWER.JS — All viewer mode logic in one place
-   Organiser code is never touched by anything in this file.
+   VIEWER.JS — Completely isolated from organiser mode
+   - Never touches allRounds, currentRoundIndex, roundsPage
+   - Never calls setViewerMode, appMode, or organiser functions
+   - Uses #viewerPage and #viewerResults only
    ============================================================ */
 
-/* ── State ── */
-var _viewerSessionId   = null;
-var _viewerLastUpdated = null;
-var _viewerPollTimer   = null;
-var _viewerSessionMeta = null; // { started_by, created_at, club_name }
+var _vSessionId   = null;
+var _vLastUpdated = null;
+var _vPollTimer   = null;
+var _vMeta        = null;
+var _vRoundsData  = [];
 
-/* ============================================================
-   ENTRY POINT — called when viewer taps a live session card
-   ============================================================ */
+/* ── Entry point ── */
 async function viewerOpen(sessionId) {
   try {
     const rows = await sbGet('sessions',
-      `id=eq.${sessionId}&select=id,rounds_data,players,started_by,created_at,updated_at,status`
+      `id=eq.${sessionId}&select=id,rounds_data,started_by,created_at,updated_at,status`
     );
     if (!rows || !rows.length) { alert('Session not found.'); return; }
-
     const sess = rows[0];
     if (!sess.rounds_data || !sess.rounds_data.length) {
-      alert('No rounds data yet — try again in a moment.');
-      return;
+      alert('No rounds data yet.'); return;
     }
-
-    _viewerSessionId   = sessionId;
-    _viewerLastUpdated = sess.updated_at;
-    _viewerSessionMeta = {
-      started_by:  sess.started_by,
-      created_at:  sess.created_at,
-      club_name:   (typeof getMyClub === 'function') ? getMyClub().name : ''
+    _vSessionId   = sessionId;
+    _vLastUpdated = sess.updated_at;
+    _vRoundsData  = sess.rounds_data;
+    _vMeta = {
+      started_by: sess.started_by,
+      created_at: sess.created_at,
+      club_name:  (typeof getMyClub === 'function') ? getMyClub().name : '',
+      status:     sess.status
     };
-
-    // Load rounds into global allRounds (read-only use)
-    allRounds.splice(0, allRounds.length, ...sess.rounds_data);
-    currentRoundIndex = allRounds.length - 1;
-
-    // Show rounds page
-    _viewerShowPage();
-
-    // Render everything
-    viewerRender(sess.rounds_data);
-
-    // Start live poll
-    viewerStartPoll();
-
+    _vShowPage();
+    _vRender(_vRoundsData);
+    if (sess.status === 'live') viewerStartPoll();
   } catch (e) {
     console.warn('viewerOpen error:', e.message);
-    alert('Could not load session. Check connection.');
+    alert('Could not load session.');
   }
 }
 
-/* ── Show rounds page cleanly, bypass all organiser guards ── */
-function _viewerShowPage() {
-  // Hide all pages
+/* ── Back button ── */
+function viewerGoBack() {
+  viewerStopPoll();
+  _vHidePage();
+  if (typeof showPage === 'function') {
+    showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
+  }
+}
+
+/* ── Show/hide viewerPage only ── */
+function _vShowPage() {
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-
-  // Show rounds page with viewer class
-  const roundsPage = document.getElementById('roundsPage');
-  if (roundsPage) {
-    roundsPage.style.display = 'block';
-    roundsPage.classList.add('viewer-page');
+  const vPage = document.getElementById('viewerPage');
+  if (vPage) vPage.style.display = 'block';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const vBtn = document.getElementById('tabBtnViewer');
+  if (vBtn) {
+    vBtn.style.display       = '';
+    vBtn.style.pointerEvents = 'auto';
+    vBtn.style.opacity       = '1';
+    vBtn.classList.add('active');
+    vBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
-
-  // Activate rounds tab — reset any disabled state from organiser guards
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  const roundsBtn = document.getElementById('tabBtnRounds');
-  if (roundsBtn) {
-    roundsBtn.style.display       = '';
-    roundsBtn.style.pointerEvents = 'auto';
-    roundsBtn.style.opacity       = '1';
-    roundsBtn.removeAttribute('aria-disabled');
-    roundsBtn.classList.add('active');
-    roundsBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }
-
-  // Apply viewer-mode class so CSS hides action card, settings panel, etc.
-  if (typeof setViewerMode === 'function') setViewerMode(true);
-
-  // Inject viewer sub-tabs if not already present
-  _viewerInjectSubTabs();
-
   if (typeof lastPage !== 'undefined') lastPage = 'dashboardPage';
 }
 
-/* ── Inject Summary / Live sub-tabs into roundsPage ── */
-function _viewerInjectSubTabs() {
-  // Remove existing to avoid duplicates
-  const existing = document.getElementById('viewerSubTabs');
-  if (existing) existing.remove();
-
-  const titleCard = document.querySelector('#roundsPage .title-card');
-  if (!titleCard) return;
-
-  const subTabs = document.createElement('div');
-  subTabs.id = 'viewerSubTabs';
-  subTabs.className = 'viewer-subtabs';
-  subTabs.innerHTML = `
-    <button class="viewer-subtab-btn" id="viewerTabLive" onclick="viewerSwitchTab('live')">🏸 Live</button>
-    <button class="viewer-subtab-btn" id="viewerTabSummary" onclick="viewerSwitchTab('summary')">📊 Summary</button>
-  `;
-
-  // Insert after title-card
-  titleCard.insertAdjacentElement('afterend', subTabs);
+function _vHidePage() {
+  const vPage = document.getElementById('viewerPage');
+  if (vPage) vPage.style.display = 'none';
+  const vBtn = document.getElementById('tabBtnViewer');
+  if (vBtn) vBtn.style.display = 'none';
 }
 
-/* ── Switch between Live and Summary sub-tabs ── */
-function viewerSwitchTab(tab) {
-  const liveBtn    = document.getElementById('viewerTabLive');
-  const summaryBtn = document.getElementById('viewerTabSummary');
-  const gameResults = document.getElementById('game-results');
-  const viewerSummaryDiv = document.getElementById('viewerSummaryContainer');
-
-  if (liveBtn)    liveBtn.classList.toggle('active',    tab === 'live');
-  if (summaryBtn) summaryBtn.classList.toggle('active', tab === 'summary');
-
-  if (tab === 'live') {
-    if (gameResults)       gameResults.style.display    = '';
-    if (viewerSummaryDiv)  viewerSummaryDiv.style.display = 'none';
-  } else {
-    if (gameResults)       gameResults.style.display    = 'none';
-    // Build or show summary container
-    let summaryDiv = document.getElementById('viewerSummaryContainer');
-    if (!summaryDiv) {
-      summaryDiv = document.createElement('div');
-      summaryDiv.id = 'viewerSummaryContainer';
-      summaryDiv.style.padding = '8px 6px';
-      gameResults.insertAdjacentElement('afterend', summaryDiv);
-    }
-    summaryDiv.style.display = '';
-    _viewerRenderSummary(summaryDiv);
-  }
-}
-
-/* ============================================================
-   MAIN RENDER — info bar + leaderboard + rounds
-   ============================================================ */
-function viewerRender(roundsData) {
-  const resultsDiv = document.getElementById('game-results');
-  if (!resultsDiv) return;
-  resultsDiv.innerHTML = '';
-  resultsDiv.classList.add('viewer-rounds');
-
-  // Update title
-  const roundTitle = document.getElementById('roundTitle');
-  if (roundTitle) {
-    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
-    const tr   = (typeof translations !== 'undefined') ? translations[lang] : {};
-    roundTitle.textContent = (roundsData.length) + ' ' + (tr.rounds || 'Rounds');
-  }
-
-  if (!roundsData.length) {
-    resultsDiv.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No rounds yet</div>';
+/* ── Main render ── */
+function _vRender(roundsData) {
+  const container = document.getElementById('viewerResults');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!roundsData || !roundsData.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:0.85rem;">No rounds yet</div>';
     return;
   }
-
-  // 1. Session info bar
-  resultsDiv.appendChild(_viewerBuildInfoBar());
-
-  // 2. Current round only (latest)
+  container.appendChild(_vBuildSubTabs());
+  const livePanel = document.createElement('div');
+  livePanel.id = 'vPanelLive';
+  livePanel.appendChild(_vBuildInfoBar());
   const lastIdx = roundsData.length - 1;
-  resultsDiv.appendChild(_viewerBuildRound(roundsData[lastIdx], lastIdx, roundsData.length));
-
-  // Default to Live tab active
-  const liveBtn = document.getElementById('viewerTabLive');
-  const summaryBtn = document.getElementById('viewerTabSummary');
-  if (liveBtn)    liveBtn.classList.add('active');
-  if (summaryBtn) summaryBtn.classList.remove('active');
-
-  // Hide summary container if switching back from summary
-  const summaryDiv = document.getElementById('viewerSummaryContainer');
-  if (summaryDiv) summaryDiv.style.display = 'none';
-  resultsDiv.style.display = '';
+  livePanel.appendChild(_vBuildRound(roundsData[lastIdx]));
+  container.appendChild(livePanel);
+  const summaryPanel = document.createElement('div');
+  summaryPanel.id = 'vPanelSummary';
+  summaryPanel.style.display = 'none';
+  container.appendChild(summaryPanel);
 }
 
-/* ============================================================
-   INFO BAR — "You are watching" with elapsed time
-   ============================================================ */
-function _viewerBuildInfoBar() {
+/* ── Sub-tabs ── */
+function _vBuildSubTabs() {
+  const bar = document.createElement('div');
+  bar.className = 'viewer-subtabs';
+  bar.innerHTML = `
+    <button class="viewer-subtab-btn active" id="vTabLive" onclick="vSwitchTab('live')">🏸 Live</button>
+    <button class="viewer-subtab-btn" id="vTabSummary" onclick="vSwitchTab('summary')">📊 Summary</button>
+  `;
+  return bar;
+}
+
+function vSwitchTab(tab) {
+  document.getElementById('vTabLive')?.classList.toggle('active', tab === 'live');
+  document.getElementById('vTabSummary')?.classList.toggle('active', tab === 'summary');
+  const live    = document.getElementById('vPanelLive');
+  const summary = document.getElementById('vPanelSummary');
+  if (!live || !summary) return;
+  if (tab === 'live') {
+    live.style.display = ''; summary.style.display = 'none';
+  } else {
+    live.style.display = 'none'; summary.style.display = '';
+    _vRenderSummary(summary);
+  }
+}
+
+/* ── Info bar ── */
+function _vBuildInfoBar() {
   const bar = document.createElement('div');
   bar.className = 'viewer-info-bar';
-
-  const meta = _viewerSessionMeta || {};
-  const elapsed = _viewerElapsed(meta.created_at);
-  const club    = meta.club_name   || '';
-  const starter = meta.started_by  || '';
-
+  const meta    = _vMeta || {};
+  const elapsed = _vElapsed(meta.created_at);
+  const isLive  = meta.status === 'live';
   bar.innerHTML = `
-    <span class="viewer-info-dot"></span>
+    <span class="viewer-info-dot" style="${isLive ? '' : 'background:#9e9e9e;animation:none;'}"></span>
     <span class="viewer-info-text">
-      <strong>${club}</strong>
-      ${starter ? ' · ' + starter : ''}
+      <strong>${meta.club_name || ''}</strong>
+      ${meta.started_by ? ' · ' + meta.started_by : ''}
       ${elapsed ? ' · ' + elapsed : ''}
+      ${!isLive ? ' · <em>Completed</em>' : ''}
     </span>
   `;
   return bar;
 }
 
-function _viewerElapsed(isoStr) {
+function _vElapsed(isoStr) {
   if (!isoStr) return '';
   const ms = Date.now() - new Date(isoStr).getTime();
   const m  = Math.floor(ms / 60000);
   if (m < 1)  return 'just started';
-  if (m < 60) return m + 'm ago';
+  if (m < 60) return m + 'm';
   return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
 }
 
-/* ============================================================
-   LEADERBOARD — live standings from rounds data
-   ============================================================ */
-function _viewerBuildLeaderboard(roundsData) {
-  // Compute wins/losses per player from all scored games
-  const stats = new Map(); // name → { wins, played }
-
-  for (const round of roundsData) {
-    for (const game of (round.games || [])) {
-      const all = [...(game.pair1 || []), ...(game.pair2 || [])];
-      all.forEach(name => {
-        if (!stats.has(name)) stats.set(name, { wins: 0, played: 0 });
-        stats.get(name).played++;
-      });
-      if (game.winner) {
-        const winners = game.winner === 'L' ? (game.pair1 || []) : (game.pair2 || []);
-        winners.forEach(name => {
-          if (!stats.has(name)) stats.set(name, { wins: 0, played: 0 });
-          stats.get(name).wins++;
-        });
-      }
-    }
-  }
-
-  // Sort by wins desc, then played desc
-  const sorted = [...stats.entries()]
-    .map(([name, s]) => ({ name, ...s, losses: s.played - s.wins }))
-    .sort((a, b) => b.wins - a.wins || b.played - a.played);
-
-  const container = document.createElement('div');
-  container.className = 'viewer-leaderboard';
-
-  const title = document.createElement('div');
-  title.className = 'viewer-leaderboard-title';
-  title.textContent = '🏆 Standings';
-  container.appendChild(title);
-
-  const table = document.createElement('div');
-  table.className = 'viewer-leaderboard-table';
-
-  sorted.forEach((p, idx) => {
-    const row = document.createElement('div');
-    row.className = 'viewer-lb-row' + (idx === 0 && p.wins > 0 ? ' viewer-lb-top' : '');
-
-    const rank = document.createElement('span');
-    rank.className = 'viewer-lb-rank';
-    rank.textContent = '#' + (idx + 1);
-
-    const name = document.createElement('span');
-    name.className = 'viewer-lb-name';
-    name.textContent = p.name;
-
-    const wl = document.createElement('span');
-    wl.className = 'viewer-lb-wl';
-    wl.innerHTML = `<span class="viewer-lb-w">${p.wins}W</span> <span class="viewer-lb-l">${p.losses}L</span>`;
-
-    row.appendChild(rank);
-    row.appendChild(name);
-    row.appendChild(wl);
-    table.appendChild(row);
-  });
-
-  container.appendChild(table);
-  return container;
-}
-
-/* ============================================================
-   ROUND BUILDER — one round card, read-only
-   Uses exact same CSS classes as organiser for identical look
-   ============================================================ */
-function _viewerBuildRound(data, index, total) {
-  const isLatest = index === total - 1;
+/* ── Round builder — uses same CSS classes as organiser ── */
+function _vBuildRound(data) {
+  if (!data) return document.createElement('div');
   const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
-  const tr   = (typeof translations !== 'undefined') ? translations[lang] : {};
+  const tr   = (typeof translations !== 'undefined') ? (translations[lang] || {}) : {};
 
   const wrapper = document.createElement('div');
-  wrapper.className = 'round-wrapper ' + (isLatest ? 'latest-round' : 'played-round');
+  wrapper.className = 'round-wrapper viewer-rounds';
 
-  // Round header
   const header = document.createElement('div');
   header.className = 'round-header';
   header.textContent = (tr.roundno || 'Round ') + data.round;
   wrapper.appendChild(header);
 
-  // Court cards — same classes as organiser
   (data.games || []).forEach((game, gi) => {
     const courtDiv = document.createElement('div');
     courtDiv.className = 'courtcard court-' + (gi + 1);
@@ -310,19 +180,16 @@ function _viewerBuildRound(data, index, total) {
       teamDiv.dataset.teamSide = side;
       teamDiv.style.pointerEvents = 'none';
 
-      const players = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
-
-      // Winner highlight
       if (game.winner === side) {
         teamDiv.classList.add('winner');
         const cup = document.createElement('img');
-        cup.src       = 'win-cup.png';
+        cup.src = 'win-cup.png';
         cup.className = 'win-cup active';
         cup.style.cssText = 'pointer-events:none;visibility:visible;opacity:1;filter:none;';
         teamDiv.appendChild(cup);
       }
 
-      // Player buttons — same class as organiser, read-only
+      const players = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
       players.forEach(name => {
         const btn = document.createElement('button');
         btn.className = side === 'L' ? 'Lplayer-btn' : 'Rplayer-btn';
@@ -334,7 +201,6 @@ function _viewerBuildRound(data, index, total) {
 
       teamsDiv.appendChild(teamDiv);
 
-      // VS divider
       if (si === 0) {
         const vs = document.createElement('div');
         vs.className = 'vs-divider';
@@ -347,16 +213,12 @@ function _viewerBuildRound(data, index, total) {
     wrapper.appendChild(courtDiv);
   });
 
-  // Resting players
   if (data.resting && data.resting.length) {
-    const restSection = document.createElement('div');
-    restSection.className = 'round-header';
-    restSection.style.paddingLeft = '12px';
-    const label = document.createElement('div');
-    const tr2 = (typeof translations !== 'undefined') ? translations[lang] : {};
-    label.textContent = tr2.sittingOut || 'Resting';
-    restSection.appendChild(label);
-
+    const tr2 = (typeof translations !== 'undefined') ? (translations[(typeof currentLang !== 'undefined') ? currentLang : 'en'] || {}) : {};
+    const restRow = document.createElement('div');
+    restRow.className = 'round-header';
+    restRow.style.paddingLeft = '12px';
+    restRow.textContent = tr2.sittingOut || 'Resting';
     const restBox = document.createElement('div');
     restBox.className = 'rest-box';
     data.resting.forEach(name => {
@@ -366,37 +228,28 @@ function _viewerBuildRound(data, index, total) {
       chip.style.cssText = 'pointer-events:none;cursor:default;';
       restBox.appendChild(chip);
     });
-    restSection.appendChild(restBox);
-    wrapper.appendChild(restSection);
+    restRow.appendChild(restBox);
+    wrapper.appendChild(restRow);
   }
 
   return wrapper;
 }
 
-
-/* ============================================================
-   SUMMARY TAB — same output as organiser summary tab
-   Built from allRounds data — no schedulerState needed
-   ============================================================ */
-function _viewerRenderSummary(container) {
+/* ── Summary tab ── */
+function _vRenderSummary(container) {
   container.innerHTML = '';
-
   const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
-  const tr   = (typeof translations !== 'undefined') ? translations[lang] : {};
+  const tr   = (typeof translations !== 'undefined') ? (translations[lang] || {}) : {};
 
-  // ── Player standings (reuse report-header + player-card CSS) ──
-  const stats = new Map(); // name → { wins, played, rest }
-
-  for (const round of (allRounds || [])) {
-    // Track resting
+  const stats = new Map();
+  for (const round of _vRoundsData) {
     for (const name of (round.resting || [])) {
       const base = name.split('#')[0];
       if (!stats.has(base)) stats.set(base, { wins: 0, played: 0, rest: 0 });
       stats.get(base).rest++;
     }
     for (const game of (round.games || [])) {
-      const all = [...(game.pair1 || []), ...(game.pair2 || [])];
-      all.forEach(name => {
+      [...(game.pair1 || []), ...(game.pair2 || [])].forEach(name => {
         if (!stats.has(name)) stats.set(name, { wins: 0, played: 0, rest: 0 });
         stats.get(name).played++;
       });
@@ -414,7 +267,6 @@ function _viewerRenderSummary(container) {
     .map(([name, s]) => ({ name, ...s }))
     .sort((a, b) => b.wins - a.wins || b.played - a.played);
 
-  // Header row
   const header = document.createElement('div');
   header.className = 'report-header';
   header.innerHTML = `
@@ -427,12 +279,11 @@ function _viewerRenderSummary(container) {
   `;
   container.appendChild(header);
 
-  // Player cards
   sorted.forEach((p, idx) => {
-    const topClass = idx === 0 ? 'top-1' : idx === 1 ? 'top-2' : idx === 2 ? 'top-3' : '';
+    const colors = ['#f5a623','#9b9b9b','#cd7f32','#9e9e9e'];
     const card = document.createElement('div');
-    card.className = 'player-card ' + topClass;
-    card.style.setProperty('--strip-color', idx === 0 ? '#f5a623' : idx === 1 ? '#9b9b9b' : idx === 2 ? '#cd7f32' : '#9e9e9e');
+    card.className = 'player-card ' + (idx < 3 ? 'top-' + (idx + 1) : '');
+    card.style.setProperty('--strip-color', colors[Math.min(idx, 3)]);
     card.innerHTML = `
       <div class="rating-strip"></div>
       <div class="rank">#${idx + 1}</div>
@@ -448,90 +299,55 @@ function _viewerRenderSummary(container) {
     container.appendChild(card);
   });
 
-  // ── Round history — same court card style as Live tab ──
   const roundsTitle = document.createElement('div');
   roundsTitle.className = 'round-header';
-  roundsTitle.style.cssText = 'margin:16px 4px 6px;';
+  roundsTitle.style.margin = '16px 4px 6px';
   roundsTitle.textContent = tr.rounds || 'Rounds';
   container.appendChild(roundsTitle);
 
-  const total = (allRounds || []).length;
-  // All rounds, same class (no dimming) — pass index as total-1 so all use latest-round style
-  for (let i = total - 1; i >= 0; i--) {
-    container.appendChild(_viewerBuildRound(allRounds[i], total - 1, total));
+  for (let i = _vRoundsData.length - 1; i >= 0; i--) {
+    container.appendChild(_vBuildRound(_vRoundsData[i]));
   }
 }
 
-/* ============================================================
-   POLLING — re-renders only when updated_at changes
-   ============================================================ */
+/* ── Polling ── */
 function viewerStartPoll() {
   viewerStopPoll();
-  _viewerPollTimer = setInterval(async () => {
+  _vPollTimer = setInterval(async () => {
     try {
-      const roundsPage = document.getElementById('roundsPage');
-      if (!roundsPage || roundsPage.style.display === 'none') {
-        viewerStopPoll(); return;
-      }
-
+      const vPage = document.getElementById('viewerPage');
+      if (!vPage || vPage.style.display === 'none') { viewerStopPoll(); return; }
       const rows = await sbGet('sessions',
-        `id=eq.${_viewerSessionId}&select=rounds_data,started_by,created_at,updated_at,status`
+        `id=eq.${_vSessionId}&select=rounds_data,started_by,created_at,updated_at,status`
       );
       if (!rows || !rows.length) { viewerStopPoll(); return; }
-
       const sess = rows[0];
-
-      // No change — skip render
-      if (sess.updated_at === _viewerLastUpdated) return;
-      _viewerLastUpdated = sess.updated_at;
-
-      // Update meta in case started_by changed
-      _viewerSessionMeta = {
-        started_by: sess.started_by,
-        created_at: sess.created_at,
-        club_name:  (typeof getMyClub === 'function') ? getMyClub().name : ''
-      };
-
-      // Reload allRounds
-      const fetched = sess.rounds_data || [];
-      allRounds.splice(0, allRounds.length, ...fetched);
-      currentRoundIndex = allRounds.length - 1;
-
-      // Re-render with flash animation on latest round
-      viewerRender(fetched);
-      _viewerFlashLatest();
-
-      // If summary tab is active, refresh it too
-      const summaryDiv = document.getElementById('viewerSummaryContainer');
-      if (summaryDiv && summaryDiv.style.display !== 'none') {
-        _viewerRenderSummary(summaryDiv);
-      }
-
-      // Stop if session ended
+      if (sess.updated_at === _vLastUpdated) return;
+      _vLastUpdated = sess.updated_at;
+      _vMeta = { started_by: sess.started_by, created_at: sess.created_at,
+        club_name: (typeof getMyClub === 'function') ? getMyClub().name : '', status: sess.status };
+      _vRoundsData = sess.rounds_data || [];
+      _vRender(_vRoundsData);
+      _vFlashLatest();
       if (sess.status === 'completed') viewerStopPoll();
-
-    } catch (e) { /* silent — keep polling */ }
+    } catch (e) { /* silent */ }
   }, 5000);
 }
 
 function viewerStopPoll() {
-  if (_viewerPollTimer) { clearInterval(_viewerPollTimer); _viewerPollTimer = null; }
+  if (_vPollTimer) { clearInterval(_vPollTimer); _vPollTimer = null; }
 }
 
-/* ── Flash animation on latest round when data updates ── */
-function _viewerFlashLatest() {
-  const latest = document.querySelector('.viewer-rounds .latest-round');
-  if (!latest) return;
-  latest.classList.remove('viewer-flash');
-  // Force reflow then add class
-  void latest.offsetWidth;
-  latest.classList.add('viewer-flash');
-  setTimeout(() => latest.classList.remove('viewer-flash'), 1000);
+function _vFlashLatest() {
+  const el = document.querySelector('#viewerResults .round-wrapper');
+  if (!el) return;
+  el.classList.remove('viewer-flash');
+  void el.offsetWidth;
+  el.classList.add('viewer-flash');
+  setTimeout(() => el.classList.remove('viewer-flash'), 1000);
 }
 
-/* ============================================================
-   CLUB LOGIN — for viewer settings page
-   ============================================================ */
+/* ── Club login ── */
 async function viewerLoadClubs() {
   try {
     const clubs = await dbGetClubs();
@@ -540,16 +356,12 @@ async function viewerLoadClubs() {
     select.innerHTML = '<option value="">— Select club —</option>';
     clubs.forEach(c => {
       const opt = document.createElement('option');
-      opt.value       = c.id;
-      opt.textContent = c.name;
+      opt.value = c.id; opt.textContent = c.name;
       select.appendChild(opt);
     });
-    // Pre-select current club
-    const current = (typeof getMyClub === 'function') ? getMyClub() : null;
-    if (current && current.id) select.value = current.id;
-  } catch (e) {
-    console.warn('viewerLoadClubs error:', e.message);
-  }
+    const cur = (typeof getMyClub === 'function') ? getMyClub() : null;
+    if (cur && cur.id) select.value = cur.id;
+  } catch (e) { console.warn('viewerLoadClubs:', e.message); }
 }
 
 async function viewerJoinClub() {
@@ -557,35 +369,20 @@ async function viewerJoinClub() {
   const pwInput  = document.getElementById('sbPasswordInputViewer');
   const feedback = document.getElementById('sbClubFeedbackViewer');
   const status   = document.getElementById('sbClubStatusViewer');
-
-  const setFb = (msg, ok) => {
-    if (!feedback) return;
-    feedback.textContent = msg;
-    feedback.style.color = ok ? 'var(--green, #2dce89)' : 'var(--red, #e63757)';
-  };
-
+  const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
   if (!select || !select.value) { setFb('Please select a club.', false); return; }
   const pw = pwInput ? pwInput.value.trim() : '';
   if (!pw) { setFb('Enter password.', false); return; }
-
   try {
     const clubs = await sbGet('clubs', `id=eq.${select.value}&select=id,name,select_password`);
     if (!clubs.length) throw new Error('Club not found.');
-    const club = clubs[0];
-
-    if (pw !== club.select_password) throw new Error('Wrong password.');
-
-    if (typeof setMyClub === 'function') setMyClub(club.id, club.name);
-    localStorage.setItem('kbrr_club_mode',    'user');
+    if (pw !== clubs[0].select_password) throw new Error('Wrong password.');
+    if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
+    localStorage.setItem('kbrr_club_mode', 'user');
     localStorage.setItem('kbrr_rating_field', 'club_ratings');
-    localStorage.setItem('kbrr_rating_mode',  'local');
-
     if (pwInput) pwInput.value = '';
-    if (status)  status.textContent = '✅ ' + club.name;
+    if (status)  status.textContent = '✅ ' + clubs[0].name;
     setFb('Joined successfully', true);
-
     if (typeof syncToLocal === 'function') syncToLocal();
-  } catch (e) {
-    setFb('❌ ' + e.message, false);
-  }
+  } catch (e) { setFb('❌ ' + e.message, false); }
 }

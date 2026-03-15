@@ -131,6 +131,10 @@
         <span class="tab-icon">📡</span>
         <span class="tab-label">Dashboard</span>
       </button>
+      <button class="tab-btn" onclick="viewerGoBack()" id="tabBtnViewer" style="display:none">
+        <span class="tab-icon">🏸</span>
+        <span class="tab-label">Session</span>
+      </button>
       <button class="tab-btn" onclick="showPage('helpPage', this)">
         <span class="tab-icon">❓</span>
         <span class="tab-label" data-i18n="help">Help</span>
@@ -443,6 +447,13 @@
     <div id="dashboardContainer" class="dashboard-container">
       <div class="dashboard-loading"><div class="help-spinner"></div></div>
     </div>
+  </div>
+
+  <!-- ============================= -->
+  <!--          VIEWER PAGE          -->
+  <!-- ============================= -->
+  <div id="viewerPage" class="page" style="display:none;">
+    <div id="viewerResults"></div>
   </div>
 
   <!-- ============================= -->

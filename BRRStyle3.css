@@ -1981,24 +1981,10 @@ body.app-dark .newImport-player-card.player-added {
 }
 
 /* ══════════════════════════════════════════════
-   VIEWER MODE — block all scoring interactions
+   VIEWER MODE — settings page only
+   Organiser DOM elements never targeted here.
+   All viewer round rendering is in #viewerPage.
 ══════════════════════════════════════════════ */
-body.viewer-mode .team[data-team-side],
-body.viewer-mode .win-cup,
-body.viewer-mode .swap-icon,
-body.viewer-mode .Lplayer-btn,
-body.viewer-mode .Rplayer-btn {
-  pointer-events: none !important;
-}
-body.viewer-mode .win-cup {
-  opacity: 0 !important;
-}
-body.viewer-mode .win-cup.active {
-  opacity: 1 !important;
-}
-body.viewer-mode .swap-icon {
-  opacity: 0 !important;
-}
 
 /* ─────────────────────────────────────────────
    VIEWER MODE — Settings page adjustments
@@ -2151,6 +2137,18 @@ body.viewer-mode #clubLoginCard {
 }
 
 /* ─────────────────────────────────────────────
+   VIEWER PAGE — isolated from organiser DOM
+───────────────────────────────────────────── */
+#viewerPage {
+  padding: 8px 6px;
+}
+#viewerPage .action-card,
+#viewerPage .round-settings-panel,
+#viewerPage .title-card {
+  display: none !important;
+}
+
+/* ─────────────────────────────────────────────
    VIEWER ROUNDS — compact + alternating bg
    Applied to #game-results when in viewer mode
 ───────────────────────────────────────────── */
@@ -2206,17 +2204,7 @@ body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
   font-size: 0.75rem !important;
 }
 
-/* Hide action buttons in viewer mode */
-body.viewer-mode .action-card {
-  display: none !important;
-}
-body.viewer-mode .round-settings-panel {
-  display: none !important;
-}
-/* Hide title card (rounds count + lock) in viewer mode */
-body.viewer-mode #roundsPage .title-card {
-  display: none !important;
-}
+
 
 
 /* ══════════════════════════════════════════════

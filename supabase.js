@@ -662,7 +662,7 @@ async function dbGetPastSessions() {
     const club = getMyClub();
     if (!club.id) return [];
     const rows = await sbGet('sessions',
-      `club_id=eq.${club.id}&status=eq.completed&order=updated_at.desc&limit=3&select=id,date,started_by,players,updated_at`
+      `club_id=eq.${club.id}&status=eq.completed&order=updated_at.desc&limit=3&select=id,date,started_by,players,rounds_data,updated_at`
     );
     return rows || [];
   } catch (e) {

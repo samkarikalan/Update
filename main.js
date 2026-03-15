@@ -49,6 +49,7 @@ function applyMode(mode) {
     tabBtnRounds:    { viewer: false, organiser: true },
     tabBtnSummary:   { viewer: false, organiser: true },
     tabBtnDashboard: { viewer: true,  organiser: true },
+    tabBtnViewer:    { viewer: false, organiser: false },
   };
   Object.entries(tabRules).forEach(([id, rules]) => {
     const el = document.getElementById(id);
@@ -80,12 +81,6 @@ function setViewerMode(isViewer) {
     if (resetBtn && resetBtn.classList.contains('active')) {
       if (typeof settingsShowTab === 'function') settingsShowTab('font');
     }
-    // Populate viewer club login dropdown
-    if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
-    // Show current club status in viewer card
-    const club = (typeof getMyClub === 'function') ? getMyClub() : null;
-    const status = document.getElementById('sbClubStatusViewer');
-    if (status) status.textContent = club && club.name ? 'Club: ' + club.name : '';
   } else {
     document.body.classList.remove('viewer-mode');
   }
@@ -448,10 +443,6 @@ function showPage(pageID, el) {
 
   // ➜ Additional action when roundsPage is opened
   if (pageID === "roundsPage") {
-    // Always restore organiser mode when organiser opens rounds page
-    if (appMode === 'organiser' && typeof setViewerMode === 'function') {
-      setViewerMode(false);
-    }
     if (sessionFinished) {
       console.warn("Rounds already finished");
       return;
@@ -462,9 +453,6 @@ function showPage(pageID, el) {
     } else {
       if (lastPage === "playersPage") {
         goToRounds();
-      } else {
-        // Coming from dashboard or other page mid-session — just re-render current round
-        if (typeof showRound === 'function') showRound(currentRoundIndex);
       }
     }
   }
