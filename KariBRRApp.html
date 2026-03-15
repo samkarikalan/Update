@@ -601,6 +601,22 @@
             <span class="vault-status-role" id="vaultStatusRole" style="display:none"></span>
             <button class="vault-logout-btn" onclick="sbClearClub()">Logout</button>
           </div>
+
+          <!-- Vault login — shown when no club selected -->
+          <div id="vaultLoginSection" style="display:none;padding:10px 0 4px;">
+            <div class="club-row">
+              <select id="sbClubSelectVault" class="club-select" style="flex:1">
+                <option value="">— Select club —</option>
+              </select>
+            </div>
+            <div class="club-row" style="margin-top:8px">
+              <input type="password" id="sbPasswordInputVault" class="club-input"
+                     placeholder="Enter password"
+                     onkeydown="if(event.key==='Enter')vaultJoinClub()">
+              <button class="btn-save" onclick="vaultJoinClub()">Join</button>
+            </div>
+            <div id="sbClubFeedbackVault" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
+          </div>
           <div class="vault-sync-row">
             <span id="sbSyncStatus" class="vault-sync-text"></span>
             <button class="vault-sync-btn" onclick="syncToLocal()">🔄 Sync</button>

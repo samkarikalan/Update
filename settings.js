@@ -841,6 +841,73 @@ function vaultSyncStatus() {
     if (dot)   { dot.style.background = 'var(--muted)'; dot.style.boxShadow = 'none'; }
     if (role)  role.style.display = 'none';
   }
+
+  // Show login section when no club, hide when logged in
+  const loginSection = document.getElementById('vaultLoginSection');
+  const syncRow      = document.querySelector('.vault-sync-row');
+  const innerTabs    = document.querySelector('.vault-inner-tabs');
+  const hasClub      = !!club.name;
+  if (loginSection) loginSection.style.display = hasClub ? 'none' : '';
+  if (syncRow)      syncRow.style.display      = hasClub ? '' : 'none';
+  if (innerTabs)    innerTabs.style.display     = hasClub ? '' : 'none';
+  // Also hide content panels (siblings of inner-tabs)
+  document.querySelectorAll('.vault-inner-content').forEach(el => {
+    el.style.display = hasClub ? '' : 'none';
+  });
+
+  // Populate vault club select when showing login
+  if (!hasClub) vaultLoadClubsForLogin();
+}
+
+
+/* ── Vault login — load clubs and join ── */
+async function vaultLoadClubsForLogin() {
+  try {
+    const clubs = await dbGetClubs();
+    const select = document.getElementById('sbClubSelectVault');
+    if (!select) return;
+    select.innerHTML = '<option value="">— Select club —</option>';
+    clubs.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+  } catch (e) { console.warn('vaultLoadClubsForLogin:', e.message); }
+}
+
+async function vaultJoinClub() {
+  const select   = document.getElementById('sbClubSelectVault');
+  const pwInput  = document.getElementById('sbPasswordInputVault');
+  const feedback = document.getElementById('sbClubFeedbackVault');
+  const setFb = (msg, ok) => {
+    if (!feedback) return;
+    feedback.textContent = msg;
+    feedback.style.color = ok ? '#2dce89' : '#e63757';
+  };
+  if (!select || !select.value) { setFb('Please select a club.', false); return; }
+  const pw = pwInput ? pwInput.value.trim() : '';
+  if (!pw) { setFb('Enter password.', false); return; }
+  try {
+    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=id,name,select_password,admin_password,trusted`);
+    if (!clubs.length) throw new Error('Club not found.');
+    const club = clubs[0];
+    let mode = null;
+    if (pw === club.admin_password)       mode = 'admin';
+    else if (pw === club.select_password) mode = 'user';
+    else throw new Error('Wrong password.');
+    setMyClub(club.id, club.name);
+    localStorage.setItem('kbrr_club_mode',    mode);
+    localStorage.setItem('kbrr_club_trusted', club.trusted ? 'true' : 'false');
+    localStorage.setItem('kbrr_rating_field', 'club_ratings');
+    localStorage.setItem('kbrr_rating_mode',  'local');
+    if (pwInput) pwInput.value = '';
+    setFb('✅ Joined as ' + (mode === 'admin' ? 'Admin' : 'User'), true);
+    sbRenderClubStatus();
+    vaultSyncStatus();
+    await syncToLocal();
+    // Refresh vault tabs
+    if (typeof vaultShowTab === 'function') vaultShowTab('players');
+  } catch (e) { setFb('❌ ' + e.message, false); }
 }
 
 async function sbConfirmJoin() {
@@ -906,9 +973,23 @@ function sbClearClub() {
   localStorage.removeItem('kbrr_club_trusted');
   localStorage.removeItem('kbrr_rating_mode');
   localStorage.removeItem('kbrr_rating_field');
-  localStorage.removeItem("kbrr_rating_field");
-  document.getElementById("sbRatingModeWrap") && (document.getElementById("sbRatingModeWrap").style.display = "none");
+  localStorage.removeItem('kbrr_rating_field');
+
+  // Clear all player data on logout
+  localStorage.removeItem('newImportHistory');
+  localStorage.removeItem('schedulerPlayers');
+  if (typeof newImportState !== 'undefined' && newImportState) {
+    newImportState.historyPlayers = [];
+    newImportState.selectedPlayers = [];
+  }
+  if (typeof schedulerState !== 'undefined' && schedulerState) {
+    schedulerState.allPlayers    = [];
+    schedulerState.activeplayers = [];
+  }
+
+  document.getElementById('sbRatingModeWrap') && (document.getElementById('sbRatingModeWrap').style.display = 'none');
   sbRenderClubStatus();
+  vaultSyncStatus();
   updateRegisterTabVisibility();
   showClubJoinOverlay();
 }
