@@ -159,10 +159,9 @@ function viewerRender(roundsData) {
   // 1. Session info bar
   resultsDiv.appendChild(_viewerBuildInfoBar());
 
-  // 2. All rounds — latest first
-  for (let i = roundsData.length - 1; i >= 0; i--) {
-    resultsDiv.appendChild(_viewerBuildRound(roundsData[i], i, roundsData.length));
-  }
+  // 2. Current round only (latest)
+  const lastIdx = roundsData.length - 1;
+  resultsDiv.appendChild(_viewerBuildRound(roundsData[lastIdx], lastIdx, roundsData.length));
 
   // Default to Live tab active
   const liveBtn = document.getElementById('viewerTabLive');
@@ -457,9 +456,9 @@ function _viewerRenderSummary(container) {
   container.appendChild(roundsTitle);
 
   const total = (allRounds || []).length;
-  // Show all rounds including the last (summary shows full history)
+  // All rounds, same class (no dimming) — pass index as total-1 so all use latest-round style
   for (let i = total - 1; i >= 0; i--) {
-    container.appendChild(_viewerBuildRound(allRounds[i], i, total));
+    container.appendChild(_viewerBuildRound(allRounds[i], total - 1, total));
   }
 }
 
