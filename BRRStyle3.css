@@ -2027,6 +2027,37 @@ body.viewer-mode #clubLoginCard {
 ══════════════════════════════════════════════ */
 
 /* Info bar */
+
+/* ─────────────────────────────────────────────
+   VIEWER SUB-TABS (Live / Summary)
+───────────────────────────────────────────── */
+.viewer-subtabs {
+  display: flex;
+  gap: 0;
+  margin: 8px 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.viewer-subtab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  text-align: center;
+}
+.viewer-subtab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.viewer-subtab-btn:hover:not(.active) {
+  color: var(--text-dim);
+}
+
 .viewer-info-bar {
   display: flex;
   align-items: center;
@@ -2061,7 +2092,7 @@ body.viewer-mode #clubLoginCard {
   margin-bottom: 10px;
 }
 .viewer-leaderboard-title {
-  font-size: 11px;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -2087,14 +2118,14 @@ body.viewer-mode #clubLoginCard {
   border: 1px solid rgba(245,166,35,0.25);
 }
 .viewer-lb-rank {
-  font-size: 11px;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--muted);
   text-align: center;
 }
 .viewer-lb-row.viewer-lb-top .viewer-lb-rank { color: #f5a623; }
 .viewer-lb-name {
-  font-size: 13px;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -2102,7 +2133,7 @@ body.viewer-mode #clubLoginCard {
   text-overflow: ellipsis;
 }
 .viewer-lb-wl {
-  font-size: 11px;
+  font-size: 0.68rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2143,23 +2174,23 @@ body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
 }
 .viewer-rounds .round-header {
   margin: 4px 2px 2px !important;
-  font-size: 9px !important;
+  font-size: 0.58rem !important;
 }
 .viewer-rounds .courtcard {
   margin: 4px 0 !important;
 }
 .viewer-rounds .courtname {
   padding: 4px 10px 3px !important;
-  font-size: 9px !important;
+  font-size: 0.58rem !important;
 }
 .viewer-rounds .team[data-team-side="L"],
 .viewer-rounds .team[data-team-side="R"] {
   padding: 5px 10px !important;
-  min-height: 36px !important;
+  min-height: 2.4rem !important;
 }
 .viewer-rounds .Lplayer-btn,
 .viewer-rounds .Rplayer-btn {
-  font-size: 13px !important;
+  font-size: 0.82rem !important;
   padding: 2px 4px !important;
 }
 .viewer-rounds .vs-divider {
@@ -2172,7 +2203,7 @@ body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
 }
 .viewer-rounds .rest-btn {
   padding: 2px 8px !important;
-  font-size: 12px !important;
+  font-size: 0.75rem !important;
 }
 
 /* Hide action buttons in viewer mode */
@@ -2323,16 +2354,16 @@ body.viewer-mode #roundsPage::before {
 
 /* ── Tab label — fixed size, never changes with font setting ── */
 .tab-label {
-  font-size: 11px !important;
+  font-size: 0.72rem !important;
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
 }
 .tab-icon {
-  font-size: 22px !important;
+  font-size: 1.35rem !important;
 }
 .tab-btn {
-  font-size: 11px !important;
+  font-size: 0.72rem !important;
 }
 
 /* Organiser scrollable tab buttons — exactly 3 visible */

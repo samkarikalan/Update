@@ -68,9 +68,9 @@ function _viewerShowPage() {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   const roundsBtn = document.getElementById('tabBtnRounds');
   if (roundsBtn) {
-    roundsBtn.style.display      = '';
+    roundsBtn.style.display       = '';
     roundsBtn.style.pointerEvents = 'auto';
-    roundsBtn.style.opacity      = '1';
+    roundsBtn.style.opacity       = '1';
     roundsBtn.removeAttribute('aria-disabled');
     roundsBtn.classList.add('active');
     roundsBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -79,7 +79,59 @@ function _viewerShowPage() {
   // Apply viewer-mode class so CSS hides action card, settings panel, etc.
   if (typeof setViewerMode === 'function') setViewerMode(true);
 
+  // Inject viewer sub-tabs if not already present
+  _viewerInjectSubTabs();
+
   if (typeof lastPage !== 'undefined') lastPage = 'dashboardPage';
+}
+
+/* ── Inject Summary / Live sub-tabs into roundsPage ── */
+function _viewerInjectSubTabs() {
+  // Remove existing to avoid duplicates
+  const existing = document.getElementById('viewerSubTabs');
+  if (existing) existing.remove();
+
+  const titleCard = document.querySelector('#roundsPage .title-card');
+  if (!titleCard) return;
+
+  const subTabs = document.createElement('div');
+  subTabs.id = 'viewerSubTabs';
+  subTabs.className = 'viewer-subtabs';
+  subTabs.innerHTML = `
+    <button class="viewer-subtab-btn" id="viewerTabLive" onclick="viewerSwitchTab('live')">🏸 Live</button>
+    <button class="viewer-subtab-btn" id="viewerTabSummary" onclick="viewerSwitchTab('summary')">📊 Summary</button>
+  `;
+
+  // Insert after title-card
+  titleCard.insertAdjacentElement('afterend', subTabs);
+}
+
+/* ── Switch between Live and Summary sub-tabs ── */
+function viewerSwitchTab(tab) {
+  const liveBtn    = document.getElementById('viewerTabLive');
+  const summaryBtn = document.getElementById('viewerTabSummary');
+  const gameResults = document.getElementById('game-results');
+  const viewerSummaryDiv = document.getElementById('viewerSummaryContainer');
+
+  if (liveBtn)    liveBtn.classList.toggle('active',    tab === 'live');
+  if (summaryBtn) summaryBtn.classList.toggle('active', tab === 'summary');
+
+  if (tab === 'live') {
+    if (gameResults)       gameResults.style.display    = '';
+    if (viewerSummaryDiv)  viewerSummaryDiv.style.display = 'none';
+  } else {
+    if (gameResults)       gameResults.style.display    = 'none';
+    // Build or show summary container
+    let summaryDiv = document.getElementById('viewerSummaryContainer');
+    if (!summaryDiv) {
+      summaryDiv = document.createElement('div');
+      summaryDiv.id = 'viewerSummaryContainer';
+      summaryDiv.style.padding = '8px 6px';
+      gameResults.insertAdjacentElement('afterend', summaryDiv);
+    }
+    summaryDiv.style.display = '';
+    _viewerRenderSummary(summaryDiv);
+  }
 }
 
 /* ============================================================
@@ -114,6 +166,17 @@ function viewerRender(roundsData) {
   for (let i = roundsData.length - 1; i >= 0; i--) {
     resultsDiv.appendChild(_viewerBuildRound(roundsData[i], i, roundsData.length));
   }
+
+  // Default to Live tab active
+  const liveBtn = document.getElementById('viewerTabLive');
+  const summaryBtn = document.getElementById('viewerTabSummary');
+  if (liveBtn)    liveBtn.classList.add('active');
+  if (summaryBtn) summaryBtn.classList.remove('active');
+
+  // Hide summary container if switching back from summary
+  const summaryDiv = document.getElementById('viewerSummaryContainer');
+  if (summaryDiv) summaryDiv.style.display = 'none';
+  resultsDiv.style.display = '';
 }
 
 /* ============================================================
@@ -314,6 +377,132 @@ function _viewerBuildRound(data, index, total) {
   return wrapper;
 }
 
+
+/* ============================================================
+   SUMMARY TAB — same output as organiser summary tab
+   Built from allRounds data — no schedulerState needed
+   ============================================================ */
+function _viewerRenderSummary(container) {
+  container.innerHTML = '';
+
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
+  const tr   = (typeof translations !== 'undefined') ? translations[lang] : {};
+
+  // ── Player standings (reuse report-header + player-card CSS) ──
+  const stats = new Map(); // name → { wins, played, rest }
+
+  for (const round of (allRounds || [])) {
+    // Track resting
+    for (const name of (round.resting || [])) {
+      const base = name.split('#')[0];
+      if (!stats.has(base)) stats.set(base, { wins: 0, played: 0, rest: 0 });
+      stats.get(base).rest++;
+    }
+    for (const game of (round.games || [])) {
+      const all = [...(game.pair1 || []), ...(game.pair2 || [])];
+      all.forEach(name => {
+        if (!stats.has(name)) stats.set(name, { wins: 0, played: 0, rest: 0 });
+        stats.get(name).played++;
+      });
+      if (game.winner) {
+        const winners = game.winner === 'L' ? (game.pair1 || []) : (game.pair2 || []);
+        winners.forEach(name => {
+          if (!stats.has(name)) stats.set(name, { wins: 0, played: 0, rest: 0 });
+          stats.get(name).wins++;
+        });
+      }
+    }
+  }
+
+  const sorted = [...stats.entries()]
+    .map(([name, s]) => ({ name, ...s }))
+    .sort((a, b) => b.wins - a.wins || b.played - a.played);
+
+  // Header row
+  const header = document.createElement('div');
+  header.className = 'report-header';
+  header.innerHTML = `
+    <div class="header-strip"></div>
+    <div class="header-rank">Rank</div>
+    <div class="header-name">Name</div>
+    <div class="header-wins">W</div>
+    <div class="header-played">P</div>
+    <div class="header-rested">R</div>
+  `;
+  container.appendChild(header);
+
+  // Player cards
+  sorted.forEach((p, idx) => {
+    const topClass = idx === 0 ? 'top-1' : idx === 1 ? 'top-2' : idx === 2 ? 'top-3' : '';
+    const card = document.createElement('div');
+    card.className = 'player-card ' + topClass;
+    card.style.setProperty('--strip-color', idx === 0 ? '#f5a623' : idx === 1 ? '#9b9b9b' : idx === 2 ? '#cd7f32' : '#9e9e9e');
+    card.innerHTML = `
+      <div class="rating-strip"></div>
+      <div class="rank">#${idx + 1}</div>
+      <div class="name">${p.name}</div>
+      <div class="stat wins">${p.wins}</div>
+      <div class="stat played">${p.played}</div>
+      <div class="stat rest">${p.rest}</div>
+      <span class="rating-badge"></span>
+      <div class="stat-label lbl-wins">W</div>
+      <div class="stat-label lbl-played">P</div>
+      <div class="stat-label lbl-rest">R</div>
+    `;
+    container.appendChild(card);
+  });
+
+  // ── Round history (reuse export-round CSS from summary.js) ──
+  const roundsTitle = document.createElement('div');
+  roundsTitle.style.cssText = 'font-size:0.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:16px 4px 6px;';
+  roundsTitle.textContent = tr.rounds || 'Rounds';
+  container.appendChild(roundsTitle);
+
+  (allRounds || []).slice(0, -1).forEach(data => {
+    const roundDiv = document.createElement('div');
+    roundDiv.className = 'export-round';
+
+    const title = document.createElement('div');
+    title.className = 'export-round-title';
+    title.textContent = (tr.roundno || 'Round ') + data.round;
+    roundDiv.appendChild(title);
+
+    (data.games || []).forEach(game => {
+      const match = document.createElement('div');
+      match.className = 'export-match';
+
+      const leftTeam = document.createElement('div');
+      leftTeam.className = 'export-team';
+      leftTeam.innerHTML = (game.pair1 || []).join('<br>');
+      if (game.winner === 'L') leftTeam.classList.add('winner');
+
+      const vs = document.createElement('div');
+      vs.className = 'export-vs';
+      vs.textContent = 'VS';
+
+      const rightTeam = document.createElement('div');
+      rightTeam.className = 'export-team';
+      rightTeam.innerHTML = (game.pair2 || []).join('<br>');
+      if (game.winner === 'R') rightTeam.classList.add('winner');
+
+      match.append(leftTeam, vs, rightTeam);
+      roundDiv.appendChild(match);
+    });
+
+    const restTitle = document.createElement('div');
+    restTitle.className = 'export-rest-title';
+    restTitle.textContent = tr.sittingOut || 'Resting';
+    roundDiv.appendChild(restTitle);
+
+    const restBox = document.createElement('div');
+    restBox.className = 'export-rest-box';
+    restBox.textContent = (data.resting || []).map(n => n.split('#')[0]).join(', ') || (tr.none || 'None');
+    roundDiv.appendChild(restBox);
+
+    container.appendChild(roundDiv);
+  });
+}
+
 /* ============================================================
    POLLING — re-renders only when updated_at changes
    ============================================================ */
@@ -352,6 +541,12 @@ function viewerStartPoll() {
       // Re-render with flash animation on latest round
       viewerRender(fetched);
       _viewerFlashLatest();
+
+      // If summary tab is active, refresh it too
+      const summaryDiv = document.getElementById('viewerSummaryContainer');
+      if (summaryDiv && summaryDiv.style.display !== 'none') {
+        _viewerRenderSummary(summaryDiv);
+      }
 
       // Stop if session ended
       if (sess.status === 'completed') viewerStopPoll();
