@@ -500,11 +500,7 @@ function clubAdminInit() {
   sbLoadClubs();
   sbRenderClubStatus();
   updateRegisterTabVisibility();
-  // Show join overlay if no club selected yet
-  const club = getMyClub();
-  if (!club.id) {
-    showClubJoinOverlay();
-  }
+  // Club login is handled in Vault tab — no overlay needed
 }
 
 function showClubJoinOverlay() {
@@ -991,7 +987,6 @@ function sbClearClub() {
   sbRenderClubStatus();
   vaultSyncStatus();
   updateRegisterTabVisibility();
-  showClubJoinOverlay();
 }
 
 async function sbDeleteClub() {
