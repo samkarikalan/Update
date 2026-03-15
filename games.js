@@ -1208,6 +1208,9 @@ DISPLAY & UI FUNCTIONS
 function clearPreviousRound() {
   const resultsDiv = document.getElementById('game-results');
 
+  // Remove viewer-rounds class when organiser takes over
+  resultsDiv.classList.remove('viewer-rounds');
+
   // Remove all child nodes (old rounds)
   while (resultsDiv.firstChild) {
     resultsDiv.removeChild(resultsDiv.firstChild);
@@ -1237,6 +1240,7 @@ function showAllRounds() {
   const resultsDiv = document.getElementById('game-results');
   if (!resultsDiv) return;
   resultsDiv.innerHTML = '';
+  resultsDiv.classList.add('viewer-rounds');
 
   if (!allRounds || !allRounds.length) {
     resultsDiv.innerHTML = '<div class="round-header" style="padding:20px;text-align:center;">No rounds yet</div>';

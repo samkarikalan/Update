@@ -202,6 +202,9 @@ async function _openSessionRounds(sessionId) {
   const roundsBtn = document.getElementById('tabBtnRounds');
   if (roundsBtn) {
     roundsBtn.style.display = '';
+    roundsBtn.style.pointerEvents = 'auto';
+    roundsBtn.style.opacity = '1';
+    roundsBtn.removeAttribute('aria-disabled');
     roundsBtn.classList.add('active');
     roundsBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
@@ -211,20 +214,15 @@ async function _openSessionRounds(sessionId) {
   const anchor = document.getElementById('roundsSlotAnchor');
   if (slot && anchor) { anchor.appendChild(slot); slot.style.display = 'block'; }
 
-  const actionCard    = document.querySelector('.action-card');
-  const settingsPanel = document.querySelector('.round-settings-panel');
-
   if (appMode === 'viewer') {
-    // Viewer — hide organiser controls, show all rounds read-only
-    if (actionCard)    actionCard.style.display    = 'none';
-    if (settingsPanel) settingsPanel.style.display = 'none';
+    // Apply viewer mode properly so all CSS rules and restrictions take effect
+    if (typeof setViewerMode === 'function') setViewerMode(true);
+    // Render all rounds read-only
     if (typeof showAllRounds === 'function') showAllRounds();
     // Start polling for live updates
     _startViewerPoll(sessionId);
   } else {
-    // Organiser opened from dashboard — restore controls, show current round normally
-    if (actionCard)    actionCard.style.display    = '';
-    if (settingsPanel) settingsPanel.style.display = '';
+    // Organiser — show current round normally
     if (typeof showRound === 'function') showRound(currentRoundIndex);
   }
 

@@ -1999,6 +1999,62 @@ body.viewer-mode .win-cup.active {
 body.viewer-mode .swap-icon {
   opacity: 0 !important;
 }
+
+/* ─────────────────────────────────────────────
+   VIEWER ROUNDS — compact + alternating bg
+   Applied to #game-results when in viewer mode
+───────────────────────────────────────────── */
+.viewer-rounds .round-wrapper {
+  border-radius: 10px;
+  margin-bottom: 6px !important;
+  padding: 4px 6px 6px !important;
+  overflow: hidden;
+}
+.viewer-rounds .round-wrapper:nth-child(odd) {
+  background: var(--surface2);
+}
+.viewer-rounds .round-wrapper:nth-child(even) {
+  background: var(--surface3);
+}
+body.app-dark .viewer-rounds .round-wrapper:nth-child(odd) {
+  background: rgba(255,255,255,0.03);
+}
+body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
+  background: rgba(255,255,255,0.06);
+}
+.viewer-rounds .round-header {
+  margin: 4px 2px 2px !important;
+  font-size: 0.6rem !important;
+}
+.viewer-rounds .courtcard {
+  margin: 4px 0 !important;
+}
+.viewer-rounds .courtname {
+  padding: 4px 10px 3px !important;
+}
+.viewer-rounds .team[data-team-side="L"],
+.viewer-rounds .team[data-team-side="R"] {
+  padding: 5px 10px !important;
+  min-height: 36px !important;
+}
+.viewer-rounds .Lplayer-btn,
+.viewer-rounds .Rplayer-btn {
+  font-size: 0.82rem !important;
+  padding: 2px 4px !important;
+}
+.viewer-rounds .vs-divider {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.viewer-rounds .rest-box {
+  padding: 2px 0 4px !important;
+  gap: 4px !important;
+}
+.viewer-rounds .rest-btn {
+  padding: 2px 8px !important;
+  font-size: 0.78rem !important;
+}
+
 /* Hide action buttons in viewer mode */
 body.viewer-mode .action-card {
   display: none !important;
