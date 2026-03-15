@@ -1208,11 +1208,15 @@ DISPLAY & UI FUNCTIONS
 function clearPreviousRound() {
   const resultsDiv = document.getElementById('game-results');
 
-  // Remove viewer classes when organiser takes over
+  // Remove all viewer state when organiser takes over
   resultsDiv.classList.remove('viewer-rounds');
   const roundsPage = document.getElementById('roundsPage');
   if (roundsPage) roundsPage.classList.remove('viewer-page');
   if (typeof viewerStopPoll === 'function') viewerStopPoll();
+  // Remove viewer-mode body class so action card and controls are restored
+  if (typeof appMode !== 'undefined' && appMode === 'organiser') {
+    if (typeof setViewerMode === 'function') setViewerMode(false);
+  }
 
   // Remove all child nodes (old rounds)
   while (resultsDiv.firstChild) {

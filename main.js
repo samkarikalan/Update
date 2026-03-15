@@ -448,6 +448,10 @@ function showPage(pageID, el) {
 
   // ➜ Additional action when roundsPage is opened
   if (pageID === "roundsPage") {
+    // Always restore organiser mode when organiser opens rounds page
+    if (appMode === 'organiser' && typeof setViewerMode === 'function') {
+      setViewerMode(false);
+    }
     if (sessionFinished) {
       console.warn("Rounds already finished");
       return;
@@ -458,6 +462,9 @@ function showPage(pageID, el) {
     } else {
       if (lastPage === "playersPage") {
         goToRounds();
+      } else {
+        // Coming from dashboard or other page mid-session — just re-render current round
+        if (typeof showRound === 'function') showRound(currentRoundIndex);
       }
     }
   }
