@@ -1229,9 +1229,9 @@ function clearPreviousRound() {
 // Show a round
 
 // ============================================================
-// SHOW ALL ROUNDS — viewer mode: renders every round stacked
-// Latest round at top, finished rounds below (dimmed)
-// Read-only: no swap, no winner marking
+// ============================================================
+// RENDER VIEWER ROUNDS — purpose-built, read-only, all rounds
+// Latest first. Reuses courtcard + court-N classes for styling.
 // ============================================================
 function showAllRounds() {
   const resultsDiv = document.getElementById('game-results');
@@ -1239,33 +1239,32 @@ function showAllRounds() {
   resultsDiv.innerHTML = '';
 
   if (!allRounds || !allRounds.length) {
-    resultsDiv.innerHTML = '<div class="dash-empty-inline" style="padding:20px;text-align:center;color:var(--muted)">No rounds yet</div>';
+    resultsDiv.innerHTML = '<div class="round-header" style="padding:20px;text-align:center;">No rounds yet</div>';
     return;
   }
 
-  // Render rounds latest-first
-  const reversed = [...allRounds].map((r, i) => ({ round: r, origIndex: i })).reverse();
-
-  reversed.forEach(({ round: data, origIndex }) => {
-    const isLatest = origIndex === allRounds.length - 1;
+  // Latest round first
+  for (let i = allRounds.length - 1; i >= 0; i--) {
+    const data     = allRounds[i];
+    const isLatest = i === allRounds.length - 1;
 
     const wrapper = document.createElement('div');
     wrapper.className = isLatest ? 'round-wrapper latest-round' : 'round-wrapper played-round';
 
-    // Round header label
+    // Round header
     const header = document.createElement('div');
     header.className = 'round-header';
     header.textContent = (translations[currentLang]?.roundno || 'Round') + ' ' + data.round;
     wrapper.appendChild(header);
 
-    // Courts
-    data.games.forEach((game, gameIndex) => {
+    // Court cards
+    (data.games || []).forEach((game, gi) => {
       const courtDiv = document.createElement('div');
-      courtDiv.className = `courtcard court-${gameIndex + 1}`;
+      courtDiv.className = 'courtcard court-' + (gi + 1);
 
       const courtName = document.createElement('div');
       courtName.className = 'courtname';
-      courtName.textContent = `Court ${gameIndex + 1}`;
+      courtName.textContent = 'Court ' + (gi + 1);
       courtDiv.appendChild(courtName);
 
       const teamsDiv = document.createElement('div');
@@ -1276,30 +1275,30 @@ function showAllRounds() {
         teamDiv.className = 'team';
         teamDiv.dataset.teamSide = side;
 
-        const pairs = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
+        const players = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
 
-        // Winner highlight
+        // Winner — gold highlight + trophy
         if (game.winner === side) {
           teamDiv.classList.add('winner');
           const cup = document.createElement('img');
           cup.src = 'win-cup.png';
           cup.className = 'win-cup active';
-          cup.style.pointerEvents = 'none';
-          cup.style.visibility = 'visible';
+          cup.style.cssText = 'pointer-events:none;visibility:visible;opacity:1;filter:none;';
           teamDiv.appendChild(cup);
         }
 
-        pairs.forEach(p => {
+        // Player names — read-only
+        players.forEach(name => {
           const btn = document.createElement('button');
           btn.className = 'team-btn';
-          btn.textContent = p;
+          btn.textContent = name;
           btn.style.pointerEvents = 'none';
           teamDiv.appendChild(btn);
         });
 
         teamsDiv.appendChild(teamDiv);
 
-        // VS divider between teams
+        // VS divider
         if (si === 0) {
           const vs = document.createElement('div');
           vs.className = 'vs-divider';
@@ -1312,36 +1311,35 @@ function showAllRounds() {
       wrapper.appendChild(courtDiv);
     });
 
-    // Resting players (read-only)
+    // Resting players
     if (data.resting && data.resting.length) {
-      const restSection = document.createElement('div');
-      restSection.className = 'round-header';
-      restSection.style.paddingLeft = '12px';
-      const label = document.createElement('div');
-      label.textContent = t('sittingOut') || 'Sitting Out';
-      restSection.appendChild(label);
+      const restRow = document.createElement('div');
+      restRow.className = 'round-header';
+      restRow.style.paddingLeft = '12px';
+      restRow.textContent = t('sittingOut') || 'Sitting Out';
       const restBox = document.createElement('div');
       restBox.className = 'rest-box';
       data.resting.forEach(name => {
-        const btn = document.createElement('span');
-        btn.className = 'rest-btn';
-        btn.textContent = name.split('#')[0];
-        btn.style.pointerEvents = 'none';
-        restBox.appendChild(btn);
+        const chip = document.createElement('span');
+        chip.className = 'rest-btn';
+        chip.textContent = name.split('#')[0];
+        chip.style.cssText = 'pointer-events:none;cursor:default;';
+        restBox.appendChild(chip);
       });
-      restSection.appendChild(restBox);
-      wrapper.appendChild(restSection);
+      restRow.appendChild(restBox);
+      wrapper.appendChild(restRow);
     }
 
     resultsDiv.appendChild(wrapper);
-  });
+  }
 
-  // Update round title to show total rounds
+  // Update title bar
   const roundTitle = document.getElementById('roundTitle');
   if (roundTitle) {
     roundTitle.textContent = allRounds.length + ' ' + (translations[currentLang]?.rounds || 'Rounds');
   }
 }
+
 
 function showRound(index) {
   clearPreviousRound();

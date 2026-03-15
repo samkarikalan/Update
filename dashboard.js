@@ -171,6 +171,9 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
 
 /* ── Open rounds tab and render all rounds from DB ── */
 async function _openSessionRounds(sessionId) {
+  // Fetch rounds data from DB
+  let fetchedRounds = null;
+  let updatedAt = null;
   try {
     const rows = await sbGet('sessions',
       `id=eq.${sessionId}&select=rounds_data,updated_at`
@@ -179,17 +182,17 @@ async function _openSessionRounds(sessionId) {
       alert('No rounds data available yet.');
       return;
     }
-
-    // Load into global allRounds — splice to avoid multiple Proxy triggers
-    const fetched = rows[0].rounds_data;
-    allRounds.splice(0, allRounds.length, ...fetched);
-    currentRoundIndex = allRounds.length - 1;
-    _viewerLastUpdated = rows[0].updated_at;
-
+    fetchedRounds = rows[0].rounds_data;
+    updatedAt = rows[0].updated_at;
   } catch (e) {
     console.warn('_openSessionRounds fetch error:', e.message);
     return;
   }
+
+  // Load into global allRounds
+  allRounds.splice(0, allRounds.length, ...fetchedRounds);
+  currentRoundIndex = allRounds.length - 1;
+  _viewerLastUpdated = updatedAt;
 
   // Show rounds page — bypass player count guard
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
@@ -208,13 +211,24 @@ async function _openSessionRounds(sessionId) {
   const anchor = document.getElementById('roundsSlotAnchor');
   if (slot && anchor) { anchor.appendChild(slot); slot.style.display = 'block'; }
 
-  // Render all rounds (viewer only — organiser uses normal showRound)
-  if (appMode === 'viewer' && typeof showAllRounds === 'function') showAllRounds();
+  const actionCard    = document.querySelector('.action-card');
+  const settingsPanel = document.querySelector('.round-settings-panel');
+
+  if (appMode === 'viewer') {
+    // Viewer — hide organiser controls, show all rounds read-only
+    if (actionCard)    actionCard.style.display    = 'none';
+    if (settingsPanel) settingsPanel.style.display = 'none';
+    if (typeof showAllRounds === 'function') showAllRounds();
+    // Start polling for live updates
+    _startViewerPoll(sessionId);
+  } else {
+    // Organiser opened from dashboard — restore controls, show current round normally
+    if (actionCard)    actionCard.style.display    = '';
+    if (settingsPanel) settingsPanel.style.display = '';
+    if (typeof showRound === 'function') showRound(currentRoundIndex);
+  }
 
   lastPage = 'dashboardPage';
-
-  // Start polling for updates (viewer only)
-  if (appMode === 'viewer') _startViewerPoll(sessionId);
 }
 
 /* ── Viewer polling — re-renders when organiser updates rounds ── */
