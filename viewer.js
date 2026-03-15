@@ -449,55 +449,18 @@ function _viewerRenderSummary(container) {
     container.appendChild(card);
   });
 
-  // ── Round history (reuse export-round CSS from summary.js) ──
+  // ── Round history — same court card style as Live tab ──
   const roundsTitle = document.createElement('div');
-  roundsTitle.style.cssText = 'font-size:0.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:16px 4px 6px;';
+  roundsTitle.className = 'round-header';
+  roundsTitle.style.cssText = 'margin:16px 4px 6px;';
   roundsTitle.textContent = tr.rounds || 'Rounds';
   container.appendChild(roundsTitle);
 
-  (allRounds || []).slice(0, -1).forEach(data => {
-    const roundDiv = document.createElement('div');
-    roundDiv.className = 'export-round';
-
-    const title = document.createElement('div');
-    title.className = 'export-round-title';
-    title.textContent = (tr.roundno || 'Round ') + data.round;
-    roundDiv.appendChild(title);
-
-    (data.games || []).forEach(game => {
-      const match = document.createElement('div');
-      match.className = 'export-match';
-
-      const leftTeam = document.createElement('div');
-      leftTeam.className = 'export-team';
-      leftTeam.innerHTML = (game.pair1 || []).join('<br>');
-      if (game.winner === 'L') leftTeam.classList.add('winner');
-
-      const vs = document.createElement('div');
-      vs.className = 'export-vs';
-      vs.textContent = 'VS';
-
-      const rightTeam = document.createElement('div');
-      rightTeam.className = 'export-team';
-      rightTeam.innerHTML = (game.pair2 || []).join('<br>');
-      if (game.winner === 'R') rightTeam.classList.add('winner');
-
-      match.append(leftTeam, vs, rightTeam);
-      roundDiv.appendChild(match);
-    });
-
-    const restTitle = document.createElement('div');
-    restTitle.className = 'export-rest-title';
-    restTitle.textContent = tr.sittingOut || 'Resting';
-    roundDiv.appendChild(restTitle);
-
-    const restBox = document.createElement('div');
-    restBox.className = 'export-rest-box';
-    restBox.textContent = (data.resting || []).map(n => n.split('#')[0]).join(', ') || (tr.none || 'None');
-    roundDiv.appendChild(restBox);
-
-    container.appendChild(roundDiv);
-  });
+  const total = (allRounds || []).length;
+  // Show all rounds including the last (summary shows full history)
+  for (let i = total - 1; i >= 0; i--) {
+    container.appendChild(_viewerBuildRound(allRounds[i], i, total));
+  }
 }
 
 /* ============================================================
