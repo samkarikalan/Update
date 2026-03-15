@@ -33,27 +33,6 @@ async function renderDashboard() {
 
     container.innerHTML = '';
 
-    // ── End Session button — organiser only, no active local rounds ──
-    if (typeof isAdminMode === 'function' && isAdminMode()) {
-      const hasLocalRounds = typeof allRounds !== 'undefined' && allRounds.length > 1;
-      if (!hasLocalRounds) {
-        // Check if there's a live session in DB belonging to this organiser
-        const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
-        const myName = myPlayer ? myPlayer.name : null;
-        const mySession = myName ? liveSessions.find(s => s.started_by === myName) : null;
-        if (mySession) {
-          const endBar = document.createElement('div');
-          endBar.style.cssText = 'padding:8px 0 4px;';
-          const endBtn = document.createElement('button');
-          endBtn.style.cssText = 'width:100%;padding:10px;background:#e63757;color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;';
-          endBtn.innerHTML = '⏹ End Session';
-          endBtn.onclick = () => { if (typeof endSession === 'function') endSession(); };
-          endBar.appendChild(endBtn);
-          container.appendChild(endBar);
-        }
-      }
-    }
-
     // ── Live Section ──
     const liveSection = document.createElement('div');
     liveSection.className = 'dash-section';
@@ -183,6 +162,22 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
   if (sessionId) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => _openSessionRounds(sessionId));
+  }
+
+  // End Session button — admin only, live cards only, for sessions started by me
+  if (isLive && typeof isAdminMode === 'function' && isAdminMode()) {
+    const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+    const myName   = myPlayer ? myPlayer.name : null;
+    if (myName && starter === myName) {
+      const endBtn = document.createElement('button');
+      endBtn.style.cssText = 'width:100%;margin-top:10px;padding:8px;background:#e63757;color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;';
+      endBtn.textContent = '⏹ End Session';
+      endBtn.onclick = (e) => {
+        e.stopPropagation(); // prevent opening session view
+        if (typeof endSession === 'function') endSession();
+      };
+      card.appendChild(endBtn);
+    }
   }
 
   return card;
