@@ -2213,6 +2213,10 @@ body.viewer-mode .action-card {
 body.viewer-mode .round-settings-panel {
   display: none !important;
 }
+/* Hide title card (rounds count + lock) in viewer mode */
+body.viewer-mode #roundsPage .title-card {
+  display: none !important;
+}
 
 
 /* ══════════════════════════════════════════════
