@@ -2024,13 +2024,14 @@ body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
 }
 .viewer-rounds .round-header {
   margin: 4px 2px 2px !important;
-  font-size: 0.6rem !important;
+  font-size: 9px !important;
 }
 .viewer-rounds .courtcard {
   margin: 4px 0 !important;
 }
 .viewer-rounds .courtname {
   padding: 4px 10px 3px !important;
+  font-size: 9px !important;
 }
 .viewer-rounds .team[data-team-side="L"],
 .viewer-rounds .team[data-team-side="R"] {
@@ -2039,7 +2040,7 @@ body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
 }
 .viewer-rounds .Lplayer-btn,
 .viewer-rounds .Rplayer-btn {
-  font-size: 0.82rem !important;
+  font-size: 13px !important;
   padding: 2px 4px !important;
 }
 .viewer-rounds .vs-divider {
@@ -2052,7 +2053,7 @@ body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
 }
 .viewer-rounds .rest-btn {
   padding: 2px 8px !important;
-  font-size: 0.78rem !important;
+  font-size: 12px !important;
 }
 
 /* Hide action buttons in viewer mode */
