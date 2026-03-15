@@ -2213,19 +2213,7 @@ body.viewer-mode .action-card {
 body.viewer-mode .round-settings-panel {
   display: none !important;
 }
-/* Read-only banner on rounds page in viewer mode */
-body.viewer-mode #roundsPage::before {
-  content: '👁  View only — switch to Organiser to score';
-  display: block;
-  margin: 10px 12px 0;
-  padding: 8px 14px;
-  background: rgba(245,166,35,0.08);
-  border: 1px solid rgba(245,166,35,0.2);
-  border-radius: 10px;
-  font-size: 0.74rem;
-  color: #f5a623;
-  text-align: center;
-}
+
 
 /* ══════════════════════════════════════════════
    DASHBOARD

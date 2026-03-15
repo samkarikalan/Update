@@ -159,10 +159,7 @@ function viewerRender(roundsData) {
   // 1. Session info bar
   resultsDiv.appendChild(_viewerBuildInfoBar());
 
-  // 2. Leaderboard
-  resultsDiv.appendChild(_viewerBuildLeaderboard(roundsData));
-
-  // 3. All rounds — latest first
+  // 2. All rounds — latest first
   for (let i = roundsData.length - 1; i >= 0; i--) {
     resultsDiv.appendChild(_viewerBuildRound(roundsData[i], i, roundsData.length));
   }
