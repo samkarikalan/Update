@@ -57,9 +57,13 @@ async function profileEndSession() {
   btn.style.opacity = '0.7';
 
   try {
-    await endSession(true); // pass flag to skip drawer close logic
+    await endSession(true);
+    // Close profile drawer after session ended
+    const overlay = document.getElementById('profileOverlay');
+    const drawer  = document.getElementById('profileDrawer');
+    if (overlay) overlay.style.display = 'none';
+    if (drawer)  drawer.classList.remove('open');
   } catch(e) {
-    // endSession reloads page on success, so if we get here something went wrong
     btn.disabled        = false;
     btnText.textContent = 'End Session';
     btn.style.opacity   = '1';

@@ -621,32 +621,37 @@ function restoreSyncIndicator() {
    POWER BUTTON — End Session
 ============================================================= */
 async function endSession(fromProfile = false) {
-  // Check if any games were played this session
-  const gamesPlayed = (typeof allRounds !== "undefined") &&
-    allRounds.some(round => (round.games || round).some(game => game.winner));
+  if (!confirm('End session?')) return;
 
-  const msg = gamesPlayed
-    ? "End session?\n\nGame results will be saved before resetting."
-    : "End session?\n\nNo games played — nothing will be saved.";
-
-  if (!confirm(msg)) return;
-
-  // Session data flushed via flushLiveSession() below (written to live_sessions after each round)
-
-  // Mark session completed in sessions table + keep last 3
-  if (typeof dbCompleteSession === "function") await dbCompleteSession();
+  // Mark session completed in sessions table
+  if (typeof dbCompleteSession === 'function') await dbCompleteSession();
 
   // Flush live_sessions → players.sessions, then delete temp rows
-  if (typeof flushLiveSession === "function") await flushLiveSession();
+  if (typeof flushLiveSession === 'function') await flushLiveSession();
 
-  // Release session slots before reset
-  if (typeof dbReleaseMySession === "function") await dbReleaseMySession();
+  // Release session slots
+  if (typeof dbReleaseMySession === 'function') await dbReleaseMySession();
 
-  // Reset app
-  localStorage.removeItem("schedulerState");
-  localStorage.removeItem("allRounds");
-  localStorage.removeItem("currentRoundIndex");
-  location.reload();
+  // Clear local session state — no reload
+  localStorage.removeItem('schedulerState');
+  localStorage.removeItem('allRounds');
+  localStorage.removeItem('currentRoundIndex');
+  sessionStorage.removeItem('kbrr_session_db_id');
+
+  // Reset in-memory state
+  if (typeof allRounds !== 'undefined') allRounds.length = 0;
+  if (typeof schedulerState !== 'undefined') {
+    schedulerState.activeplayers = [];
+    schedulerState.allPlayers    = [];
+    if (schedulerState.winCount)    schedulerState.winCount.clear();
+    if (schedulerState.PlayedCount) schedulerState.PlayedCount.clear();
+    if (schedulerState.restCount)   schedulerState.restCount.clear();
+  }
+
+  // Stay on dashboard and refresh it
+  if (typeof showPage === 'function') {
+    showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
+  }
 }
 
 /* === SETTINGS TAB SWITCHER === */

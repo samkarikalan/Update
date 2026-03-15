@@ -642,6 +642,28 @@ async function dbCompleteSession() {
   }
 }
 
+// Auto-cleanup stale live sessions — mark completed if older than 3 hours
+async function dbCleanupStaleSessions() {
+  try {
+    const club = getMyClub();
+    if (!club.id) return;
+    const rows = await sbGet('sessions',
+      `club_id=eq.${club.id}&status=eq.live&select=id,created_at`
+    );
+    if (!rows || !rows.length) return;
+    const threeHoursAgo = Date.now() - (3 * 60 * 60 * 1000);
+    for (const sess of rows) {
+      const age = new Date(sess.created_at).getTime();
+      if (age < threeHoursAgo) {
+        await sbPatch('sessions', `id=eq.${sess.id}`, {
+          status:     'completed',
+          updated_at: new Date().toISOString()
+        }).catch(() => {});
+      }
+    }
+  } catch (e) { /* silent */ }
+}
+
 // Fetch ALL live sessions for this club (multiple halls)
 async function dbGetLiveSessions() {
   try {

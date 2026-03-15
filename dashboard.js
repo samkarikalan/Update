@@ -25,6 +25,9 @@ async function renderDashboard() {
   container.innerHTML = '<div class="dashboard-loading"><div class="help-spinner"></div></div>';
 
   try {
+    // Cleanup stale sessions first (crashed apps leave ghost live sessions)
+    if (typeof dbCleanupStaleSessions === 'function') await dbCleanupStaleSessions();
+
     // Fetch all live sessions (one per hall)
     const liveSessions = await dbGetLiveSessions();
 
