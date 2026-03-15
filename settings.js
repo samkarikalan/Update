@@ -525,6 +525,61 @@ function sbShowClubTab(tab) {
   if (tab === "create") sbPopulateDeleteDropdown();
 }
 
+
+// ── Viewer Club Login ─────────────────────────────────────────
+// Populates the viewer-specific club select dropdown
+async function sbLoadClubsViewer() {
+  try {
+    const clubs = await dbGetClubs();
+    const select = document.getElementById('sbClubSelectViewer');
+    if (!select) return;
+    select.innerHTML = '<option value="">— Select club —</option>';
+    clubs.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+    // Pre-select current club if already joined
+    const current = getMyClub();
+    if (current.id) select.value = current.id;
+  } catch (e) {
+    console.warn('Could not load clubs for viewer:', e.message);
+  }
+}
+
+// Viewer join — only accepts user/select password (not admin)
+async function sbConfirmJoinViewer() {
+  const select  = document.getElementById('sbClubSelectViewer');
+  const pwInput = document.getElementById('sbPasswordInputViewer');
+  const feedback = document.getElementById('sbClubFeedbackViewer');
+  const status   = document.getElementById('sbClubStatusViewer');
+
+  if (!select || !select.value) { if (feedback) feedback.textContent = 'Please select a club.'; return; }
+  const password = pwInput?.value.trim();
+  if (!password) { if (feedback) feedback.textContent = 'Enter password.'; return; }
+
+  try {
+    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=id,name,select_password`);
+    if (!clubs.length) throw new Error('Club not found.');
+    const club = clubs[0];
+
+    if (password !== club.select_password) throw new Error('Wrong password.');
+
+    setMyClub(club.id, club.name);
+    localStorage.setItem('kbrr_club_mode',    'user');
+    localStorage.setItem('kbrr_rating_field', 'club_ratings');
+    localStorage.setItem('kbrr_rating_mode',  'local');
+
+    if (pwInput) pwInput.value = '';
+    if (feedback) { feedback.style.color = 'var(--green)'; feedback.textContent = '✅ Joined ' + club.name; }
+    if (status) status.textContent = 'Club: ' + club.name;
+    syncToLocal();
+  } catch (e) {
+    if (feedback) { feedback.style.color = 'var(--red)'; feedback.textContent = '❌ ' + e.message; }
+  }
+}
+
 async function sbLoadClubs() {
   try {
     const clubs = await dbGetClubs();

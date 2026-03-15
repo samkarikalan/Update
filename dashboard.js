@@ -3,13 +3,11 @@
    File: dashboard.js
    ============================================================ */
 
-var _dashboardTimer    = null;
-var _viewerPollTimer   = null;
-var _viewerLastUpdated = null;  // track last updated_at seen by viewer
+var _dashboardTimer = null;
 
 /* ── Called when Dashboard tab opens ── */
 async function renderDashboard() {
-  _stopViewerPoll(); // stop any active poll when returning to dashboard
+  if (typeof viewerStopPoll === 'function') viewerStopPoll(); // stop any active poll
   const container = document.getElementById('dashboardContainer');
   if (!container) return;
 
@@ -169,108 +167,9 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
   return card;
 }
 
-/* ── Open rounds tab and render all rounds from DB ── */
-async function _openSessionRounds(sessionId) {
-  // Fetch rounds data from DB
-  let fetchedRounds = null;
-  let updatedAt = null;
-  try {
-    const rows = await sbGet('sessions',
-      `id=eq.${sessionId}&select=rounds_data,updated_at`
-    );
-    if (!rows || !rows.length || !rows[0].rounds_data || !rows[0].rounds_data.length) {
-      alert('No rounds data available yet.');
-      return;
-    }
-    fetchedRounds = rows[0].rounds_data;
-    updatedAt = rows[0].updated_at;
-  } catch (e) {
-    console.warn('_openSessionRounds fetch error:', e.message);
-    return;
-  }
-
-  // Load into global allRounds
-  allRounds.splice(0, allRounds.length, ...fetchedRounds);
-  currentRoundIndex = allRounds.length - 1;
-  _viewerLastUpdated = updatedAt;
-
-  // Show rounds page — bypass player count guard
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  document.getElementById('roundsPage').style.display = 'block';
-
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-  const roundsBtn = document.getElementById('tabBtnRounds');
-  if (roundsBtn) {
-    roundsBtn.style.display = '';
-    roundsBtn.style.pointerEvents = 'auto';
-    roundsBtn.style.opacity = '1';
-    roundsBtn.removeAttribute('aria-disabled');
-    roundsBtn.classList.add('active');
-    roundsBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }
-
-  // Move shared player slot to rounds anchor
-  const slot   = document.getElementById('sharedPlayerSlot');
-  const anchor = document.getElementById('roundsSlotAnchor');
-  if (slot && anchor) { anchor.appendChild(slot); slot.style.display = 'block'; }
-
-  if (appMode === 'viewer') {
-    // Apply viewer mode properly so all CSS rules and restrictions take effect
-    if (typeof setViewerMode === 'function') setViewerMode(true);
-    // Render all rounds read-only
-    if (typeof showAllRounds === 'function') showAllRounds();
-    // Start polling for live updates
-    _startViewerPoll(sessionId);
-  } else {
-    // Organiser — show current round normally
-    if (typeof showRound === 'function') showRound(currentRoundIndex);
-  }
-
-  lastPage = 'dashboardPage';
-}
-
-/* ── Viewer polling — re-renders when organiser updates rounds ── */
-function _startViewerPoll(sessionId) {
-  _stopViewerPoll(); // clear any existing poll
-  _viewerPollTimer = setInterval(async () => {
-    try {
-      // Only poll if still on rounds page
-      const roundsPage = document.getElementById('roundsPage');
-      if (!roundsPage || roundsPage.style.display === 'none') {
-        _stopViewerPoll();
-        return;
-      }
-
-      const rows = await sbGet('sessions',
-        `id=eq.${sessionId}&select=rounds_data,updated_at,status`
-      );
-      if (!rows || !rows.length) { _stopViewerPoll(); return; }
-
-      const row = rows[0];
-
-      // Stop polling if session ended
-      if (row.status === 'completed') {
-        _stopViewerPoll();
-        if (typeof showAllRounds === 'function') showAllRounds();
-        return;
-      }
-
-      // Only re-render if data has changed
-      if (row.updated_at === _viewerLastUpdated) return;
-      _viewerLastUpdated = row.updated_at;
-
-      // Reload allRounds — splice to avoid multiple Proxy triggers
-      const fetched = row.rounds_data || [];
-      allRounds.splice(0, allRounds.length, ...fetched);
-      currentRoundIndex = allRounds.length - 1;
-      if (typeof showAllRounds === 'function') showAllRounds();
-
-    } catch (e) { /* silent — keep polling */ }
-  }, 5000); // poll every 5 seconds
-}
-
-function _stopViewerPoll() {
-  if (_viewerPollTimer) { clearInterval(_viewerPollTimer); _viewerPollTimer = null; }
+/* ── Open rounds view — delegates entirely to viewer.js ── */
+function _openSessionRounds(sessionId) {
+  if (typeof viewerOpen === 'function') viewerOpen(sessionId);
 }
 
 /* ── Format date ── */

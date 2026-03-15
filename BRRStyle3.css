@@ -2001,6 +2001,125 @@ body.viewer-mode .swap-icon {
 }
 
 /* ─────────────────────────────────────────────
+   VIEWER MODE — Settings page adjustments
+───────────────────────────────────────────── */
+/* Hide Reset tab in viewer mode */
+body.viewer-mode #settingsTabResetBtn {
+  display: none !important;
+}
+/* Hide Club Management card in viewer mode */
+body.viewer-mode #clubMgmtCard {
+  display: none !important;
+}
+/* Show Club Login card in viewer mode */
+#clubLoginCard {
+  display: none;
+}
+body.viewer-mode #clubLoginCard {
+  display: block !important;
+}
+
+
+/* ══════════════════════════════════════════════
+   VIEWER PAGE — rounds page when in viewer mode
+   .viewer-page added to #roundsPage by viewer.js
+   All organiser styles untouched
+══════════════════════════════════════════════ */
+
+/* Info bar */
+.viewer-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(245,166,35,0.07);
+  border: 1px solid rgba(245,166,35,0.2);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.viewer-info-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #f5a623;
+  flex-shrink: 0;
+  animation: viewerDotPulse 2s infinite;
+}
+@keyframes viewerDotPulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.7); }
+}
+.viewer-info-text { font-size: 12px; color: var(--text-dim); }
+.viewer-info-text strong { color: var(--text); font-weight: 600; }
+
+/* Leaderboard */
+.viewer-leaderboard {
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.viewer-leaderboard-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.viewer-leaderboard-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.viewer-lb-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: var(--surface3);
+}
+.viewer-lb-row.viewer-lb-top {
+  background: rgba(245,166,35,0.1);
+  border: 1px solid rgba(245,166,35,0.25);
+}
+.viewer-lb-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+.viewer-lb-row.viewer-lb-top .viewer-lb-rank { color: #f5a623; }
+.viewer-lb-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.viewer-lb-wl {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.viewer-lb-w { color: #2dce89; }
+.viewer-lb-l { color: var(--muted); }
+
+/* Flash animation on latest round update */
+@keyframes viewerFlash {
+  0%   { background: rgba(45,206,137,0.18); }
+  100% { background: transparent; }
+}
+.viewer-rounds .latest-round.viewer-flash {
+  animation: viewerFlash 0.8s ease-out forwards;
+  border-radius: 10px;
+}
+
+/* ─────────────────────────────────────────────
    VIEWER ROUNDS — compact + alternating bg
    Applied to #game-results when in viewer mode
 ───────────────────────────────────────────── */

@@ -25,6 +25,7 @@
   <script src="help.js" defer></script>
   <script src="profile.js" defer></script>
   <script src="dashboard.js" defer></script>
+  <script src="viewer.js" defer></script>
 </head>
 <body>
 
@@ -200,7 +201,7 @@
       </div>
 
       <!-- Club Management — password protected, collapsed by default -->
-      <div class="settings-card" style="padding:0;overflow:hidden;margin-top:10px">
+      <div class="settings-card" id="clubMgmtCard" style="padding:0;overflow:hidden;margin-top:10px">
         <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
           🏢 Club Management <span id="clubMgmtArrow">▶</span>
         </button>
@@ -245,6 +246,24 @@
             <button class="btn-clear" style="margin-top:12px;width:100%" onclick="lockClubMgmt()">🔒 Lock</button>
           </div>
         </div>
+      </div>
+
+      <!-- Club Login card — visible in viewer mode only -->
+      <div class="settings-card" id="clubLoginCard" style="margin-top:10px;padding:14px">
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🏢 Club Login</div>
+        <div class="club-row">
+          <select id="sbClubSelectViewer" class="club-select" style="flex:1">
+            <option value="">— Select club —</option>
+          </select>
+        </div>
+        <div class="club-row" style="margin-top:8px">
+          <input type="password" id="sbPasswordInputViewer" class="club-input"
+                 placeholder="Enter password"
+                 onkeydown="if(event.key==='Enter')viewerJoinClub()">
+          <button class="btn-save" onclick="viewerJoinClub()">Join</button>
+        </div>
+        <div id="sbClubFeedbackViewer" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
+        <div id="sbClubStatusViewer" style="font-size:0.82rem;margin-top:8px;color:var(--muted)"></div>
       </div>
 
     </div>

@@ -75,6 +75,17 @@ function setViewerMode(isViewer) {
   // Use body class — all viewer restrictions handled via CSS + JS checks
   if (isViewer) {
     document.body.classList.add('viewer-mode');
+    // If viewer lands on Reset tab, switch to Font tab
+    const resetBtn = document.getElementById('settingsTabResetBtn');
+    if (resetBtn && resetBtn.classList.contains('active')) {
+      if (typeof settingsShowTab === 'function') settingsShowTab('font');
+    }
+    // Populate viewer club login dropdown
+    if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
+    // Show current club status in viewer card
+    const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+    const status = document.getElementById('sbClubStatusViewer');
+    if (status) status.textContent = club && club.name ? 'Club: ' + club.name : '';
   } else {
     document.body.classList.remove('viewer-mode');
   }
