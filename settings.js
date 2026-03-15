@@ -152,6 +152,9 @@ document.addEventListener("DOMContentLoaded", () => {
 function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem("appLanguage", lang);
+  // Always close the language menu when a language is selected
+  const langMenu = document.getElementById('langMenu');
+  if (langMenu) langMenu.style.display = 'none';
 
   document.querySelectorAll("[id^='lang_']").forEach(btn => {
     btn.classList.remove("active");
