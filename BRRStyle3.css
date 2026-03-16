@@ -1993,9 +1993,21 @@ body.app-dark .newImport-player-card.player-added {
 body.viewer-mode #settingsTabResetBtn {
   display: none !important;
 }
-/* Hide Club Management card in viewer mode */
-body.viewer-mode #clubMgmtCard {
+/* Hide Club Management and first-time banner in viewer mode */
+body.viewer-mode #clubMgmtCard,
+body.viewer-mode #clubFirstTimeBanner {
   display: none !important;
+}
+
+/* Link-style button for resend OTP */
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
 }
 /* Show Club Login card in viewer mode */
 #clubLoginCard {

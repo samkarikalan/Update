@@ -760,38 +760,151 @@ async function vaultDeletePlayer(displayName) {
   vaultRenderModify();
 }
 
-// ── Club Management in Settings — password protected ──
-const PLATFORM_ADMIN_PW = 'kbrr2024admin'; // change to your platform password
+// ── Club Management — OTP-based create/delete ──
 
-function toggleClubMgmt() {
+var _clubCreateEmail = ''; // store email during OTP flow
+var _clubDeleteEmail = ''; // store registration email during delete OTP flow
+var _clubDeleteId    = ''; // store selected club id during delete OTP flow
+
+function toggleClubMgmt(forceOpen) {
   const panel = document.getElementById('clubMgmtPanel');
   const arrow = document.getElementById('clubMgmtArrow');
-  const open  = panel.style.display === 'none';
+  const open  = forceOpen === true ? true : panel.style.display === 'none';
   panel.style.display = open ? 'block' : 'none';
   arrow.textContent   = open ? '▼' : '▶';
-  // Reset lock on close
-  if (!open) lockClubMgmt();
+  if (open) sbPopulateDeleteDropdown();
 }
 
-function unlockClubMgmt() {
-  const pw  = document.getElementById('clubMgmtPassword');
-  const fb  = document.getElementById('clubMgmtLockFeedback');
-  if (pw.value === PLATFORM_ADMIN_PW) {
-    document.getElementById('clubMgmtLock').style.display     = 'none';
-    document.getElementById('clubMgmtUnlocked').style.display = 'block';
-    pw.value = '';
-    sbPopulateDeleteDropdown();
-  } else {
-    fb.textContent = 'Wrong password.';
-    pw.value = '';
-    setTimeout(() => { fb.textContent = ''; }, 2000);
-  }
+/* ── CREATE CLUB — Step 1: Send OTP ── */
+async function clubCreateSendOtp() {
+  const name    = document.getElementById('sbNewClubName')?.value.trim();
+  const email   = document.getElementById('sbNewClubEmail')?.value.trim();
+  const selPw   = document.getElementById('sbNewClubSelectPw')?.value.trim();
+  const adminPw = document.getElementById('sbNewClubAdminPw')?.value.trim();
+  const fb      = document.getElementById('clubCreateFeedback');
+
+  const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
+
+  if (!name)    { setFb('Enter club name.', false); return; }
+  if (!email || !email.includes('@')) { setFb('Enter a valid email.', false); return; }
+  if (!selPw)   { setFb('Enter user password.', false); return; }
+  if (!adminPw) { setFb('Enter admin password.', false); return; }
+
+  setFb('Sending OTP...', true);
+  try {
+    await dbSendOtp(email);
+    _clubCreateEmail = email;
+    document.getElementById('clubCreateEmailMasked').textContent = maskEmail(email);
+    document.getElementById('clubCreateStep1').style.display = 'none';
+    document.getElementById('clubCreateStep2').style.display = '';
+    document.getElementById('sbNewClubOtp').value = '';
+    document.getElementById('sbNewClubOtp').focus();
+    setFb('OTP sent! Check your email.', true);
+  } catch (e) { setFb('❌ ' + e.message, false); }
 }
 
-function lockClubMgmt() {
-  document.getElementById('clubMgmtLock').style.display     = 'block';
-  document.getElementById('clubMgmtUnlocked').style.display = 'none';
-  document.getElementById('clubMgmtPassword').value = '';
+async function clubCreateResend() {
+  if (!_clubCreateEmail) return;
+  try {
+    await dbSendOtp(_clubCreateEmail);
+    document.getElementById('clubCreateFeedback').textContent = 'OTP resent.';
+    document.getElementById('clubCreateFeedback').style.color = '#2dce89';
+  } catch (e) {}
+}
+
+/* ── CREATE CLUB — Step 2: Verify OTP & Create ── */
+async function clubCreateVerify() {
+  const otp     = document.getElementById('sbNewClubOtp')?.value.trim();
+  const name    = document.getElementById('sbNewClubName')?.value.trim();
+  const selPw   = document.getElementById('sbNewClubSelectPw')?.value.trim();
+  const adminPw = document.getElementById('sbNewClubAdminPw')?.value.trim();
+  const fb      = document.getElementById('clubCreateFeedback');
+  const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
+
+  if (!otp || otp.length < 6) { setFb('Enter the 6-digit OTP.', false); return; }
+  setFb('Verifying...', true);
+  try {
+    await dbVerifyOtp(_clubCreateEmail, otp);
+    // OTP verified — create the club
+    const club = await dbAddClub(name, selPw, adminPw, _clubCreateEmail);
+    setMyClub(club.id, club.name);
+    localStorage.setItem('kbrr_club_mode',    'admin');
+    localStorage.setItem('kbrr_rating_field', 'club_ratings');
+    // Reset form
+    ['sbNewClubName','sbNewClubEmail','sbNewClubSelectPw','sbNewClubAdminPw','sbNewClubOtp'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('clubCreateStep1').style.display = '';
+    document.getElementById('clubCreateStep2').style.display = 'none';
+    _clubCreateEmail = '';
+    setFb('✅ Club "' + club.name + '" created! You are now Admin.', true);
+    sbRenderClubStatus();
+    vaultSyncStatus();
+    // Hide first-time banner
+    const banner = document.getElementById('clubFirstTimeBanner');
+    if (banner) banner.style.display = 'none';
+    await syncToLocal();
+  } catch (e) { setFb('❌ ' + e.message, false); }
+}
+
+/* ── DELETE CLUB — Step 1: Send OTP ── */
+async function clubDeleteSendOtp() {
+  const select = document.getElementById('sbDeleteClubSelect');
+  const fb     = document.getElementById('clubDeleteFeedback');
+  const setFb  = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
+
+  if (!select || !select.value) { setFb('Select a club to delete.', false); return; }
+
+  setFb('Fetching club details...', true);
+  try {
+    const regEmail = await dbGetClubRegEmail(select.value);
+    if (!regEmail) { setFb('This club has no registration email. Cannot delete via OTP.', false); return; }
+    await dbSendOtp(regEmail);
+    _clubDeleteEmail = regEmail;
+    _clubDeleteId    = select.value;
+    document.getElementById('clubDeleteEmailMasked').textContent = maskEmail(regEmail);
+    document.getElementById('clubDeleteStep1').style.display = 'none';
+    document.getElementById('clubDeleteStep2').style.display = '';
+    document.getElementById('sbDeleteOtp').value = '';
+    document.getElementById('sbDeleteOtp').focus();
+    setFb('OTP sent to club registration email.', true);
+  } catch (e) { setFb('❌ ' + e.message, false); }
+}
+
+async function clubDeleteResend() {
+  if (!_clubDeleteEmail) return;
+  try {
+    await dbSendOtp(_clubDeleteEmail);
+    document.getElementById('clubDeleteFeedback').textContent = 'OTP resent.';
+    document.getElementById('clubDeleteFeedback').style.color = '#2dce89';
+  } catch (e) {}
+}
+
+/* ── DELETE CLUB — Step 2: Verify OTP & Delete ── */
+async function clubDeleteVerify() {
+  const otp   = document.getElementById('sbDeleteOtp')?.value.trim();
+  const fb    = document.getElementById('clubDeleteFeedback');
+  const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
+
+  if (!otp || otp.length < 6) { setFb('Enter the 6-digit OTP.', false); return; }
+  setFb('Verifying...', true);
+  try {
+    await dbVerifyOtp(_clubDeleteEmail, otp);
+    const clubName = document.getElementById('sbDeleteClubSelect')?.options[document.getElementById('sbDeleteClubSelect').selectedIndex]?.text || '';
+    await dbDeleteClub(_clubDeleteId);
+    // If deleted club was active, clear session
+    const myClub = getMyClub();
+    if (myClub.id === _clubDeleteId) sbClearClub();
+    // Reset
+    document.getElementById('sbDeleteClubSelect').value = '';
+    document.getElementById('clubDeleteStep1').style.display = '';
+    document.getElementById('clubDeleteStep2').style.display = 'none';
+    document.getElementById('sbDeleteOtp').value = '';
+    _clubDeleteEmail = '';
+    _clubDeleteId    = '';
+    await sbPopulateDeleteDropdown();
+    setFb('✅ Club "' + clubName + '" deleted.', true);
+  } catch (e) { setFb('❌ ' + e.message, false); }
 }
 
 function vaultRenderRegister() {
@@ -853,6 +966,13 @@ function vaultSyncStatus() {
 
   // Populate vault club select when showing login
   if (!hasClub) vaultLoadClubsForLogin();
+
+  // First-time banner — show in organiser mode only when no club joined
+  const banner = document.getElementById('clubFirstTimeBanner');
+  if (banner) {
+    const isOrganiser = (typeof appMode !== 'undefined') && appMode === 'organiser';
+    banner.style.display = (isOrganiser && !hasClub) ? '' : 'none';
+  }
 }
 
 
@@ -989,42 +1109,7 @@ function sbClearClub() {
   updateRegisterTabVisibility();
 }
 
-async function sbDeleteClub() {
-  const select  = document.getElementById("sbDeleteClubSelect");
-  const pwInput = document.getElementById("sbDeleteAdminPw");
-  const clubId  = select?.value;
-  const pw      = pwInput?.value.trim();
-
-  if (!clubId)  { sbFeedback("Select a club to delete.", "red"); return; }
-  if (!pw)      { sbFeedback("Enter admin password.", "red"); return; }
-
-  // Verify admin password against selected club
-  const clubName = select.options[select.selectedIndex]?.text || "";
-  try {
-    const clubs = await sbGet("clubs", `id=eq.${clubId}&select=id,name,admin_password`);
-    if (!clubs || !clubs.length) { sbFeedback("Club not found.", "red"); return; }
-    if (clubs[0].admin_password !== pw) { sbFeedback("Wrong admin password.", "red"); return; }
-  } catch (e) {
-    sbFeedback("Verification failed.", "red"); return;
-  }
-
-  const confirmed = confirm(`Delete club "${clubName}"?\nThis will remove all members and cannot be undone.`);
-  if (!confirmed) return;
-
-  try {
-    await dbDeleteClub(clubId);
-    // If deleted club was active, clear session
-    const myClub = getMyClub();
-    if (myClub.id === clubId) sbClearClub();
-    if (select)  select.value  = "";
-    if (pwInput) pwInput.value = "";
-    await sbLoadClubs();
-    await sbPopulateDeleteDropdown();
-    sbFeedback(`Club "${clubName}" deleted.`, "red");
-  } catch (e) {
-    sbFeedback("Delete failed: " + (e.message || e), "red");
-  }
-}
+// sbDeleteClub replaced by clubDeleteSendOtp/clubDeleteVerify (OTP flow)
 
 async function sbPopulateDeleteDropdown() {
   const select = document.getElementById("sbDeleteClubSelect");
@@ -1049,28 +1134,7 @@ function isAdminMode() {
   return getClubMode() === "admin";
 }
 
-async function sbCreateClub() {
-  const name    = document.getElementById("sbNewClubName")?.value.trim();
-  const selPw   = document.getElementById("sbNewClubSelectPw")?.value.trim();
-  const adminPw = document.getElementById("sbNewClubAdminPw")?.value.trim();
-
-  if (!name)    { sbFeedback("Enter club name.", "red"); return; }
-  if (!selPw)   { sbFeedback("Enter club password.", "red"); return; }
-  if (!adminPw) { sbFeedback("Enter admin password.", "red"); return; }
-
-  try {
-    const club = await dbAddClub(name, selPw, adminPw);
-    setMyClub(club.id, club.name);
-    document.getElementById("sbNewClubName").value    = "";
-    document.getElementById("sbNewClubSelectPw").value  = "";
-    document.getElementById("sbNewClubAdminPw").value = "";
-    sbRenderClubStatus();
-    await sbLoadClubs();
-    sbFeedback(`✅ Club "${name}" created!`, "green");
-  } catch (e) {
-    sbFeedback("❌ " + e.message, "red");
-  }
-}
+// sbCreateClub replaced by clubCreateSendOtp/clubCreateVerify (OTP flow)
 
 function sbFeedback(msg, color) {
   const el = document.getElementById("sbClubFeedback");

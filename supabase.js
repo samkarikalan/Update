@@ -392,17 +392,61 @@ async function dbGetClubs() {
 }
 
 /// Create a new club
-async function dbAddClub(clubName, selectPassword, adminPassword) {
-  if (!clubName.trim()) throw new Error("Club name required.");
-  if (!selectPassword)  throw new Error("Select password required.");
-  if (!adminPassword)   throw new Error("Admin password required.");
+async function dbAddClub(clubName, selectPassword, adminPassword, registrationEmail) {
+  if (!clubName.trim()) throw new Error('Club name required.');
+  if (!selectPassword)  throw new Error('Select password required.');
+  if (!adminPassword)   throw new Error('Admin password required.');
 
-  const created = await sbPost("clubs", {
+  const payload = {
     name:            clubName.trim(),
     select_password: selectPassword,
     admin_password:  adminPassword
-  });
+  };
+  if (registrationEmail) payload.registration_email = registrationEmail.trim().toLowerCase();
+
+  const created = await sbPost('clubs', payload);
   return created[0];
+}
+
+/* ── OTP via Supabase Auth ── */
+async function dbSendOtp(email) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), create_user: true })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.msg || err.message || 'Failed to send OTP');
+  }
+  return true;
+}
+
+async function dbVerifyOtp(email, token) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), token: token.trim(), type: 'magiclink' })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.msg || err.message || 'Invalid or expired OTP');
+  }
+  return true;
+}
+
+/* ── Get club registration email (masked for display) ── */
+async function dbGetClubRegEmail(clubId) {
+  const rows = await sbGet('clubs', `id=eq.${clubId}&select=registration_email`);
+  if (!rows || !rows.length) throw new Error('Club not found.');
+  return rows[0].registration_email || null;
+}
+
+function maskEmail(email) {
+  if (!email) return '';
+  const [user, domain] = email.split('@');
+  const masked = user[0] + '***' + (user.length > 1 ? user.slice(-1) : '');
+  return masked + '@' + domain;
 }
 
 /// Verify club select password — returns club if correct
