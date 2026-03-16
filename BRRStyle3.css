@@ -1127,8 +1127,8 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
 .session-matches {
   border-top: 1px solid var(--border);
   overflow: hidden;
-  transition: max-height 0.3s ease;
-  max-height: 600px;
+  transition: max-height 0.5s ease;
+  max-height: 5000px;
 }
 .session-matches.collapsed {
   max-height: 0;
