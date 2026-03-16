@@ -166,10 +166,15 @@ function goToRounds() {
     allRounds = [AischedulerNextRound(schedulerState)];
     currentRoundIndex = 0;
     showRound(0);
-    // Start session in DB then sync rounds
-    if (typeof dbStartSession === 'function') dbStartSession().then(() => {
+    // Start session in DB only if not already started
+    const existingSessionId = (typeof getMySessionId === 'function') ? getMySessionId() : null;
+    if (!existingSessionId && typeof dbStartSession === 'function') {
+      dbStartSession().then(() => {
+        if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
+      });
+    } else {
       if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
-    });
+    }
   } else {   
       schedulerState.numCourts = numCourts;      
       schedulerState.fixedMap = new Map();
