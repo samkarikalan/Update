@@ -385,7 +385,7 @@ async function dbDeletePlayer(playerId, clubAdminPassword) {
 /// Get all clubs
 async function dbGetClubs() {
   try {
-    return await sbGet("clubs", "select=id,name,registered_date&order=name.asc");
+    return await sbGet("clubs", "select=id,name&order=name.asc");
   } catch (e) {
     return [];
   }
