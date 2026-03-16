@@ -712,6 +712,31 @@ async function dbCleanupStaleSessions() {
   } catch (e) { /* silent */ }
 }
 
+/* Force complete any session by ID — for ending stale/other-device sessions */
+async function dbForceCompleteSession(sessionId) {
+  try {
+    await sbPatch('sessions', `id=eq.${sessionId}`, {
+      status:     'completed',
+      updated_at: new Date().toISOString()
+    });
+    // Keep only last 3 completed per club
+    const club = getMyClub();
+    if (club.id) {
+      const all = await sbGet('sessions',
+        `club_id=eq.${club.id}&status=eq.completed&order=updated_at.desc&select=id`
+      );
+      if (all && all.length > 3) {
+        const toDelete = all.slice(3).map(s => s.id);
+        for (const id of toDelete) {
+          await sbDelete('sessions', `id=eq.${id}`).catch(() => {});
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('dbForceCompleteSession error:', e.message);
+  }
+}
+
 // Fetch ALL live sessions for this club (multiple halls)
 /* ── Get all club IDs a player belongs to ── */
 async function dbGetPlayerClubs(playerName) {
