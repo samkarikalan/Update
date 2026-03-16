@@ -466,6 +466,9 @@ function showPage(pageID, el) {
 
   if (pageID === "dashboardPage") {
     if (typeof renderDashboard === "function") renderDashboard();
+  } else {
+    // Stop dashboard poll when navigating away
+    if (typeof dashboardStopPoll === 'function') dashboardStopPoll();
   }
 
   if (pageID === "clubPage") {

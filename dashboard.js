@@ -3,11 +3,61 @@
    File: dashboard.js
    ============================================================ */
 
-var _dashboardTimer = null;
+var _dashboardTimer     = null;
+var _dashboardPollTimer = null;
+var _dashboardLiveIds   = []; // track current live session IDs
+
+/* ── Dashboard polling — detects session status changes ── */
+function dashboardStartPoll() {
+  dashboardStopPoll();
+  _dashboardPollTimer = setInterval(async () => {
+    // Only poll if dashboard is visible
+    const dashPage = document.getElementById('dashboardPage');
+    if (!dashPage || dashPage.style.display === 'none') {
+      dashboardStopPoll(); return;
+    }
+    try {
+      const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
+      let currentLiveIds = [];
+
+      if (isViewer) {
+        const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+        if (!myPlayer) return;
+        const clubIds = await dbGetPlayerClubs(myPlayer.name);
+        if (!clubIds.length) return;
+        const inList = '(' + clubIds.join(',') + ')';
+        const rows = await sbGet('sessions',
+          `club_id=in.${inList}&status=eq.live&select=id`
+        );
+        currentLiveIds = (rows || []).map(r => r.id);
+      } else {
+        const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+        if (!club || !club.id) return;
+        const rows = await sbGet('sessions',
+          `club_id=eq.${club.id}&status=eq.live&select=id`
+        );
+        currentLiveIds = (rows || []).map(r => r.id);
+      }
+
+      // Re-render if live sessions changed
+      const prev = _dashboardLiveIds.slice().sort().join(',');
+      const curr = currentLiveIds.slice().sort().join(',');
+      if (prev !== curr) {
+        _dashboardLiveIds = currentLiveIds;
+        if (typeof renderDashboard === 'function') renderDashboard();
+      }
+    } catch (e) { /* silent */ }
+  }, 5000);
+}
+
+function dashboardStopPoll() {
+  if (_dashboardPollTimer) { clearInterval(_dashboardPollTimer); _dashboardPollTimer = null; }
+}
 
 /* ── Called when Dashboard tab opens ── */
 async function renderDashboard() {
   if (typeof viewerStopPoll === 'function') viewerStopPoll(); // stop any active poll
+  dashboardStopPoll(); // stop dashboard poll when leaving
   const container = document.getElementById('dashboardContainer');
   if (!container) return;
 
@@ -119,6 +169,9 @@ async function renderDashboard() {
     }
     container.appendChild(pastSection);
 
+    // Start polling for live session changes
+    dashboardStartPoll();
+
   } catch(e) {
     container.innerHTML = `
       <div class="dash-empty">
@@ -226,7 +279,6 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
           sessionStorage.removeItem('kbrr_session_db_id');
           if (typeof allRounds !== 'undefined') allRounds.length = 0;
         }
-        // Refresh dashboard
         if (typeof renderDashboard === 'function') renderDashboard();
       } catch(e) {
         endBtn.disabled = false;
