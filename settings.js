@@ -840,9 +840,7 @@ async function clubCreateVerify() {
     setFb('✅ Club "' + club.name + '" created! You are now Admin.', true);
     sbRenderClubStatus();
     vaultSyncStatus();
-    // Hide first-time banner
-    const banner = document.getElementById('clubFirstTimeBanner');
-    if (banner) banner.style.display = 'none';
+
     await syncToLocal();
   } catch (e) { setFb('❌ ' + e.message, false); }
 }
@@ -967,12 +965,6 @@ function vaultSyncStatus() {
   // Populate vault club select when showing login
   if (!hasClub) vaultLoadClubsForLogin();
 
-  // First-time banner — show in organiser mode only when no club joined
-  const banner = document.getElementById('clubFirstTimeBanner');
-  if (banner) {
-    const isOrganiser = (typeof appMode !== 'undefined') && appMode === 'organiser';
-    banner.style.display = (isOrganiser && !hasClub) ? '' : 'none';
-  }
 }
 
 

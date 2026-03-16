@@ -413,7 +413,11 @@ async function dbSendOtp(email) {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-    body: JSON.stringify({ email: email.trim().toLowerCase(), create_user: true })
+    body: JSON.stringify({
+      email:       email.trim().toLowerCase(),
+      create_user: true,
+      options: { shouldCreateUser: true }
+    })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -426,7 +430,7 @@ async function dbVerifyOtp(email, token) {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-    body: JSON.stringify({ email: email.trim().toLowerCase(), token: token.trim(), type: 'magiclink' })
+    body: JSON.stringify({ email: email.trim().toLowerCase(), token: token.trim(), type: 'email' })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
