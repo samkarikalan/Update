@@ -713,14 +713,48 @@ async function dbCleanupStaleSessions() {
 }
 
 // Fetch ALL live sessions for this club (multiple halls)
+/* ── Get all club IDs a player belongs to ── */
+async function dbGetPlayerClubs(playerName) {
+  try {
+    if (!playerName) return [];
+    const players = await sbGet('players',
+      `name=ilike.${encodeURIComponent(playerName)}&select=id`
+    );
+    if (!players || !players.length) return [];
+    const playerId = players[0].id;
+    const members = await sbGet('club_members',
+      `player_id=eq.${playerId}&select=club_id`
+    );
+    return (members || []).map(m => m.club_id);
+  } catch (e) {
+    return [];
+  }
+}
+
 async function dbGetLiveSessions() {
   try {
-    const club = getMyClub();
-    if (!club.id) return [];
-    const rows = await sbGet('sessions',
-      `club_id=eq.${club.id}&status=eq.live&order=created_at.asc&select=id,rounds_data,started_by,updated_at`
-    );
-    return rows || [];
+    const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
+
+    if (isViewer) {
+      // Viewer — show sessions from all clubs the player belongs to
+      const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+      if (!myPlayer) return [];
+      const clubIds = await dbGetPlayerClubs(myPlayer.name);
+      if (!clubIds.length) return [];
+      const inList = '(' + clubIds.join(',') + ')';
+      const rows = await sbGet('sessions',
+        `club_id=in.${inList}&status=eq.live&order=created_at.asc&select=id,rounds_data,started_by,updated_at,club_id`
+      );
+      return rows || [];
+    } else {
+      // Organiser — show sessions for their selected club
+      const club = getMyClub();
+      if (!club.id) return [];
+      const rows = await sbGet('sessions',
+        `club_id=eq.${club.id}&status=eq.live&order=created_at.asc&select=id,rounds_data,started_by,updated_at`
+      );
+      return rows || [];
+    }
   } catch (e) {
     return [];
   }
@@ -729,12 +763,26 @@ async function dbGetLiveSessions() {
 // Fetch last 3 completed sessions for dashboard
 async function dbGetPastSessions() {
   try {
-    const club = getMyClub();
-    if (!club.id) return [];
-    const rows = await sbGet('sessions',
-      `club_id=eq.${club.id}&status=eq.completed&order=updated_at.desc&limit=3&select=id,date,started_by,players,rounds_data,updated_at`
-    );
-    return rows || [];
+    const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
+
+    if (isViewer) {
+      const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+      if (!myPlayer) return [];
+      const clubIds = await dbGetPlayerClubs(myPlayer.name);
+      if (!clubIds.length) return [];
+      const inList = '(' + clubIds.join(',') + ')';
+      const rows = await sbGet('sessions',
+        `club_id=in.${inList}&status=eq.completed&order=updated_at.desc&limit=5&select=id,date,started_by,players,rounds_data,updated_at,club_id`
+      );
+      return rows || [];
+    } else {
+      const club = getMyClub();
+      if (!club.id) return [];
+      const rows = await sbGet('sessions',
+        `club_id=eq.${club.id}&status=eq.completed&order=updated_at.desc&limit=3&select=id,date,started_by,players,rounds_data,updated_at`
+      );
+      return rows || [];
+    }
   } catch (e) {
     return [];
   }

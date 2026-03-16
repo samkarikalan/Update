@@ -60,28 +60,7 @@
 
   <!-- ============================= -->
   <!--        CLUB JOIN OVERLAY      -->
-  <!-- ============================= -->
-  <div id="clubJoinOverlay" class="club-join-overlay" style="display:none">
-    <div class="club-join-card">
-      <div class="club-join-logo">🏸 CLUB Scheduler</div>
-      <div class="club-join-title">Select your club to continue</div>
-      <select id="sbClubSelect" class="club-select club-join-select">
-        <option value="">— Select club —</option>
-      </select>
-      <input type="password" id="sbPasswordInput"
-             class="club-input club-join-input" placeholder="Enter password">
-      <button class="btn-save club-join-btn" onclick="sbConfirmJoin()">Join Club</button>
-      <div id="sbClubFeedback" style="font-size:0.8rem;margin-top:4px"></div>
-      <div id="sbRatingModeWrap" style="display:none">
-        <div class="sb-rating-divider"></div>
-        <div class="sb-rating-label">Rating Mode</div>
-        <div class="sb-rating-btns">
-          <button id="sbRatingGlobal" class="sb-rating-btn" onclick="sbSetRatingMode('global')">🌐 Global</button>
-          <button id="sbRatingLocal"  class="sb-rating-btn active" onclick="sbSetRatingMode('local')">🏠 Club</button>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
   <!-- ============================= -->
   <!--           TOP BAR             -->
@@ -114,6 +93,10 @@
       <button class="tab-btn" onclick="showPage('settingsPage', this)">
         <span class="tab-icon">⚙️</span>
         <span class="tab-label">Settings</span>
+      </button>
+      <button class="tab-btn" onclick="showPage('clubPage', this)" id="tabBtnClub">
+        <span class="tab-icon">🏢</span>
+        <span class="tab-label">Club</span>
       </button>
       <button class="tab-btn active" onclick="showPage('playersPage', this)" id="tabBtnPlayers">
         <span class="tab-icon">👥</span>
@@ -204,94 +187,6 @@
 
       </div>
 
-      <!-- Club Management — organiser mode only, collapsible, no password -->
-      <div class="settings-card" id="clubMgmtCard" style="padding:0;overflow:hidden;margin-top:10px">
-        <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
-          🏢 Club Management <span id="clubMgmtArrow">▶</span>
-        </button>
-        <div id="clubMgmtPanel" style="display:none;padding:14px">
-
-          <!-- ── CREATE CLUB ── -->
-          <div class="manage-section-title">Create New Club</div>
-          <div class="club-row">
-            <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
-          </div>
-          <!-- Step 1: Send OTP -->
-          <div id="clubCreateStep1">
-            <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
-          </div>
-          <!-- Step 2: Enter OTP (hidden until sent) -->
-          <div id="clubCreateStep2" style="display:none">
-            <div class="club-row" style="margin-top:8px">
-              <input type="text" id="sbNewClubOtp" class="club-input"
-                     placeholder="Enter 8-digit OTP" maxlength="8"
-                     onkeydown="if(event.key==='Enter')clubCreateVerify()">
-              <button class="btn-save" onclick="clubCreateVerify()">Verify & Create</button>
-            </div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-              OTP sent to <span id="clubCreateEmailMasked"></span>
-              · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
-            </div>
-          </div>
-          <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
-          <!-- ── DELETE CLUB ── -->
-          <div class="manage-section-title manage-section-danger" style="margin-top:20px">Delete Club</div>
-          <div class="club-row">
-            <select id="sbDeleteClubSelect" class="club-select">
-              <option value="">— Select club to delete —</option>
-            </select>
-          </div>
-          <!-- Step 1: Send OTP -->
-          <div id="clubDeleteStep1">
-            <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
-          </div>
-          <!-- Step 2: Enter OTP -->
-          <div id="clubDeleteStep2" style="display:none">
-            <div class="club-row" style="margin-top:8px">
-              <input type="text" id="sbDeleteOtp" class="club-input"
-                     placeholder="Enter 8-digit OTP" maxlength="8"
-                     onkeydown="if(event.key==='Enter')clubDeleteVerify()">
-              <button class="btn-clear" onclick="clubDeleteVerify()">Verify & Delete</button>
-            </div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-              OTP sent to <span id="clubDeleteEmailMasked"></span>
-              · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
-            </div>
-          </div>
-          <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
-        </div>
-      </div>
-
-
-      <!-- Club Login card — visible in viewer mode only -->
-      <div class="settings-card" id="clubLoginCard" style="margin-top:10px;padding:14px">
-        <div style="font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🏢 Club Login</div>
-        <div class="club-row">
-          <select id="sbClubSelectViewer" class="club-select" style="flex:1">
-            <option value="">— Select club —</option>
-          </select>
-        </div>
-        <div class="club-row" style="margin-top:8px">
-          <input type="password" id="sbPasswordInputViewer" class="club-input"
-                 placeholder="Enter password"
-                 onkeydown="if(event.key==='Enter')viewerJoinClub()">
-          <button class="btn-save" onclick="viewerJoinClub()">Join</button>
-        </div>
-        <div id="sbClubFeedbackViewer" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
-        <div id="sbClubStatusViewer" style="font-size:0.82rem;margin-top:8px;color:var(--muted)"></div>
-      </div>
-
     </div>
   </div>
 
@@ -332,6 +227,99 @@
   <!--  JS moves it between tabs.    -->
   <!--  Starts inside playersPage.   -->
   <!-- ============================= -->
+
+  <!-- ============================= -->
+  <!--           CLUB PAGE           -->
+  <!-- ============================= -->
+  <div id="clubPage" class="page" style="display:none;">
+    <div class="settings-wrap">
+
+      <!-- Club Login — both modes -->
+      <div class="settings-card" id="clubLoginCard" style="padding:14px">
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🏢 Club Login</div>
+        <div class="club-row">
+          <select id="sbClubSelectViewer" class="club-select" style="flex:1">
+            <option value="">— Select club —</option>
+          </select>
+        </div>
+        <div class="club-row" style="margin-top:8px">
+          <input type="password" id="sbPasswordInputViewer" class="club-input"
+                 placeholder="Enter password"
+                 onkeydown="if(event.key==='Enter')viewerJoinClub()">
+          <button class="btn-save" onclick="viewerJoinClub()">Join</button>
+        </div>
+        <div id="sbClubFeedbackViewer" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
+        <div id="sbClubStatusViewer" style="font-size:0.82rem;margin-top:8px;color:var(--muted)"></div>
+      </div>
+
+      <!-- Club Management — organiser mode only -->
+      <div class="settings-card" id="clubMgmtCard" style="padding:0;overflow:hidden;margin-top:10px">
+        <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
+          🏢 Club Management <span id="clubMgmtArrow">▶</span>
+        </button>
+        <div id="clubMgmtPanel" style="display:none;padding:14px">
+
+          <!-- ── CREATE CLUB ── -->
+          <div class="manage-section-title">Create New Club</div>
+          <div class="club-row">
+            <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
+          </div>
+          <div class="club-row" style="margin-top:6px">
+            <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
+          </div>
+          <div class="club-row" style="margin-top:6px">
+            <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
+          </div>
+          <div class="club-row" style="margin-top:6px">
+            <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
+          </div>
+          <div id="clubCreateStep1">
+            <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
+          </div>
+          <div id="clubCreateStep2" style="display:none">
+            <div class="club-row" style="margin-top:8px">
+              <input type="text" id="sbNewClubOtp" class="club-input"
+                     placeholder="Enter 8-digit OTP" maxlength="8"
+                     onkeydown="if(event.key==='Enter')clubCreateVerify()">
+              <button class="btn-save" onclick="clubCreateVerify()">Verify & Create</button>
+            </div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+              OTP sent to <span id="clubCreateEmailMasked"></span>
+              · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
+            </div>
+          </div>
+          <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+
+          <!-- ── DELETE CLUB ── -->
+          <div class="manage-section-title manage-section-danger" style="margin-top:20px">Delete Club</div>
+          <div class="club-row">
+            <select id="sbDeleteClubSelect" class="club-select">
+              <option value="">— Select club to delete —</option>
+            </select>
+          </div>
+          <div id="clubDeleteStep1">
+            <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
+          </div>
+          <div id="clubDeleteStep2" style="display:none">
+            <div class="club-row" style="margin-top:8px">
+              <input type="text" id="sbDeleteOtp" class="club-input"
+                     placeholder="Enter 8-digit OTP" maxlength="8"
+                     onkeydown="if(event.key==='Enter')clubDeleteVerify()">
+              <button class="btn-clear" onclick="clubDeleteVerify()">Verify & Delete</button>
+            </div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+              OTP sent to <span id="clubDeleteEmailMasked"></span>
+              · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
+            </div>
+          </div>
+          <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
  <div id="playersPage" class="page">
 
   <div class="card browse-card" onclick="newImportShowModal()">
@@ -624,21 +612,6 @@
             <button class="vault-logout-btn" onclick="sbClearClub()">Logout</button>
           </div>
 
-          <!-- Vault login — shown when no club selected -->
-          <div id="vaultLoginSection" style="display:none;padding:10px 0 4px;">
-            <div class="club-row">
-              <select id="sbClubSelectVault" class="club-select" style="flex:1">
-                <option value="">— Select club —</option>
-              </select>
-            </div>
-            <div class="club-row" style="margin-top:8px">
-              <input type="password" id="sbPasswordInputVault" class="club-input"
-                     placeholder="Enter password"
-                     onkeydown="if(event.key==='Enter')vaultJoinClub()">
-              <button class="btn-save" onclick="vaultJoinClub()">Join</button>
-            </div>
-            <div id="sbClubFeedbackVault" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
-          </div>
           <div class="vault-sync-row">
             <span id="sbSyncStatus" class="vault-sync-text"></span>
             <button class="vault-sync-btn" onclick="syncToLocal()">🔄 Sync</button>

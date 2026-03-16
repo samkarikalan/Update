@@ -45,6 +45,7 @@ function applyMode(mode) {
   // Viewer:    Settings · Dashboard · Help
   // Organiser: Settings · Players · Rounds · Summary · Dashboard · Help
   const tabRules = {
+    tabBtnClub:      { viewer: false, organiser: true },
     tabBtnPlayers:   { viewer: false, organiser: true },
     tabBtnRounds:    { viewer: false, organiser: true },
     tabBtnSummary:   { viewer: false, organiser: true },
@@ -162,7 +163,7 @@ function initModeOnLoad() {
   // Hide badge and mode-dependent tabs until mode is selected
   const badge = document.getElementById('modeBadgeBtn');
   if (badge) badge.style.display = 'none';
-  ['tabBtnPlayers','tabBtnRounds','tabBtnSummary','tabBtnDashboard'].forEach(id => {
+  ['tabBtnClub','tabBtnPlayers','tabBtnRounds','tabBtnSummary','tabBtnDashboard'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -468,6 +469,15 @@ function showPage(pageID, el) {
 
   if (pageID === "dashboardPage") {
     if (typeof renderDashboard === "function") renderDashboard();
+  }
+
+  if (pageID === "clubPage") {
+    if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
+    if (typeof sbPopulateDeleteDropdown === 'function') sbPopulateDeleteDropdown();
+    // Show current club status
+    const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+    const status = document.getElementById('sbClubStatusViewer');
+    if (status) status.textContent = club && club.name ? '✅ ' + club.name : '';
   }
 
   // Update last visited page

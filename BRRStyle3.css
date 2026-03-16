@@ -1993,7 +1993,7 @@ body.app-dark .newImport-player-card.player-added {
 body.viewer-mode #settingsTabResetBtn {
   display: none !important;
 }
-/* Hide Club Management and first-time banner in viewer mode */
+/* Hide Club Management in viewer mode */
 body.viewer-mode #clubMgmtCard {
   display: none !important;
 }
@@ -2008,12 +2008,9 @@ body.viewer-mode #clubMgmtCard {
   padding: 0;
   text-decoration: underline;
 }
-/* Show Club Login card in viewer mode */
+/* Club Login card — always visible */
 #clubLoginCard {
-  display: none;
-}
-body.viewer-mode #clubLoginCard {
-  display: block !important;
+  display: block;
 }
 
 

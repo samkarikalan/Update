@@ -11,13 +11,26 @@ async function renderDashboard() {
   const container = document.getElementById('dashboardContainer');
   if (!container) return;
 
-  const club = (typeof getMyClub === 'function') ? getMyClub() : null;
-  if (!club || !club.id) {
+  const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
+  const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+  const club     = (typeof getMyClub === 'function') ? getMyClub() : null;
+
+  // Viewer needs a profile; organiser needs a club
+  if (isViewer && !myPlayer) {
+    container.innerHTML = `
+      <div class="dash-empty">
+        <div class="dash-empty-icon">👤</div>
+        <p>Set up your profile first.</p>
+        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px">Tap the profile icon to select your name.</p>
+      </div>`;
+    return;
+  }
+  if (!isViewer && (!club || !club.id)) {
     container.innerHTML = `
       <div class="dash-empty">
         <div class="dash-empty-icon">🏟️</div>
         <p>No club selected.</p>
-        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px">Go to Settings to join a club.</p>
+        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px">Go to Club tab to join a club.</p>
       </div>`;
     return;
   }
@@ -36,6 +49,25 @@ async function renderDashboard() {
 
     container.innerHTML = '';
 
+    // For viewer — enrich sessions with club names
+    if (isViewer && (liveSessions.length || pastSessions.length)) {
+      try {
+        const allClubIds = [...new Set([
+          ...liveSessions.map(s => s.club_id),
+          ...pastSessions.map(s => s.club_id)
+        ].filter(Boolean))];
+        if (allClubIds.length) {
+          const clubs = await Promise.all(
+            allClubIds.map(id => sbGet('clubs', `id=eq.${id}&select=id,name`).catch(() => []))
+          );
+          const clubMap = {};
+          clubs.flat().forEach(c => { if (c) clubMap[c.id] = c.name; });
+          liveSessions.forEach(s => { s.club_name = clubMap[s.club_id] || s.club_id; });
+          pastSessions.forEach(s => { s.club_name = clubMap[s.club_id] || s.club_id; });
+        }
+      } catch (e) { /* silent */ }
+    }
+
     // ── Live Section ──
     const liveSection = document.createElement('div');
     liveSection.className = 'dash-section';
@@ -45,8 +77,9 @@ async function renderDashboard() {
       liveSessions.forEach(sess => {
         const players     = _extractPlayersFromRounds(sess.rounds_data || []);
         const totalRounds = (sess.rounds_data || []).length;
+        const cardClubName = isViewer ? (sess.club_name || sess.club_id || '') : (club ? club.name : '');
         const card = _buildSessionCard({
-          clubName:   club.name,
+          clubName:   cardClubName,
           starter:    sess.started_by,
           players,
           totalRounds,
@@ -68,8 +101,9 @@ async function renderDashboard() {
 
     if (pastSessions.length) {
       pastSessions.forEach(sess => {
+        const pastClubName = isViewer ? (sess.club_name || sess.club_id || '') : (club ? club.name : '');
         const card = _buildSessionCard({
-          clubName:    club.name,
+          clubName:    pastClubName,
           starter:     sess.started_by,
           players:     sess.players || [],
           totalRounds: (sess.rounds_data || []).length || null,
@@ -118,6 +152,8 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
   const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
   const myName   = myPlayer ? myPlayer.name.toLowerCase() : '';
   const dateLabel = isLive ? 'Today' : _formatDate(date || updatedAt);
+  // Show club name on card (useful when viewer sees multiple clubs)
+  const displayClub = clubName || '';
 
   // Top row
   const top = document.createElement('div');

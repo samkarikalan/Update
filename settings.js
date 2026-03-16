@@ -497,21 +497,11 @@ function playerMgmtAddNew() {
 // ── Club Admin (Supabase) ────────────────────────────────────
 
 function clubAdminInit() {
-  sbLoadClubs();
   sbRenderClubStatus();
   updateRegisterTabVisibility();
-  // Club login is handled in Vault tab — no overlay needed
 }
 
-function showClubJoinOverlay() {
-  const overlay = document.getElementById('clubJoinOverlay');
-  if (overlay) overlay.style.display = 'flex';
-}
 
-function hideClubJoinOverlay() {
-  const overlay = document.getElementById('clubJoinOverlay');
-  if (overlay) overlay.style.display = 'none';
-}
 
 function sbShowClubTab(tab) {
   ["join","create","players"].forEach(t => {
@@ -525,76 +515,10 @@ function sbShowClubTab(tab) {
 }
 
 
-// ── Viewer Club Login ─────────────────────────────────────────
-// Populates the viewer-specific club select dropdown
-async function sbLoadClubsViewer() {
-  try {
-    const clubs = await dbGetClubs();
-    const select = document.getElementById('sbClubSelectViewer');
-    if (!select) return;
-    select.innerHTML = '<option value="">— Select club —</option>';
-    clubs.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id;
-      opt.textContent = c.name;
-      select.appendChild(opt);
-    });
-    // Pre-select current club if already joined
-    const current = getMyClub();
-    if (current.id) select.value = current.id;
-  } catch (e) {
-    console.warn('Could not load clubs for viewer:', e.message);
-  }
-}
 
-// Viewer join — only accepts user/select password (not admin)
-async function sbConfirmJoinViewer() {
-  const select  = document.getElementById('sbClubSelectViewer');
-  const pwInput = document.getElementById('sbPasswordInputViewer');
-  const feedback = document.getElementById('sbClubFeedbackViewer');
-  const status   = document.getElementById('sbClubStatusViewer');
 
-  if (!select || !select.value) { if (feedback) feedback.textContent = 'Please select a club.'; return; }
-  const password = pwInput?.value.trim();
-  if (!password) { if (feedback) feedback.textContent = 'Enter password.'; return; }
 
-  try {
-    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=id,name,select_password`);
-    if (!clubs.length) throw new Error('Club not found.');
-    const club = clubs[0];
 
-    if (password !== club.select_password) throw new Error('Wrong password.');
-
-    setMyClub(club.id, club.name);
-    localStorage.setItem('kbrr_club_mode',    'user');
-    localStorage.setItem('kbrr_rating_field', 'club_ratings');
-    localStorage.setItem('kbrr_rating_mode',  'local');
-
-    if (pwInput) pwInput.value = '';
-    if (feedback) { feedback.style.color = 'var(--green)'; feedback.textContent = '✅ Joined ' + club.name; }
-    if (status) status.textContent = 'Club: ' + club.name;
-    syncToLocal();
-  } catch (e) {
-    if (feedback) { feedback.style.color = 'var(--red)'; feedback.textContent = '❌ ' + e.message; }
-  }
-}
-
-async function sbLoadClubs() {
-  try {
-    const clubs = await dbGetClubs();
-    const select = document.getElementById("sbClubSelect");
-    if (!select) return;
-    select.innerHTML = '<option value="">— Select club —</option>';
-    clubs.forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c.id;
-      opt.textContent = c.name;
-      select.appendChild(opt);
-    });
-  } catch (e) {
-    console.warn("Could not load clubs:", e.message);
-  }
-}
 
 function sbRenderClubStatus() {
   const club  = getMyClub();
@@ -949,116 +873,16 @@ function vaultSyncStatus() {
     if (role)  role.style.display = 'none';
   }
 
-  // Show login section when no club, hide when logged in
-  const loginSection = document.getElementById('vaultLoginSection');
-  const syncRow      = document.querySelector('.vault-sync-row');
-  const innerTabs    = document.querySelector('.vault-inner-tabs');
-  const hasClub      = !!club.name;
-  if (loginSection) loginSection.style.display = hasClub ? 'none' : '';
-  if (syncRow)      syncRow.style.display      = hasClub ? '' : 'none';
-  if (innerTabs)    innerTabs.style.display     = hasClub ? '' : 'none';
-  // Also hide content panels (siblings of inner-tabs)
-  document.querySelectorAll('.vault-inner-content').forEach(el => {
-    el.style.display = hasClub ? '' : 'none';
-  });
 
-  // Populate vault club select when showing login
-  if (!hasClub) vaultLoadClubsForLogin();
 
 }
 
 
-/* ── Vault login — load clubs and join ── */
-async function vaultLoadClubsForLogin() {
-  try {
-    const clubs = await dbGetClubs();
-    const select = document.getElementById('sbClubSelectVault');
-    if (!select) return;
-    select.innerHTML = '<option value="">— Select club —</option>';
-    clubs.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id; opt.textContent = c.name;
-      select.appendChild(opt);
-    });
-  } catch (e) { console.warn('vaultLoadClubsForLogin:', e.message); }
-}
 
-async function vaultJoinClub() {
-  const select   = document.getElementById('sbClubSelectVault');
-  const pwInput  = document.getElementById('sbPasswordInputVault');
-  const feedback = document.getElementById('sbClubFeedbackVault');
-  const setFb = (msg, ok) => {
-    if (!feedback) return;
-    feedback.textContent = msg;
-    feedback.style.color = ok ? '#2dce89' : '#e63757';
-  };
-  if (!select || !select.value) { setFb('Please select a club.', false); return; }
-  const pw = pwInput ? pwInput.value.trim() : '';
-  if (!pw) { setFb('Enter password.', false); return; }
-  try {
-    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=id,name,select_password,admin_password,trusted`);
-    if (!clubs.length) throw new Error('Club not found.');
-    const club = clubs[0];
-    let mode = null;
-    if (pw === club.admin_password)       mode = 'admin';
-    else if (pw === club.select_password) mode = 'user';
-    else throw new Error('Wrong password.');
-    setMyClub(club.id, club.name);
-    localStorage.setItem('kbrr_club_mode',    mode);
-    localStorage.setItem('kbrr_club_trusted', club.trusted ? 'true' : 'false');
-    localStorage.setItem('kbrr_rating_field', 'club_ratings');
-    localStorage.setItem('kbrr_rating_mode',  'local');
-    if (pwInput) pwInput.value = '';
-    setFb('✅ Joined as ' + (mode === 'admin' ? 'Admin' : 'User'), true);
-    sbRenderClubStatus();
-    vaultSyncStatus();
-    await syncToLocal();
-    // Refresh vault tabs
-    if (typeof vaultShowTab === 'function') vaultShowTab('players');
-  } catch (e) { setFb('❌ ' + e.message, false); }
-}
 
-async function sbConfirmJoin() {
-  const select   = document.getElementById("sbClubSelect");
-  const pwInput  = document.getElementById("sbPasswordInput");
-  if (!select || !select.value) { sbFeedback("Please select a club.", "red"); return; }
-  const password = pwInput?.value.trim();
-  if (!password) { sbFeedback("Enter password.", "red"); return; }
 
-  try {
-    // Fetch club including trusted flag
-    const clubs = await sbGet("clubs", `id=eq.${select.value}&select=id,name,select_password,admin_password,trusted`);
-    if (!clubs.length) throw new Error("Club not found.");
-    const club = clubs[0];
 
-    let mode = null;
-    if (password === club.admin_password)       mode = "admin";
-    else if (password === club.select_password) mode = "user";
-    else throw new Error("Wrong password.");
 
-    // Save club + mode + trusted flag
-    setMyClub(club.id, club.name);
-    localStorage.setItem("kbrr_club_mode",    mode);
-    localStorage.setItem("kbrr_club_trusted", club.trusted ? "true" : "false");
-
-    // Set rating field at login — single gate decision made here, used everywhere
-    // 'club_ratings' = local mode (default). 'rating' = global mode (future)
-    localStorage.setItem('kbrr_rating_field', 'club_ratings');
-    localStorage.setItem('kbrr_rating_mode',  'local');
-    // Single gate decision — which field to read/write for ratings
-    localStorage.setItem("kbrr_rating_field", "club_ratings");
-
-    pwInput.value = "";
-    sbRenderClubStatus();
-    sbRenderRatingMode(club.trusted === true);
-    sbFeedback(`✅ Joined as ${mode === "admin" ? "Admin 🔑" : "User 👤"}`, "green");
-    hideClubJoinOverlay();
-    syncToLocal();
-    updateRegisterTabVisibility();
-  } catch (e) {
-    sbFeedback("❌ " + e.message, "red");
-  }
-}
 
 function sbRenderRatingMode(isTrusted) {
   // global mode blocked until fully tested — hide UI always
