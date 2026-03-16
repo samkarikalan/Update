@@ -821,7 +821,7 @@ async function clubCreateVerify() {
   const fb      = document.getElementById('clubCreateFeedback');
   const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
-  if (!otp || otp.length < 6) { setFb('Enter the 6-digit OTP.', false); return; }
+  if (!otp || otp.length < 8) { setFb('Enter the 8-digit OTP.', false); return; }
   setFb('Verifying...', true);
   try {
     await dbVerifyOtp(_clubCreateEmail, otp);
@@ -884,7 +884,7 @@ async function clubDeleteVerify() {
   const fb    = document.getElementById('clubDeleteFeedback');
   const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
-  if (!otp || otp.length < 6) { setFb('Enter the 6-digit OTP.', false); return; }
+  if (!otp || otp.length < 8) { setFb('Enter the 8-digit OTP.', false); return; }
   setFb('Verifying...', true);
   try {
     await dbVerifyOtp(_clubDeleteEmail, otp);
