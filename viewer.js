@@ -1,9 +1,10 @@
 /* ============================================================
-   VIEWER.JS — Completely isolated from organiser mode
-   - Never touches allRounds, currentRoundIndex, roundsPage
-   - Never calls setViewerMode, appMode, or organiser functions
-   - Uses #viewerPage and #viewerResults only
-   ============================================================ */
+VIEWER.JS — Completely isolated from organiser mode
+
+- Never touches allRounds, currentRoundIndex, roundsPage
+- Never calls setViewerMode, appMode, or organiser functions
+- Uses #viewerPage and #viewerResults only
+  ============================================================ */
 
 var _vSessionId   = null;
 var _vLastUpdated = null;
@@ -13,411 +14,397 @@ var _vRoundsData  = [];
 
 /* ── Entry point ── */
 async function viewerOpen(sessionId) {
-  try {
-    const rows = await sbGet('sessions',
-      `id=eq.${sessionId}&select=id,rounds_data,started_by,created_at,updated_at,status`
-    );
-    if (!rows || !rows.length) { alert('Session not found.'); return; }
-    const sess = rows[0];
-    if (!sess.rounds_data || !sess.rounds_data.length) {
-      alert('No rounds data yet.'); return;
-    }
-    _vSessionId   = sessionId;
-    _vLastUpdated = sess.updated_at;
-    _vRoundsData  = sess.rounds_data;
-    _vMeta = {
-      started_by: sess.started_by,
-      created_at: sess.created_at,
-      club_name:  (typeof getMyClub === 'function') ? getMyClub().name : '',
-      status:     sess.status
-    };
-    _vShowPage();
-    _vRender(_vRoundsData);
-    if (sess.status === 'live') viewerStartPoll();
-  } catch (e) {
-    console.warn('viewerOpen error:', e.message);
-    alert('Could not load session.');
-  }
+try {
+const rows = await sbGet(‘sessions’,
+`id=eq.${sessionId}&select=id,rounds_data,started_by,created_at,updated_at,status`
+);
+if (!rows || !rows.length) { alert(‘Session not found.’); return; }
+const sess = rows[0];
+if (!sess.rounds_data || !sess.rounds_data.length) {
+alert(‘No rounds data yet.’); return;
+}
+_vSessionId   = sessionId;
+_vLastUpdated = sess.updated_at;
+_vRoundsData  = sess.rounds_data;
+_vMeta = {
+started_by: sess.started_by,
+created_at: sess.created_at,
+club_name:  (typeof getMyClub === ‘function’) ? getMyClub().name : ‘’,
+status:     sess.status
+};
+_vShowPage();
+_vRender(_vRoundsData);
+if (sess.status === ‘live’) viewerStartPoll();
+} catch (e) {
+console.warn(‘viewerOpen error:’, e.message);
+alert(‘Could not load session.’);
+}
 }
 
 /* ── Back button ── */
 function viewerGoBack() {
-  viewerStopPoll();
-  _vHidePage();
-  if (typeof showPage === 'function') {
-    showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
-  }
+viewerStopPoll();
+_vHidePage();
+if (typeof showPage === ‘function’) {
+showPage(‘dashboardPage’, document.getElementById(‘tabBtnDashboard’));
+}
 }
 
 /* ── Show/hide viewerPage only ── */
 function _vShowPage() {
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  const vPage = document.getElementById('viewerPage');
-  if (vPage) vPage.style.display = 'block';
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  const vBtn = document.getElementById('tabBtnViewer');
-  if (vBtn) {
-    vBtn.style.display       = '';
-    vBtn.style.pointerEvents = 'auto';
-    vBtn.style.opacity       = '1';
-    vBtn.classList.add('active');
-    vBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }
-  if (typeof lastPage !== 'undefined') lastPage = 'dashboardPage';
+document.querySelectorAll(’.page’).forEach(p => p.style.display = ‘none’);
+const vPage = document.getElementById(‘viewerPage’);
+if (vPage) vPage.style.display = ‘block’;
+document.querySelectorAll(’.tab-btn’).forEach(b => b.classList.remove(‘active’));
+const vBtn = document.getElementById(‘tabBtnViewer’);
+if (vBtn) {
+vBtn.style.display       = ‘’;
+vBtn.style.pointerEvents = ‘auto’;
+vBtn.style.opacity       = ‘1’;
+vBtn.classList.add(‘active’);
+vBtn.scrollIntoView({ behavior: ‘smooth’, block: ‘nearest’, inline: ‘center’ });
+}
+if (typeof lastPage !== ‘undefined’) lastPage = ‘dashboardPage’;
 }
 
 function _vHidePage() {
-  const vPage = document.getElementById('viewerPage');
-  if (vPage) vPage.style.display = 'none';
-  const vBtn = document.getElementById('tabBtnViewer');
-  if (vBtn) vBtn.style.display = 'none';
+const vPage = document.getElementById(‘viewerPage’);
+if (vPage) vPage.style.display = ‘none’;
+const vBtn = document.getElementById(‘tabBtnViewer’);
+if (vBtn) vBtn.style.display = ‘none’;
 }
 
 /* ── Main render ── */
 function _vRender(roundsData) {
-  const container = document.getElementById('viewerResults');
-  if (!container) return;
-  container.innerHTML = '';
-  if (!roundsData || !roundsData.length) {
-    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:0.85rem;">No rounds yet</div>';
-    return;
-  }
-  container.appendChild(_vBuildSubTabs());
-  const livePanel = document.createElement('div');
-  livePanel.id = 'vPanelLive';
-  livePanel.appendChild(_vBuildInfoBar());
-  const lastIdx = roundsData.length - 1;
-  livePanel.appendChild(_vBuildRound(roundsData[lastIdx]));
-  container.appendChild(livePanel);
-  const summaryPanel = document.createElement('div');
-  summaryPanel.id = 'vPanelSummary';
-  summaryPanel.style.display = 'none';
-  container.appendChild(summaryPanel);
+const container = document.getElementById(‘viewerResults’);
+if (!container) return;
+container.innerHTML = ‘’;
+if (!roundsData || !roundsData.length) {
+container.innerHTML = ‘<div style="padding:20px;text-align:center;color:var(--muted);font-size:0.85rem;">No rounds yet</div>’;
+return;
+}
+container.appendChild(_vBuildSubTabs());
+const livePanel = document.createElement(‘div’);
+livePanel.id = ‘vPanelLive’;
+livePanel.appendChild(_vBuildInfoBar());
+const lastIdx = roundsData.length - 1;
+livePanel.appendChild(_vBuildRound(roundsData[lastIdx]));
+container.appendChild(livePanel);
+const summaryPanel = document.createElement(‘div’);
+summaryPanel.id = ‘vPanelSummary’;
+summaryPanel.style.display = ‘none’;
+container.appendChild(summaryPanel);
 }
 
 /* ── Sub-tabs ── */
 function _vBuildSubTabs() {
-  const bar = document.createElement('div');
-  bar.className = 'viewer-subtabs';
-  bar.innerHTML = `
-    <button class="viewer-subtab-btn active" id="vTabLive" onclick="vSwitchTab('live')">🏸 Live</button>
-    <button class="viewer-subtab-btn" id="vTabSummary" onclick="vSwitchTab('summary')">📊 Summary</button>
-  `;
-  return bar;
+const bar = document.createElement(‘div’);
+bar.className = ‘viewer-subtabs’;
+bar.innerHTML = `<button class="viewer-subtab-btn active" id="vTabLive" onclick="vSwitchTab('live')">🏸 Live</button> <button class="viewer-subtab-btn" id="vTabSummary" onclick="vSwitchTab('summary')">📊 Summary</button>`;
+return bar;
 }
 
 function vSwitchTab(tab) {
-  document.getElementById('vTabLive')?.classList.toggle('active', tab === 'live');
-  document.getElementById('vTabSummary')?.classList.toggle('active', tab === 'summary');
-  const live    = document.getElementById('vPanelLive');
-  const summary = document.getElementById('vPanelSummary');
-  if (!live || !summary) return;
-  if (tab === 'live') {
-    live.style.display = ''; summary.style.display = 'none';
-  } else {
-    live.style.display = 'none'; summary.style.display = '';
-    _vRenderSummary(summary);
-  }
+document.getElementById(‘vTabLive’)?.classList.toggle(‘active’, tab === ‘live’);
+document.getElementById(‘vTabSummary’)?.classList.toggle(‘active’, tab === ‘summary’);
+const live    = document.getElementById(‘vPanelLive’);
+const summary = document.getElementById(‘vPanelSummary’);
+if (!live || !summary) return;
+if (tab === ‘live’) {
+live.style.display = ‘’; summary.style.display = ‘none’;
+} else {
+live.style.display = ‘none’; summary.style.display = ‘’;
+_vRenderSummary(summary);
+}
 }
 
 /* ── Info bar ── */
 function _vBuildInfoBar() {
-  const bar = document.createElement('div');
-  bar.className = 'viewer-info-bar';
-  const meta    = _vMeta || {};
-  const elapsed = _vElapsed(meta.created_at);
-  const isLive  = meta.status === 'live';
-  bar.innerHTML = `
-    <span class="viewer-info-dot" style="${isLive ? '' : 'background:#9e9e9e;animation:none;'}"></span>
-    <span class="viewer-info-text">
-      <strong>${meta.club_name || ''}</strong>
-      ${meta.started_by ? ' · ' + meta.started_by : ''}
-      ${elapsed ? ' · ' + elapsed : ''}
-      ${!isLive ? ' · <em>Completed</em>' : ''}
-    </span>
-  `;
-  return bar;
+const bar = document.createElement(‘div’);
+bar.className = ‘viewer-info-bar’;
+const meta    = _vMeta || {};
+const elapsed = _vElapsed(meta.created_at);
+const isLive  = meta.status === ‘live’;
+bar.innerHTML = `<span class="viewer-info-dot" style="${isLive ? '' : 'background:#9e9e9e;animation:none;'}"></span> <span class="viewer-info-text"> <strong>${meta.club_name || ''}</strong> ${meta.started_by ? ' · ' + meta.started_by : ''} ${elapsed ? ' · ' + elapsed : ''} ${!isLive ? ' · <em>Completed</em>' : ''} </span>`;
+return bar;
 }
 
 function _vElapsed(isoStr) {
-  if (!isoStr) return '';
-  const ms = Date.now() - new Date(isoStr).getTime();
-  const m  = Math.floor(ms / 60000);
-  if (m < 1)  return 'just started';
-  if (m < 60) return m + 'm';
-  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+if (!isoStr) return ‘’;
+const ms = Date.now() - new Date(isoStr).getTime();
+const m  = Math.floor(ms / 60000);
+if (m < 1)  return ‘just started’;
+if (m < 60) return m + ‘m’;
+return Math.floor(m / 60) + ’h ’ + (m % 60) + ‘m’;
 }
 
 /* ── Round builder — uses same CSS classes as organiser ── */
 function _vBuildRound(data) {
-  if (!data) return document.createElement('div');
-  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
-  const tr   = (typeof translations !== 'undefined') ? (translations[lang] || {}) : {};
+if (!data) return document.createElement(‘div’);
+const lang = (typeof currentLang !== ‘undefined’) ? currentLang : ‘en’;
+const tr   = (typeof translations !== ‘undefined’) ? (translations[lang] || {}) : {};
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'round-wrapper viewer-rounds';
+const wrapper = document.createElement(‘div’);
+wrapper.className = ‘round-wrapper viewer-rounds’;
 
-  const header = document.createElement('div');
-  header.className = 'round-header';
-  header.textContent = (tr.roundno || 'Round ') + data.round;
-  wrapper.appendChild(header);
+const header = document.createElement(‘div’);
+header.className = ‘round-header’;
+header.textContent = (tr.roundno || ’Round ’) + data.round;
+wrapper.appendChild(header);
 
-  (data.games || []).forEach((game, gi) => {
-    const courtDiv = document.createElement('div');
-    courtDiv.className = 'courtcard court-' + (gi + 1);
+(data.games || []).forEach((game, gi) => {
+const courtDiv = document.createElement(‘div’);
+courtDiv.className = ‘courtcard court-’ + (gi + 1);
 
-    const courtName = document.createElement('div');
-    courtName.className = 'courtname';
-    courtName.textContent = 'Court ' + (gi + 1);
-    courtDiv.appendChild(courtName);
+```
+const courtName = document.createElement('div');
+courtName.className = 'courtname';
+courtName.textContent = 'Court ' + (gi + 1);
+courtDiv.appendChild(courtName);
 
-    const teamsDiv = document.createElement('div');
-    teamsDiv.className = 'teams';
+const teamsDiv = document.createElement('div');
+teamsDiv.className = 'teams';
 
-    ['L', 'R'].forEach((side, si) => {
-      const teamDiv = document.createElement('div');
-      teamDiv.className = 'team';
-      teamDiv.dataset.teamSide = side;
-      teamDiv.style.pointerEvents = 'none';
+['L', 'R'].forEach((side, si) => {
+  const teamDiv = document.createElement('div');
+  teamDiv.className = 'team';
+  teamDiv.dataset.teamSide = side;
+  teamDiv.style.pointerEvents = 'none';
 
-      if (game.winner === side) {
-        teamDiv.classList.add('winner');
-        const cup = document.createElement('img');
-        cup.src = 'win-cup.png';
-        cup.className = 'win-cup active';
-        cup.style.cssText = 'pointer-events:none;visibility:visible;opacity:1;filter:none;';
-        teamDiv.appendChild(cup);
-      }
-
-      const players = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
-      players.forEach(name => {
-        const btn = document.createElement('button');
-        btn.className = side === 'L' ? 'Lplayer-btn' : 'Rplayer-btn';
-        btn.textContent = name;
-        btn.style.pointerEvents = 'none';
-        btn.tabIndex = -1;
-        teamDiv.appendChild(btn);
-      });
-
-      teamsDiv.appendChild(teamDiv);
-
-      if (si === 0) {
-        const vs = document.createElement('div');
-        vs.className = 'vs-divider';
-        vs.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
-        teamsDiv.appendChild(vs);
-      }
-    });
-
-    courtDiv.appendChild(teamsDiv);
-    wrapper.appendChild(courtDiv);
-  });
-
-  if (data.resting && data.resting.length) {
-    const tr2 = (typeof translations !== 'undefined') ? (translations[(typeof currentLang !== 'undefined') ? currentLang : 'en'] || {}) : {};
-    const restRow = document.createElement('div');
-    restRow.className = 'round-header';
-    restRow.style.paddingLeft = '12px';
-    restRow.textContent = tr2.sittingOut || 'Resting';
-    const restBox = document.createElement('div');
-    restBox.className = 'rest-box';
-    data.resting.forEach(name => {
-      const chip = document.createElement('span');
-      chip.className = 'rest-btn';
-      chip.textContent = name.split('#')[0];
-      chip.style.cssText = 'pointer-events:none;cursor:default;';
-      restBox.appendChild(chip);
-    });
-    restRow.appendChild(restBox);
-    wrapper.appendChild(restRow);
+  if (game.winner === side) {
+    teamDiv.classList.add('winner');
+    const cup = document.createElement('img');
+    cup.src = 'win-cup.png';
+    cup.className = 'win-cup active';
+    cup.style.cssText = 'pointer-events:none;visibility:visible;opacity:1;filter:none;';
+    teamDiv.appendChild(cup);
   }
 
-  return wrapper;
+  const players = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
+  players.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = side === 'L' ? 'Lplayer-btn' : 'Rplayer-btn';
+    btn.textContent = name;
+    btn.style.pointerEvents = 'none';
+    btn.tabIndex = -1;
+    teamDiv.appendChild(btn);
+  });
+
+  teamsDiv.appendChild(teamDiv);
+
+  if (si === 0) {
+    const vs = document.createElement('div');
+    vs.className = 'vs-divider';
+    vs.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+    teamsDiv.appendChild(vs);
+  }
+});
+
+courtDiv.appendChild(teamsDiv);
+wrapper.appendChild(courtDiv);
+```
+
+});
+
+if (data.resting && data.resting.length) {
+const tr2 = (typeof translations !== ‘undefined’) ? (translations[(typeof currentLang !== ‘undefined’) ? currentLang : ‘en’] || {}) : {};
+const restRow = document.createElement(‘div’);
+restRow.className = ‘round-header’;
+restRow.style.paddingLeft = ‘12px’;
+restRow.textContent = tr2.sittingOut || ‘Resting’;
+const restBox = document.createElement(‘div’);
+restBox.className = ‘rest-box’;
+data.resting.forEach(name => {
+const chip = document.createElement(‘span’);
+chip.className = ‘rest-btn’;
+chip.textContent = name.split(’#’)[0];
+chip.style.cssText = ‘pointer-events:none;cursor:default;’;
+restBox.appendChild(chip);
+});
+restRow.appendChild(restBox);
+wrapper.appendChild(restRow);
+}
+
+return wrapper;
 }
 
 /* ── Summary tab ── */
 function _vRenderSummary(container) {
-  container.innerHTML = '';
-  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
-  const tr   = (typeof translations !== 'undefined') ? (translations[lang] || {}) : {};
+container.innerHTML = ‘’;
+const lang = (typeof currentLang !== ‘undefined’) ? currentLang : ‘en’;
+const tr   = (typeof translations !== ‘undefined’) ? (translations[lang] || {}) : {};
 
-  const stats = new Map();
-  for (const round of _vRoundsData) {
-    for (const name of (round.resting || [])) {
-      const base = name.split('#')[0];
-      if (!stats.has(base)) stats.set(base, { wins: 0, played: 0, rest: 0 });
-      stats.get(base).rest++;
-    }
-    for (const game of (round.games || [])) {
-      [...(game.pair1 || []), ...(game.pair2 || [])].forEach(name => {
-        if (!stats.has(name)) stats.set(name, { wins: 0, played: 0, rest: 0 });
-        stats.get(name).played++;
-      });
-      if (game.winner) {
-        const winners = game.winner === 'L' ? (game.pair1 || []) : (game.pair2 || []);
-        winners.forEach(name => {
-          if (!stats.has(name)) stats.set(name, { wins: 0, played: 0, rest: 0 });
-          stats.get(name).wins++;
-        });
-      }
-    }
-  }
+const stats = new Map();
+for (const round of _vRoundsData) {
+for (const name of (round.resting || [])) {
+const base = name.split(’#’)[0];
+if (!stats.has(base)) stats.set(base, { wins: 0, played: 0, rest: 0 });
+stats.get(base).rest++;
+}
+for (const game of (round.games || [])) {
+[…(game.pair1 || []), …(game.pair2 || [])].forEach(name => {
+if (!stats.has(name)) stats.set(name, { wins: 0, played: 0, rest: 0 });
+stats.get(name).played++;
+});
+if (game.winner) {
+const winners = game.winner === ‘L’ ? (game.pair1 || []) : (game.pair2 || []);
+winners.forEach(name => {
+if (!stats.has(name)) stats.set(name, { wins: 0, played: 0, rest: 0 });
+stats.get(name).wins++;
+});
+}
+}
+}
 
-  const sorted = [...stats.entries()]
-    .map(([name, s]) => ({ name, ...s }))
-    .sort((a, b) => b.wins - a.wins || b.played - a.played);
+const sorted = […stats.entries()]
+.map(([name, s]) => ({ name, …s }))
+.sort((a, b) => b.wins - a.wins || b.played - a.played);
 
-  const header = document.createElement('div');
-  header.className = 'report-header';
-  header.innerHTML = `
-    <div class="header-strip"></div>
-    <div class="header-rank">Rank</div>
-    <div class="header-name">Name</div>
-    <div class="header-wins">W</div>
-    <div class="header-played">P</div>
-    <div class="header-rested">R</div>
-  `;
-  container.appendChild(header);
+const header = document.createElement(‘div’);
+header.className = ‘report-header’;
+header.innerHTML = `<div class="header-strip"></div> <div class="header-rank">Rank</div> <div class="header-name">Name</div> <div class="header-wins">W</div> <div class="header-played">P</div> <div class="header-rested">R</div>`;
+container.appendChild(header);
 
-  sorted.forEach((p, idx) => {
-    const colors = ['#f5a623','#9b9b9b','#cd7f32','#9e9e9e'];
-    const card = document.createElement('div');
-    card.className = 'player-card ' + (idx < 3 ? 'top-' + (idx + 1) : '');
-    card.style.setProperty('--strip-color', colors[Math.min(idx, 3)]);
-    card.innerHTML = `
-      <div class="rating-strip"></div>
-      <div class="rank">#${idx + 1}</div>
-      <div class="name">${p.name}</div>
-      <div class="stat wins">${p.wins}</div>
-      <div class="stat played">${p.played}</div>
-      <div class="stat rest">${p.rest}</div>
-      <span class="rating-badge"></span>
-      <div class="stat-label lbl-wins">W</div>
-      <div class="stat-label lbl-played">P</div>
-      <div class="stat-label lbl-rest">R</div>
-    `;
-    container.appendChild(card);
-  });
+sorted.forEach((p, idx) => {
+const colors = [’#f5a623’,’#9b9b9b’,’#cd7f32’,’#9e9e9e’];
+const card = document.createElement(‘div’);
+card.className = ‘player-card ’ + (idx < 3 ? ‘top-’ + (idx + 1) : ‘’);
+card.style.setProperty(’–strip-color’, colors[Math.min(idx, 3)]);
+card.innerHTML = `<div class="rating-strip"></div> <div class="rank">#${idx + 1}</div> <div class="name">${p.name}</div> <div class="stat wins">${p.wins}</div> <div class="stat played">${p.played}</div> <div class="stat rest">${p.rest}</div> <span class="rating-badge"></span> <div class="stat-label lbl-wins">W</div> <div class="stat-label lbl-played">P</div> <div class="stat-label lbl-rest">R</div>`;
+container.appendChild(card);
+});
 
-  const roundsTitle = document.createElement('div');
-  roundsTitle.className = 'round-header';
-  roundsTitle.style.margin = '16px 4px 6px';
-  roundsTitle.textContent = tr.rounds || 'Rounds';
-  container.appendChild(roundsTitle);
+const roundsTitle = document.createElement(‘div’);
+roundsTitle.className = ‘round-header’;
+roundsTitle.style.margin = ‘16px 4px 6px’;
+roundsTitle.textContent = tr.rounds || ‘Rounds’;
+container.appendChild(roundsTitle);
 
-  for (let i = _vRoundsData.length - 1; i >= 0; i--) {
-    container.appendChild(_vBuildRound(_vRoundsData[i]));
-  }
+for (let i = _vRoundsData.length - 1; i >= 0; i–) {
+container.appendChild(_vBuildRound(_vRoundsData[i]));
+}
 }
 
 /* ── Polling ── */
 function viewerStartPoll() {
-  viewerStopPoll();
-  _vPollTimer = setInterval(async () => {
-    try {
-      const vPage = document.getElementById('viewerPage');
-      if (!vPage || vPage.style.display === 'none') { viewerStopPoll(); return; }
-      const rows = await sbGet('sessions',
-        `id=eq.${_vSessionId}&select=rounds_data,started_by,created_at,updated_at,status`
-      );
-      if (!rows || !rows.length) { viewerStopPoll(); return; }
-      const sess = rows[0];
-      if (sess.updated_at === _vLastUpdated) return;
-      _vLastUpdated = sess.updated_at;
-      _vMeta = { started_by: sess.started_by, created_at: sess.created_at,
-        club_name: (typeof getMyClub === 'function') ? getMyClub().name : '', status: sess.status };
-      _vRoundsData = sess.rounds_data || [];
-      _vRender(_vRoundsData);
-      _vFlashLatest();
-      if (sess.status === 'completed') viewerStopPoll();
-    } catch (e) { /* silent */ }
-  }, 5000);
+viewerStopPoll();
+_vPollTimer = setInterval(async () => {
+try {
+const vPage = document.getElementById(‘viewerPage’);
+if (!vPage || vPage.style.display === ‘none’) { viewerStopPoll(); return; }
+const rows = await sbGet(‘sessions’,
+`id=eq.${_vSessionId}&select=rounds_data,started_by,created_at,updated_at,status`
+);
+if (!rows || !rows.length) { viewerStopPoll(); return; }
+const sess = rows[0];
+if (sess.updated_at === _vLastUpdated) return;
+_vLastUpdated = sess.updated_at;
+_vMeta = { started_by: sess.started_by, created_at: sess.created_at,
+club_name: (typeof getMyClub === ‘function’) ? getMyClub().name : ‘’, status: sess.status };
+_vRoundsData = sess.rounds_data || [];
+_vRender(_vRoundsData);
+_vFlashLatest();
+if (sess.status === ‘completed’) viewerStopPoll();
+} catch (e) { /* silent */ }
+}, 5000);
 }
 
 function viewerStopPoll() {
-  if (_vPollTimer) { clearInterval(_vPollTimer); _vPollTimer = null; }
+if (_vPollTimer) { clearInterval(_vPollTimer); _vPollTimer = null; }
 }
 
 function _vFlashLatest() {
-  const el = document.querySelector('#viewerResults .round-wrapper');
-  if (!el) return;
-  el.classList.remove('viewer-flash');
-  void el.offsetWidth;
-  el.classList.add('viewer-flash');
-  setTimeout(() => el.classList.remove('viewer-flash'), 1000);
+const el = document.querySelector(’#viewerResults .round-wrapper’);
+if (!el) return;
+el.classList.remove(‘viewer-flash’);
+void el.offsetWidth;
+el.classList.add(‘viewer-flash’);
+setTimeout(() => el.classList.remove(‘viewer-flash’), 1000);
 }
 
 /* ── Club login UI state ── */
 function clubLoginRefresh() {
-  const club = (typeof getMyClub === 'function') ? getMyClub() : null;
-  const mode = localStorage.getItem('kbrr_club_mode');
-  const loggedIn = !!(club && club.id);
+const club = (typeof getMyClub === ‘function’) ? getMyClub() : null;
+const mode = localStorage.getItem(‘kbrr_club_mode’);
+const loggedIn = !!(club && club.id);
 
-  const loggedInState = document.getElementById('clubLoggedInState');
-  const loginForm     = document.getElementById('clubLoginForm');
-  if (loggedInState) loggedInState.style.display = loggedIn ? '' : 'none';
-  if (loginForm)     loginForm.style.display     = loggedIn ? 'none' : '';
+const loggedInState = document.getElementById(‘clubLoggedInState’);
+const loginForm     = document.getElementById(‘clubLoginForm’);
+if (loggedInState) loggedInState.style.display = loggedIn ? ‘’ : ‘none’;
+if (loginForm)     loginForm.style.display     = loggedIn ? ‘none’ : ‘’;
 
-  if (loggedIn) {
-    const dot  = document.getElementById('clubLoginDot');
-    const name = document.getElementById('clubLoginName');
-    const role = document.getElementById('clubLoginRole');
-    if (name) name.textContent = club.name;
-    if (dot)  { dot.style.background = '#2dce89'; dot.style.boxShadow = '0 0 0 3px rgba(45,206,137,0.2)'; }
-    if (role) {
-      role.textContent = mode === 'admin' ? 'ADMIN' : 'USER';
-      role.style.background = mode === 'admin' ? '#2dce89' : 'var(--accent)';
-      role.style.color = mode === 'admin' ? '#000' : '#fff';
-      role.style.display = 'inline-block';
-    }
-  }
+if (loggedIn) {
+const dot  = document.getElementById(‘clubLoginDot’);
+const name = document.getElementById(‘clubLoginName’);
+const role = document.getElementById(‘clubLoginRole’);
+if (name) name.textContent = club.name;
+if (dot)  { dot.style.background = ‘#2dce89’; dot.style.boxShadow = ‘0 0 0 3px rgba(45,206,137,0.2)’; }
+if (role) {
+role.textContent = mode === ‘admin’ ? ‘ADMIN’ : ‘USER’;
+role.style.background = mode === ‘admin’ ? ‘#2dce89’ : ‘var(–accent)’;
+role.style.color = mode === ‘admin’ ? ‘#000’ : ‘#fff’;
+role.style.display = ‘inline-block’;
+}
+}
 }
 
 function clubLoginSwitch() {
-  // Show login form to allow changing club
-  const loggedInState = document.getElementById('clubLoggedInState');
-  const loginForm     = document.getElementById('clubLoginForm');
-  if (loggedInState) loggedInState.style.display = 'none';
-  if (loginForm)     loginForm.style.display     = '';
-  viewerLoadClubs();
+// Show login form to allow changing club
+const loggedInState = document.getElementById(‘clubLoggedInState’);
+const loginForm     = document.getElementById(‘clubLoginForm’);
+if (loggedInState) loggedInState.style.display = ‘none’;
+if (loginForm)     loginForm.style.display     = ‘’;
+viewerLoadClubs();
 }
 
 /* ── Club login ── */
 async function viewerLoadClubs() {
-  try {
-    const clubs = await dbGetClubs();
-    const select = document.getElementById('sbClubSelectViewer');
-    if (!select) return;
-    select.innerHTML = '<option value="">— Select club —</option>';
-    clubs.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id; opt.textContent = c.name;
-      select.appendChild(opt);
-    });
-    const cur = (typeof getMyClub === 'function') ? getMyClub() : null;
-    if (cur && cur.id) select.value = cur.id;
-  } catch (e) { console.warn('viewerLoadClubs:', e.message); }
+try {
+const clubs = await dbGetClubs();
+const select = document.getElementById(‘sbClubSelectViewer’);
+if (!select) return;
+select.innerHTML = ‘<option value="">— Select club —</option>’;
+clubs.forEach(c => {
+const opt = document.createElement(‘option’);
+opt.value = c.id; opt.textContent = c.name;
+select.appendChild(opt);
+});
+const cur = (typeof getMyClub === ‘function’) ? getMyClub() : null;
+if (cur && cur.id) select.value = cur.id;
+} catch (e) { console.warn(‘viewerLoadClubs:’, e.message); }
 }
 
 async function viewerJoinClub() {
-  const select   = document.getElementById('sbClubSelectViewer');
-  const pwInput  = document.getElementById('sbPasswordInputViewer');
-  const feedback = document.getElementById('sbClubFeedbackViewer');
-  const status   = document.getElementById('sbClubStatusViewer');
-  const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
-  if (!select || !select.value) { setFb('Please select a club.', false); return; }
-  const pw = pwInput ? pwInput.value.trim() : '';
-  if (!pw) { setFb('Enter password.', false); return; }
-  try {
-    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=id,name,select_password`);
-    if (!clubs.length) throw new Error('Club not found.');
-    if (pw !== clubs[0].select_password) throw new Error('Wrong password.');
-    if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
-    localStorage.setItem('kbrr_club_mode', 'user');
-    localStorage.setItem('kbrr_rating_field', 'club_ratings');
-    if (pwInput) pwInput.value = '';
-    setFb('Joined successfully', true);
-    clubLoginRefresh();
-    if (typeof syncToLocal === 'function') syncToLocal();
-  } catch (e) { setFb('❌ ' + e.message, false); }
+const select   = document.getElementById(‘sbClubSelectViewer’);
+const pwInput  = document.getElementById(‘sbPasswordInputViewer’);
+const feedback = document.getElementById(‘sbClubFeedbackViewer’);
+const status   = document.getElementById(‘sbClubStatusViewer’);
+const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? ‘#2dce89’ : ‘#e63757’; } };
+if (!select || !select.value) { setFb(‘Please select a club.’, false); return; }
+const pw = pwInput ? pwInput.value.trim() : ‘’;
+if (!pw) { setFb(‘Enter password.’, false); return; }
+try {
+const isOrganiser = (typeof appMode !== ‘undefined’) && appMode === ‘organiser’;
+const fields = isOrganiser ? ‘id,name,select_password,admin_password’ : ‘id,name,select_password’;
+const clubs = await sbGet(‘clubs’, `id=eq.${select.value}&select=${fields}`);
+if (!clubs.length) throw new Error(‘Club not found.’);
+
+```
+let role = 'user';
+if (isOrganiser && pw === clubs[0].admin_password) {
+  role = 'admin';
+} else if (pw !== clubs[0].select_password) {
+  throw new Error('Wrong password.');
+}
+
+if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
+localStorage.setItem('kbrr_club_mode', role);
+localStorage.setItem('kbrr_rating_field', 'club_ratings');
+if (pwInput) pwInput.value = '';
+setFb(role === 'admin' ? '✅ Joined as Admin' : '✅ Joined successfully', true);
+clubLoginRefresh();
+if (typeof syncToLocal === 'function') syncToLocal();
+```
+
+} catch (e) { setFb(’❌ ’ + e.message, false); }
 }
