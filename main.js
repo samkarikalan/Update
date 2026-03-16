@@ -469,12 +469,9 @@ function showPage(pageID, el) {
   }
 
   if (pageID === "clubPage") {
+    if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
     if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
     if (typeof sbPopulateDeleteDropdown === 'function') sbPopulateDeleteDropdown();
-    // Show current club status
-    const club = (typeof getMyClub === 'function') ? getMyClub() : null;
-    const status = document.getElementById('sbClubStatusViewer');
-    if (status) status.textContent = club && club.name ? '✅ ' + club.name : '';
   }
 
   // Update last visited page

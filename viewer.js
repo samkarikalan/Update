@@ -347,6 +347,41 @@ function _vFlashLatest() {
   setTimeout(() => el.classList.remove('viewer-flash'), 1000);
 }
 
+/* ── Club login UI state ── */
+function clubLoginRefresh() {
+  const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+  const mode = localStorage.getItem('kbrr_club_mode');
+  const loggedIn = !!(club && club.id);
+
+  const loggedInState = document.getElementById('clubLoggedInState');
+  const loginForm     = document.getElementById('clubLoginForm');
+  if (loggedInState) loggedInState.style.display = loggedIn ? '' : 'none';
+  if (loginForm)     loginForm.style.display     = loggedIn ? 'none' : '';
+
+  if (loggedIn) {
+    const dot  = document.getElementById('clubLoginDot');
+    const name = document.getElementById('clubLoginName');
+    const role = document.getElementById('clubLoginRole');
+    if (name) name.textContent = club.name;
+    if (dot)  { dot.style.background = '#2dce89'; dot.style.boxShadow = '0 0 0 3px rgba(45,206,137,0.2)'; }
+    if (role) {
+      role.textContent = mode === 'admin' ? 'ADMIN' : 'USER';
+      role.style.background = mode === 'admin' ? '#2dce89' : 'var(--accent)';
+      role.style.color = mode === 'admin' ? '#000' : '#fff';
+      role.style.display = 'inline-block';
+    }
+  }
+}
+
+function clubLoginSwitch() {
+  // Show login form to allow changing club
+  const loggedInState = document.getElementById('clubLoggedInState');
+  const loginForm     = document.getElementById('clubLoginForm');
+  if (loggedInState) loggedInState.style.display = 'none';
+  if (loginForm)     loginForm.style.display     = '';
+  viewerLoadClubs();
+}
+
 /* ── Club login ── */
 async function viewerLoadClubs() {
   try {
@@ -381,8 +416,8 @@ async function viewerJoinClub() {
     localStorage.setItem('kbrr_club_mode', 'user');
     localStorage.setItem('kbrr_rating_field', 'club_ratings');
     if (pwInput) pwInput.value = '';
-    if (status)  status.textContent = '✅ ' + clubs[0].name;
     setFb('Joined successfully', true);
+    clubLoginRefresh();
     if (typeof syncToLocal === 'function') syncToLocal();
   } catch (e) { setFb('❌ ' + e.message, false); }
 }

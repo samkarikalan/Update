@@ -764,7 +764,7 @@ async function clubCreateVerify() {
     setFb('✅ Club "' + club.name + '" created! You are now Admin.', true);
     sbRenderClubStatus();
     vaultSyncStatus();
-
+    if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
     await syncToLocal();
   } catch (e) { setFb('❌ ' + e.message, false); }
 }
@@ -922,6 +922,7 @@ function sbClearClub() {
   document.getElementById('sbRatingModeWrap') && (document.getElementById('sbRatingModeWrap').style.display = 'none');
   sbRenderClubStatus();
   vaultSyncStatus();
+  if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
   updateRegisterTabVisibility();
 }
 

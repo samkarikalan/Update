@@ -236,20 +236,33 @@
 
       <!-- Club Login — both modes -->
       <div class="settings-card" id="clubLoginCard" style="padding:14px">
-        <div style="font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🏢 Club Login</div>
-        <div class="club-row">
-          <select id="sbClubSelectViewer" class="club-select" style="flex:1">
-            <option value="">— Select club —</option>
-          </select>
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🏢 Club</div>
+
+        <!-- Logged in state -->
+        <div id="clubLoggedInState" style="display:none">
+          <div class="vault-status-strip" style="margin-bottom:8px">
+            <div class="vault-status-dot" id="clubLoginDot"></div>
+            <span id="clubLoginName" style="font-weight:600;font-size:0.9rem"></span>
+            <span id="clubLoginRole" style="font-size:0.72rem;padding:2px 8px;border-radius:20px;margin-left:6px"></span>
+          </div>
+          <button class="btn-clear" style="width:100%;font-size:0.82rem" onclick="clubLoginSwitch()">🔄 Change Club</button>
         </div>
-        <div class="club-row" style="margin-top:8px">
-          <input type="password" id="sbPasswordInputViewer" class="club-input"
-                 placeholder="Enter password"
-                 onkeydown="if(event.key==='Enter')viewerJoinClub()">
-          <button class="btn-save" onclick="viewerJoinClub()">Join</button>
+
+        <!-- Login form — shown when not logged in or changing club -->
+        <div id="clubLoginForm">
+          <div class="club-row">
+            <select id="sbClubSelectViewer" class="club-select" style="flex:1">
+              <option value="">— Select club —</option>
+            </select>
+          </div>
+          <div class="club-row" style="margin-top:8px">
+            <input type="password" id="sbPasswordInputViewer" class="club-input"
+                   placeholder="Enter password"
+                   onkeydown="if(event.key==='Enter')viewerJoinClub()">
+            <button class="btn-save" onclick="viewerJoinClub()">Join</button>
+          </div>
+          <div id="sbClubFeedbackViewer" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
         </div>
-        <div id="sbClubFeedbackViewer" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
-        <div id="sbClubStatusViewer" style="font-size:0.82rem;margin-top:8px;color:var(--muted)"></div>
       </div>
 
       <!-- Club Management — organiser mode only -->
