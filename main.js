@@ -378,8 +378,7 @@ function syncPlayersFromMaster() { syncRatings(); }
 
 function updateRoundsPageAccess() {
   const block = schedulerState.activeplayers.length < 4;
-  const tabs = document.querySelectorAll('.tab-btn');
-  const roundsTab = tabs[2]; // ← was 1, now 2 (Settings added at 0)
+  const roundsTab = document.getElementById('tabBtnRounds');
 
   if (!roundsTab) return;
 
@@ -388,16 +387,14 @@ function updateRoundsPageAccess() {
   roundsTab.setAttribute('aria-disabled', block);
 
   if (block && isPageVisible('roundsPage')) {
-    showPage('playersPage', tabs[1]);
+    showPage('playersPage', document.getElementById('tabBtnPlayers'));
   }
 }
 
 
 function updateSummaryPageAccess() {
   const hasRounds = Array.isArray(allRounds) && allRounds.length > 0;
-  const tabs = document.querySelectorAll('.tab-btn');
-  const summaryTab = tabs[3]; // ← was 2, now 3
-
+  const summaryTab = document.getElementById('tabBtnSummary');
   const block = !hasRounds;
 
   if (!summaryTab) return;
@@ -407,7 +404,7 @@ function updateSummaryPageAccess() {
   summaryTab.setAttribute('aria-disabled', block);
 
   if (block && isPageVisible('summaryPage')) {
-    showPage('playersPage', tabs[1]);
+    showPage('playersPage', document.getElementById('tabBtnPlayers'));
   }
 }
 
