@@ -135,11 +135,10 @@ function toggleRound() {
       }
     });   
 
-    // Show win cups whenever competitive toggle is ON
-    // (even during warm-up) so winners can be marked for seeding
+    // Show win cups in both modes — wins drive ratings in both
     document.querySelectorAll(".win-cup").forEach(cup => {
-      cup.style.visibility = playmode === "competitive" ? "visible" : "hidden";
-      cup.style.pointerEvents = playmode === "competitive" ? "auto" : "none";
+      cup.style.visibility = "visible";
+      cup.style.pointerEvents = "auto";
       cup.classList.add("blinking");
     });
 
@@ -148,29 +147,22 @@ function toggleRound() {
   } else {
     // ---- RETURN TO IDLE MODE ----
 
-    // Require winners if competitive toggle is ON
-    // (warm-up rounds included — results seed tier rankings)
-    if (playmode === "competitive") {     
-      const currentRoundGames = allRounds[allRounds.length - 1].games;
-      const winnersCount = currentRoundGames.filter(game => game.winner).length;
-      
-      if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
-        alert("Please mark winners for all games");
-        return; // ❌ stay in active mode
-      }
-
-      // Always update points when competitive toggle is ON
-      // warm-up rounds → seeds tier rankings
-      // competitive rounds → drives tier rankings
-      updatePointsAfterRound(schedulerState);
+    // Require all winners to be marked before advancing — both modes
+    const currentRoundGames = allRounds[allRounds.length - 1].games;
+    const winnersCount = currentRoundGames.filter(game => game.winner).length;
+    if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
+      alert("Please mark winners for all games");
+      return; // stay in active mode
     }
+
+    // Update rank points after every round (both modes)
+    updatePointsAfterRound(schedulerState);
 
     nextRound();
     document.getElementById("roundsPage").classList.remove("active-mode");
 
-    // Check if enough rounds played — switch to End Session state
-    const minR = schedulerState.minRounds || 6;
-    currentState = allRounds.length > minR ? "done" : "idle";
+    // Done state available after round 1
+    currentState = allRounds.length > 1 ? "done" : "idle";
     
     // Re-enable everything previously disabled
     document.querySelectorAll(".disabled").forEach(el => {
@@ -301,82 +293,11 @@ function getNextFixedPairGames(schedulerState, fixedPairs, numCourts) {
 }
 
 
-function AischedulerNextRound(schedulerState) {
-
-  const { activeplayers } = schedulerState;
-  const playmode = getPlayMode();
-  const page2 = document.getElementById("roundsPage");
-
-  let result;
-
-  // Use minRounds from user input instead of hardcoded played count
-  const canStartCompetitive =
-    activeplayers.length > 0 &&
-    allRounds.length >= (schedulerState.minRounds || 6);
-
-  // --------------------------------------------------
-  // RANDOM MODE
-  // --------------------------------------------------
-  if (playmode === "random" || !canStartCompetitive) {
-
-    if (schedulerState._lastMode === "competitive") {
-      // resetForRandomPhase(schedulerState); // optional
-    }
-
-    result = RandomRound(schedulerState);
-
-    page2.classList.remove("competitive-mode");
-    page2.classList.add("random-mode");
-
-    schedulerState._lastMode = "random";
-  }
-
-  // --------------------------------------------------
-  // COMPETITIVE MODE
-  // --------------------------------------------------
-  else {
-
-    // Reset only once when entering competitive
-    if (schedulerState._lastMode !== "competitive") {
-      resetForCompetitivePhase(schedulerState);
-    }
-
-    // 🔥 Uses new CompetitiveRound from competitive_algorithm.js
-    result = CompetitiveRound(schedulerState);
-
-    page2.classList.remove("random-mode");
-    page2.classList.add("competitive-mode");
-
-    schedulerState._lastMode = "competitive";
-  }
-
-  return result;
-}
+// AischedulerNextRound is defined in competitive_algorithm.js
+// Both Random and Competitive modes use the same balanced algorithm.
 
 function resetForCompetitivePhase(state) {
-
-  // Clear pair uniqueness memory
-  state.pairPlayedSet.clear();
-  state.playedTogether.clear();
-  state.gamesMap.clear();
-  state.pairCooldownMap.clear();
-
-  // Reset opponent tracking
-  state.opponentMap = new Map();
-  for (const p1 of state.activeplayers) {
-    const inner = new Map();
-    for (const p2 of state.activeplayers) {
-      if (p1 !== p2) inner.set(p2, 0);
-    }
-    state.opponentMap.set(p1, inner);
-  }
-
-  // DO NOT TOUCH:
-  // winCount
-  // rankPoints
-  // PlayedCount
-  // restCount
-  // restQueue
+  // No longer needed — kept as no-op for safety in case called elsewhere
 }
 
 function getPlayingAndResting(state) {
@@ -2522,33 +2443,8 @@ modeToggle.addEventListener("change", () => {
 });
 
 // Min Rounds value
-let minRoundsValue = parseInt(localStorage.getItem('minRounds')) || 6;
-document.getElementById('minRoundsDisplay').textContent = minRoundsValue;
-
-document.getElementById('minRoundsPlus').addEventListener('click', () => {
-  minRoundsValue = Math.min(20, minRoundsValue + 1);
-  document.getElementById('minRoundsDisplay').textContent = minRoundsValue;
-  localStorage.setItem('minRounds', minRoundsValue);
-  schedulerState.minRounds = minRoundsValue;
-});
-
-document.getElementById('minRoundsMinus').addEventListener('click', () => {
-  minRoundsValue = Math.max(1, minRoundsValue - 1);
-  document.getElementById('minRoundsDisplay').textContent = minRoundsValue;
-  localStorage.setItem('minRounds', minRoundsValue);
-  schedulerState.minRounds = minRoundsValue;
-});
-
-function toggleRoundSettings() {
-  const body    = document.getElementById('roundSettingsBody');
-  const chevron = document.getElementById('roundSettingsChevron');
-  const isOpen  = body.classList.toggle('open');
-  chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
-}
-
 function toggleMinRoundsVisibility() {
-  const isCompetitive = getPlayMode() === 'competitive';
-  document.getElementById('minRoundsRow').style.display = isCompetitive ? 'flex' : 'none';
+  // minRoundsRow removed — no warm-up concept. No-op kept for safety.
 }
 
 function updateModeLabel() {
