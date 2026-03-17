@@ -385,18 +385,12 @@
   <!-- ============================= -->
   <div id="roundsPage" class="page" style="display:none;">
 
-    <!-- Mode banner: READY / LIVE / SETUP -->
-    <div class="mode-banner ready-mode" id="roundModeBanner">
-      <div>
-        <div class="mode-banner-title" id="roundBannerTitle">🏸 Rounds</div>
-        <div class="mode-banner-hint" id="roundBannerHint">Tap Start to begin</div>
-      </div>
-      <span class="mode-banner-badge" id="roundModeBadge">READY</span>
-    </div>
-
     <div class="title-card">
       <div id="roundTitle">R</div>
-      <img id="lockToggleBtn" class="lock-icon" src="lock.png" alt="Lock" />
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="mode-banner-badge ready-mode" id="roundModeBadge">READY</span>
+        <img id="lockToggleBtn" class="lock-icon" src="lock.png" alt="Lock" />
+      </div>
     </div>
 
     <div id="game-results"></div>

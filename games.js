@@ -2429,27 +2429,18 @@ lockBtn.addEventListener('click', () => {
 
 // ── Mode banner sync ──────────────────────────────────────────
 function _syncModeBanner() {
-  const banner = document.getElementById('roundModeBanner');
-  const hint   = document.getElementById('roundBannerHint');
-  const badge  = document.getElementById('roundModeBadge');
-  const title  = document.getElementById('roundBannerTitle');
-  if (!banner) return;
-
-  const roundNum = allRounds.length > 0 ? allRounds[allRounds.length-1].round : '';
-  if (title && roundNum) title.textContent = '🏸 Round ' + roundNum;
+  const badge = document.getElementById('roundModeBadge');
+  if (!badge) return;
 
   if (currentState === "active") {
-    banner.className = 'mode-banner live-mode';
+    badge.className = 'mode-banner-badge live-mode';
     badge.textContent = 'LIVE';
-    hint.textContent  = 'Tap a team to mark the winner';
   } else if (!interactionLocked) {
-    banner.className = 'mode-banner setup-mode';
+    badge.className = 'mode-banner-badge setup-mode';
     badge.textContent = 'SETUP';
-    hint.textContent  = 'Shuffle or swap players freely';
   } else {
-    banner.className = 'mode-banner ready-mode';
+    badge.className = 'mode-banner-badge ready-mode';
     badge.textContent = 'READY';
-    hint.textContent  = 'Tap Start / Next Round to begin';
   }
 }
 

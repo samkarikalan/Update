@@ -2403,3 +2403,13 @@ body.app-dark .mode-banner.setup-mode { color: #f5a623; }
 .action.right.primary.start-state {
   background: linear-gradient(135deg, #2dce89 0%, #1aa870 100%) !important;
 }
+
+/* Badge standalone — next to lock icon in title card */
+.mode-banner-badge {
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
+  color: #fff; flex-shrink: 0;
+}
+.mode-banner-badge.ready-mode { background: var(--accent); }
+.mode-banner-badge.live-mode  { background: #2dce89; }
+.mode-banner-badge.setup-mode { background: #f5a623; }
