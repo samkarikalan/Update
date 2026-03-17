@@ -2363,63 +2363,43 @@ body.organiser-tabs .tab-btn {
   scroll-snap-align: start;
 }
 
-/* ─────────────────────────────────────────────
-   MODE BANNER — LIVE vs SETUP
-───────────────────────────────────────────── */
+/* ─── MODE BANNER ─────────────────────────────────────────── */
 .mode-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: var(--r-md, 12px);
-  margin: 6px 0 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  transition: background 0.3s, border-color 0.3s;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; border-radius: var(--r-md, 12px);
+  margin: 4px 0 6px; font-size: 0.82rem;
+  border: 1.5px solid transparent;
+  transition: background 0.25s, border-color 0.25s;
+}
+.mode-banner.ready-mode {
+  background: rgba(108,99,255,0.07);
+  border-color: rgba(108,99,255,0.2);
+  color: var(--accent);
 }
 .mode-banner.live-mode {
-  background: linear-gradient(135deg, rgba(45,206,137,0.12), rgba(45,206,137,0.04));
-  border: 1.5px solid rgba(45,206,137,0.35);
+  background: rgba(45,206,137,0.1);
+  border-color: rgba(45,206,137,0.3);
   color: #1a6e4a;
 }
-body.app-dark .mode-banner.live-mode {
-  color: #2dce89;
-  background: rgba(45,206,137,0.08);
-  border-color: rgba(45,206,137,0.25);
-}
+body.app-dark .mode-banner.live-mode { color: #2dce89; }
 .mode-banner.setup-mode {
-  background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.03));
-  border: 1.5px solid rgba(245,158,11,0.3);
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.25);
   color: #7a5200;
 }
-body.app-dark .mode-banner.setup-mode {
-  color: #f5a623;
-  background: rgba(245,158,11,0.07);
-  border-color: rgba(245,158,11,0.2);
-}
-.mode-banner-title {
-  font-size: 0.88rem;
-  font-weight: 800;
-  margin-bottom: 2px;
-}
-.mode-banner-hint {
-  font-size: 0.75rem;
-  font-weight: 400;
-  opacity: 0.8;
-}
+body.app-dark .mode-banner.setup-mode { color: #f5a623; }
+.mode-banner-title { font-weight: 800; font-size: 0.85rem; }
+.mode-banner-hint  { font-size: 0.73rem; opacity: 0.8; margin-top: 1px; }
 .mode-banner-badge {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  flex-shrink: 0;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
+  color: #fff; flex-shrink: 0;
 }
-.live-mode .mode-banner-badge  { background: #2dce89; color: #fff; }
-.setup-mode .mode-banner-badge { background: #f5a623; color: #fff; }
+.ready-mode .mode-banner-badge { background: var(--accent); }
+.live-mode  .mode-banner-badge { background: #2dce89; }
+.setup-mode .mode-banner-badge { background: #f5a623; }
 
-/* Start button — green */
+/* ─── START BUTTON (green) ────────────────────────────────── */
 .action.right.primary.start-state {
   background: linear-gradient(135deg, #2dce89 0%, #1aa870 100%) !important;
 }

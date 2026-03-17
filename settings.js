@@ -213,13 +213,9 @@ function resetRounds() {
   report(); 
   sessionFinished = false;
   document.getElementById("nextBtn").disabled = false;
-  // Note: shuffle state managed by _updateShuffleBtn() called below
-
-  // Reset session state for new round flow
-  if (typeof sessionStarted !== 'undefined') { sessionStarted = false; }
-  if (typeof _updateNextBtn === 'function')   { _updateNextBtn(); }
-  if (typeof _updateModeBanner === 'function'){ _updateModeBanner(); }
-  if (typeof _updateShuffleBtn === 'function'){ _updateShuffleBtn(); }
+  // Shuffle state managed by _syncShuffleBtn
+  if (typeof _syncShuffleBtn   === 'function') _syncShuffleBtn();
+  if (typeof _syncModeBanner   === 'function') _syncModeBanner();
 
   // Optional: also disable End to prevent double-click
   //document.getElementById("endBtn").disabled = false;

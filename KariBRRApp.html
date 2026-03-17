@@ -385,13 +385,13 @@
   <!-- ============================= -->
   <div id="roundsPage" class="page" style="display:none;">
 
-    <!-- Mode Banner — LIVE vs SETUP -->
-    <div class="mode-banner" id="roundModeBanner">
+    <!-- Mode banner: READY / LIVE / SETUP -->
+    <div class="mode-banner ready-mode" id="roundModeBanner">
       <div>
-        <div class="mode-banner-title" id="roundBannerTitle">🏸 Round</div>
-        <div class="mode-banner-hint" id="roundBannerHint">Tap a team to mark winner</div>
+        <div class="mode-banner-title" id="roundBannerTitle">🏸 Rounds</div>
+        <div class="mode-banner-hint" id="roundBannerHint">Tap Start to begin</div>
       </div>
-      <div class="mode-banner-badge" id="roundModeBadge">LIVE</div>
+      <span class="mode-banner-badge" id="roundModeBadge">READY</span>
     </div>
 
     <div class="title-card">
@@ -402,9 +402,9 @@
     <div id="game-results"></div>
 
     <div class="action-card">
-      <button class="action mid small" id="roundShufle" onclick="RefreshRound()" aria-label="Mix round">🎲</button>
-      <button id="nextBtn" class="action right primary start-state" onclick="goNextRound()">
-        <span id="btnText" data-i18n="nround">Start</span>
+      <button class="action mid small disabled-btn" id="roundShufle" onclick="RefreshRound()" aria-label="Mix round" disabled>🎲</button>
+      <button id="nextBtn" class="action right primary start-state" onclick="toggleRound()">
+        <span id="btnText">Start</span>
         <span class="icon"> ▶</span>
       </button>
       <button class="action mid small" onclick="toggleRoundSettings()" aria-label="Settings">⚙️</button>

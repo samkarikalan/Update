@@ -106,104 +106,103 @@ function isGameRepeated(game) {
 
 
 
-// ── sessionStarted: false until first Start click ────────────
-let sessionStarted = false;
+function toggleRound() {
+  const btn    = document.getElementById("nextBtn");
+  const textEl = document.getElementById("btnText");
+  const icon   = btn.querySelector(".icon");
 
-function _updateModeBanner() {
-  const banner = document.getElementById('roundModeBanner');
-  const hint   = document.getElementById('roundBannerHint');
-  const badge  = document.getElementById('roundModeBadge');
-  const title  = document.getElementById('roundBannerTitle');
-  if (!banner) return;
+  if (currentState === "idle") {
+    // ── ENTER ACTIVE MODE (Start / begin round) ──
+    // Auto-lock if not already locked
+    if (!interactionLocked) lockBtn.click();
 
-  // Update title to match round number
-  const roundNum = allRounds.length > 0 ? allRounds[allRounds.length - 1].round : '';
-  if (title && roundNum) title.textContent = '🏸 Round ' + roundNum;
+    currentState = "active";
 
-  if (interactionLocked) {
-    banner.className = 'mode-banner live-mode';
-    badge.textContent = 'LIVE';
-    hint.textContent  = 'Tap a team to mark the winner';
-  } else {
-    banner.className = 'mode-banner setup-mode';
-    badge.textContent = 'SETUP';
-    hint.textContent  = 'Shuffle or adjust players freely';
-  }
-}
+    // Disable everything except nextBtn and win-cup
+    document.querySelectorAll(
+      "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
+    ).forEach(el => {
+      if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
+        el.style.pointerEvents = "none";
+        el.classList.add("disabled");
+      }
+    });
 
-function _updateNextBtn() {
-  const btn    = document.getElementById('nextBtn');
-  const textEl = document.getElementById('btnText');
-  const icon   = btn && btn.querySelector('.icon');
-  if (!btn) return;
+    // Show win cups — both modes require winner marking
+    document.querySelectorAll(".win-cup").forEach(cup => {
+      cup.style.visibility    = "visible";
+      cup.style.pointerEvents = "auto";
+      cup.classList.add("blinking");
+    });
 
-  if (!sessionStarted) {
-    btn.classList.add('start-state');
-    if (textEl) { textEl.removeAttribute('data-i18n'); textEl.textContent = 'Start'; }
-    if (icon)   icon.textContent = ' ▶';
-  } else {
-    btn.classList.remove('start-state');
-    if (textEl) { textEl.dataset.i18n = 'nround'; }
-    if (icon)   icon.textContent = ' ▶';
-    setLanguage(currentLang);
-  }
-}
+    document.getElementById("roundsPage").classList.add("active-mode");
+    _syncModeBanner();
 
-function _updateShuffleBtn() {
-  const shuffleBtn = document.getElementById('roundShufle');
-  if (!shuffleBtn) return;
-  if (interactionLocked) {
-    shuffleBtn.disabled = true;
-    shuffleBtn.classList.add('disabled-btn');
-  } else {
-    shuffleBtn.disabled = false;
-    shuffleBtn.classList.remove('disabled-btn');
-  }
-}
+  } else if (currentState === "active") {
+    // ── RETURN TO IDLE MODE (advance round) ──
 
-// ── goNextRound: single handler for Start + Next Round ───────
-function goNextRound() {
-  if (!sessionStarted) {
-    // First click — Start session, auto-lock
-    sessionStarted = true;
-    if (!interactionLocked) {
-      interactionLocked = true;
-      document.body.classList.add('locked');
-      const lockImg = document.getElementById('lockToggleBtn');
-      if (lockImg) lockImg.src = 'lock.png';
+    // Require all winners marked — both modes
+    const currentRoundGames = allRounds[allRounds.length - 1].games;
+    const winnersCount = currentRoundGames.filter(g => g.winner).length;
+    if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
+      alert("Please mark winners for all games");
+      return;
     }
-    _updateNextBtn();
-    _updateModeBanner();
-    _updateShuffleBtn();
+
+    // Update rank points — both modes
+    updatePointsAfterRound(schedulerState);
+
+    nextRound();
+    document.getElementById("roundsPage").classList.remove("active-mode");
+    currentState = "idle";
+
+    // Re-enable everything
+    document.querySelectorAll(".disabled").forEach(el => {
+      el.style.pointerEvents = "";
+      el.classList.remove("disabled");
+      if (el.classList.contains("menu-btn")) {
+        el.onclick = function() { showPage("settingsPage", this); };
+      }
+    });
+
+    // Hide win cups
+    document.querySelectorAll(".win-cup").forEach(cup => {
+      cup.style.pointerEvents = "none";
+      cup.style.visibility    = "hidden";
+    });
+
+    _syncModeBanner();
+    _syncShuffleBtn();
+
+  } else if (currentState === "done") {
+    // done behaves same as idle — just re-enter active
+    currentState = "idle";
+    toggleRound();
     return;
   }
 
-  // Must be locked (play mode) to advance
-  if (!interactionLocked) {
-    alert('Lock the round first before advancing (tap 🔒)');
-    return;
+  // Update button label
+  if (currentState === "idle") {
+    // Show "Start" if no rounds played yet, else "Next Round"
+    const isFirst = allRounds.length <= 1;
+    if (isFirst) {
+      btn.classList.add("start-state");
+      textEl.removeAttribute("data-i18n");
+      textEl.textContent = "Start";
+    } else {
+      btn.classList.remove("start-state");
+      textEl.dataset.i18n = "nround";
+    }
+    icon.textContent = " ▶";
+    btn.classList.remove("end", "round-active");
+  } else if (currentState === "active") {
+    btn.classList.remove("start-state", "end");
+    textEl.dataset.i18n = "endrounds";
+    icon.textContent = " ▶";
+    btn.classList.add("round-active");
   }
-
-  // All winners must be marked
-  const games = allRounds[allRounds.length - 1]?.games;
-  if (!games || !games.length) return;
-  const unmarked = games.filter(g => !g.winner);
-  if (unmarked.length > 0) {
-    alert('Please mark winners for all courts (' + (games.length - unmarked.length) + '/' + games.length + ' done)');
-    return;
-  }
-
-  // Update rank points then advance
-  updatePointsAfterRound(schedulerState);
-  nextRound();
-
-  _updateModeBanner();
-  _updateShuffleBtn();
-  _updateNextBtn();
+  setLanguage(currentLang);
 }
-
-// Keep toggleRound as alias for any remaining references
-function toggleRound() { goNextRound(); }
 
 
 
@@ -307,12 +306,9 @@ function getNextFixedPairGames(schedulerState, fixedPairs, numCourts) {
 }
 
 
-// AischedulerNextRound is defined in competitive_algorithm.js
-// Both Random and Competitive modes use the same balanced algorithm.
+// AischedulerNextRound → defined in competitive_algorithm.js
+// resetForCompetitivePhase → no longer needed
 
-function resetForCompetitivePhase(state) {
-  // No longer needed — kept as no-op for safety in case called elsewhere
-}
 
 function getPlayingAndResting(state) {
 
@@ -1173,12 +1169,12 @@ function showRound(index) {
   const data = allRounds[index];
   if (!data) return;
 
-  // Update round title
+  // ✅ Update round title
   const roundTitle = document.getElementById("roundTitle");
   roundTitle.className = "roundTitle";
   roundTitle.innerText = translations[currentLang].roundno + " " + data.round;
 
-  // Create sections
+  // ✅ Create sections safely
   let restDiv = null;
   if (data.resting && data.resting.length !== 0) {
     restDiv = renderRestingPlayers(data, index);
@@ -1186,16 +1182,16 @@ function showRound(index) {
 
   const gamesDiv = renderGames(data, index);
 
-  // Wrap everything
+  // ✅ Wrap everything
   const wrapper = document.createElement('div');
   wrapper.className = 'round-wrapper';
 
-  // Apply lock state
+  // 🔒 Apply lock state globally
   if (interactionLocked) {
     wrapper.classList.add('locked');
   }
 
-  // Append conditionally
+  // ✅ Append conditionally
   if (restDiv) {
     wrapper.append(gamesDiv, restDiv);
   } else {
@@ -1204,10 +1200,9 @@ function showRound(index) {
 
   resultsDiv.append(wrapper);
 
-  // Sync mode banner and shuffle state after every round display
-  if (typeof _updateModeBanner === 'function') _updateModeBanner();
-  if (typeof _updateShuffleBtn === 'function') _updateShuffleBtn();
-  if (typeof _updateNextBtn    === 'function') _updateNextBtn();
+  // Sync mode banner and shuffle after every round display
+  _syncModeBanner();
+  _syncShuffleBtn();
 }
 
 
@@ -1361,66 +1356,64 @@ function renderGames(data, roundIndex) {
 
       });
 
-      // Win cup — hidden until this team is tapped as winner
       const winCup = document.createElement('img');
       winCup.src = 'win-cup.png';
-      winCup.className = 'win-cup';
-      winCup.title = 'Winner';
+      winCup.className = 'win-cup blinking';
+      winCup.title = 'Mark winner';
       winCup.style.visibility = 'hidden';
       winCup.style.pointerEvents = 'none';
 
-      // Restore winner state if already marked (e.g. after refresh)
       if (game.winner === teamSide) {
         winCup.classList.add('active');
-        winCup.style.visibility = 'visible';
+        winCup.classList.remove('blinking');
       }
 
       const toggleWinner = (e) => {
         if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
-        // Only allow marking when locked (play mode) and session started
-        if (!interactionLocked || !sessionStarted) return;
+        if (currentState !== "active") return;
         e.stopPropagation();
         e.preventDefault();
 
-        const allCups      = teamDiv.parentElement.querySelectorAll('.win-cup');
+        const allCups = teamDiv.parentElement.querySelectorAll('.win-cup');
         const allSwapIcons = teamDiv.parentElement.querySelectorAll('.swap-icon');
-        const isActive     = winCup.classList.contains('active');
+        const isActive = winCup.classList.contains('active');
 
         if (!isActive) {
-          // Mark this team as winner — hide all cups first, then show this one
           allCups.forEach(cup => {
-            cup.classList.remove('active');
-            cup.style.visibility    = 'hidden';
+            cup.classList.remove('active', 'blinking');
+            cup.style.visibility = 'hidden';
             cup.style.pointerEvents = 'none';
           });
+
           winCup.classList.add('active');
-          winCup.style.visibility    = 'visible';
+          winCup.classList.remove('blinking');
+          winCup.style.visibility = 'visible';
           winCup.style.pointerEvents = 'auto';
 
-          // Hide swap icons while winner is marked
           allSwapIcons.forEach(icon => {
-            icon.style.visibility    = 'hidden';
+            icon.style.visibility = 'hidden';
             icon.style.pointerEvents = 'none';
           });
 
-          game.winner  = teamSide;
+          game.winner = teamSide;
           game.winners = teamPairs.slice();
-          if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
+          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
         } else {
-          // Unmark — clear winner, restore swap icons
           allCups.forEach(cup => {
             cup.classList.remove('active');
-            cup.style.visibility    = 'hidden';
-            cup.style.pointerEvents = 'none';
+            cup.classList.add('blinking');
+            cup.style.visibility = 'visible';
+            cup.style.pointerEvents = 'auto';
           });
+
           allSwapIcons.forEach(icon => {
-            icon.style.visibility    = 'visible';
+            icon.style.visibility = 'visible';
             icon.style.pointerEvents = 'auto';
           });
 
-          game.winner  = undefined;
+          game.winner = undefined;
           game.winners = [];
-          if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
+          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
         }
       };
 
@@ -1539,7 +1532,7 @@ function goodrenderGames(data, roundIndex) {
       // 🏆 Winner toggle logic (minimal, correct)
       const toggleWinner = (e) => {
         if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
-        if (currentState === "idle") return;
+        if (currentState !== "active") return;
         e.stopPropagation();
         e.preventDefault();
 
@@ -2417,32 +2410,58 @@ function enableTouchDrag(el) {
 }
 
 
-let interactionLocked = false;
+let interactionLocked = true;
 
-// Start unlocked (setup mode) — locked when Start is clicked
+// Apply initial state
+document.body.classList.add('locked');
 
 const lockBtn = document.getElementById('lockToggleBtn');
 
 lockBtn.addEventListener('click', () => {
   if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
+  // Cannot unlock during active round
+  if (currentState === "active") return;
   interactionLocked = !interactionLocked;
   document.body.classList.toggle('locked', interactionLocked);
-
-  // Sync lock image
-  lockBtn.src = interactionLocked ? 'lock.png' : 'unlock.png';
-
-  // Clear all winner marks when unlocking (entering setup mode)
-  if (!interactionLocked) {
-    const games = allRounds[allRounds.length - 1]?.games;
-    if (games) {
-      games.forEach(g => { g.winner = undefined; g.winners = []; });
-      showRound(currentRoundIndex);
-    }
-  }
-
-  _updateModeBanner();
-  _updateShuffleBtn();
+  _syncModeBanner();
+  _syncShuffleBtn();
 });
+
+// ── Mode banner sync ──────────────────────────────────────────
+function _syncModeBanner() {
+  const banner = document.getElementById('roundModeBanner');
+  const hint   = document.getElementById('roundBannerHint');
+  const badge  = document.getElementById('roundModeBadge');
+  const title  = document.getElementById('roundBannerTitle');
+  if (!banner) return;
+
+  const roundNum = allRounds.length > 0 ? allRounds[allRounds.length-1].round : '';
+  if (title && roundNum) title.textContent = '🏸 Round ' + roundNum;
+
+  if (currentState === "active") {
+    banner.className = 'mode-banner live-mode';
+    badge.textContent = 'LIVE';
+    hint.textContent  = 'Tap a team to mark the winner';
+  } else if (!interactionLocked) {
+    banner.className = 'mode-banner setup-mode';
+    badge.textContent = 'SETUP';
+    hint.textContent  = 'Shuffle or swap players freely';
+  } else {
+    banner.className = 'mode-banner ready-mode';
+    badge.textContent = 'READY';
+    hint.textContent  = 'Tap Start / Next Round to begin';
+  }
+}
+
+// ── Shuffle button sync ───────────────────────────────────────
+function _syncShuffleBtn() {
+  const btn = document.getElementById('roundShufle');
+  if (!btn) return;
+  // Shuffle only when unlocked AND not in active round
+  const allow = !interactionLocked && currentState !== "active";
+  btn.disabled = !allow;
+  btn.classList.toggle('disabled-btn', !allow);
+}
 
 
 
@@ -2473,15 +2492,22 @@ modeToggle.addEventListener("change", () => {
 });
 
 // Min Rounds value
+// minRoundsRow removed from UI — no warm-up concept
+
+function toggleRoundSettings() {
+  const body = document.getElementById('roundSettingsBody');
+  const isOpen = body.classList.toggle('open');
+  const gearBtn = document.querySelector('.action-card .action.mid.small:last-child');
+  if (gearBtn) gearBtn.classList.toggle('settings-active', isOpen);
+}
+
 function toggleMinRoundsVisibility() {
-  // minRoundsRow removed — no warm-up concept. No-op kept for safety.
+  // no-op: minRoundsRow removed
 }
 
 function updateModeLabel() {
-  modeLabel.textContent =
-    getPlayMode() === "competitive"
-      ? "🏆"
-      : "🎲";
+  const lbl = document.getElementById('modeLabel');
+  if (lbl) lbl.textContent = getPlayMode() === "competitive" ? "🏆" : "🎲";
 }
 
 // Patched toggleRoundSettings — no chevron ref
@@ -2491,4 +2517,26 @@ function toggleRoundSettings() {
   const isOpen = body.classList.toggle('open');
   const gearBtn = document.querySelector('.action-card .action.mid.small:last-child');
   if (gearBtn) gearBtn.classList.toggle('settings-active', isOpen);
+}
+
+// ── Points helpers ────────────────────────────────────────────
+function applyResult(player, isWin, rankPoints, streakMap) {
+  const streak = streakMap.get(player) || 0;
+  let delta = isWin ? 2 : -2;
+  if (isWin && streak > 0)  delta += 1;
+  if (!isWin && streak < 0) delta -= 1;
+  streakMap.set(player, isWin ? Math.max(streak, 0) + 1 : Math.min(streak, 0) - 1);
+  rankPoints.set(player, (rankPoints.get(player) || 100) + delta);
+}
+
+function updatePointsAfterRound(state) {
+  const round = allRounds[allRounds.length - 1];
+  if (!round?.games) return;
+  for (const game of round.games) {
+    if (!game.winner || !game.pair1 || !game.pair2) continue;
+    const winners = game.winner === 'L' ? game.pair1 : game.pair2;
+    const losers  = game.winner === 'L' ? game.pair2 : game.pair1;
+    for (const p of winners) applyResult(p, true,  state.rankPoints, state.streakMap);
+    for (const p of losers)  applyResult(p, false, state.rankPoints, state.streakMap);
+  }
 }
