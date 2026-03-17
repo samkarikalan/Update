@@ -385,6 +385,15 @@
   <!-- ============================= -->
   <div id="roundsPage" class="page" style="display:none;">
 
+    <!-- Mode Banner — LIVE vs SETUP -->
+    <div class="mode-banner" id="roundModeBanner">
+      <div>
+        <div class="mode-banner-title" id="roundBannerTitle">🏸 Round</div>
+        <div class="mode-banner-hint" id="roundBannerHint">Tap a team to mark winner</div>
+      </div>
+      <div class="mode-banner-badge" id="roundModeBadge">LIVE</div>
+    </div>
+
     <div class="title-card">
       <div id="roundTitle">R</div>
       <img id="lockToggleBtn" class="lock-icon" src="lock.png" alt="Lock" />
@@ -394,8 +403,8 @@
 
     <div class="action-card">
       <button class="action mid small" id="roundShufle" onclick="RefreshRound()" aria-label="Mix round">🎲</button>
-      <button id="nextBtn" class="action right primary" onclick="toggleRound()">
-        <span id="btnText" data-i18n="nround"></span>
+      <button id="nextBtn" class="action right primary start-state" onclick="goNextRound()">
+        <span id="btnText" data-i18n="nround">Start</span>
         <span class="icon"> ▶</span>
       </button>
       <button class="action mid small" onclick="toggleRoundSettings()" aria-label="Settings">⚙️</button>

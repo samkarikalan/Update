@@ -655,6 +655,12 @@ async function endSession(fromProfile = false) {
     if (schedulerState.restCount)   schedulerState.restCount.clear();
   }
 
+  // Reset round flow state
+  if (typeof sessionStarted !== 'undefined') { sessionStarted = false; }
+  if (typeof _updateNextBtn    === 'function') _updateNextBtn();
+  if (typeof _updateModeBanner === 'function') _updateModeBanner();
+  if (typeof _updateShuffleBtn === 'function') _updateShuffleBtn();
+
   // Stay on dashboard and refresh it
   if (typeof showPage === 'function') {
     showPage('dashboardPage', document.getElementById('tabBtnDashboard'));

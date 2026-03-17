@@ -106,86 +106,104 @@ function isGameRepeated(game) {
 
 
 
-function toggleRound() {
-  const btn     = document.getElementById("nextBtn");
-  const textEl  = document.getElementById("btnText");
-  const icon    = btn.querySelector(".icon");
+// ── sessionStarted: false until first Start click ────────────
+let sessionStarted = false;
 
-  if (currentState === "idle") {
-    // ---- ENTER ACTIVE MODE ----
-    if (interactionLocked == false) lockBtn.click();
-    currentState = "active";
+function _updateModeBanner() {
+  const banner = document.getElementById('roundModeBanner');
+  const hint   = document.getElementById('roundBannerHint');
+  const badge  = document.getElementById('roundModeBadge');
+  const title  = document.getElementById('roundBannerTitle');
+  if (!banner) return;
 
-    // Disable everything except nextBtn and win cups
-    document.querySelectorAll(
-      "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
-    ).forEach(el => {
-      if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
-        el.style.pointerEvents = "none";
-        el.classList.add("disabled");
-      }
-    });
+  // Update title to match round number
+  const roundNum = allRounds.length > 0 ? allRounds[allRounds.length - 1].round : '';
+  if (title && roundNum) title.textContent = '🏸 Round ' + roundNum;
 
-    // Show win cups — wins drive ratings in both modes
-    document.querySelectorAll(".win-cup").forEach(cup => {
-      cup.style.visibility   = "visible";
-      cup.style.pointerEvents = "auto";
-      cup.classList.add("blinking");
-    });
-
-    document.getElementById("roundsPage").classList.add("active-mode");
-
-  } else if (currentState === "active") {
-    // ---- RETURN TO IDLE MODE ----
-
-    // Require all winners marked before advancing
-    const currentRoundGames = allRounds[allRounds.length - 1].games;
-    const winnersCount = currentRoundGames.filter(g => g.winner).length;
-    if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
-      alert("Please mark winners for all games");
-      return; // stay in active mode
-    }
-
-    // Update rank points after every round
-    updatePointsAfterRound(schedulerState);
-
-    nextRound();
-    document.getElementById("roundsPage").classList.remove("active-mode");
-    currentState = "idle";
-
-    // Re-enable everything
-    document.querySelectorAll(".disabled").forEach(el => {
-      el.style.pointerEvents = "";
-      el.classList.remove("disabled");
-      if (el.classList.contains("menu-btn")) {
-        el.onclick = function() { showPage('settingsPage', this); };
-      }
-    });
-
-    // Hide win cups
-    document.querySelectorAll(".win-cup").forEach(cup => {
-      cup.style.pointerEvents = "none";
-      cup.style.visibility    = "hidden";
-    });
-  }
-
-  // Update button label:
-  // After 3+ rounds played — hint that session can be ended via profile drawer
-  // The button itself always starts/ends a round, never ends the session
-  const canEnd = allRounds.length > 3;
-  if (currentState === "idle" && canEnd) {
-    textEl.dataset.i18n = "endSession";
-    icon.textContent = "⏹";
-    btn.classList.add("end");
+  if (interactionLocked) {
+    banner.className = 'mode-banner live-mode';
+    badge.textContent = 'LIVE';
+    hint.textContent  = 'Tap a team to mark the winner';
   } else {
-    const state = roundStates[currentState];
-    textEl.dataset.i18n = state.key;
-    icon.textContent = state.icon;
-    btn.classList.toggle("end", state.class === "end");
+    banner.className = 'mode-banner setup-mode';
+    badge.textContent = 'SETUP';
+    hint.textContent  = 'Shuffle or adjust players freely';
   }
-  btn.classList.toggle("round-active", currentState === "active");
-  setLanguage(currentLang);
 }
+
+function _updateNextBtn() {
+  const btn    = document.getElementById('nextBtn');
+  const textEl = document.getElementById('btnText');
+  const icon   = btn && btn.querySelector('.icon');
+  if (!btn) return;
+
+  if (!sessionStarted) {
+    btn.classList.add('start-state');
+    if (textEl) { textEl.removeAttribute('data-i18n'); textEl.textContent = 'Start'; }
+    if (icon)   icon.textContent = ' ▶';
+  } else {
+    btn.classList.remove('start-state');
+    if (textEl) { textEl.dataset.i18n = 'nround'; }
+    if (icon)   icon.textContent = ' ▶';
+    setLanguage(currentLang);
+  }
+}
+
+function _updateShuffleBtn() {
+  const shuffleBtn = document.getElementById('roundShufle');
+  if (!shuffleBtn) return;
+  if (interactionLocked) {
+    shuffleBtn.disabled = true;
+    shuffleBtn.classList.add('disabled-btn');
+  } else {
+    shuffleBtn.disabled = false;
+    shuffleBtn.classList.remove('disabled-btn');
+  }
+}
+
+// ── goNextRound: single handler for Start + Next Round ───────
+function goNextRound() {
+  if (!sessionStarted) {
+    // First click — Start session, auto-lock
+    sessionStarted = true;
+    if (!interactionLocked) {
+      interactionLocked = true;
+      document.body.classList.add('locked');
+      const lockImg = document.getElementById('lockToggleBtn');
+      if (lockImg) lockImg.src = 'lock.png';
+    }
+    _updateNextBtn();
+    _updateModeBanner();
+    _updateShuffleBtn();
+    return;
+  }
+
+  // Must be locked (play mode) to advance
+  if (!interactionLocked) {
+    alert('Lock the round first before advancing (tap 🔒)');
+    return;
+  }
+
+  // All winners must be marked
+  const games = allRounds[allRounds.length - 1]?.games;
+  if (!games || !games.length) return;
+  const unmarked = games.filter(g => !g.winner);
+  if (unmarked.length > 0) {
+    alert('Please mark winners for all courts (' + (games.length - unmarked.length) + '/' + games.length + ' done)');
+    return;
+  }
+
+  // Update rank points then advance
+  updatePointsAfterRound(schedulerState);
+  nextRound();
+
+  _updateModeBanner();
+  _updateShuffleBtn();
+  _updateNextBtn();
+}
+
+// Keep toggleRound as alias for any remaining references
+function toggleRound() { goNextRound(); }
 
 
 
@@ -1155,12 +1173,12 @@ function showRound(index) {
   const data = allRounds[index];
   if (!data) return;
 
-  // ✅ Update round title
+  // Update round title
   const roundTitle = document.getElementById("roundTitle");
   roundTitle.className = "roundTitle";
   roundTitle.innerText = translations[currentLang].roundno + " " + data.round;
 
-  // ✅ Create sections safely
+  // Create sections
   let restDiv = null;
   if (data.resting && data.resting.length !== 0) {
     restDiv = renderRestingPlayers(data, index);
@@ -1168,16 +1186,16 @@ function showRound(index) {
 
   const gamesDiv = renderGames(data, index);
 
-  // ✅ Wrap everything
+  // Wrap everything
   const wrapper = document.createElement('div');
   wrapper.className = 'round-wrapper';
 
-  // 🔒 Apply lock state globally
+  // Apply lock state
   if (interactionLocked) {
     wrapper.classList.add('locked');
   }
 
-  // ✅ Append conditionally
+  // Append conditionally
   if (restDiv) {
     wrapper.append(gamesDiv, restDiv);
   } else {
@@ -1185,6 +1203,11 @@ function showRound(index) {
   }
 
   resultsDiv.append(wrapper);
+
+  // Sync mode banner and shuffle state after every round display
+  if (typeof _updateModeBanner === 'function') _updateModeBanner();
+  if (typeof _updateShuffleBtn === 'function') _updateShuffleBtn();
+  if (typeof _updateNextBtn    === 'function') _updateNextBtn();
 }
 
 
@@ -1338,64 +1361,66 @@ function renderGames(data, roundIndex) {
 
       });
 
+      // Win cup — hidden until this team is tapped as winner
       const winCup = document.createElement('img');
       winCup.src = 'win-cup.png';
-      winCup.className = 'win-cup blinking';
-      winCup.title = 'Mark winner';
+      winCup.className = 'win-cup';
+      winCup.title = 'Winner';
       winCup.style.visibility = 'hidden';
       winCup.style.pointerEvents = 'none';
 
+      // Restore winner state if already marked (e.g. after refresh)
       if (game.winner === teamSide) {
         winCup.classList.add('active');
-        winCup.classList.remove('blinking');
+        winCup.style.visibility = 'visible';
       }
 
       const toggleWinner = (e) => {
         if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
-        if (currentState === "idle") return;
+        // Only allow marking when locked (play mode) and session started
+        if (!interactionLocked || !sessionStarted) return;
         e.stopPropagation();
         e.preventDefault();
 
-        const allCups = teamDiv.parentElement.querySelectorAll('.win-cup');
+        const allCups      = teamDiv.parentElement.querySelectorAll('.win-cup');
         const allSwapIcons = teamDiv.parentElement.querySelectorAll('.swap-icon');
-        const isActive = winCup.classList.contains('active');
+        const isActive     = winCup.classList.contains('active');
 
         if (!isActive) {
+          // Mark this team as winner — hide all cups first, then show this one
           allCups.forEach(cup => {
-            cup.classList.remove('active', 'blinking');
-            cup.style.visibility = 'hidden';
+            cup.classList.remove('active');
+            cup.style.visibility    = 'hidden';
             cup.style.pointerEvents = 'none';
           });
-
           winCup.classList.add('active');
-          winCup.classList.remove('blinking');
-          winCup.style.visibility = 'visible';
+          winCup.style.visibility    = 'visible';
           winCup.style.pointerEvents = 'auto';
 
+          // Hide swap icons while winner is marked
           allSwapIcons.forEach(icon => {
-            icon.style.visibility = 'hidden';
+            icon.style.visibility    = 'hidden';
             icon.style.pointerEvents = 'none';
           });
 
-          game.winner = teamSide;
+          game.winner  = teamSide;
           game.winners = teamPairs.slice();
-          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
+          if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
         } else {
+          // Unmark — clear winner, restore swap icons
           allCups.forEach(cup => {
             cup.classList.remove('active');
-            cup.classList.add('blinking');
-            cup.style.visibility = 'visible';
-            cup.style.pointerEvents = 'auto';
+            cup.style.visibility    = 'hidden';
+            cup.style.pointerEvents = 'none';
           });
-
           allSwapIcons.forEach(icon => {
-            icon.style.visibility = 'visible';
+            icon.style.visibility    = 'visible';
             icon.style.pointerEvents = 'auto';
           });
 
-          game.winner = undefined;
+          game.winner  = undefined;
           game.winners = [];
-          if (typeof saveRoundsToDb === "function") saveRoundsToDb();
+          if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
         }
       };
 
@@ -2392,22 +2417,31 @@ function enableTouchDrag(el) {
 }
 
 
-let interactionLocked = true;
+let interactionLocked = false;
 
-// Apply initial state
-document.body.classList.add('locked');
+// Start unlocked (setup mode) — locked when Start is clicked
 
 const lockBtn = document.getElementById('lockToggleBtn');
 
 lockBtn.addEventListener('click', () => {
   if (typeof appMode !== 'undefined' && appMode === 'viewer') return;
   interactionLocked = !interactionLocked;
-
-  // Toggle body class
   document.body.classList.toggle('locked', interactionLocked);
 
-  // Update icon text
-  //lockBtn.textContent = interactionLocked ? '🔒' : '🔓';
+  // Sync lock image
+  lockBtn.src = interactionLocked ? 'lock.png' : 'unlock.png';
+
+  // Clear all winner marks when unlocking (entering setup mode)
+  if (!interactionLocked) {
+    const games = allRounds[allRounds.length - 1]?.games;
+    if (games) {
+      games.forEach(g => { g.winner = undefined; g.winners = []; });
+      showRound(currentRoundIndex);
+    }
+  }
+
+  _updateModeBanner();
+  _updateShuffleBtn();
 });
 
 
