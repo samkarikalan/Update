@@ -144,6 +144,7 @@ function newImportShowModal() {
   syncPlayersFromMaster(); // ensure latest ratings before rendering
   newImportLoadHistory();
   newImportLoadFavorites();
+  _newImportFilterToClub(); // filter both to current club (async, refreshes cards when done)
   newImportRefreshSelectCards();
   newImportRefreshSelectedCards();
   // Load availability status in background — refresh cards when done
@@ -236,10 +237,34 @@ function isValidPlayerName(name) {
    STORAGE — HISTORY
 ========================= */
 function newImportLoadHistory() {
-  // Master DB already consolidated by consolidateMasterDB() on app load
-  // Just load it into memory
   const raw = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
   newImportState.historyPlayers = raw.filter(p => p && p.displayName);
+  // Filter to club members if logged in
+  _newImportFilterToClub();
+}
+
+// Filter history and favourites to only players in the current club
+async function _newImportFilterToClub() {
+  const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+  if (!club.id) return; // no club — show all history as-is
+
+  try {
+    const clubPlayers = await dbGetPlayers();
+    if (!clubPlayers || !clubPlayers.length) return;
+    const clubNames = new Set(clubPlayers.map(p => p.name.trim().toLowerCase()));
+
+    // Filter history
+    newImportState.historyPlayers = newImportState.historyPlayers.filter(
+      p => clubNames.has((p.displayName || '').trim().toLowerCase())
+    );
+
+    // Filter favourites
+    newImportState.favoritePlayers = newImportState.favoritePlayers.filter(
+      p => clubNames.has((p.displayName || '').trim().toLowerCase())
+    );
+
+    newImportRefreshSelectCards();
+  } catch(e) { /* silent — fall back to unfiltered */ }
 }
 
 /* =========================
@@ -1258,8 +1283,13 @@ async function addPlayersBrowseLoad() {
   try {
     let players = [];
     if (scope === "club") {
-      // Use already-synced history players (club members)
-      players = newImportState.historyPlayers || [];
+      // Fetch club members directly from DB (respects current club filter)
+      const clubPlayers = await dbGetPlayers();
+      players = (clubPlayers || []).map(p => ({
+        displayName: p.name,
+        gender:      p.gender || "Male",
+        rating:      parseFloat(p.rating) || 1.0
+      }));
     } else {
       // Fetch ALL players globally (bypass club filter)
       const raw = await sbGet("players", "order=name.asc");

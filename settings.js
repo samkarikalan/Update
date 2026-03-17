@@ -300,9 +300,25 @@ async function playerPlayingRenderList() {
   const admin = isAdminMode();
 
   try {
-    const rows = await sbGet('players',
-      'is_playing=eq.true&select=name,gender,session_id,session_started_at&order=name.asc'
-    );
+    const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+
+    let rows;
+    if (club.id) {
+      // Get only players belonging to this club
+      const members = await sbGet('club_members', `club_id=eq.${club.id}&select=player_id`);
+      if (!members || !members.length) {
+        container.innerHTML = '<p class="player-mgmt-empty">No players currently locked.</p>';
+        return;
+      }
+      const idList = '(' + members.map(m => m.player_id).join(',') + ')';
+      rows = await sbGet('players',
+        `id=in.${idList}&is_playing=eq.true&select=name,gender,session_id,session_started_at&order=name.asc`
+      );
+    } else {
+      // No club logged in — show nothing
+      container.innerHTML = '<p class="player-mgmt-empty">Join a club to view playing players.</p>';
+      return;
+    }
 
     if (!rows || !rows.length) {
       container.innerHTML = '<p class="player-mgmt-empty">No players currently locked.</p>';
@@ -379,7 +395,12 @@ async function playerPlayingRelease(name) {
 async function playerPlayingReleaseAll() {
   if (!confirm('Release ALL locked players?')) return;
   try {
-    await sbPatch('players', 'is_playing=eq.true', {
+    const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+    if (!club.id) { alert('No club logged in.'); return; }
+    const members = await sbGet('club_members', `club_id=eq.${club.id}&select=player_id`);
+    if (!members || !members.length) return;
+    const idList = '(' + members.map(m => m.player_id).join(',') + ')';
+    await sbPatch('players', `id=in.${idList}&is_playing=eq.true`, {
       is_playing: false, session_id: null, session_started_at: null
     });
     playerPlayingRenderList();

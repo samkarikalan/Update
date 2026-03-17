@@ -4,15 +4,15 @@
    ============================================================ */
 
 
-let allRounds = [];
-let lastRound = [];
-let currentRoundIndex = 0;
-let isOnPage2 = false;
-let resetRest = false;
+var allRounds = [];
+var lastRound = [];
+var currentRoundIndex = 0;
+var isOnPage2 = false;
+var resetRest = false;
 
 
 	
-let schedulerState = {
+var schedulerState = {
     numCourts: 0,
     allPlayers: [],
     activeplayers: [],
