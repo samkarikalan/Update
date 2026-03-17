@@ -54,7 +54,10 @@ function applyMode(mode) {
   };
   Object.entries(tabRules).forEach(([id, rules]) => {
     const el = document.getElementById(id);
-    if (el) el.style.display = rules[mode] ? '' : 'none';
+    if (!el) return;
+    // Never hide the Session tab if a session is currently pinned open
+    if (id === 'tabBtnViewer' && window._vSessionTabPinned) return;
+    el.style.display = rules[mode] ? '' : 'none';
   });
 
   // If viewer is on a hidden page → redirect to Dashboard
@@ -69,7 +72,15 @@ function applyMode(mode) {
     }
     setViewerMode(true);
   } else {
+    // Switching to organiser — close any open viewer session
+    if (window._vSessionTabPinned) {
+      if (typeof viewerStopPoll === 'function') viewerStopPoll();
+      if (typeof _vHidePage === 'function') _vHidePage();
+    }
     setViewerMode(false);
+    // Redirect to dashboard and refresh it
+    showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
+    if (typeof renderDashboard === 'function') renderDashboard();
   }
 }
 
@@ -412,10 +423,6 @@ function showPage(pageID, el) {
   // Show selected page
   document.getElementById(pageID).style.display = 'block';
 
-  // Remember if Session tab was visible before clearing active states
-  const vBtn = document.getElementById('tabBtnViewer');
-  const vBtnWasVisible = vBtn && vBtn.style.display !== 'none';
-
   // Update active tab styling
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   if (el) {
@@ -424,9 +431,10 @@ function showPage(pageID, el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
 
-  // Restore Session tab visibility if it was showing (navigating away should not hide it)
-  if (vBtnWasVisible && vBtn) {
-    vBtn.style.display = '';
+  // Restore Session tab if a session is currently pinned open
+  if (window._vSessionTabPinned) {
+    const vBtn = document.getElementById('tabBtnViewer');
+    if (vBtn) vBtn.style.display = '';
   }
 
   // Sync all rating badges on the newly visible page

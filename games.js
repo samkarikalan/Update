@@ -226,17 +226,6 @@ function setStatus(status) {
 
 
 
-let isLocked = true;
-  const lockIcon = document.getElementById('lockToggleBtn');
-
-  function toggleLock() {
-    isLocked = !isLocked;
-    lockIcon.src = isLocked ? 'lock.png' : 'unlock.png';
-    lockIcon.alt = isLocked ? 'Lock' : 'Unlock';
-  }
-
-  lockIcon.addEventListener('click', toggleLock);
-
 function getNextFixedPairGames(schedulerState, fixedPairs, numCourts) {
   const hash = JSON.stringify(fixedPairs);
 
@@ -2423,6 +2412,8 @@ lockBtn.addEventListener('click', () => {
   if (currentState === "active") return;
   interactionLocked = !interactionLocked;
   document.body.classList.toggle('locked', interactionLocked);
+  lockBtn.src = interactionLocked ? 'lock.png' : 'unlock.png';
+  lockBtn.alt = interactionLocked ? 'Lock' : 'Unlock';
   _syncModeBanner();
   _syncShuffleBtn();
 });

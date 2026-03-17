@@ -159,7 +159,8 @@ function goToRounds() {
   }
   if (allRounds.length <= 1) {
     initScheduler(numCourts);
-    allRounds = [AischedulerNextRound(schedulerState)];
+    allRounds.length = 0;
+    allRounds.push(AischedulerNextRound(schedulerState));
     currentRoundIndex = 0;
     showRound(0);
     // Start session in DB only if not already started
@@ -598,9 +599,17 @@ function rebuildRestQueue(restQueue) {
   
 
 function RefreshRound() {
+    const savedRoundIndex = schedulerState.roundIndex;
     schedulerState.roundIndex = allRounds.length - 1;
     currentRoundIndex = schedulerState.roundIndex;
-    const newRound = AischedulerNextRound(schedulerState);
+
+    // Use RandomRound directly — it uses pairPlayedSet + lastRound
+    // to actively avoid repeating pairs, giving genuine variety on reshuffle
+    const newRound = RandomRound(schedulerState);
+    newRound.round = savedRoundIndex + 1; // keep round number stable
+
+    // Restore roundIndex — shuffle should not advance the round counter
+    schedulerState.roundIndex = savedRoundIndex;
     allRounds[allRounds.length - 1] = newRound;
     showRound(currentRoundIndex);
 }

@@ -7,72 +7,108 @@ function renderRounds() {
   const exportRoot = document.getElementById('export');
   exportRoot.innerHTML = '';
 
-  allRounds.slice(0, -1).forEach((data) => {
-    /* ───────── Round Container ───────── */
-    const roundDiv = document.createElement('div');
-    roundDiv.className = 'export-round';
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
+  const tr   = (typeof translations !== 'undefined') ? (translations[lang] || {}) : {};
 
-    /* ───────── Round Title ───────── */
-    const title = document.createElement('div');
-    title.className = 'export-round-title';
-    title.textContent = data.round;
-    roundDiv.appendChild(title);
+  const rounds = (typeof allRounds !== 'undefined' ? allRounds : (window.allRounds || []));
 
-    /* ───────── Matches ───────── */
-    data.games.forEach(game => {
-      const match = document.createElement('div');
-      match.className = 'export-match';
+  // Show all rounds except the current pending one (last entry has no winners yet)
+  const completedRounds = rounds.slice(0, -1);
+  if (!completedRounds.length) return;
 
-      const leftTeam = document.createElement('div');
-      leftTeam.className = 'export-team';
-      leftTeam.innerHTML = game.pair1.join('<br>');
+  // Section title
+  const title = document.createElement('div');
+  title.className = 'round-header';
+  title.style.margin = '16px 4px 6px';
+  title.textContent = tr.rounds || 'Rounds';
+  exportRoot.appendChild(title);
 
-      const vs = document.createElement('div');
-      vs.className = 'export-vs';
-      vs.textContent = 'VS';
+  // Render newest first
+  for (let i = completedRounds.length - 1; i >= 0; i--) {
+    exportRoot.appendChild(_buildSummaryRound(completedRounds[i], tr));
+  }
+}
 
-      const rightTeam = document.createElement('div');
-      rightTeam.className = 'export-team';
-      rightTeam.innerHTML = game.pair2.join('<br>');
+function _buildSummaryRound(data, tr) {
+  if (!data) return document.createElement('div');
 
-      // ✅ Add 🏆 to the winning team
-      if (game.winners && Array.isArray(game.winners)) {
-        const leftWins = game.pair1.filter(p => game.winners.includes(p)).length;
-        const rightWins = game.pair2.filter(p => game.winners.includes(p)).length;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'round-wrapper viewer-rounds';
 
-       if (leftWins > rightWins) {
-          leftTeam.classList.add('winner');
-        } else if (rightWins > leftWins) {
-          rightTeam.classList.add('winner');
-        } else if (leftWins > 0 && leftWins === rightWins) {
-          leftTeam.classList.add('winner');
-          rightTeam.classList.add('winner');
-        }
+  const header = document.createElement('div');
+  header.className = 'round-header';
+  header.textContent = (tr.roundno || 'Round ') + data.round;
+  wrapper.appendChild(header);
+
+  (data.games || []).forEach((game, gi) => {
+    const courtDiv = document.createElement('div');
+    courtDiv.className = 'courtcard court-' + (gi + 1);
+
+    const courtName = document.createElement('div');
+    courtName.className = 'courtname';
+    courtName.textContent = 'Court ' + (gi + 1);
+    courtDiv.appendChild(courtName);
+
+    const teamsDiv = document.createElement('div');
+    teamsDiv.className = 'teams';
+
+    ['L', 'R'].forEach((side, si) => {
+      const teamDiv = document.createElement('div');
+      teamDiv.className = 'team';
+      teamDiv.style.pointerEvents = 'none';
+
+      if (game.winner === side) {
+        teamDiv.classList.add('winner');
+        const cup = document.createElement('img');
+        cup.src = 'win-cup.png';
+        cup.className = 'win-cup active';
+        cup.style.cssText = 'pointer-events:none;visibility:visible;opacity:1;filter:none;';
+        teamDiv.appendChild(cup);
       }
 
-      match.append(leftTeam, vs, rightTeam);
-      roundDiv.appendChild(match);
+      const players = side === 'L' ? (game.pair1 || []) : (game.pair2 || []);
+      players.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = side === 'L' ? 'Lplayer-btn' : 'Rplayer-btn';
+        btn.textContent = name;
+        btn.style.pointerEvents = 'none';
+        btn.tabIndex = -1;
+        teamDiv.appendChild(btn);
+      });
+
+      teamsDiv.appendChild(teamDiv);
+
+      if (si === 0) {
+        const vs = document.createElement('div');
+        vs.className = 'vs-divider';
+        vs.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+        teamsDiv.appendChild(vs);
+      }
     });
 
-    /* ───────── Sitting Out Section ───────── */
-    const restTitle = document.createElement('div');
-    restTitle.className = 'export-rest-title';
-    restTitle.textContent = t('sittingOut'); 
-    roundDiv.appendChild(restTitle);
-
-    const restBox = document.createElement('div');
-    restBox.className = 'export-rest-box';
-
-    if (!data.resting || data.resting.length === 0) {
-      restBox.textContent = t('none'); 
-    } else {
-      restBox.innerHTML = data.resting.join(', ');
-    }
-
-    roundDiv.appendChild(restBox);
-
-    exportRoot.appendChild(roundDiv);
+    courtDiv.appendChild(teamsDiv);
+    wrapper.appendChild(courtDiv);
   });
+
+  if (data.resting && data.resting.length) {
+    const restRow = document.createElement('div');
+    restRow.className = 'round-header';
+    restRow.style.paddingLeft = '12px';
+    restRow.textContent = tr.sittingOut || 'Resting';
+    const restBox = document.createElement('div');
+    restBox.className = 'rest-box';
+    data.resting.forEach(name => {
+      const chip = document.createElement('span');
+      chip.className = 'rest-btn';
+      chip.textContent = name.split('#')[0];
+      chip.style.cssText = 'pointer-events:none;cursor:default;';
+      restBox.appendChild(chip);
+    });
+    restRow.appendChild(restBox);
+    wrapper.appendChild(restRow);
+  }
+
+  return wrapper;
 }
 
 // ExportCSS.js

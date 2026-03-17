@@ -63,6 +63,8 @@ function _vShowPage() {
     vBtn.classList.add('active');
     vBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
+  // Pin the Session tab so it stays visible when navigating to other tabs
+  window._vSessionTabPinned = true;
   if (typeof lastPage !== 'undefined') lastPage = 'dashboardPage';
 }
 
@@ -71,6 +73,8 @@ function _vHidePage() {
   if (vPage) vPage.style.display = 'none';
   const vBtn = document.getElementById('tabBtnViewer');
   if (vBtn) vBtn.style.display = 'none';
+  // Unpin Session tab
+  window._vSessionTabPinned = false;
 }
 
 /* ── Main render ── */
