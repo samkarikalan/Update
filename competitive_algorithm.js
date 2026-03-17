@@ -241,3 +241,33 @@ function AischedulerNextRound(state) {
 
 // ── Compatibility shim ────────────────────────────────────────
 function createSortedKey(a, b) { return _pairKey(a, b); }
+
+
+// ── Points helpers (used by toggleRound after each round) ──────
+
+function applyResult(player, isWin, rankPoints, streakMap) {
+  const streak = streakMap.get(player) || 0;
+  let delta = 0;
+  if (isWin) {
+    delta = 2;
+    if (streak > 0) delta += 1;
+    streakMap.set(player, Math.max(streak, 0) + 1);
+  } else {
+    delta = -2;
+    if (streak < 0) delta -= 1;
+    streakMap.set(player, Math.min(streak, 0) - 1);
+  }
+  rankPoints.set(player, (rankPoints.get(player) || 100) + delta);
+}
+
+function updatePointsAfterRound(state) {
+  const latestRound = allRounds[allRounds.length - 1];
+  if (!latestRound?.games) return;
+  for (const game of latestRound.games) {
+    if (!game.winner || !game.pair1 || !game.pair2) continue;
+    const winners = game.winner === 'L' ? game.pair1 : game.pair2;
+    const losers  = game.winner === 'L' ? game.pair2 : game.pair1;
+    for (const p of winners) applyResult(p, true,  state.rankPoints, state.streakMap);
+    for (const p of losers)  applyResult(p, false, state.rankPoints, state.streakMap);
+  }
+}
