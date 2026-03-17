@@ -963,10 +963,7 @@ function sbFeedback(msg, color) {
 }
 
 function updateRegisterTabVisibility() {
-  const tab = document.getElementById("newImportVaultBtn");
-  if (!tab) return;
-  // Vault tab always visible — all users need access to Join
-  tab.style.display = "inline-block";
+  // Vault tab moved to top nav — no longer in import modal, nothing to update here
 }
 
 /* =============================================================

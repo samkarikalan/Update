@@ -94,9 +94,9 @@
         <span class="tab-icon">⚙️</span>
         <span class="tab-label">Settings</span>
       </button>
-      <button class="tab-btn" onclick="showPage('clubPage', this)" id="tabBtnClub">
-        <span class="tab-icon">🏢</span>
-        <span class="tab-label">Club</span>
+      <button class="tab-btn" onclick="showPage('vaultPage', this)" id="tabBtnVault">
+        <span class="tab-icon">⚡</span>
+        <span class="tab-label">Vault</span>
       </button>
       <button class="tab-btn active" onclick="showPage('playersPage', this)" id="tabBtnPlayers">
         <span class="tab-icon">👥</span>
@@ -144,22 +144,93 @@
         </div>
       </div>
 
-      <!-- Compact settings card with 3 tabs -->
+      <!-- Settings card with 2 tabs: Club / General -->
       <div class="settings-card" style="padding:0;overflow:hidden">
 
         <!-- Tab buttons -->
         <div class="newImport-subtabs" style="border-bottom:1px solid var(--border);margin:0;padding:4px 4px 0">
-          <button class="newImport-subtab-btn active" id="settingsTabFontBtn"
-                  onclick="settingsShowTab('font')">Font</button>
-          <button class="newImport-subtab-btn" id="settingsTabThemeBtn"
-                  onclick="settingsShowTab('theme')">Theme</button>
-          <button class="newImport-subtab-btn" id="settingsTabResetBtn"
-                  onclick="settingsShowTab('reset')">Reset</button>
+          <button class="newImport-subtab-btn active" id="settingsTabClubBtn"
+                  onclick="settingsShowTab('club')">🏢 Club</button>
+          <button class="newImport-subtab-btn" id="settingsTabGeneralBtn"
+                  onclick="settingsShowTab('general')">General</button>
         </div>
 
-        <!-- FONT tab -->
-        <div id="settingsTabFont" class="settings-tab-content">
-          <div class="row">
+        <!-- CLUB tab -->
+        <div id="settingsTabClub" class="settings-tab-content">
+
+          <!-- Club Management — organiser mode only -->
+          <div id="settingsClubMgmtCard" style="padding:0;overflow:hidden">
+            <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
+              🏢 Club Management <span id="clubMgmtArrow">▶</span>
+            </button>
+            <div id="clubMgmtPanel" style="display:none;padding:14px">
+
+              <!-- ── CREATE CLUB ── -->
+              <div class="manage-section-title">Create New Club</div>
+              <div class="club-row">
+                <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
+              </div>
+              <div class="club-row" style="margin-top:6px">
+                <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
+              </div>
+              <div class="club-row" style="margin-top:6px">
+                <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
+              </div>
+              <div class="club-row" style="margin-top:6px">
+                <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
+              </div>
+              <div id="clubCreateStep1">
+                <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
+              </div>
+              <div id="clubCreateStep2" style="display:none">
+                <div class="club-row" style="margin-top:8px">
+                  <input type="text" id="sbNewClubOtp" class="club-input"
+                         placeholder="Enter 8-digit OTP" maxlength="8"
+                         onkeydown="if(event.key==='Enter')clubCreateVerify()">
+                  <button class="btn-save" onclick="clubCreateVerify()">Verify & Create</button>
+                </div>
+                <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+                  OTP sent to <span id="clubCreateEmailMasked"></span>
+                  · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
+                </div>
+              </div>
+              <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+
+              <!-- ── DELETE CLUB ── -->
+              <div class="manage-section-title manage-section-danger" style="margin-top:20px">Delete Club</div>
+              <div class="club-row">
+                <select id="sbDeleteClubSelect" class="club-select">
+                  <option value="">— Select club to delete —</option>
+                </select>
+              </div>
+              <div id="clubDeleteStep1">
+                <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
+              </div>
+              <div id="clubDeleteStep2" style="display:none">
+                <div class="club-row" style="margin-top:8px">
+                  <input type="text" id="sbDeleteOtp" class="club-input"
+                         placeholder="Enter 8-digit OTP" maxlength="8"
+                         onkeydown="if(event.key==='Enter')clubDeleteVerify()">
+                  <button class="btn-clear" onclick="clubDeleteVerify()">Verify & Delete</button>
+                </div>
+                <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+                  OTP sent to <span id="clubDeleteEmailMasked"></span>
+                  · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
+                </div>
+              </div>
+              <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- GENERAL tab -->
+        <div id="settingsTabGeneral" class="settings-tab-content" style="display:none">
+
+          <!-- Font sub-section -->
+          <div style="padding:8px 12px 4px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Font</div>
+          <div class="row" style="padding:0 12px 10px">
             <div class="btn active" id="font_small" onclick="setFontSize('small')"
                  style="font-size:0.75rem" data-i18n="small"></div>
             <div class="btn" id="font_medium" onclick="setFontSize('medium')"
@@ -167,22 +238,25 @@
             <div class="btn" id="font_large" onclick="setFontSize('large')"
                  style="font-size:1.25rem" data-i18n="large"></div>
           </div>
-        </div>
 
-        <!-- THEME tab -->
-        <div id="settingsTabTheme" class="settings-tab-content" style="display:none">
-          <div class="row">
+          <div style="height:1px;background:var(--border);margin:0 12px"></div>
+
+          <!-- Theme sub-section -->
+          <div style="padding:8px 12px 4px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Theme</div>
+          <div class="row" style="padding:0 12px 10px">
             <div class="btn active" id="theme_light" onclick="setTheme('light')" data-i18n="light"></div>
             <div class="btn" id="theme_dark" onclick="setTheme('dark')" data-i18n="dark"></div>
           </div>
-        </div>
 
-        <!-- RESET tab -->
-        <div id="settingsTabReset" class="settings-tab-content" style="display:none">
-          <div class="row">
+          <div style="height:1px;background:var(--border);margin:0 12px"></div>
+
+          <!-- Reset sub-section -->
+          <div style="padding:8px 12px 4px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Reset</div>
+          <div class="row" style="padding:0 12px 12px">
             <div class="btn danger" onclick="showConfirm('confirmResetAll', ResetAll)" data-i18n="resetAll"></div>
             <div class="btn warn" onclick="showConfirm('confirmResetGames', resetRounds)" data-i18n="resetExcept"></div>
           </div>
+
         </div>
 
       </div>
@@ -229,12 +303,12 @@
   <!-- ============================= -->
 
   <!-- ============================= -->
-  <!--           CLUB PAGE           -->
+  <!--           VAULT PAGE          -->
   <!-- ============================= -->
-  <div id="clubPage" class="page" style="display:none;">
+  <div id="vaultPage" class="page" style="display:none;">
     <div class="settings-wrap">
 
-      <!-- Club Login — both modes -->
+      <!-- Club Login -->
       <div class="settings-card" id="clubLoginCard" style="padding:14px">
         <div style="font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🏢 Club</div>
 
@@ -248,7 +322,7 @@
           <button class="btn-clear" style="width:100%;font-size:0.82rem" onclick="clubLoginSwitch()">🔄 Change Club</button>
         </div>
 
-        <!-- Login form — shown when not logged in or changing club -->
+        <!-- Login form -->
         <div id="clubLoginForm">
           <div class="club-row">
             <select id="sbClubSelectViewer" class="club-select" style="flex:1">
@@ -265,69 +339,37 @@
         </div>
       </div>
 
-      <!-- Club Management — organiser mode only -->
-      <div class="settings-card" id="clubMgmtCard" style="padding:0;overflow:hidden;margin-top:10px">
-        <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
-          🏢 Club Management <span id="clubMgmtArrow">▶</span>
-        </button>
-        <div id="clubMgmtPanel" style="display:none;padding:14px">
+      <!-- Vault content -->
+      <div class="settings-card" style="padding:14px;margin-top:10px">
 
-          <!-- ── CREATE CLUB ── -->
-          <div class="manage-section-title">Create New Club</div>
-          <div class="club-row">
-            <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
-          </div>
-          <div id="clubCreateStep1">
-            <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
-          </div>
-          <div id="clubCreateStep2" style="display:none">
-            <div class="club-row" style="margin-top:8px">
-              <input type="text" id="sbNewClubOtp" class="club-input"
-                     placeholder="Enter 8-digit OTP" maxlength="8"
-                     onkeydown="if(event.key==='Enter')clubCreateVerify()">
-              <button class="btn-save" onclick="clubCreateVerify()">Verify & Create</button>
-            </div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-              OTP sent to <span id="clubCreateEmailMasked"></span>
-              · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
-            </div>
-          </div>
-          <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
-          <!-- ── DELETE CLUB ── -->
-          <div class="manage-section-title manage-section-danger" style="margin-top:20px">Delete Club</div>
-          <div class="club-row">
-            <select id="sbDeleteClubSelect" class="club-select">
-              <option value="">— Select club to delete —</option>
-            </select>
-          </div>
-          <div id="clubDeleteStep1">
-            <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
-          </div>
-          <div id="clubDeleteStep2" style="display:none">
-            <div class="club-row" style="margin-top:8px">
-              <input type="text" id="sbDeleteOtp" class="club-input"
-                     placeholder="Enter 8-digit OTP" maxlength="8"
-                     onkeydown="if(event.key==='Enter')clubDeleteVerify()">
-              <button class="btn-clear" onclick="clubDeleteVerify()">Verify & Delete</button>
-            </div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-              OTP sent to <span id="clubDeleteEmailMasked"></span>
-              · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
-            </div>
-          </div>
-          <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
+        <div class="vault-sync-row">
+          <span id="sbSyncStatus" class="vault-sync-text"></span>
+          <button class="vault-sync-btn" onclick="syncToLocal()">🔄 Sync</button>
         </div>
+
+        <!-- Vault inner tabs -->
+        <div class="vault-inner-tabs">
+          <button class="vault-inner-tab active" id="vaultTabPlayersBtn" onclick="vaultShowTab('players',this)">🔴 Playing</button>
+          <button class="vault-inner-tab" id="vaultTabRegisterBtn" onclick="vaultShowTab('register',this)">📋 Register</button>
+          <button class="vault-inner-tab" id="vaultTabModifyBtn" onclick="vaultShowTab('modify',this)">✏️ Modify</button>
+        </div>
+
+        <!-- PLAYING inner tab -->
+        <div class="vault-inner-content active" id="vaultTabPlayers">
+          <div id="playerPlayingList" class="player-mgmt-list"></div>
+        </div>
+
+        <!-- REGISTER inner tab -->
+        <div class="vault-inner-content" id="vaultTabRegister">
+          <div id="vaultRegisterContainer"></div>
+        </div>
+
+        <!-- MODIFY inner tab -->
+        <div class="vault-inner-content" id="vaultTabModify">
+          <div id="vaultModifyList" class="player-mgmt-list"></div>
+        </div>
+
+        <div id="vaultFeedback"></div>
       </div>
 
     </div>
@@ -526,9 +568,7 @@
           <button class="newImport-subtab-btn"
                   id="newImportAddplayersBtn"
                   onclick="newImportShowSelectMode('addplayers')">Add Players</button>
-          <button class="newImport-subtab-btn vault-tab-btn"
-                  id="newImportVaultBtn"
-                  onclick="newImportShowSelectMode('vault')">⚡ Vault</button>
+
         </div>
 
         <input type="text"
@@ -604,39 +644,7 @@
 
         </div>
 
-        <!-- ⚡ VAULT SECTION — replaces Register tab -->
-        <div id="newImportVaultSection" style="display:none">
 
-
-          <div class="vault-sync-row">
-            <span id="sbSyncStatus" class="vault-sync-text"></span>
-            <button class="vault-sync-btn" onclick="syncToLocal()">🔄 Sync</button>
-          </div>
-
-          <!-- Vault inner tabs -->
-          <div class="vault-inner-tabs">
-            <button class="vault-inner-tab active" id="vaultTabPlayersBtn" onclick="vaultShowTab('players',this)">🔴 Playing</button>
-            <button class="vault-inner-tab" id="vaultTabRegisterBtn" onclick="vaultShowTab('register',this)">📋 Register</button>
-            <button class="vault-inner-tab" id="vaultTabModifyBtn" onclick="vaultShowTab('modify',this)">✏️ Modify</button>
-          </div>
-
-          <!-- PLAYING inner tab -->
-          <div class="vault-inner-content active" id="vaultTabPlayers">
-            <div id="playerPlayingList" class="player-mgmt-list"></div>
-          </div>
-
-          <!-- REGISTER inner tab -->
-          <div class="vault-inner-content" id="vaultTabRegister">
-            <div id="vaultRegisterContainer"></div>
-          </div>
-
-          <!-- MODIFY inner tab — admin only player edits -->
-          <div class="vault-inner-content" id="vaultTabModify">
-            <div id="vaultModifyList" class="player-mgmt-list"></div>
-          </div>
-
-          <div id="vaultFeedback"></div>
-        </div>
 
       </div>
     </div>

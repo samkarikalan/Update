@@ -42,10 +42,10 @@ function applyMode(mode) {
   if (cardOrganiser) cardOrganiser.classList.toggle('active', mode === 'organiser');
 
   // Tab visibility rules
-  // Viewer:    Settings · Dashboard · Help
-  // Organiser: Settings · Players · Rounds · Summary · Dashboard · Help
+  // Viewer:    Settings · Vault · Dashboard · Help
+  // Organiser: Settings · Vault · Players · Rounds · Summary · Dashboard · Help
   const tabRules = {
-    tabBtnClub:      { viewer: false, organiser: true },
+    tabBtnVault:     { viewer: true,  organiser: true },
     tabBtnPlayers:   { viewer: false, organiser: true },
     tabBtnRounds:    { viewer: false, organiser: true },
     tabBtnSummary:   { viewer: false, organiser: true },
@@ -77,11 +77,8 @@ function setViewerMode(isViewer) {
   // Use body class — all viewer restrictions handled via CSS + JS checks
   if (isViewer) {
     document.body.classList.add('viewer-mode');
-    // If viewer lands on Reset tab, switch to Font tab
-    const resetBtn = document.getElementById('settingsTabResetBtn');
-    if (resetBtn && resetBtn.classList.contains('active')) {
-      if (typeof settingsShowTab === 'function') settingsShowTab('font');
-    }
+    // Ensure we're on the club tab by default
+    if (typeof settingsShowTab === 'function') settingsShowTab('club');
   } else {
     document.body.classList.remove('viewer-mode');
   }
@@ -163,7 +160,7 @@ function initModeOnLoad() {
   // Hide badge and mode-dependent tabs until mode is selected
   const badge = document.getElementById('modeBadgeBtn');
   if (badge) badge.style.display = 'none';
-  ['tabBtnClub','tabBtnPlayers','tabBtnRounds','tabBtnSummary','tabBtnDashboard'].forEach(id => {
+  ['tabBtnVault','tabBtnPlayers','tabBtnRounds','tabBtnSummary','tabBtnDashboard'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -471,7 +468,7 @@ function showPage(pageID, el) {
     if (typeof dashboardStopPoll === 'function') dashboardStopPoll();
   }
 
-  if (pageID === "clubPage") {
+  if (pageID === "vaultPage") {
     if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
     if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
     if (typeof sbPopulateDeleteDropdown === 'function') sbPopulateDeleteDropdown();
@@ -663,7 +660,7 @@ async function endSession(fromProfile = false) {
 
 /* === SETTINGS TAB SWITCHER === */
 function settingsShowTab(tab) {
-  ["font","theme","reset"].forEach(t => {
+  ["club","general"].forEach(t => {
     const el = document.getElementById("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1));
     if (el) el.style.display = t === tab ? "" : "none";
     const btn = document.getElementById("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1) + "Btn");

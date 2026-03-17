@@ -179,7 +179,7 @@ function newImportShowSelectMode(mode) {
   const addSection     = document.getElementById("newImportAddPlayersSection");
   const searchInput    = document.getElementById("newImportSearch");
 
-  // Always hide vault section first — shown only when mode === 'vault'
+  // Always hide vault section (removed from import modal)
   const vaultSection = document.getElementById("newImportVaultSection");
   if (vaultSection) vaultSection.style.display = "none";
 
@@ -193,20 +193,6 @@ function newImportShowSelectMode(mode) {
     if (ta && typeof translations !== "undefined" && translations[currentLang]?.importExample) {
       ta.placeholder = translations[currentLang].importExample;
     }
-    return;
-  }
-
-  if (mode === "register" || mode === "vault") {
-    listContainer.style.display  = "none";
-    addSection.style.display     = "none";
-    searchInput.style.display    = "none";
-    clearHistory.style.display   = "none";
-    clearFavorites.style.display = "none";
-    if (vaultSection) vaultSection.style.display = "block";
-    if (mode === "register") newImportRenderRegister();
-    if (typeof vaultSyncStatus === "function") vaultSyncStatus();
-    if (typeof restoreSyncIndicator === "function") restoreSyncIndicator();
-    if (typeof playerPlayingRenderList === "function") playerPlayingRenderList();
     return;
   }
 
@@ -960,15 +946,14 @@ function addPlayerSendToRegister(names) {
   }
 
   // Force-show Register tab button before switching (it may be hidden)
-  const regBtn = document.getElementById("newImportVaultBtn");
-  if (regBtn) regBtn.style.display = "inline-block";
+  // (Vault tab removed from import modal — register now handled via Vault page)
 
-  // Switch to Register tab keeping staging list intact
-  const regBtn2 = document.getElementById("newImportVaultBtn");
-  if (regBtn2) regBtn2.style.display = "inline-block";
+  // Switch to addplayers tab as fallback
+  const addBtn = document.getElementById("newImportAddplayersBtn");
+  if (addBtn) addBtn.style.display = "inline-block";
   document.querySelectorAll(".newImport-subtab-btn").forEach(b => b.classList.remove("active"));
-  if (regBtn2) regBtn2.classList.add("active");
-  newImportState.currentSelectMode = "register";
+  if (addBtn) addBtn.classList.add("active");
+  newImportState.currentSelectMode = "addplayers";
   ["newImportSelectCards","newImportAddPlayersSection","newImportSearch",
    "newImportClearHistoryBtn","newImportClearFavoritesBtn"].forEach(id => {
     const el = document.getElementById(id);
