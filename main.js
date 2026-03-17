@@ -45,7 +45,7 @@ function applyMode(mode) {
   // Viewer:    Settings · Vault · Dashboard · Help
   // Organiser: Settings · Vault · Players · Rounds · Summary · Dashboard · Help
   const tabRules = {
-    tabBtnVault:     { viewer: true,  organiser: true },
+    tabBtnVault:     { viewer: false, organiser: true },
     tabBtnPlayers:   { viewer: false, organiser: true },
     tabBtnRounds:    { viewer: false, organiser: true },
     tabBtnSummary:   { viewer: false, organiser: true },
@@ -412,12 +412,21 @@ function showPage(pageID, el) {
   // Show selected page
   document.getElementById(pageID).style.display = 'block';
 
+  // Remember if Session tab was visible before clearing active states
+  const vBtn = document.getElementById('tabBtnViewer');
+  const vBtnWasVisible = vBtn && vBtn.style.display !== 'none';
+
   // Update active tab styling
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   if (el) {
     el.classList.add('active');
     // Scroll active tab into view smoothly
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
+  // Restore Session tab visibility if it was showing (navigating away should not hide it)
+  if (vBtnWasVisible && vBtn) {
+    vBtn.style.display = '';
   }
 
   // Sync all rating badges on the newly visible page
