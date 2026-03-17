@@ -107,86 +107,82 @@ function isGameRepeated(game) {
 
 
 function toggleRound() {
-  const btn = document.getElementById("nextBtn");
-  const textEl = document.getElementById("btnText");
-  const icon = btn.querySelector(".icon");
-  const playmode = getPlayMode();
-
-  // End Session state — trigger power button
-  if (currentState === "done") {
-    document.getElementById("powerBtn")?.click();
-    return;
-  }
+  const btn     = document.getElementById("nextBtn");
+  const textEl  = document.getElementById("btnText");
+  const icon    = btn.querySelector(".icon");
 
   if (currentState === "idle") {
-    // ---- ENTER ACTIVE (BUSY) MODE ----
-    if (interactionLocked ==false) {
-      lockBtn.click();
-    }
+    // ---- ENTER ACTIVE MODE ----
+    if (interactionLocked == false) lockBtn.click();
     currentState = "active";
 
-    // Disable everything except #nextBtn and .win-cup
+    // Disable everything except nextBtn and win cups
     document.querySelectorAll(
       "button, .player-btn, .mode-card, .lock-icon, .swap-icon, .menu-btn"
     ).forEach(el => {
       if (el.id !== "nextBtn" && !el.classList.contains("win-cup")) {
         el.style.pointerEvents = "none";
-        el.classList.add("disabled");    
+        el.classList.add("disabled");
       }
-    });   
+    });
 
-    // Show win cups in both modes — wins drive ratings in both
+    // Show win cups — wins drive ratings in both modes
     document.querySelectorAll(".win-cup").forEach(cup => {
-      cup.style.visibility = "visible";
+      cup.style.visibility   = "visible";
       cup.style.pointerEvents = "auto";
       cup.classList.add("blinking");
     });
 
     document.getElementById("roundsPage").classList.add("active-mode");
 
-  } else {
+  } else if (currentState === "active") {
     // ---- RETURN TO IDLE MODE ----
 
-    // Require all winners to be marked before advancing — both modes
+    // Require all winners marked before advancing
     const currentRoundGames = allRounds[allRounds.length - 1].games;
-    const winnersCount = currentRoundGames.filter(game => game.winner).length;
+    const winnersCount = currentRoundGames.filter(g => g.winner).length;
     if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
       alert("Please mark winners for all games");
       return; // stay in active mode
     }
 
-    // Update rank points after every round (both modes)
+    // Update rank points after every round
     updatePointsAfterRound(schedulerState);
 
     nextRound();
     document.getElementById("roundsPage").classList.remove("active-mode");
+    currentState = "idle";
 
-    // Done state available after round 1
-    currentState = allRounds.length > 1 ? "done" : "idle";
-    
-    // Re-enable everything previously disabled
+    // Re-enable everything
     document.querySelectorAll(".disabled").forEach(el => {
       el.style.pointerEvents = "";
       el.classList.remove("disabled");
-    
       if (el.classList.contains("menu-btn")) {
-        el.onclick = function() {
-          showPage('settingsPage', this);
-        };
+        el.onclick = function() { showPage('settingsPage', this); };
       }
     });
 
-    // Hide & disable win cups
+    // Hide win cups
     document.querySelectorAll(".win-cup").forEach(cup => {
       cup.style.pointerEvents = "none";
-      cup.style.visibility = "hidden";
+      cup.style.visibility    = "hidden";
     });
   }
 
-  const state = roundStates[currentState];
-  textEl.dataset.i18n = state.key;
-  icon.textContent = state.icon;
-  btn.classList.toggle("end", state.class === "end");
+  // Update button label:
+  // After 3+ rounds played — hint that session can be ended via profile drawer
+  // The button itself always starts/ends a round, never ends the session
+  const canEnd = allRounds.length > 3;
+  if (currentState === "idle" && canEnd) {
+    textEl.dataset.i18n = "endSession";
+    icon.textContent = "⏹";
+    btn.classList.add("end");
+  } else {
+    const state = roundStates[currentState];
+    textEl.dataset.i18n = state.key;
+    icon.textContent = state.icon;
+    btn.classList.toggle("end", state.class === "end");
+  }
   btn.classList.toggle("round-active", currentState === "active");
   setLanguage(currentLang);
 }
