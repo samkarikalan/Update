@@ -277,7 +277,9 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
           localStorage.removeItem('allRounds');
           localStorage.removeItem('currentRoundIndex');
           sessionStorage.removeItem('kbrr_session_db_id');
-          if (typeof allRounds !== 'undefined') allRounds.length = 0;
+          // Reload to fully reset all in-memory state and prevent auto-restart
+          location.reload();
+          return;
         }
         if (typeof renderDashboard === 'function') renderDashboard();
       } catch(e) {

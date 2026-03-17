@@ -1359,7 +1359,6 @@ function addPlayersBrowseRender(players) {
             data-browse-action="favorite" data-browse-player="${nameSafe}">
             ${fav ? "★" : "☆"}
           </button>
-          <button class="circle-btn delete" data-browse-action="delete" data-browse-player="${nameSafe}">×</button>
           <button class="circle-btn add ${isSelected ? 'active-added' : ''} ${busy ? 'disabled-btn' : ''}"
             data-browse-action="${busy ? '' : 'add'}" data-browse-player="${nameSafe}"
             ${busy ? "disabled title='Already playing in another session'" : ""}>
