@@ -143,7 +143,7 @@ function openModeSwitcher() {
       </button>
       <button class="mode-sheet-btn organiser ${!isViewer ? 'active-organiser' : ''}"
               onclick="switchMode('organiser')">
-        <div class="mode-sheet-icon">⚙️</div>
+        <div class="mode-sheet-icon"><img src="win-cup.png" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.25))"></div>
         <div class="mode-sheet-info">
           <div class="mode-sheet-name">Organiser</div>
           <div class="mode-sheet-desc">Run session, score games, manage players</div>
