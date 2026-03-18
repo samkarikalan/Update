@@ -11,10 +11,7 @@ function selectMode(mode) {
   // Hide mode select overlay
   const overlay = document.getElementById('modeSelectOverlay');
   if (overlay) overlay.style.display = 'none';
-  // Show badge
-  const badgeEl = document.getElementById('modeBadgeBtn');
-  if (badgeEl) badgeEl.style.display = '';
-  // Apply tab visibility / mode classes
+  // Apply tab visibility / mode classes (safe — all refs guarded)
   applyMode(mode);
   // Show home screen
   showHomeScreen();
@@ -280,14 +277,6 @@ function showHomeScreen() {
     if (statusBar) statusBar.classList.add('disconnected');
   }
 
-  // Hero card
-  const heroCard  = document.getElementById('homeHeroCard');
-  const heroLabel = document.getElementById('homeHeroLabel');
-  const heroTitle = document.getElementById('homeHeroTitle');
-  if (heroLabel) heroLabel.textContent = isOrganiser ? 'ORGANISER' : 'VIEWER';
-  if (heroTitle) heroTitle.textContent = isOrganiser ? 'Start Session' : 'Watch Session';
-  if (heroCard) heroCard.classList.toggle('viewer-hero', !isOrganiser);
-
   // Show organiser flow or viewer flow
   const orgFlow  = document.getElementById('homeOrganizerFlow');
   const viewFlow = document.getElementById('homeViewerFlow');
@@ -350,60 +339,21 @@ function applyMode(mode) {
   // Toggle scrollable tabs body class
   document.body.classList.toggle('organiser-tabs', mode === 'organiser');
 
-  // Update badge
-  const badge = document.getElementById('modeBadgeBtn');
-  const badgeLabel = document.getElementById('modeBadgeLabel');
-  if (badge) badge.className = 'mode-badge-btn ' + (mode === 'viewer' ? 'viewer-mode' : 'organiser-mode');
-  if (badgeLabel) badgeLabel.textContent = mode === 'viewer' ? 'Viewer' : 'Organiser';
-
   // Update Settings mode switch card
   const cardViewer    = document.getElementById('modeCardViewer');
   const cardOrganiser = document.getElementById('modeCardOrganiser');
   if (cardViewer)    cardViewer.classList.toggle('active',    mode === 'viewer');
   if (cardOrganiser) cardOrganiser.classList.toggle('active', mode === 'organiser');
 
-  // Tab visibility rules
-  // Viewer:    Settings · Vault · Dashboard · Help
-  // Organiser: Settings · Vault · Players · Rounds · Summary · Dashboard · Help
-  const tabRules = {
-    tabBtnVault:     { viewer: false, organiser: true },
-    tabBtnPlayers:   { viewer: false, organiser: true },
-    tabBtnRounds:    { viewer: false, organiser: true },
-    tabBtnSummary:   { viewer: false, organiser: true },
-    tabBtnDashboard: { viewer: true,  organiser: true },
-    tabBtnViewer:    { viewer: false, organiser: false },
-  };
-  Object.entries(tabRules).forEach(([id, rules]) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    // Never hide the Session tab if a session is currently pinned open
-    if (id === 'tabBtnViewer' && window._vSessionTabPinned) return;
-    el.style.display = rules[mode] ? '' : 'none';
-  });
-
-  // If viewer is on a hidden page → redirect to Dashboard
+  // Set viewer/organiser body classes and restrictions
   if (mode === 'viewer') {
-    const hiddenPages = ['playersPage', 'roundsPage', 'summaryPage'];
-    const onHiddenPage = hiddenPages.some(pid => {
-      const p = document.getElementById(pid);
-      return p && p.style.display !== 'none';
-    });
-    if (onHiddenPage) {
-      showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
-    }
     setViewerMode(true);
   } else {
-    // Switching to organiser — close any open viewer session
     if (window._vSessionTabPinned) {
       if (typeof viewerStopPoll === 'function') viewerStopPoll();
       if (typeof _vHidePage === 'function') _vHidePage();
     }
     setViewerMode(false);
-    // Only auto-redirect to dashboard when switching modes mid-session (not on initial load)
-    if (typeof showHomeScreen !== 'function' || document.getElementById('homePageOverlay')?.style.display === 'none') {
-      showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
-      if (typeof renderDashboard === 'function') renderDashboard();
-    }
   }
 }
 
@@ -484,22 +434,19 @@ function openModeSwitcher() {
 function switchMode(mode) {
   const overlay = document.getElementById('modeSheetOverlay');
   if (overlay) overlay.remove();
-  applyMode(mode);
+  appMode = mode;
   sessionStorage.setItem('appMode', mode);
-  // Return to home screen when switching modes from Settings
+  applyMode(mode);
   showHomeScreen();
 }
 
 function initModeOnLoad() {
+  // Make sure home overlay is hidden until mode is chosen
+  const homeEl = document.getElementById('homePageOverlay');
+  if (homeEl) homeEl.style.display = 'none';
+  // Show the mode select overlay
   const overlay = document.getElementById('modeSelectOverlay');
   if (overlay) overlay.style.display = 'flex';
-  // Hide badge and mode-dependent tabs until mode is selected
-  const badge = document.getElementById('modeBadgeBtn');
-  if (badge) badge.style.display = 'none';
-  ['tabBtnVault','tabBtnPlayers','tabBtnRounds','tabBtnSummary','tabBtnDashboard'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
 }
 
 /* ============================================================
