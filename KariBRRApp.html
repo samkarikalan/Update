@@ -122,6 +122,16 @@
         <div class="home-tile-name">Settings</div>
         <div class="home-tile-sub">Theme · Font</div>
       </div>
+      <div class="home-tile home-tile-organiser" onclick="homeNavigate('roundsPage','tabBtnRounds')">
+        <div class="home-tile-icon home-tile-icon-rounds">🏸</div>
+        <div class="home-tile-name">Rounds</div>
+        <div class="home-tile-sub">Play &amp; score</div>
+      </div>
+      <div class="home-tile home-tile-organiser" onclick="homeNavigate('summaryPage','tabBtnSummary')">
+        <div class="home-tile-icon home-tile-icon-summary">📊</div>
+        <div class="home-tile-name">Summary</div>
+        <div class="home-tile-sub">Session stats</div>
+      </div>
     </div>
 
     <!-- Help Button -->
@@ -147,59 +157,32 @@
       </div>
     </div>
     <span class="app-logo-premium" onclick="showHomeScreen()" style="cursor:pointer" title="Home">CLUB Scheduler</span>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button class="home-nav-btn" onclick="showHomeScreen()" aria-label="Home" title="Home" id="homeNavBtn" style="display:none;">🏠</button>
-      <button class="profile-btn" id="profileBtn" onclick="openProfileDrawer()" aria-label="Profile" title="My Profile">
-        <img id="profileBtnAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
-        <span id="profileBtnIcon" class="profile-btn-icon">👤</span>
-      </button>
-    </div>
+    <button class="profile-btn" id="profileBtn" onclick="openProfileDrawer()" aria-label="Profile" title="My Profile">
+      <img id="profileBtnAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
+      <span id="profileBtnIcon" class="profile-btn-icon">👤</span>
+    </button>
   </div>
 
   <!-- ============================= -->
   <!--       TOP TAB NAVIGATION      -->
   <!-- ============================= -->
-  <div class="top-tabs">
-    <div class="tabs-container">
-      <button class="tab-btn" onclick="showPage('settingsPage', this)">
-        <span class="tab-icon">⚙️</span>
-        <span class="tab-label">Settings</span>
-      </button>
-      <button class="tab-btn" onclick="showPage('vaultPage', this)" id="tabBtnVault">
-        <span class="tab-icon">⚡</span>
-        <span class="tab-label">Vault</span>
-      </button>
-      <button class="tab-btn active" onclick="showPage('playersPage', this)" id="tabBtnPlayers">
-        <span class="tab-icon">👥</span>
-        <span class="tab-label" data-i18n="players">Players</span>
-      </button>
-      <button class="tab-btn" onclick="showPage('roundsPage', this)" id="tabBtnRounds">
-        <span class="tab-icon">🏸</span>
-        <span class="tab-label" data-i18n="rounds">Rounds</span>
-      </button>
-      <button class="tab-btn" onclick="showPage('summaryPage', this)" id="tabBtnSummary">
-        <span class="tab-icon">📊</span>
-        <span class="tab-label" data-i18n="summary">Summary</span>
-      </button>
-      <button class="tab-btn" onclick="showPage('dashboardPage', this)" id="tabBtnDashboard">
-        <span class="tab-icon">📡</span>
-        <span class="tab-label">Dashboard</span>
-      </button>
-      <button class="tab-btn" onclick="_vShowPage()" id="tabBtnViewer" style="display:none">
-        <span class="tab-icon">🏸</span>
-        <span class="tab-label">Session</span>
-      </button>
-      <button class="tab-btn" onclick="showPage('helpPage', this)">
-        <span class="tab-icon">❓</span>
-        <span class="tab-label" data-i18n="help">Help</span>
-      </button>
-    </div>
-  </div>
+  <!-- Tab buttons removed — navigation via home screen only -->
+  <!-- Ghost IDs preserved so JS references don't break -->
+  <span id="tabBtnVault"    style="display:none"></span>
+  <span id="tabBtnPlayers"  style="display:none"></span>
+  <span id="tabBtnRounds"   style="display:none"></span>
+  <span id="tabBtnSummary"  style="display:none"></span>
+  <span id="tabBtnDashboard" style="display:none"></span>
+  <span id="tabBtnViewer"   style="display:none"></span>
 
   <!-- ============================= -->
   <!--         SETTINGS PAGE         -->
   <!-- ============================= -->
   <div id="settingsPage" class="page" style="display:none;">
+  <div class="page-back-bar">
+    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <span class="page-back-title">⚙️ Settings</span>
+  </div>
     <div class="settings-wrap">
 
       <!-- Mode switch card -->
@@ -377,6 +360,10 @@
   <!--           VAULT PAGE          -->
   <!-- ============================= -->
   <div id="vaultPage" class="page" style="display:none;">
+  <div class="page-back-bar">
+    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <span class="page-back-title">⚡ Vault</span>
+  </div>
     <div class="settings-wrap">
 
       <!-- Club Login -->
@@ -447,6 +434,10 @@
   </div>
 
  <div id="playersPage" class="page">
+  <div class="page-back-bar">
+    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <span class="page-back-title">👥 Players</span>
+  </div>
 
   <div class="card browse-card" onclick="newImportShowModal()">
     <div class="browse-left">
@@ -497,6 +488,10 @@
   <!--          ROUNDS PAGE          -->
   <!-- ============================= -->
   <div id="roundsPage" class="page" style="display:none;">
+  <div class="page-back-bar">
+    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <span class="page-back-title">🏸 Rounds</span>
+  </div>
 
     <div class="title-card">
       <div id="roundTitle">R</div>
@@ -561,6 +556,10 @@
   <!--         SUMMARY PAGE          -->
   <!-- ============================= -->
   <div id="summaryPage" class="page" style="display:none;">
+  <div class="page-back-bar">
+    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <span class="page-back-title">📊 Summary</span>
+  </div>
     <div class="exp_btn" onclick="exportBRR2HTML()" data-i18n="exporthtml">📄</div>
     <div id="reportContainer"></div>
     <div id="export"></div>
@@ -570,6 +569,10 @@
   <!--        DASHBOARD PAGE         -->
   <!-- ============================= -->
   <div id="dashboardPage" class="page" style="display:none;">
+  <div class="page-back-bar">
+    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <span class="page-back-title">📡 Dashboard</span>
+  </div>
     <div id="dashboardContainer" class="dashboard-container">
       <div class="dashboard-loading"><div class="help-spinner"></div></div>
     </div>
@@ -586,6 +589,10 @@
   <!--           HELP PAGE           -->
   <!-- ============================= -->
   <div id="helpPage" class="page" style="display:none;">
+  <div class="page-back-bar">
+    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <span class="page-back-title">❓ Help</span>
+  </div>
 
     <!-- Search bar -->
     <div class="help-search-wrap">

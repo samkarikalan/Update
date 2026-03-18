@@ -28,8 +28,7 @@ function showHomeScreen() {
   const homeEl = document.getElementById('homePageOverlay');
   if (!homeEl) return;
   homeEl.style.display = 'flex';
-  const homeNavBtn = document.getElementById('homeNavBtn');
-  if (homeNavBtn) homeNavBtn.style.display = 'none';
+
 
   // Sync flag display
   const mainFlag = document.getElementById('currentFlag');
@@ -84,7 +83,8 @@ function showHomeScreen() {
   document.querySelectorAll('.home-tile').forEach(tile => {
     tile.style.display = '';
     const name = tile.querySelector('.home-tile-name');
-    if (!isOrganiser && name && (name.textContent === 'Players' || name.textContent === 'Vault')) {
+    const organiserOnly = ['Players', 'Vault', 'Rounds', 'Summary'];
+    if (!isOrganiser && name && organiserOnly.includes(name.textContent)) {
       tile.style.display = 'none';
     }
   });
@@ -93,8 +93,7 @@ function showHomeScreen() {
 function homeHideScreen() {
   const homeEl = document.getElementById('homePageOverlay');
   if (homeEl) homeEl.style.display = 'none';
-  const homeNavBtn = document.getElementById('homeNavBtn');
-  if (homeNavBtn) homeNavBtn.style.display = '';
+
 }
 
 function homeNavigate(pageId, tabId) {

@@ -2712,3 +2712,51 @@ body.app-light .home-status-bar { border-color: rgba(45,206,137,0.35); }
   color: var(--text);
 }
 .home-nav-btn:hover { background: var(--surface3); border-color: var(--accent); }
+
+/* =============================================
+   PAGE BACK BAR (replaces tab navigation)
+   ============================================= */
+
+/* Hide top-tabs entirely if still rendered */
+.top-tabs { display: none !important; }
+
+.page-back-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 8px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.page-back-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.page-back-btn:hover { background: var(--surface3); }
+
+.page-back-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Remove top padding that was compensating for tabs */
+.page { padding-top: 0 !important; }
+
+.home-tile-icon-rounds  { background: rgba(108,99,255,0.15); }
+.home-tile-icon-summary { background: rgba(45,206,137,0.15); }
+body.app-light .home-tile-icon-rounds  { background: rgba(108,99,255,0.12); }
+body.app-light .home-tile-icon-summary { background: rgba(45,206,137,0.12); }
