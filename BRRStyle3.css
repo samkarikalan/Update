@@ -88,27 +88,27 @@ body.app-dark .courtname {
 .team[data-team-side="L"] {
   background: var(--brr-court-green-bg) !important;
   border-radius: 0 !important;
-  padding: 8px 12px 8px 14px !important;
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  align-items: center !important;
-  gap: 4px !important;
+  padding: 6px 10px 6px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 2px !important;
   box-shadow: none !important;
   position: relative !important;
-  min-height: 52px !important;
+  min-height: 44px !important;
 }
 
 .team[data-team-side="R"] {
   background: var(--brr-court-blue-bg) !important;
   border-radius: 0 !important;
-  padding: 8px 12px 8px 14px !important;
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  align-items: center !important;
-  gap: 4px !important;
+  padding: 6px 10px 6px 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 2px !important;
   box-shadow: none !important;
   position: relative !important;
-  min-height: 52px !important;
+  min-height: 44px !important;
 }
 
 body.app-dark .team[data-team-side="L"] {
@@ -137,9 +137,9 @@ body.app-dark .team[data-team-side="R"] {
   width: 100% !important;
   box-sizing: border-box !important;
   transition: background 0.15s, transform 0.12s !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }
 
 body.app-dark .Lplayer-btn,
