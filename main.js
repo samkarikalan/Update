@@ -24,6 +24,215 @@ function selectMode(mode) {
    HOME SCREEN
 ══════════════════════════════════════════════ */
 
+
+/* ══════════════════════════════════════════════
+   SESSION STEPPER
+   Steps: 0=Players, 1=Fixed Pairs, 2=Courts, 3=Rounds
+══════════════════════════════════════════════ */
+
+const STEPS = [
+  {
+    id: 'step-players',
+    icon: '👥',
+    title: 'Select Players',
+    sub: 'Add at least 4 players to begin',
+    doneSub: () => {
+      const n = schedulerState.activeplayers.length;
+      return `${n} player${n !== 1 ? 's' : ''} selected`;
+    },
+    isComplete: () => schedulerState.activeplayers.length >= 4,
+    action: () => homeNavigate('playersPage', 'tabBtnPlayers'),
+  },
+  {
+    id: 'step-pairs',
+    icon: '🤝',
+    title: 'Fixed Pairs',
+    sub: 'Optional — pair players who always play together',
+    doneSub: () => {
+      const n = schedulerState.fixedPairs.length;
+      return n ? `${n} pair${n !== 1 ? 's' : ''} set` : 'No fixed pairs (optional)';
+    },
+    isComplete: () => true, // always optional — tapping "Skip / Done" marks it
+    action: () => homeNavigate('playersPage', 'tabBtnPlayers'),
+  },
+  {
+    id: 'step-courts',
+    icon: '🏟️',
+    title: 'Court Settings',
+    sub: 'Set number of courts and play mode',
+    doneSub: () => {
+      const c = parseInt(document.getElementById('stepNumCourts')?.textContent || document.getElementById('num-courts')?.textContent || 1);
+      const mode = document.getElementById('stepModeToggle')?.checked ? 'Competitive' : 'Random';
+      return `${c} court${c !== 1 ? 's' : ''} · ${mode}`;
+    },
+    isComplete: () => stepCourtsConfigured,
+    action: () => homeShowCourts(),
+  },
+  {
+    id: 'step-rounds',
+    icon: '🏸',
+    title: 'Start Rounds',
+    sub: 'Everything is set — let's play!',
+    doneSub: () => 'Session in progress',
+    isComplete: () => Array.isArray(allRounds) && allRounds.length > 0,
+    action: () => homeNavigate('roundsPage', 'tabBtnRounds'),
+  },
+];
+
+let stepCourtsConfigured = false;
+let currentStep = 0;
+
+function homeRefreshStepper() {
+  if (appMode !== 'organiser') return;
+
+  // Determine which steps are done
+  const done = STEPS.map(s => s.isComplete());
+
+  // Current step = first incomplete, or last if all done
+  currentStep = done.indexOf(false);
+  if (currentStep === -1) currentStep = STEPS.length - 1;
+
+  // Special: step 1 (fixed pairs) auto-completes once players are done
+  // We mark it done after user has visited players page
+  if (done[0] && !stepPairsVisited) currentStep = Math.max(currentStep, 1);
+
+  // Update stepper dots
+  STEPS.forEach((step, i) => {
+    const el = document.getElementById(step.id);
+    if (!el) return;
+    el.classList.remove('active', 'done', 'locked');
+    if (i < currentStep && done[i]) {
+      el.classList.add('done');
+      const check = el.querySelector('.stepper-check');
+      const num   = el.querySelector('.stepper-num');
+      if (check) check.style.display = '';
+      if (num)   num.style.display   = 'none';
+    } else if (i === currentStep) {
+      el.classList.add('active');
+      const check = el.querySelector('.stepper-check');
+      const num   = el.querySelector('.stepper-num');
+      if (check) check.style.display = 'none';
+      if (num)   num.style.display   = '';
+    } else {
+      el.classList.add(done[i] ? 'done' : 'locked');
+      const check = el.querySelector('.stepper-check');
+      const num   = el.querySelector('.stepper-num');
+      if (check) check.style.display = done[i] ? '' : 'none';
+      if (num)   num.style.display   = done[i] ? 'none' : '';
+    }
+
+    // Lines
+    const line = document.getElementById('stepline-' + (i + 1));
+    if (line) line.classList.toggle('done', i < currentStep && done[i]);
+  });
+
+  // Update step card
+  const step = STEPS[currentStep];
+  const isLastDone = currentStep === STEPS.length - 1 && done[currentStep];
+
+  const iconEl  = document.getElementById('stepCardIcon');
+  const titleEl = document.getElementById('stepCardTitle');
+  const subEl   = document.getElementById('stepCardSub');
+  const btnEl   = document.getElementById('stepCardBtn');
+
+  if (iconEl)  iconEl.textContent  = step.icon;
+  if (titleEl) titleEl.textContent = isLastDone ? '🎉 Session Active' : step.title;
+  if (subEl)   subEl.textContent   = (done[currentStep] && step.doneSub) ? step.doneSub() : step.sub;
+
+  if (btnEl) {
+    if (currentStep === 2 && !stepCourtsConfigured) {
+      btnEl.textContent = 'Set Up →';
+    } else if (currentStep === 1) {
+      btnEl.textContent = done[0] ? (stepPairsVisited ? 'Done ✓' : 'Set Pairs →') : 'Go →';
+    } else if (isLastDone) {
+      btnEl.textContent = 'View Rounds →';
+    } else {
+      btnEl.textContent = 'Go →';
+    }
+  }
+
+  // Courts panel — hide when not on step 2
+  const courtsPanel = document.getElementById('stepCourtsPanel');
+  if (courtsPanel) courtsPanel.style.display = 'none';
+}
+
+let stepPairsVisited = false;
+
+function homeStepGo(stepIndex) {
+  // Only allow tapping done or current step
+  const done = STEPS.map(s => s.isComplete());
+  if (stepIndex > currentStep && !done[stepIndex]) return;
+  currentStep = stepIndex;
+  STEPS[stepIndex].action();
+}
+
+function homeStepAction() {
+  const step = STEPS[currentStep];
+  if (currentStep === 1) stepPairsVisited = true;
+  if (currentStep === 2) {
+    homeShowCourts();
+    return;
+  }
+  step.action();
+}
+
+function homeShowCourts() {
+  const panel = document.getElementById('stepCourtsPanel');
+  const card  = document.getElementById('sessionStepCard');
+  if (!panel || !card) return;
+
+  // Sync courts count from rounds page
+  const courtsDisplay = document.getElementById('num-courts');
+  const stepCourtsEl  = document.getElementById('stepNumCourts');
+  if (courtsDisplay && stepCourtsEl) stepCourtsEl.textContent = courtsDisplay.textContent;
+
+  // Sync mode toggle
+  const mainToggle = document.getElementById('modeToggle');
+  const stepToggle = document.getElementById('stepModeToggle');
+  if (mainToggle && stepToggle) stepToggle.checked = mainToggle.checked;
+
+  panel.style.display = 'block';
+  card.style.display  = 'none';
+}
+
+function stepCourtPlus() {
+  const el = document.getElementById('stepNumCourts');
+  if (!el) return;
+  const max = Math.floor(schedulerState.activeplayers.length / 4);
+  let val = parseInt(el.textContent) || 1;
+  if (val < max) { val++; el.textContent = val; }
+  // Mirror to actual rounds page counter
+  const main = document.getElementById('num-courts');
+  if (main) main.textContent = val;
+}
+
+function stepCourtMinus() {
+  const el = document.getElementById('stepNumCourts');
+  if (!el) return;
+  let val = parseInt(el.textContent) || 1;
+  if (val > 1) { val--; el.textContent = val; }
+  const main = document.getElementById('num-courts');
+  if (main) main.textContent = val;
+}
+
+function stepSyncMode() {
+  const stepToggle = document.getElementById('stepModeToggle');
+  const mainToggle = document.getElementById('modeToggle');
+  if (stepToggle && mainToggle) {
+    mainToggle.checked = stepToggle.checked;
+    mainToggle.dispatchEvent(new Event('change'));
+  }
+}
+
+function homeStepCourtsDone() {
+  stepCourtsConfigured = true;
+  const panel = document.getElementById('stepCourtsPanel');
+  const card  = document.getElementById('sessionStepCard');
+  if (panel) panel.style.display = 'none';
+  if (card)  card.style.display  = '';
+  homeNavigate('roundsPage', 'tabBtnRounds');
+}
+
 function showHomeScreen() {
   const homeEl = document.getElementById('homePageOverlay');
   if (!homeEl) return;
@@ -79,15 +288,28 @@ function showHomeScreen() {
   if (heroTitle) heroTitle.textContent = isOrganiser ? 'Start Session' : 'Watch Session';
   if (heroCard) heroCard.classList.toggle('viewer-hero', !isOrganiser);
 
-  // Show/hide tiles based on mode
+  // Show organiser flow or viewer flow
+  const orgFlow  = document.getElementById('homeOrganizerFlow');
+  const viewFlow = document.getElementById('homeViewerFlow');
+  if (orgFlow)  orgFlow.style.display  = isOrganiser ? '' : 'none';
+  if (viewFlow) viewFlow.style.display = isOrganiser ? 'none' : '';
+
+  // Hide vault tile for viewer
   document.querySelectorAll('.home-tile').forEach(tile => {
     tile.style.display = '';
     const name = tile.querySelector('.home-tile-name');
-    const organiserOnly = ['Players', 'Vault', 'Rounds', 'Summary'];
-    if (!isOrganiser && name && organiserOnly.includes(name.textContent)) {
+    if (!isOrganiser && name && name.textContent === 'Vault') {
       tile.style.display = 'none';
     }
   });
+
+  // Refresh stepper state
+  if (isOrganiser) homeRefreshStepper();
+}
+
+// Called from page back buttons — refresh stepper on return
+function homeReturnRefresh() {
+  showHomeScreen();
 }
 
 function homeHideScreen() {

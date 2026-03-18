@@ -93,20 +93,87 @@
       <span class="home-status-role" id="homeStatusRole"></span>
     </div>
 
-    <!-- Start Session Hero Card -->
-    <div class="home-hero-card" id="homeHeroCard" onclick="homeStartSession()">
-      <div class="home-hero-label" id="homeHeroLabel">ORGANISER</div>
-      <div class="home-hero-title" id="homeHeroTitle">Start Session</div>
-      <div class="home-hero-play">▶</div>
+    <!-- Session Stepper (Organiser) / Watch card (Viewer) -->
+    <div id="homeOrganizerFlow">
+
+      <!-- Step progress bar -->
+      <div class="session-stepper" id="sessionStepper">
+        <div class="stepper-step active" id="step-players" onclick="homeStepGo(0)">
+          <div class="stepper-dot">
+            <span class="stepper-check" style="display:none">✓</span>
+            <span class="stepper-num">1</span>
+          </div>
+          <div class="stepper-label">Players</div>
+        </div>
+        <div class="stepper-line" id="stepline-1"></div>
+        <div class="stepper-step locked" id="step-pairs" onclick="homeStepGo(1)">
+          <div class="stepper-dot">
+            <span class="stepper-check" style="display:none">✓</span>
+            <span class="stepper-num">2</span>
+          </div>
+          <div class="stepper-label">Fixed Pairs</div>
+        </div>
+        <div class="stepper-line" id="stepline-2"></div>
+        <div class="stepper-step locked" id="step-courts" onclick="homeStepGo(2)">
+          <div class="stepper-dot">
+            <span class="stepper-check" style="display:none">✓</span>
+            <span class="stepper-num">3</span>
+          </div>
+          <div class="stepper-label">Courts</div>
+        </div>
+        <div class="stepper-line" id="stepline-3"></div>
+        <div class="stepper-step locked" id="step-rounds" onclick="homeStepGo(3)">
+          <div class="stepper-dot">
+            <span class="stepper-check" style="display:none">✓</span>
+            <span class="stepper-num">4</span>
+          </div>
+          <div class="stepper-label">Rounds</div>
+        </div>
+      </div>
+
+      <!-- Step detail card — shows current action -->
+      <div class="session-step-card" id="sessionStepCard">
+        <div class="step-card-icon" id="stepCardIcon">👥</div>
+        <div class="step-card-body">
+          <div class="step-card-title" id="stepCardTitle">Select Players</div>
+          <div class="step-card-sub" id="stepCardSub">Add at least 4 players to begin</div>
+        </div>
+        <button class="step-card-btn" id="stepCardBtn" onclick="homeStepAction()">Go →</button>
+      </div>
+
+      <!-- Courts inline mini-panel (shown at step 3) -->
+      <div class="step-courts-panel" id="stepCourtsPanel" style="display:none">
+        <div class="step-courts-row">
+          <span class="step-courts-label">Courts</span>
+          <div class="counter">
+            <button class="circle-btn" onclick="stepCourtMinus()">−</button>
+            <span id="stepNumCourts">1</span>
+            <button class="circle-btn" onclick="stepCourtPlus()">+</button>
+          </div>
+        </div>
+        <div class="step-courts-row" style="margin-top:10px">
+          <span class="step-courts-label">🏆 Competitive</span>
+          <label class="switch">
+            <input type="checkbox" id="stepModeToggle" onchange="stepSyncMode()">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <button class="step-courts-done" onclick="homeStepCourtsDone()">Start Rounds →</button>
+      </div>
+
     </div>
 
-    <!-- 2x2 Grid -->
-    <div class="home-grid">
-      <div class="home-tile" onclick="homeNavigate('playersPage','tabBtnPlayers')">
-        <div class="home-tile-icon">👥</div>
-        <div class="home-tile-name">Players</div>
-        <div class="home-tile-sub">Manage club</div>
+    <!-- Viewer watch card -->
+    <div id="homeViewerFlow" style="display:none">
+      <div class="home-hero-card viewer-hero" onclick="homeNavigate('dashboardPage','tabBtnDashboard')">
+        <div class="home-hero-label">VIEWER</div>
+        <div class="home-hero-title">Watch Session</div>
+        <div class="home-hero-play">▶</div>
       </div>
+    </div>
+
+    <!-- Bottom tiles -->
+    <div class="home-grid home-grid-bottom">
       <div class="home-tile" onclick="homeNavigate('dashboardPage','tabBtnDashboard')">
         <div class="home-tile-icon">📡</div>
         <div class="home-tile-name">Dashboard</div>
@@ -122,12 +189,7 @@
         <div class="home-tile-name">Settings</div>
         <div class="home-tile-sub">Theme · Font</div>
       </div>
-      <div class="home-tile home-tile-organiser" onclick="homeNavigate('roundsPage','tabBtnRounds')">
-        <div class="home-tile-icon home-tile-icon-rounds">🏸</div>
-        <div class="home-tile-name">Rounds</div>
-        <div class="home-tile-sub">Play &amp; score</div>
-      </div>
-      <div class="home-tile home-tile-organiser" onclick="homeNavigate('summaryPage','tabBtnSummary')">
+      <div class="home-tile" onclick="homeNavigate('summaryPage','tabBtnSummary')" id="homeTileSummary">
         <div class="home-tile-icon home-tile-icon-summary">📊</div>
         <div class="home-tile-name">Summary</div>
         <div class="home-tile-sub">Session stats</div>
@@ -435,7 +497,7 @@
 
  <div id="playersPage" class="page">
   <div class="page-back-bar">
-    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <button class="page-back-btn" onclick="homeReturnRefresh()"">‹ Home</button>
     <span class="page-back-title">👥 Players</span>
   </div>
 
@@ -489,7 +551,7 @@
   <!-- ============================= -->
   <div id="roundsPage" class="page" style="display:none;">
   <div class="page-back-bar">
-    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+    <button class="page-back-btn" onclick="homeReturnRefresh()"">‹ Home</button>
     <span class="page-back-title">🏸 Rounds</span>
   </div>
 

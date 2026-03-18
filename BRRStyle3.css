@@ -2760,3 +2760,190 @@ body.app-light .home-status-bar { border-color: rgba(45,206,137,0.35); }
 .home-tile-icon-summary { background: rgba(45,206,137,0.15); }
 body.app-light .home-tile-icon-rounds  { background: rgba(108,99,255,0.12); }
 body.app-light .home-tile-icon-summary { background: rgba(45,206,137,0.12); }
+
+/* =============================================
+   SESSION STEPPER
+   ============================================= */
+
+#homeOrganizerFlow { margin: 14px 16px 0; }
+
+.session-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex: 0 0 auto;
+}
+
+.stepper-step.locked { opacity: 0.35; pointer-events: none; }
+.stepper-step.done   { opacity: 1; pointer-events: auto; }
+.stepper-step.active { opacity: 1; pointer-events: auto; }
+
+.stepper-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  transition: all 0.25s;
+  position: relative;
+}
+
+.stepper-step.active .stepper-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.stepper-step.done .stepper-dot {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(45,206,137,0.4);
+}
+
+.stepper-check { font-size: 0.9rem; }
+.stepper-num   { font-size: 0.85rem; font-weight: 700; }
+
+.stepper-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stepper-step.active .stepper-label { color: var(--accent); }
+.stepper-step.done   .stepper-label { color: var(--green); }
+
+.stepper-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 0 4px;
+  margin-bottom: 20px;
+  transition: background 0.3s;
+}
+
+.stepper-line.done { background: var(--green); }
+
+/* Step card */
+.session-step-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+.step-card-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  border-radius: 12px;
+}
+
+.step-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.step-card-sub {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.step-card-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+.step-card-btn:hover  { filter: brightness(1.1); }
+.step-card-btn:active { transform: scale(0.96); }
+.step-card-btn:disabled {
+  background: var(--surface3);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* Courts inline panel */
+.step-courts-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.step-courts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.step-courts-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.step-courts-done {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, #9b60ff 100%);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+}
+.step-courts-done:hover  { filter: brightness(1.1); }
+.step-courts-done:active { transform: scale(0.97); }
+
+.home-grid-bottom { margin-top: 14px; }
