@@ -8,19 +8,119 @@ var appMode = null; // 'viewer' | 'organiser'
 function selectMode(mode) {
   appMode = mode;
   sessionStorage.setItem('appMode', mode);
-  // Hide overlay
+  // Hide mode select overlay
   const overlay = document.getElementById('modeSelectOverlay');
   if (overlay) overlay.style.display = 'none';
   // Show badge
   const badgeEl = document.getElementById('modeBadgeBtn');
   if (badgeEl) badgeEl.style.display = '';
-  // Apply mode
+  // Apply tab visibility / mode classes
   applyMode(mode);
-  // Now check profile
-  const player = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
-  if (!player) {
-    if (typeof openProfileDrawer === 'function') openProfileDrawer();
+  // Show home screen
+  showHomeScreen();
+}
+
+/* ══════════════════════════════════════════════
+   HOME SCREEN
+══════════════════════════════════════════════ */
+
+function showHomeScreen() {
+  const homeEl = document.getElementById('homePageOverlay');
+  if (!homeEl) return;
+  homeEl.style.display = 'flex';
+  const homeNavBtn = document.getElementById('homeNavBtn');
+  if (homeNavBtn) homeNavBtn.style.display = 'none';
+
+  // Sync flag display
+  const mainFlag = document.getElementById('currentFlag');
+  const homeFlag = document.getElementById('homeFlagDisplay');
+  if (mainFlag && homeFlag) homeFlag.textContent = mainFlag.textContent;
+
+  // Sync profile avatar
+  const mainAvatar = document.getElementById('profileBtnAvatar');
+  const homeAvatar = document.getElementById('homeProfileAvatar');
+  const mainIcon   = document.getElementById('profileBtnIcon');
+  const homeIcon   = document.getElementById('homeProfileIcon');
+  if (homeAvatar && mainAvatar) {
+    homeAvatar.src = mainAvatar.src;
+    homeAvatar.style.display = mainAvatar.style.display;
   }
+  if (homeIcon && mainIcon) homeIcon.style.display = mainIcon.style.display;
+
+  // Status bar
+  const statusBar  = document.getElementById('homeStatusBar');
+  const statusName = document.getElementById('homeStatusName');
+  const statusRole = document.getElementById('homeStatusRole');
+  const isOrganiser = appMode === 'organiser';
+
+  const club   = (typeof getMyClub   === 'function') ? getMyClub()   : null;
+  const player = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+  const isAdmin = (typeof isClubAdmin === 'function') ? isClubAdmin() : false;
+
+  if (club && club.name) {
+    if (statusName) statusName.textContent = club.name;
+    if (statusRole) statusRole.textContent = isAdmin ? 'ADMIN' : (isOrganiser ? 'ORGANISER' : 'VIEWER');
+    if (statusBar) statusBar.classList.remove('disconnected');
+    if (statusBar) statusBar.classList.toggle('viewer-bar', !isOrganiser);
+  } else if (player && player.displayName) {
+    if (statusName) statusName.textContent = player.displayName;
+    if (statusRole) statusRole.textContent = isOrganiser ? 'ORGANISER' : 'VIEWER';
+    if (statusBar) statusBar.classList.remove('disconnected');
+  } else {
+    if (statusName) statusName.textContent = 'Not logged in';
+    if (statusRole) statusRole.textContent = '';
+    if (statusBar) statusBar.classList.add('disconnected');
+  }
+
+  // Hero card
+  const heroCard  = document.getElementById('homeHeroCard');
+  const heroLabel = document.getElementById('homeHeroLabel');
+  const heroTitle = document.getElementById('homeHeroTitle');
+  if (heroLabel) heroLabel.textContent = isOrganiser ? 'ORGANISER' : 'VIEWER';
+  if (heroTitle) heroTitle.textContent = isOrganiser ? 'Start Session' : 'Watch Session';
+  if (heroCard) heroCard.classList.toggle('viewer-hero', !isOrganiser);
+
+  // Show/hide tiles based on mode
+  document.querySelectorAll('.home-tile').forEach(tile => {
+    tile.style.display = '';
+    const name = tile.querySelector('.home-tile-name');
+    if (!isOrganiser && name && (name.textContent === 'Players' || name.textContent === 'Vault')) {
+      tile.style.display = 'none';
+    }
+  });
+}
+
+function homeHideScreen() {
+  const homeEl = document.getElementById('homePageOverlay');
+  if (homeEl) homeEl.style.display = 'none';
+  const homeNavBtn = document.getElementById('homeNavBtn');
+  if (homeNavBtn) homeNavBtn.style.display = '';
+}
+
+function homeNavigate(pageId, tabId) {
+  homeHideScreen();
+  const tabEl = tabId ? document.getElementById(tabId) : null;
+  showPage(pageId, tabEl);
+}
+
+function homeStartSession() {
+  if (appMode === 'organiser') {
+    homeNavigate('playersPage', 'tabBtnPlayers');
+  } else {
+    homeNavigate('dashboardPage', 'tabBtnDashboard');
+  }
+}
+
+function homeOpenProfile() {
+  if (typeof openProfileDrawer === 'function') openProfileDrawer();
+}
+
+function homeLangSelect(el) {
+  const mainFlag = document.getElementById('currentFlag');
+  if (mainFlag) mainFlag.textContent = el.dataset.flag;
+  const homeFlag = document.getElementById('homeFlagDisplay');
+  if (homeFlag) homeFlag.textContent = el.dataset.flag;
+  if (typeof setLanguage === 'function') setLanguage(el.dataset.lang);
 }
 
 function applyMode(mode) {
@@ -78,9 +178,11 @@ function applyMode(mode) {
       if (typeof _vHidePage === 'function') _vHidePage();
     }
     setViewerMode(false);
-    // Redirect to dashboard and refresh it
-    showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
-    if (typeof renderDashboard === 'function') renderDashboard();
+    // Only auto-redirect to dashboard when switching modes mid-session (not on initial load)
+    if (typeof showHomeScreen !== 'function' || document.getElementById('homePageOverlay')?.style.display === 'none') {
+      showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
+      if (typeof renderDashboard === 'function') renderDashboard();
+    }
   }
 }
 
@@ -163,6 +265,8 @@ function switchMode(mode) {
   if (overlay) overlay.remove();
   applyMode(mode);
   sessionStorage.setItem('appMode', mode);
+  // Return to home screen when switching modes from Settings
+  showHomeScreen();
 }
 
 function initModeOnLoad() {

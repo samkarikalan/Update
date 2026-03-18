@@ -2465,3 +2465,250 @@ body.app-dark .team[data-team-side="R"].repeated-pair {
   border-left: 4px solid rgba(239,68,68,0.9) !important;
   box-shadow: 0 0 12px rgba(239,68,68,0.18) !important;
 }
+
+/* =============================================
+   HOME PAGE OVERLAY
+   ============================================= */
+
+.home-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 0 0 24px 0;
+}
+
+/* ── Home Top Bar ── */
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.home-logo {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+
+/* ── Status Bar ── */
+.home-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 16px 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid rgba(45,206,137,0.25);
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(45,206,137,0.08);
+}
+
+.home-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  flex-shrink: 0;
+}
+
+.home-status-bar.disconnected .home-status-dot {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+.home-status-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+  flex: 1;
+}
+
+.home-status-role {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green);
+  text-transform: uppercase;
+}
+
+.home-status-bar.viewer-bar .home-status-role { color: var(--accent); }
+
+/* ── Hero Card ── */
+.home-hero-card {
+  margin: 14px 16px 0;
+  padding: 26px 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #7c6cf5 0%, #a78bfa 55%, #c4b5fd 100%);
+  box-shadow: 0 8px 32px rgba(108,99,255,0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+  min-height: 130px;
+}
+
+.home-hero-card:active { transform: scale(0.98); box-shadow: 0 4px 16px rgba(108,99,255,0.3); }
+
+.home-hero-card.viewer-hero {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #60a5fa 100%);
+  box-shadow: 0 8px 32px rgba(37,99,235,0.35);
+}
+
+.home-hero-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 6px;
+}
+
+.home-hero-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.home-hero-play {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #fff;
+  padding-left: 4px;
+}
+
+.home-hero-card.viewer-hero .home-hero-play { background: rgba(255,255,255,0.15); }
+
+/* ── 2x2 Grid ── */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 16px 0;
+}
+
+.home-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 16px 16px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.home-tile:active { transform: scale(0.96); }
+.home-tile:hover { background: var(--surface2); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+
+.home-tile-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.home-tile-icon-vault { background: #3d2b00; }
+.home-tile-icon-settings { background: var(--surface3); }
+
+body.app-light .home-tile-icon { background: var(--surface3); }
+body.app-light .home-tile-icon-vault { background: #fef3c7; }
+
+.home-tile-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.home-tile-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── Help Button ── */
+.home-help-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 14px 16px 0;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+.home-help-btn:hover { background: var(--surface2); }
+
+/* Light theme adjustments */
+body.app-light .home-hero-card { box-shadow: 0 8px 32px rgba(108,99,255,0.22); }
+body.app-light .home-status-bar { border-color: rgba(45,206,137,0.35); }
+
+/* Back button on main top-bar when home is shown */
+.home-back-btn {
+  display: none;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-size: 1rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.home-back-btn:hover { background: var(--surface3); color: var(--text); }
+
+/* Home nav button (top bar) */
+.home-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  color: var(--text);
+}
+.home-nav-btn:hover { background: var(--surface3); border-color: var(--accent); }
