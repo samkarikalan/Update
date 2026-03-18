@@ -39,9 +39,9 @@
       "title": "⭐ How Ratings Work",
       "content": "Every player starts at rating 1.0. Ratings go up when you win and down when you lose. The change depends on opponent strength.",
       "list": [
-        "1.0 – 1.9 → Beginner",
-        "2.0 – 2.9 → Developing",
-        "3.0 – 3.9 → Intermediate",
+        "1.0 – 1.9 → Rookie",
+        "2.0 – 2.9 → Club",
+        "3.0 – 3.9 → Competitive",
         "4.0 – 4.4 → Advanced",
         "4.5+ → Elite"
       ],

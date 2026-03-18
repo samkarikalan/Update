@@ -22,11 +22,11 @@ function clearMyPlayer() {
 
 /* ── Tier label from rating ── */
 function ratingTierLabel(r) {
-  if (r < 2.0) return { label: 'Beginner',     color: '#9e9e9e' };
-  if (r < 3.0) return { label: 'Developing',   color: '#4a9eff' };
-  if (r < 4.0) return { label: 'Intermediate', color: '#2dce89' };
-  if (r < 4.5) return { label: 'Advanced',     color: '#f5a623' };
-  return             { label: 'Elite',          color: '#e63757' };
+  if (r < 2.0) return { label: 'Rookie',       color: '#9e9e9e' };
+  if (r < 3.0) return { label: 'Club',          color: '#4a9eff' };
+  if (r < 4.0) return { label: 'Competitive',   color: '#2dce89' };
+  if (r < 4.5) return { label: 'Advanced',      color: '#f5a623' };
+  return             { label: 'Elite',           color: '#e63757' };
 }
 
 /* ── Update header profile button appearance ── */

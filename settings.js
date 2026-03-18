@@ -605,43 +605,53 @@ async function vaultRenderModify() {
     return;
   }
 
-  container.innerHTML = '<p style="color:#aaa;font-size:0.85rem">Loading...</p>';
-
-  if (!newImportState.historyPlayers || !newImportState.historyPlayers.length) {
-    await syncToLocal();
-  }
-  const players = [...(newImportState.historyPlayers || [])].sort((a, b) =>
-    a.displayName.localeCompare(b.displayName)
-  );
-
-  if (!players.length) {
-    container.innerHTML = '<p class="player-mgmt-empty">No players in club yet.</p>';
+  const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+  if (!club.id) {
+    container.innerHTML = '<p class="player-mgmt-empty">Join a club to manage players.</p>';
     return;
   }
 
-  container.innerHTML = '';
-  players.forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'player-mgmt-row';
-    const safeName = p.displayName.replace(/'/g, "\\'");
-    const genderImg = p.gender === 'Female' ? 'female.png' : 'male.png';
-    const currentRating = (typeof getActiveRating === 'function' ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
-    row.innerHTML = `
-      <img src="${genderImg}" class="player-mgmt-avatar vault-gender-toggle"
-           onclick="vaultToggleGender('${safeName}', this)"
-           title="Tap to toggle gender">
-      <span class="player-mgmt-name vault-name-edit"
-            onclick="vaultEditName('${safeName}')"
-            title="Tap to edit name">${p.displayName}</span>
-      <input type="number" class="rating-edit-input vault-rating-input"
-             value="${currentRating}" min="1.0" max="5.0" step="0.1"
-             onchange="vaultSaveRating('${safeName}', this.value)"
-             title="Edit rating">
-      <button class="player-mgmt-del-btn"
-              onclick="vaultDeletePlayer('${safeName}')">🗑</button>
-    `;
-    container.appendChild(row);
-  });
+  container.innerHTML = '<p style="color:#aaa;font-size:0.85rem">Loading...</p>';
+
+  try {
+    const clubPlayers = await dbGetPlayers(true); // force fresh from DB
+    const players = (clubPlayers || []).map(p => ({
+      displayName: p.name,
+      gender: p.gender || 'Male',
+      rating: parseFloat(p.rating) || 1.0
+    })).sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+    if (!players.length) {
+      container.innerHTML = '<p class="player-mgmt-empty">No players in club yet.</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+    players.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'player-mgmt-row';
+      const safeName = p.displayName.replace(/'/g, "\\'");
+      const genderImg = p.gender === 'Female' ? 'female.png' : 'male.png';
+      const currentRating = (typeof getActiveRating === 'function' ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
+      row.innerHTML = `
+        <img src="${genderImg}" class="player-mgmt-avatar vault-gender-toggle"
+             onclick="vaultToggleGender('${safeName}', this)"
+             title="Tap to toggle gender">
+        <span class="player-mgmt-name vault-name-edit"
+              onclick="vaultEditName('${safeName}')"
+              title="Tap to edit name">${p.displayName}</span>
+        <input type="number" class="rating-edit-input vault-rating-input"
+               value="${currentRating}" min="1.0" max="5.0" step="0.1"
+               onchange="vaultSaveRating('${safeName}', this.value)"
+               title="Edit rating">
+        <button class="player-mgmt-del-btn"
+                onclick="vaultDeletePlayer('${safeName}')">🗑</button>
+      `;
+      container.appendChild(row);
+    });
+  } catch(e) {
+    container.innerHTML = '<p class="player-mgmt-empty">Failed to load players.</p>';
+  }
 }
 
 function vaultSaveRating(displayName, value) {

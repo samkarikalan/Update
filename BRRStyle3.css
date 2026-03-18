@@ -139,7 +139,6 @@ body.app-dark .team[data-team-side="L"] {
 body.app-dark .team[data-team-side="R"] {
   background: rgba(74,158,255,0.14) !important;
 }
-
 /* ─────────────────────────────────────────────
    PLAYER BUTTONS
 ───────────────────────────────────────────── */
@@ -629,18 +628,6 @@ input:checked + .slider {
   box-shadow: 0 0 10px rgba(124,92,252,0.35) !important;
 }
 input:checked + .slider:before { transform: translateX(20px) !important; }
-
-/* ─────────────────────────────────────────────
-   REPEATED PAIR / GAME WARNING
-───────────────────────────────────────────── */
-.repeated-pair {
-  box-shadow: inset 0 0 0 2px rgba(239,68,68,0.55) !important;
-  background: rgba(239,68,68,0.08) !important;
-}
-.repeated-game {
-  border: 2px solid rgba(239,68,68,0.6) !important;
-  box-shadow: 0 0 0 1px rgba(239,68,68,0.2), inset 0 0 12px rgba(239,68,68,0.06) !important;
-}
 
 /* ─────────────────────────────────────────────
    SELECTED / SWAPPING STATES
@@ -2453,3 +2440,28 @@ body.app-dark .mode-banner.setup-mode { color: #f5a623; }
 .mode-banner-badge.ready-mode { background: var(--accent); }
 .mode-banner-badge.live-mode  { background: #2dce89; }
 .mode-banner-badge.setup-mode { background: #f5a623; }
+
+/* ═══════════════════════════════════════════════
+   REPEATED PAIR / GAME WARNING
+   Must be at end of file to win all specificity battles
+   (court-1..6 borders, team background colours, etc.)
+═══════════════════════════════════════════════ */
+.team[data-team-side="L"].repeated-pair,
+.team[data-team-side="R"].repeated-pair,
+body.app-dark .team[data-team-side="L"].repeated-pair,
+body.app-dark .team[data-team-side="R"].repeated-pair {
+  background: rgba(239,68,68,0.13) !important;
+  box-shadow: inset 0 0 0 2px rgba(239,68,68,0.75) !important;
+}
+
+.courtcard.court-1.repeated-game,
+.courtcard.court-2.repeated-game,
+.courtcard.court-3.repeated-game,
+.courtcard.court-4.repeated-game,
+.courtcard.court-5.repeated-game,
+.courtcard.court-6.repeated-game,
+.courtcard.repeated-game {
+  border: 2px solid rgba(239,68,68,0.8) !important;
+  border-left: 4px solid rgba(239,68,68,0.9) !important;
+  box-shadow: 0 0 12px rgba(239,68,68,0.18) !important;
+}
