@@ -512,8 +512,8 @@ border-color: var(--border) !important;
 }
 
 /* Repeated warnings */
-.repeated-pair { outline: 1px solid rgba(239,68,68,0.4) !important; background: rgba(239,68,68,0.07) !important; }
-.repeated-game { outline: 2px solid rgba(239,68,68,0.5) !important; background: rgba(239,68,68,0.1) !important; }
+.repeated-pair { box-shadow: inset 0 0 0 2px rgba(239,68,68,0.55) !important; background: rgba(239,68,68,0.08) !important; }
+.repeated-game { border: 2px solid rgba(239,68,68,0.6) !important; box-shadow: 0 0 0 1px rgba(239,68,68,0.2) !important; }
 
 /* Win cup */
 .win-cup {
