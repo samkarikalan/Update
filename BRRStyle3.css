@@ -33,6 +33,28 @@
 /* ─────────────────────────────────────────────
    COURT CARD — Main container
 ───────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────
+   TOP BAR — theme polish
+───────────────────────────────────────────── */
+body.app-light .top-bar {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fc 100%);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+body.app-dark .top-bar {
+  background: linear-gradient(180deg, #16161e 0%, #0f0f13 100%);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+body.app-light .top-tabs {
+  background: linear-gradient(180deg, #f8f9fc 0%, #f2f4f8 100%);
+}
+body.app-dark .top-tabs {
+  background: linear-gradient(180deg, #0f0f13 0%, #0c0c10 100%);
+}
+
+/* ─────────────────────────────────────────────
+   COURT CARD (moved comment back)
+───────────────────────────────────────────── */
 .courtcard {
   background: #ffffff !important;
   border: 1px solid var(--brr-court-border) !important;
@@ -704,27 +726,27 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
    PROFILE BUTTON (header)
 ───────────────────────────────────────────── */
 .profile-btn {
-  background: none;
-  border: none;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  transition: background 0.15s;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s;
 }
-.profile-btn:hover { background: var(--surface3); }
+.profile-btn:hover { background: var(--surface3); border-color: var(--accent); }
 .profile-btn-avatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 6px;
   object-fit: cover;
   border: 2px solid var(--accent);
 }
-.profile-btn-icon { font-size: 1.3rem; }
+.profile-btn-icon { font-size: 18px; }
 
 /* ─────────────────────────────────────────────
    PROFILE OVERLAY + DRAWER
@@ -2342,16 +2364,33 @@ body.app-dark .viewer-rounds .round-wrapper:nth-child(even) {
 
 /* ── Tab label — fixed size, never changes with font setting ── */
 .tab-label {
-  font-size: 0.72rem !important;
+  font-size: 10px !important;
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
 }
 .tab-icon {
-  font-size: 1.35rem !important;
+  font-size: 20px !important;
 }
 .tab-btn {
-  font-size: 0.72rem !important;
+  font-size: 10px !important;
+}
+
+/* Tab bar container */
+.top-tabs {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+}
+
+/* Active tab — pill highlight instead of just underline */
+.tab-btn.active {
+  color: var(--accent) !important;
+}
+.tab-btn.active .tab-icon {
+  filter: drop-shadow(0 0 4px var(--accent-glow));
 }
 
 /* Organiser scrollable tab buttons — exactly 3 visible */
