@@ -417,5 +417,5 @@ body.app-light .tile-players { background: rgba(108,99,255,0.1); }
 }
 .step-card-skip:hover { background: var(--surface2); color: var(--text); }
 
-.tile-pairs { background: rgba(45,206,137,0.15); }
-body.app-light .tile-pairs { background: rgba(45,206,137,0.1); }
+.tile-pairs { background: rgba(245,158,11,0.18); }
+body.app-light .tile-pairs { background: rgba(245,158,11,0.12); }
