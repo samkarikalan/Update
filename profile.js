@@ -62,13 +62,29 @@ function updateProfileBtn() {
     if (tileAvatar) { tileAvatar.src = src; tileAvatar.style.display = 'block'; }
     if (tileIcon)   tileIcon.style.display = 'none';
     if (tileName)   tileName.textContent = player.name;
-    // Club rating from master DB cache
+
+    // Show club rating + today session stats from local cache
     const master = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
     const hp = master.find(function(h) {
       return h.displayName && h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase();
     });
     const clubRating = parseFloat(hp && hp.clubRating) || 1.0;
-    if (tileRating) tileRating.textContent = 'Club ' + clubRating.toFixed(1);
+
+    // Today session wins/losses from local storage
+    const lsKey = 'kbrr_sessions_' + player.name.toLowerCase().replace(/\s+/g, '_');
+    const sessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
+    const today = new Date().toISOString().split('T')[0];
+    const todaySession = sessions.find(function(s) { return s.date === today; });
+    const todayWins   = todaySession ? (todaySession.wins   || 0) : 0;
+    const todayLosses = todaySession ? (todaySession.losses || 0) : 0;
+
+    if (tileRating) {
+      if (todaySession) {
+        tileRating.textContent = 'Club ' + clubRating.toFixed(1) + '  ·  W:' + todayWins + ' L:' + todayLosses;
+      } else {
+        tileRating.textContent = 'Club ' + clubRating.toFixed(1);
+      }
+    }
   } else {
     if (tileAvatar) tileAvatar.style.display = 'none';
     if (tileIcon)   { tileIcon.style.display = ''; tileIcon.textContent = '👤'; }
@@ -77,29 +93,7 @@ function updateProfileBtn() {
   }
 }
 
-/* ── End Session from profile drawer ── */
-async function profileEndSession() {
-  const btn     = document.getElementById('profileEndBtn');
-  const btnText = document.getElementById('profileEndBtnText');
 
-  // Show busy state — drawer stays open
-  btn.disabled      = true;
-  btnText.textContent = 'Saving...';
-  btn.style.opacity = '0.7';
-
-  try {
-    await endSession(true);
-    // Close profile drawer after session ended
-    const overlay = document.getElementById('profileOverlay');
-    const drawer  = document.getElementById('profileDrawer');
-    if (overlay) overlay.style.display = 'none';
-    if (drawer)  drawer.classList.remove('open');
-  } catch(e) {
-    btn.disabled        = false;
-    btnText.textContent = 'End Session';
-    btn.style.opacity   = '1';
-  }
-}
 
 /* ── Open drawer ── */
 async function openProfileDrawer() {
@@ -107,43 +101,6 @@ async function openProfileDrawer() {
   const drawer  = document.getElementById('profileDrawer');
   overlay.classList.remove('hidden');
   drawer.classList.add('open');
-
-  // Determine if End Session button should be visible:
-  // — Admin: always
-  // — The player who started the rounds (started_by in live_sessions): always
-  // — Anyone else: hidden
-  const endBtn = document.getElementById('profileEndBtn');
-  if (endBtn) {
-    const isAdmin = (typeof isAdminMode === 'function') && isAdminMode();
-    if (isAdmin) {
-      endBtn.style.display = '';
-    } else {
-      // Check live_sessions for today to see who started rounds
-      try {
-        const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
-        const today = new Date().toISOString().split('T')[0];
-        const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
-        let canEnd = false;
-
-        if (club.id && myPlayer) {
-          const rows = await sbGet('live_sessions',
-            `club_id=eq.${club.id}&date=eq.${today}&order=updated_at.desc&limit=1`);
-          if (rows && rows.length) {
-            const startedBy = rows[0].started_by;
-            // Allow if: name matches started_by, OR started_by not set, OR has local active rounds
-            const nameMatch  = startedBy &&
-              startedBy.trim().toLowerCase() === myPlayer.name.trim().toLowerCase();
-            const hasRounds  = typeof allRounds !== 'undefined' &&
-              allRounds.some(r => (r.games || r).some(g => g.winner));
-            canEnd = nameMatch || hasRounds;
-          }
-        }
-        endBtn.style.display = canEnd ? '' : 'none';
-      } catch(e) {
-        endBtn.style.display = 'none';
-      }
-    }
-  }
 
   const player = getMyPlayer();
   if (player) {

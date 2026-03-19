@@ -256,41 +256,7 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
     card.addEventListener('click', () => _openSessionRounds(sessionId));
   }
 
-  // End Session button — admin only, live cards only, never in viewer mode
-  const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
-  if (isLive && !isViewer && typeof isAdminMode === 'function' && isAdminMode()) {
-    const endBtn = document.createElement('button');
-    endBtn.style.cssText = 'width:100%;margin-top:10px;padding:8px;background:#e63757;color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;';
-    endBtn.textContent = '⏹ End Session';
-    endBtn.onclick = async (e) => {
-      e.stopPropagation();
-      if (!confirm('End this session?')) return;
-      endBtn.disabled = true;
-      endBtn.textContent = 'Ending...';
-      try {
-        await dbForceCompleteSession(sessionId);
-        // If this is our local session, clean up local state too
-        const localId = (typeof getMySessionId === 'function') ? getMySessionId() : null;
-        if (localId === sessionId) {
-          if (typeof flushLiveSession === 'function') await flushLiveSession();
-          if (typeof dbReleaseMySession === 'function') await dbReleaseMySession();
-          localStorage.removeItem('schedulerState');
-          localStorage.removeItem('allRounds');
-          localStorage.removeItem('currentRoundIndex');
-          sessionStorage.removeItem('kbrr_session_db_id');
-          // Reload to fully reset all in-memory state and prevent auto-restart
-          location.reload();
-          return;
-        }
-        if (typeof renderDashboard === 'function') renderDashboard();
-      } catch(e) {
-        endBtn.disabled = false;
-        endBtn.textContent = '⏹ End Session';
-        alert('Failed to end session.');
-      }
-    };
-    card.appendChild(endBtn);
-  }
+
 
   return card;
 }
