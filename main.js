@@ -23,11 +23,15 @@ function applyMode(mode) {
   // Body class for organiser scrollable tabs (kept for any CSS that uses it)
   document.body.classList.toggle('organiser-tabs', mode === 'organiser');
 
-  // Update Settings mode switch card buttons
-  var cardViewer    = document.getElementById('modeCardViewer');
-  var cardOrganiser = document.getElementById('modeCardOrganiser');
-  if (cardViewer)    cardViewer.classList.toggle('active',    mode === 'viewer');
-  if (cardOrganiser) cardOrganiser.classList.toggle('active', mode === 'organiser');
+  // Sync mode pill buttons in top bar and home bar
+  ['modePillViewer', 'homePillViewer'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('active', mode === 'viewer');
+  });
+  ['modePillOrganiser', 'homePillOrganiser'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('active', mode === 'organiser');
+  });
 
   // Apply viewer restrictions
   if (mode === 'viewer') {
@@ -46,7 +50,7 @@ function setViewerMode(isViewer) {
   if (isViewer) {
     document.body.classList.add('viewer-mode');
     // Ensure we're on the club tab by default
-    if (typeof settingsShowTab === 'function') settingsShowTab('club');
+    // settings no longer has tabs
   } else {
     document.body.classList.remove('viewer-mode');
   }

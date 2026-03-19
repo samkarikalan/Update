@@ -67,10 +67,6 @@ function showHomeScreen() {
 
   homeEl.style.display = 'flex';
 
-  // Sync flag
-  var mainFlag = document.getElementById('currentFlag');
-  var homeFlag = document.getElementById('homeFlagDisplay');
-  if (mainFlag && homeFlag) homeFlag.textContent = mainFlag.textContent;
 
   // Status bar
   var isOrganiser = (typeof appMode !== 'undefined') && appMode === 'organiser';
@@ -320,18 +316,6 @@ function homeRefreshSummaryTile() {
   });
 }
 
-/* ── Language picker on home screen ── */
-function homeLangToggle() {
-  var m = document.getElementById('homeLangMenu');
-  if (m) m.classList.toggle('show');
-}
-
-function homeLangSelect(lang, flag) {
-  var homeFlag = document.getElementById('homeFlagDisplay');
-  var mainFlag = document.getElementById('currentFlag');
-  if (homeFlag) homeFlag.textContent = flag;
-  if (mainFlag) mainFlag.textContent = flag;
-  if (typeof setLanguage === 'function') setLanguage(lang);
-  var m = document.getElementById('homeLangMenu');
-  if (m) m.classList.remove('show');
-}
+/* Language is now handled in Settings page */
+function homeLangToggle() {}
+function homeLangSelect() {}

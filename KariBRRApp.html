@@ -69,17 +69,9 @@
 
     <!-- Top bar -->
     <div class="home-topbar">
-      <div class="lang-wrapper">
-        <button class="lang-btn" onclick="homeLangToggle()" aria-label="Language">
-          <span id="homeFlagDisplay">🇺🇸</span>
-        </button>
-        <div class="lang-menu" id="homeLangMenu">
-          <div onclick="homeLangSelect('en','🇺🇸')">🇺🇸 English</div>
-          <div onclick="homeLangSelect('jp','🇯🇵')">🇯🇵 日本語</div>
-          <div onclick="homeLangSelect('kr','🇰🇷')">🇰🇷 한국어</div>
-          <div onclick="homeLangSelect('zh','🇨🇳')">🇨🇳 中文</div>
-          <div onclick="homeLangSelect('vi','🇻🇳')">🇻🇳 Tiếng Việt</div>
-        </div>
+      <div class="mode-pill" id="homeModeПill">
+        <button class="mode-pill-btn" id="homePillViewer"  onclick="switchMode('viewer')">👁 Viewer</button>
+        <button class="mode-pill-btn active" id="homePillOrganiser" onclick="switchMode('organiser')">🏆 Organiser</button>
       </div>
       <span class="home-logo">🏸 CLUB Scheduler</span>
       <button class="profile-btn" onclick="openProfileDrawer()" aria-label="Profile">
@@ -208,17 +200,9 @@
   <!--           TOP BAR             -->
   <!-- ============================= -->
   <div class="top-bar">
-    <div class="lang-wrapper">
-      <button class="lang-btn" onclick="toggleLangMenu()" aria-label="Language">
-        <span id="currentFlag">🇺🇸</span>
-      </button>
-      <div class="lang-menu" id="langMenu">
-        <div data-lang="en" data-flag="🇺🇸">🇺🇸 English</div>
-        <div data-lang="jp" data-flag="🇯🇵">🇯🇵 日本語</div>
-        <div data-lang="kr" data-flag="🇰🇷">🇰🇷 한국어</div>
-        <div data-lang="zh" data-flag="🇨🇳">🇨🇳 中文</div>
-        <div data-lang="vi" data-flag="🇻🇳">🇻🇳 Tiếng Việt</div>
-      </div>
+    <div class="mode-pill" id="modePill">
+      <button class="mode-pill-btn" id="modePillViewer"  onclick="switchMode('viewer')">👁 Viewer</button>
+      <button class="mode-pill-btn active" id="modePillOrganiser" onclick="switchMode('organiser')">🏆 Organiser</button>
     </div>
     <span class="app-logo-premium">CLUB Scheduler</span>
     <button class="profile-btn" id="profileBtn" onclick="openProfileDrawer()" aria-label="Profile" title="My Profile">
@@ -243,137 +227,63 @@
   <!--         SETTINGS PAGE         -->
   <!-- ============================= -->
   <div id="settingsPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">⚙️ Settings</span></div>
-    <div class="settings-wrap">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+      <span class="page-back-title">⚙️ Settings</span>
+    </div>
+    <div class="pref-wrap">
 
-      <!-- Mode switch card -->
-      <div class="settings-card mode-switch-card" id="settingsModeSwitchCard">
-        <div class="mode-switch-card-label">Current Mode</div>
-        <div class="mode-switch-card-row">
-          <button class="mode-switch-card-btn viewer" id="modeCardViewer" onclick="switchMode('viewer')">
-            <span>👁</span> Viewer
-          </button>
-          <button class="mode-switch-card-btn organiser" id="modeCardOrganiser" onclick="switchMode('organiser')">
-            <img src="win-cup.png" style="width:18px;height:18px;object-fit:contain;vertical-align:middle"> Organiser
-          </button>
+      <!-- APPEARANCE -->
+      <div class="pref-section-label">Appearance</div>
+      <div class="pref-card">
+        <div class="pref-row">
+          <span class="pref-row-label">Theme</span>
+          <div class="pref-pill-group">
+            <button class="pref-pill active" id="theme_light" onclick="setTheme('light')" data-i18n="light">Light</button>
+            <button class="pref-pill" id="theme_dark" onclick="setTheme('dark')" data-i18n="dark">Dark</button>
+          </div>
+        </div>
+        <div class="pref-divider"></div>
+        <div class="pref-row">
+          <span class="pref-row-label">Font Size</span>
+          <div class="pref-pill-group">
+            <button class="pref-pill active" id="font_small" onclick="setFontSize('small')" style="font-size:0.78rem" data-i18n="small">S</button>
+            <button class="pref-pill" id="font_medium" onclick="setFontSize('medium')" style="font-size:0.9rem" data-i18n="medium">M</button>
+            <button class="pref-pill" id="font_large" onclick="setFontSize('large')" style="font-size:1rem" data-i18n="large">L</button>
+          </div>
         </div>
       </div>
 
-      <!-- Settings card with 2 tabs: Club / General -->
-      <div class="settings-card" style="padding:0;overflow:hidden">
-
-        <!-- Tab buttons -->
-        <div class="newImport-subtabs" style="border-bottom:1px solid var(--border);margin:0;padding:4px 4px 0">
-          <button class="newImport-subtab-btn active" id="settingsTabClubBtn"
-                  onclick="settingsShowTab('club')">🏢 Club</button>
-          <button class="newImport-subtab-btn" id="settingsTabGeneralBtn"
-                  onclick="settingsShowTab('general')">General</button>
+      <!-- LANGUAGE -->
+      <div class="pref-section-label">Language</div>
+      <div class="pref-card">
+        <div class="pref-row pref-row-tap" onclick="settingsToggleLangPicker()">
+          <span class="pref-row-label">Language</span>
+          <span class="pref-row-value" id="settingsLangValue">🇺🇸 English</span>
+          <span class="pref-row-chevron">›</span>
         </div>
-
-        <!-- CLUB tab -->
-        <div id="settingsTabClub" class="settings-tab-content">
-
-          <!-- Club Management — organiser mode only -->
-          <div id="settingsClubMgmtCard" style="padding:0;overflow:hidden">
-            <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
-              🏢 Club Management <span id="clubMgmtArrow">▶</span>
-            </button>
-            <div id="clubMgmtPanel" style="display:none;padding:14px">
-
-              <!-- ── CREATE CLUB ── -->
-              <div class="manage-section-title">Create New Club</div>
-              <div class="club-row">
-                <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
-              </div>
-              <div class="club-row" style="margin-top:6px">
-                <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
-              </div>
-              <div class="club-row" style="margin-top:6px">
-                <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
-              </div>
-              <div class="club-row" style="margin-top:6px">
-                <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
-              </div>
-              <div id="clubCreateStep1">
-                <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
-              </div>
-              <div id="clubCreateStep2" style="display:none">
-                <div class="club-row" style="margin-top:8px">
-                  <input type="text" id="sbNewClubOtp" class="club-input"
-                         placeholder="Enter 8-digit OTP" maxlength="8"
-                         onkeydown="if(event.key==='Enter')clubCreateVerify()">
-                  <button class="btn-save" onclick="clubCreateVerify()">Verify & Create</button>
-                </div>
-                <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-                  OTP sent to <span id="clubCreateEmailMasked"></span>
-                  · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
-                </div>
-              </div>
-              <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
-              <!-- ── DELETE CLUB ── -->
-              <div class="manage-section-title manage-section-danger" style="margin-top:20px">Delete Club</div>
-              <div class="club-row">
-                <select id="sbDeleteClubSelect" class="club-select">
-                  <option value="">— Select club to delete —</option>
-                </select>
-              </div>
-              <div id="clubDeleteStep1">
-                <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
-              </div>
-              <div id="clubDeleteStep2" style="display:none">
-                <div class="club-row" style="margin-top:8px">
-                  <input type="text" id="sbDeleteOtp" class="club-input"
-                         placeholder="Enter 8-digit OTP" maxlength="8"
-                         onkeydown="if(event.key==='Enter')clubDeleteVerify()">
-                  <button class="btn-clear" onclick="clubDeleteVerify()">Verify & Delete</button>
-                </div>
-                <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-                  OTP sent to <span id="clubDeleteEmailMasked"></span>
-                  · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
-                </div>
-              </div>
-              <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
-            </div>
-          </div>
-
+        <div class="pref-lang-picker" id="settingsLangPicker" style="display:none;">
+          <div class="pref-divider"></div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('en','🇺🇸','English')">🇺🇸 English</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('jp','🇯🇵','日本語')">🇯🇵 日本語</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('kr','🇰🇷','한국어')">🇰🇷 한국어</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('zh','🇨🇳','中文')">🇨🇳 中文</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('vi','🇻🇳','Tiếng Việt')">🇻🇳 Tiếng Việt</div>
         </div>
+      </div>
 
-        <!-- GENERAL tab -->
-        <div id="settingsTabGeneral" class="settings-tab-content" style="display:none">
-
-          <!-- Font sub-section -->
-          <div style="padding:8px 12px 4px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Font</div>
-          <div class="row" style="padding:0 12px 10px">
-            <div class="btn active" id="font_small" onclick="setFontSize('small')"
-                 style="font-size:0.75rem" data-i18n="small"></div>
-            <div class="btn" id="font_medium" onclick="setFontSize('medium')"
-                 style="font-size:1rem" data-i18n="medium"></div>
-            <div class="btn" id="font_large" onclick="setFontSize('large')"
-                 style="font-size:1.25rem" data-i18n="large"></div>
-          </div>
-
-          <div style="height:1px;background:var(--border);margin:0 12px"></div>
-
-          <!-- Theme sub-section -->
-          <div style="padding:8px 12px 4px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Theme</div>
-          <div class="row" style="padding:0 12px 10px">
-            <div class="btn active" id="theme_light" onclick="setTheme('light')" data-i18n="light"></div>
-            <div class="btn" id="theme_dark" onclick="setTheme('dark')" data-i18n="dark"></div>
-          </div>
-
-          <div style="height:1px;background:var(--border);margin:0 12px"></div>
-
-          <!-- Reset sub-section -->
-          <div style="padding:8px 12px 4px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Reset</div>
-          <div class="row" style="padding:0 12px 12px">
-            <div class="btn danger" onclick="showConfirm('confirmResetAll', ResetAll)" data-i18n="resetAll"></div>
-            <div class="btn warn" onclick="showConfirm('confirmResetGames', resetRounds)" data-i18n="resetExcept"></div>
-          </div>
-
+      <!-- RESET -->
+      <div class="pref-section-label">Reset</div>
+      <div class="pref-card">
+        <div class="pref-row pref-row-tap pref-row-danger" onclick="showConfirm('confirmResetAll', ResetAll)">
+          <span class="pref-row-label" data-i18n="resetAll">Reset All</span>
+          <span class="pref-row-chevron">›</span>
         </div>
-
+        <div class="pref-divider"></div>
+        <div class="pref-row pref-row-tap pref-row-warn" onclick="showConfirm('confirmResetGames', resetRounds)">
+          <span class="pref-row-label" data-i18n="resetExcept">Reset Rounds Only</span>
+          <span class="pref-row-chevron">›</span>
+        </div>
       </div>
 
     </div>
@@ -486,6 +396,71 @@
         </div>
 
         <div id="vaultFeedback"></div>
+      </div>
+
+      <!-- Club Management — moved from Settings, admin only -->
+      <div class="settings-card" style="padding:0;overflow:hidden;margin-top:10px" id="vaultClubMgmtCard">
+        <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
+          🏢 Club Management <span id="clubMgmtArrow">▶</span>
+        </button>
+        <div id="clubMgmtPanel" style="display:none;padding:14px">
+
+          <!-- CREATE CLUB -->
+          <div class="manage-section-title">Create New Club</div>
+          <div class="club-row">
+            <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
+          </div>
+          <div class="club-row" style="margin-top:6px">
+            <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
+          </div>
+          <div class="club-row" style="margin-top:6px">
+            <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
+          </div>
+          <div class="club-row" style="margin-top:6px">
+            <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
+          </div>
+          <div id="clubCreateStep1">
+            <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
+          </div>
+          <div id="clubCreateStep2" style="display:none">
+            <div class="club-row" style="margin-top:8px">
+              <input type="text" id="sbNewClubOtp" class="club-input"
+                     placeholder="Enter 8-digit OTP" maxlength="8"
+                     onkeydown="if(event.key==='Enter')clubCreateVerify()">
+              <button class="btn-save" onclick="clubCreateVerify()">Verify & Create</button>
+            </div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+              OTP sent to <span id="clubCreateEmailMasked"></span>
+              · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
+            </div>
+          </div>
+          <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+
+          <!-- DELETE CLUB -->
+          <div class="manage-section-title manage-section-danger" style="margin-top:20px">Delete Club</div>
+          <div class="club-row">
+            <select id="sbDeleteClubSelect" class="club-select">
+              <option value="">— Select club to delete —</option>
+            </select>
+          </div>
+          <div id="clubDeleteStep1">
+            <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
+          </div>
+          <div id="clubDeleteStep2" style="display:none">
+            <div class="club-row" style="margin-top:8px">
+              <input type="text" id="sbDeleteOtp" class="club-input"
+                     placeholder="Enter 8-digit OTP" maxlength="8"
+                     onkeydown="if(event.key==='Enter')clubDeleteVerify()">
+              <button class="btn-clear" onclick="clubDeleteVerify()">Verify & Delete</button>
+            </div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+              OTP sent to <span id="clubDeleteEmailMasked"></span>
+              · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
+            </div>
+          </div>
+          <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+
+        </div>
       </div>
 
     </div>

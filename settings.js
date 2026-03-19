@@ -40,33 +40,23 @@ function closeConfirm() {
 
 let currentLang = "en";
 
-function toggleLangMenu() {
-  const menu = document.getElementById('langMenu');
-  const isOpen = menu.style.display === 'block';
-  menu.style.display = isOpen ? 'none' : 'block';
-  // Close on outside click
-  if (!isOpen) {
-    setTimeout(() => {
-      document.addEventListener('click', _closeLangMenu, { once: true, capture: true });
-    }, 10);
-  }
+/* Language picker in Settings */
+function settingsToggleLangPicker() {
+  const picker = document.getElementById('settingsLangPicker');
+  if (picker) picker.style.display = picker.style.display === 'none' ? '' : 'none';
 }
 
-function _closeLangMenu(e) {
-  const wrapper = document.querySelector('.lang-wrapper');
-  if (wrapper && wrapper.contains(e.target)) return;
-  document.getElementById('langMenu').style.display = 'none';
+function settingsSelectLang(lang, flag, name) {
+  const val = document.getElementById('settingsLangValue');
+  if (val) val.textContent = flag + ' ' + name;
+  const picker = document.getElementById('settingsLangPicker');
+  if (picker) picker.style.display = 'none';
+  setLanguage(lang);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.lang-menu div').forEach(item => {
-    item.addEventListener('click', () => {
-      document.getElementById('currentFlag').textContent = item.dataset.flag;
-      setLanguage(item.dataset.lang);
-      document.getElementById('langMenu').style.display = 'none';
-    });
-  });
-});
+/* Keep toggleLangMenu as no-op for any remaining refs */
+function toggleLangMenu() {}
+function _closeLangMenu() {}
 
 
 
@@ -81,31 +71,25 @@ const langFlagMap = {
 /* ===== Theme ===== */
 
 function initLanguage() {
-const savedLang = localStorage.getItem("appLanguage");
-const supportedLangs = ["en", "jp", "kr", "vi"];
- // 2. update flag
-  document.getElementById("currentFlag").textContent =
-    langFlagMap[savedLang] || "🌐";
-  
-if (supportedLangs.includes(savedLang)) {
-setLanguage(savedLang);
-//updateHelpLanguage(savedLang);
-} else {
-const browserLang = navigator.language.toLowerCase();
-if (browserLang.startsWith("ja")) {
-setLanguage("jp");
-//updateHelpLanguage("jp");
-} else if (browserLang.startsWith("ko")) {
-setLanguage("kr");
-//updateHelpLanguage("kr");
-} else if (browserLang.startsWith("vi")) {
-setLanguage("vi");
-//updateHelpLanguage("vi");
-} else {
-setLanguage("en");
-//updateHelpLanguage("en");
-}
-}
+  const savedLang = localStorage.getItem("appLanguage");
+  const supportedLangs = ["en", "jp", "kr", "vi", "zh"];
+  const langNames = { en: "English", jp: "日本語", kr: "한국어", zh: "中文", vi: "Tiếng Việt" };
+
+  const lang = supportedLangs.includes(savedLang) ? savedLang : (() => {
+    const b = navigator.language.toLowerCase();
+    if (b.startsWith("ja")) return "jp";
+    if (b.startsWith("ko")) return "kr";
+    if (b.startsWith("vi")) return "vi";
+    if (b.startsWith("zh")) return "zh";
+    return "en";
+  })();
+
+  // Update settings label
+  const flag = langFlagMap[lang] || "🌐";
+  const val = document.getElementById("settingsLangValue");
+  if (val) val.textContent = flag + " " + (langNames[lang] || lang);
+
+  setLanguage(lang);
 }
 
 function initTheme() {
@@ -152,9 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
 function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem("appLanguage", lang);
-  // Always close the language menu when a language is selected
-  const langMenu = document.getElementById('langMenu');
-  if (langMenu) langMenu.style.display = 'none';
 
   document.querySelectorAll("[id^='lang_']").forEach(btn => {
     btn.classList.remove("active");
