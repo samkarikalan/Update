@@ -43,37 +43,19 @@ async function viewerOpen(sessionId) {
 /* ── Back button ── */
 function viewerGoBack() {
   viewerStopPoll();
-  _vHidePage();
-  if (typeof showPage === 'function') {
-    showPage('dashboardPage', document.getElementById('tabBtnDashboard'));
-  }
+  if (typeof dashSwitchTab === 'function') dashSwitchTab('sessions');
 }
 
 /* ── Show/hide viewerPage only ── */
 function _vShowPage() {
-  // Hide home overlay if open
-  if (typeof homeHideScreen === 'function') homeHideScreen();
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  const vPage = document.getElementById('viewerPage');
-  if (vPage) vPage.style.display = 'block';
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  const vBtn = document.getElementById('tabBtnViewer');
-  if (vBtn) {
-    vBtn.style.display       = '';
-    vBtn.style.pointerEvents = 'auto';
-    vBtn.style.opacity       = '1';
-    vBtn.classList.add('active');
-  }
-  window._vSessionTabPinned = true;
-  if (typeof lastPage !== 'undefined') lastPage = 'dashboardPage';
+  // Viewer content now lives inside dashboardPage Live tab — nothing to navigate
+  // dashSwitchTab('live') is called by _openSessionRounds before viewerOpen()
+  window._vSessionTabPinned = false; // no longer a pinned separate page
 }
 
 function _vHidePage() {
-  const vPage = document.getElementById('viewerPage');
-  if (vPage) vPage.style.display = 'none';
-  const vBtn = document.getElementById('tabBtnViewer');
-  if (vBtn) vBtn.style.display = 'none';
-  // Unpin Session tab
+  // Switch dashboard back to Sessions tab
+  if (typeof dashSwitchTab === 'function') dashSwitchTab('sessions');
   window._vSessionTabPinned = false;
 }
 
@@ -319,8 +301,8 @@ function viewerStartPoll() {
   viewerStopPoll();
   _vPollTimer = setInterval(async () => {
     try {
-      const vPage = document.getElementById('viewerPage');
-      if (!vPage || vPage.style.display === 'none') { viewerStopPoll(); return; }
+      const livePanel = document.getElementById('dashPanelLive');
+      if (!livePanel || livePanel.style.display === 'none') { viewerStopPoll(); return; }
       const rows = await sbGet('sessions',
         `id=eq.${_vSessionId}&select=rounds_data,started_by,created_at,updated_at,status`
       );

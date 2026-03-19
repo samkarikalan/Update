@@ -294,8 +294,29 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
   return card;
 }
 
-/* ── Open rounds view — delegates entirely to viewer.js ── */
+/* ── Inner tab switcher ── */
+function dashSwitchTab(tab) {
+  var sessBtn  = document.getElementById('dashTabSessionsBtn');
+  var liveBtn  = document.getElementById('dashTabLiveBtn');
+  var sessPanel = document.getElementById('dashPanelSessions');
+  var livePanel = document.getElementById('dashPanelLive');
+  if (!sessBtn || !liveBtn || !sessPanel || !livePanel) return;
+
+  var showSessions = (tab === 'sessions');
+  sessBtn.classList.toggle('active', showSessions);
+  liveBtn.classList.toggle('active', !showSessions);
+  sessPanel.style.display = showSessions ? '' : 'none';
+  livePanel.style.display = showSessions ? 'none' : '';
+
+  if (showSessions) {
+    // Stop viewer poll when leaving Live tab
+    if (typeof viewerStopPoll === 'function') viewerStopPoll();
+  }
+}
+
+/* ── Open rounds view — switches to Live tab inline ── */
 function _openSessionRounds(sessionId) {
+  dashSwitchTab('live');
   if (typeof viewerOpen === 'function') viewerOpen(sessionId);
 }
 
