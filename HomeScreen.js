@@ -247,20 +247,22 @@ function stepCourtsDone() {
   homeGo('roundsPage', 'tabBtnRounds');
 }
 
-/* ── Summary tile — calls report() before navigating ── */
+/* ── Summary tile — only active when session has players + rounds ── */
 function homeGoSummary() {
-  var hasRounds = Array.isArray(allRounds) && allRounds.length > 0;
-  if (!hasRounds) return; // tile is dimmed, do nothing
-  if (typeof report === 'function') report();
+  // showPage('summaryPage') already calls report() and renderRounds() internally
   homeGo('summaryPage', 'tabBtnSummary');
 }
 
 /* ── Refresh Summary tile dim state ── */
 function homeRefreshSummaryTile() {
-  var hasRounds = Array.isArray(allRounds) && allRounds.length > 0;
+  var hasData = typeof schedulerState !== 'undefined'
+    && schedulerState.allPlayers
+    && schedulerState.allPlayers.length > 0
+    && Array.isArray(allRounds)
+    && allRounds.length > 0;
   document.querySelectorAll('.home-tile-summary').forEach(function(tile) {
-    tile.style.opacity      = hasRounds ? '1' : '0.4';
-    tile.style.pointerEvents = hasRounds ? '' : 'none';
+    tile.style.opacity       = hasData ? '1' : '0.4';
+    tile.style.pointerEvents = hasData ? '' : 'none';
   });
 }
 
