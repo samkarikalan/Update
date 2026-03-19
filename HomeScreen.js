@@ -257,10 +257,21 @@ function stepCourtsDone() {
   homeGo('roundsPage', 'tabBtnRounds');
 }
 
-/* ── Summary tile — only active when session has players + rounds ── */
+/* ── Summary tile — tracks origin so back button is correct ── */
 function homeGoSummary() {
-  // showPage('summaryPage') already calls report() and renderRounds() internally
   homeGo('summaryPage', 'tabBtnSummary');
+  _showSummaryBackBtn(false);
+}
+
+function roundsGoSummary() {
+  homeHideScreen();
+  showPage('summaryPage', null);
+  _showSummaryBackBtn(true);
+}
+
+function _showSummaryBackBtn(showRounds) {
+  var btn = document.getElementById('summaryBackRounds');
+  if (btn) btn.style.display = showRounds ? '' : 'none';
 }
 
 /* ── Refresh Summary tile — always active since it fetches from Supabase ── */

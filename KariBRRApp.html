@@ -592,12 +592,12 @@
 
         <!-- Quick nav tiles -->
         <div class="rounds-nav-tiles">
-          <div class="rounds-nav-tile" onclick="homeBack()">
+          <div class="rounds-nav-tile" onclick="homeGo('playersPage','tabBtnPlayers')">
             <div class="rounds-nav-icon tile-players">👥</div>
             <div class="rounds-nav-name">Players</div>
             <div class="rounds-nav-sub">Add · Remove</div>
           </div>
-          <div class="rounds-nav-tile" onclick="homeGoSummary()">
+          <div class="rounds-nav-tile" onclick="roundsGoSummary()">
             <div class="rounds-nav-icon tile-summary">📊</div>
             <div class="rounds-nav-name">Summary</div>
             <div class="rounds-nav-sub">Session stats</div>
@@ -613,7 +613,7 @@
   <!--         SUMMARY PAGE          -->
   <!-- ============================= -->
   <div id="summaryPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">📊 Summary</span></div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><button class="page-back-btn" onclick="showPage('roundsPage',null)" id="summaryBackRounds" style="display:none;">‹ Rounds</button><span class="page-back-title">📊 Summary</span></div>
     <div class="exp_btn" onclick="exportBRR2HTML()" data-i18n="exporthtml">📄</div>
     <div id="reportContainer"></div>
     <div id="export"></div>
