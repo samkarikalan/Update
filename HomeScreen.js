@@ -7,6 +7,7 @@
 
 /* ── State ── */
 var _stepCourtsSet = false;
+var _navSource = 'home'; // 'home' | 'rounds' — tracks where Players/Summary was opened from
 var _stepPairsSeen = false;
 var _homeCurrentStep = 0;
 
@@ -121,8 +122,10 @@ function homeHideScreen() {
 function homeGo(pageId, tabId) {
   if (!pageId) return;
   homeHideScreen();
+  if (pageId === 'playersPage' || pageId === 'summaryPage') _navSource = 'home';
   var tabEl = tabId ? document.getElementById(tabId) : null;
   showPage(pageId, tabEl);
+  _updateDynamicBackBtns(pageId);
 }
 
 /* ── Return from an inner page (Players/Rounds update stepper) ── */
@@ -257,21 +260,47 @@ function stepCourtsDone() {
   homeGo('roundsPage', 'tabBtnRounds');
 }
 
-/* ── Summary tile — tracks origin so back button is correct ── */
+/* ── Summary navigation ── */
 function homeGoSummary() {
+  _navSource = 'home';
   homeGo('summaryPage', 'tabBtnSummary');
-  _showSummaryBackBtn(false);
 }
 
 function roundsGoSummary() {
+  _navSource = 'rounds';
   homeHideScreen();
   showPage('summaryPage', null);
-  _showSummaryBackBtn(true);
+  _updateDynamicBackBtns('summaryPage');
 }
 
-function _showSummaryBackBtn(showRounds) {
-  var btn = document.getElementById('summaryBackRounds');
-  if (btn) btn.style.display = showRounds ? '' : 'none';
+/* ── Players navigation from Rounds ── */
+function roundsGoPlayers() {
+  _navSource = 'rounds';
+  homeHideScreen();
+  showPage('playersPage', null);
+  _updateDynamicBackBtns('playersPage');
+}
+
+/* ── Update dynamic back button labels ── */
+function _updateDynamicBackBtns(pageId) {
+  var label = _navSource === 'rounds' ? '‹ Rounds' : '‹ Home';
+  if (pageId === 'playersPage') {
+    var btn = document.getElementById('playersBackBtn');
+    if (btn) btn.textContent = label;
+  }
+  if (pageId === 'summaryPage') {
+    var btn = document.getElementById('summaryBackBtn');
+    if (btn) btn.textContent = label;
+  }
+}
+
+/* ── Back navigation — goes to correct origin ── */
+function navBack() {
+  if (_navSource === 'rounds') {
+    showPage('roundsPage', null);
+  } else {
+    showHomeScreen();
+  }
 }
 
 /* ── Refresh Summary tile — always active since it fetches from Supabase ── */

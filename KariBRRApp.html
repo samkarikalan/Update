@@ -486,7 +486,7 @@
   </div>
 
  <div id="playersPage" class="page">
-  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">👥 Players</span></div>
+  <div class="page-back-bar"><button class="page-back-btn" id="playersBackBtn" onclick="navBack()">‹ Home</button><span class="page-back-title">👥 Players</span></div>
 
   <div class="card browse-card" onclick="newImportShowModal()">
     <div class="browse-left">
@@ -592,7 +592,7 @@
 
         <!-- Quick nav tiles -->
         <div class="rounds-nav-tiles">
-          <div class="rounds-nav-tile" onclick="homeGo('playersPage','tabBtnPlayers')">
+          <div class="rounds-nav-tile" onclick="roundsGoPlayers()">
             <div class="rounds-nav-icon tile-players">👥</div>
             <div class="rounds-nav-name">Players</div>
             <div class="rounds-nav-sub">Add · Remove</div>
@@ -613,7 +613,7 @@
   <!--         SUMMARY PAGE          -->
   <!-- ============================= -->
   <div id="summaryPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><button class="page-back-btn" onclick="showPage('roundsPage',null)" id="summaryBackRounds" style="display:none;">‹ Rounds</button><span class="page-back-title">📊 Summary</span></div>
+  <div class="page-back-bar"><button class="page-back-btn" id="summaryBackBtn" onclick="navBack()">‹ Home</button><span class="page-back-title">📊 Summary</span></div>
     <div class="exp_btn" onclick="exportBRR2HTML()" data-i18n="exporthtml">📄</div>
     <div id="reportContainer"></div>
     <div id="export"></div>
