@@ -7,12 +7,12 @@ function renderRounds() {
   const exportRoot = document.getElementById('export');
   exportRoot.innerHTML = '';
 
-  const debugDiv = document.createElement('div');
-  debugDiv.style.cssText = 'font-size:0.75rem;color:var(--muted);padding:6px 4px;';
-  debugDiv.textContent = `allRounds: ${allRounds.length} total, ${allRounds.slice(0,-1).length} completed`;
-  exportRoot.appendChild(debugDiv);
+  // Show all rounds that have at least one scored game, or all rounds if session ended
+  const roundsToShow = allRounds.filter(r =>
+    r && r.games && r.games.some(g => g.winner)
+  );
 
-  allRounds.slice(0, -1).forEach((data) => {
+  roundsToShow.forEach((data) => {
     /* ───────── Round Container ───────── */
     const roundDiv = document.createElement('div');
     roundDiv.className = 'export-round';
@@ -40,19 +40,11 @@ function renderRounds() {
       rightTeam.className = 'export-team';
       rightTeam.innerHTML = game.pair2.join('<br>');
 
-      // ✅ Add 🏆 to the winning team
-      if (game.winners && Array.isArray(game.winners)) {
-        const leftWins = game.pair1.filter(p => game.winners.includes(p)).length;
-        const rightWins = game.pair2.filter(p => game.winners.includes(p)).length;
-
-       if (leftWins > rightWins) {
-          leftTeam.classList.add('winner');
-        } else if (rightWins > leftWins) {
-          rightTeam.classList.add('winner');
-        } else if (leftWins > 0 && leftWins === rightWins) {
-          leftTeam.classList.add('winner');
-          rightTeam.classList.add('winner');
-        }
+      // Mark winning team using game.winner ('L' or 'R')
+      if (game.winner === 'L') {
+        leftTeam.classList.add('winner');
+      } else if (game.winner === 'R') {
+        rightTeam.classList.add('winner');
       }
 
       match.append(leftTeam, vs, rightTeam);
