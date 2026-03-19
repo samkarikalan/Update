@@ -608,25 +608,19 @@
       <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
       <span class="page-back-title">📡 Dashboard</span>
     </div>
-    <!-- Dashboard inner tabs -->
-    <div class="dash-inner-tabs">
-      <button class="dash-inner-tab active" id="dashTabSessionsBtn" onclick="dashSwitchTab('sessions')">📋 Sessions</button>
-      <button class="dash-inner-tab"        id="dashTabLiveBtn"     onclick="dashSwitchTab('live')">🏸 Live</button>
-    </div>
-    <!-- Sessions panel -->
-    <div id="dashPanelSessions">
-      <div id="dashboardContainer" class="dashboard-container">
-        <div class="dashboard-loading"><div class="help-spinner"></div></div>
-      </div>
-    </div>
-    <!-- Live panel (viewer content moves here) -->
-    <div id="dashPanelLive" style="display:none;">
-      <div id="viewerResults"></div>
+    <div id="dashboardContainer" class="dashboard-container">
+      <div class="dashboard-loading"><div class="help-spinner"></div></div>
     </div>
   </div>
 
-  <!-- viewerPage merged into dashboardPage Live tab -->
-  <div id="viewerPage" style="display:none;"></div>
+  <!-- VIEWER PAGE — session detail -->
+  <div id="viewerPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
+      <button class="page-back-btn" onclick="viewerGoBack()">📡 Dashboard</button>
+    </div>
+    <div id="viewerResults"></div>
+  </div>
 
   <!-- ============================= -->
   <!--           HELP PAGE           -->
