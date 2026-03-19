@@ -399,9 +399,6 @@ function showPage(pageID, el) {
   if (pageID === 'playersPage') {
     const anchor = document.getElementById('playersSlotAnchor');
     if (slot && anchor) { anchor.appendChild(slot); slot.style.display = 'block'; }
-  } else if (pageID === 'roundsPage') {
-    const anchor = document.getElementById('roundsSlotAnchor');
-    if (slot && anchor) { anchor.appendChild(slot); slot.style.display = 'block'; }
   } else {
     // Hide slot when on any other page (settings, summary, help)
     if (slot) slot.style.display = 'none';
