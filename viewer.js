@@ -43,19 +43,18 @@ async function viewerOpen(sessionId) {
 /* ── Back button ── */
 function viewerGoBack() {
   viewerStopPoll();
-  if (typeof dashSwitchTab === 'function') dashSwitchTab('sessions');
+  if (typeof sessionSheetDismiss === 'function') sessionSheetDismiss();
 }
 
 /* ── Show/hide viewerPage only ── */
 function _vShowPage() {
-  // Viewer content now lives inside dashboardPage Live tab — nothing to navigate
-  // dashSwitchTab('live') is called by _openSessionRounds before viewerOpen()
-  window._vSessionTabPinned = false; // no longer a pinned separate page
+  // Viewer content renders inside #viewerResults which lives in the bottom sheet.
+  // sessionSheetOpen() is called by _openSessionRounds before viewerOpen().
+  window._vSessionTabPinned = false;
 }
 
 function _vHidePage() {
-  // Switch dashboard back to Sessions tab
-  if (typeof dashSwitchTab === 'function') dashSwitchTab('sessions');
+  if (typeof sessionSheetDismiss === 'function') sessionSheetDismiss();
   window._vSessionTabPinned = false;
 }
 
@@ -301,8 +300,8 @@ function viewerStartPoll() {
   viewerStopPoll();
   _vPollTimer = setInterval(async () => {
     try {
-      const livePanel = document.getElementById('dashPanelLive');
-      if (!livePanel || livePanel.style.display === 'none') { viewerStopPoll(); return; }
+      const sheet = document.getElementById('sessionSheet');
+      if (!sheet || !sheet.classList.contains('open')) { viewerStopPoll(); return; }
       const rows = await sbGet('sessions',
         `id=eq.${_vSessionId}&select=rounds_data,started_by,created_at,updated_at,status`
       );

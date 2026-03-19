@@ -608,20 +608,28 @@
       <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
       <span class="page-back-title">📡 Dashboard</span>
     </div>
-    <!-- Dashboard inner tabs -->
-    <div class="dash-inner-tabs">
-      <button class="dash-inner-tab active" id="dashTabSessionsBtn" onclick="dashSwitchTab('sessions')">📋 Sessions</button>
-      <button class="dash-inner-tab"        id="dashTabLiveBtn"     onclick="dashSwitchTab('live')">🏸 Live</button>
+    <div id="dashboardContainer" class="dashboard-container">
+      <div class="dashboard-loading"><div class="help-spinner"></div></div>
     </div>
-    <!-- Sessions panel -->
-    <div id="dashPanelSessions">
-      <div id="dashboardContainer" class="dashboard-container">
-        <div class="dashboard-loading"><div class="help-spinner"></div></div>
+  </div>
+
+  <!-- SESSION BOTTOM SHEET -->
+  <div id="sessionSheet" class="session-sheet-overlay" style="display:none;" onclick="sessionSheetClose(event)">
+    <div class="session-sheet">
+      <!-- Sheet handle + close -->
+      <div class="session-sheet-header">
+        <div class="session-sheet-handle"></div>
+        <button class="session-sheet-close" onclick="sessionSheetDismiss()">✕</button>
       </div>
-    </div>
-    <!-- Live panel (viewer content moves here) -->
-    <div id="dashPanelLive" style="display:none;">
-      <div id="viewerResults"></div>
+      <!-- Live / Summary subtabs -->
+      <div class="session-sheet-tabs">
+        <button class="session-sheet-tab active" id="sheetTabLive"    onclick="sheetSwitchTab('live')">🏸 Live</button>
+        <button class="session-sheet-tab"        id="sheetTabSummary" onclick="sheetSwitchTab('summary')">📊 Summary</button>
+      </div>
+      <!-- Content area -->
+      <div class="session-sheet-body">
+        <div id="viewerResults"></div>
+      </div>
     </div>
   </div>
 
