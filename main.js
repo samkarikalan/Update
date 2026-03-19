@@ -118,8 +118,11 @@ function openModeSwitcher() {
 function switchMode(mode) {
   const overlay = document.getElementById('modeSheetOverlay');
   if (overlay) overlay.remove();
-  applyMode(mode);
+  appMode = mode;
   sessionStorage.setItem('appMode', mode);
+  applyMode(mode);
+  // Refresh home screen to reflect new mode (flows, stepper, status)
+  if (typeof showHomeScreen === 'function') showHomeScreen();
 }
 
 function initModeOnLoad() {
