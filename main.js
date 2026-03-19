@@ -349,7 +349,7 @@ function updateRoundsPageAccess() {
   roundsTab.setAttribute('aria-disabled', block);
 
   if (block && isPageVisible('roundsPage')) {
-    showPage('playersPage', document.getElementById('tabBtnPlayers'));
+    showPage('playersPage', null);
   }
 }
 
@@ -366,7 +366,7 @@ function updateSummaryPageAccess() {
   summaryTab.setAttribute('aria-disabled', block);
 
   if (block && isPageVisible('summaryPage')) {
-    showPage('playersPage', document.getElementById('tabBtnPlayers'));
+    showPage('playersPage', null);
   }
 }
 
@@ -394,14 +394,15 @@ function showPage(pageID, el) {
   // Sync all rating badges on the newly visible page
   syncRatings();
 
-  // ── Move shared player slot to the active page ──
-  const slot = document.getElementById('sharedPlayerSlot');
+  // Players page — update list on open
   if (pageID === 'playersPage') {
-    const anchor = document.getElementById('playersSlotAnchor');
-    if (slot && anchor) { anchor.appendChild(slot); slot.style.display = 'block'; }
-  } else {
-    // Hide slot when on any other page (settings, summary, help)
-    if (slot) slot.style.display = 'none';
+    if (typeof updatePlayerList === 'function') updatePlayerList();
+  }
+
+  // Fixed Pairs page — refresh selectors on open
+  if (pageID === 'fixedPairsPage') {
+    if (typeof updateFixedPairSelectors === 'function') updateFixedPairSelectors();
+    if (typeof renderFixedPairs === 'function') renderFixedPairs();
   }
 
   // ➜ Additional action when roundsPage is opened

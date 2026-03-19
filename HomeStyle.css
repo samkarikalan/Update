@@ -416,3 +416,6 @@ body.app-light .tile-players { background: rgba(108,99,255,0.1); }
   transition: background 0.15s, color 0.15s;
 }
 .step-card-skip:hover { background: var(--surface2); color: var(--text); }
+
+.tile-pairs { background: rgba(45,206,137,0.15); }
+body.app-light .tile-pairs { background: rgba(45,206,137,0.1); }

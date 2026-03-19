@@ -172,6 +172,11 @@
         <div class="home-tile-icon tile-players">👥</div>
         <div class="home-tile-name">Players</div>
         <div class="home-tile-sub">Add · Remove</div>
+      <div class="home-tile home-tile-org" onclick="homeGo('fixedPairsPage','tabBtnFixedPairs')">
+        <div class="home-tile-icon tile-pairs">🤝</div>
+        <div class="home-tile-name">Fixed Pairs</div>
+        <div class="home-tile-sub">Always together</div>
+      </div>
       </div>
       <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
         <div class="home-tile-icon">📡</div>
@@ -227,6 +232,7 @@
   <!-- ============================= -->
   <!-- Ghost IDs — tab bar removed, navigation via home screen only -->
   <span id="tabBtnVault"     style="display:none"></span>
+  <span id="tabBtnFixedPairs" style="display:none"></span>
   <span id="tabBtnPlayers"   style="display:none"></span>
   <span id="tabBtnRounds"    style="display:none"></span>
   <span id="tabBtnSummary"   style="display:none"></span>
@@ -496,22 +502,19 @@
     <div class="browse-arrow">›</div>
   </div>
 
-
-
-  <!-- sharedPlayerSlot moves here when players tab active -->
-  <div id="playersSlotAnchor"></div>
-
-</div>
-
-<!-- SHARED PLAYER SLOT — starts inside playersSlotAnchor via JS on load -->
-<div id="sharedPlayerSlot" style="display:none">
   <div class="card" id="playerListCard">
     <div id="playerList" class="player-list"></div>
   </div>
+
+</div>
+
+<!-- FIXED PAIRS PAGE -->
+<div id="fixedPairsPage" class="page" style="display:none;">
+  <div class="page-back-bar"><button class="page-back-btn" id="fixedPairsBackBtn" onclick="navBack()">‹ Home</button><span class="page-back-title">🤝 Fixed Pairs</span></div>
+
   <div class="card" id="fixedPairsCard">
     <span class="browse-title" data-i18n="fixedPairs"></span>
 
-    <!-- Custom icon pickers -->
     <div class="fp-picker-row">
       <div class="fp-picker-field" id="fpField1" onclick="fpTogglePicker(1)">
         <div class="fp-avatar-placeholder" id="fpAvatar1"></div>

@@ -21,7 +21,7 @@ var STEP_DEFS = [
       return n + ' player' + (n !== 1 ? 's' : '') + ' selected';
     },
     isDone: function() { return schedulerState.activeplayers.length >= 4; },
-    go: function() { homeGo('playersPage', 'tabBtnPlayers'); }
+    go: function() { homeGo('fixedPairsPage', 'tabBtnFixedPairs'); }
   },
   {
     icon: '🤝',
@@ -122,7 +122,7 @@ function homeHideScreen() {
 function homeGo(pageId, tabId) {
   if (!pageId) return;
   homeHideScreen();
-  if (pageId === 'playersPage' || pageId === 'summaryPage') _navSource = 'home';
+  _navSource = 'home';
   var tabEl = tabId ? document.getElementById(tabId) : null;
   showPage(pageId, tabEl);
   _updateDynamicBackBtns(pageId);
@@ -281,15 +281,24 @@ function roundsGoPlayers() {
   _updateDynamicBackBtns('playersPage');
 }
 
+function roundsGoFixedPairs() {
+  _navSource = 'rounds';
+  homeHideScreen();
+  showPage('fixedPairsPage', null);
+  _updateDynamicBackBtns('fixedPairsPage');
+}
+
 /* ── Update dynamic back button labels ── */
 function _updateDynamicBackBtns(pageId) {
   var label = _navSource === 'rounds' ? '‹ Rounds' : '‹ Home';
-  if (pageId === 'playersPage') {
-    var btn = document.getElementById('playersBackBtn');
-    if (btn) btn.textContent = label;
-  }
-  if (pageId === 'summaryPage') {
-    var btn = document.getElementById('summaryBackBtn');
+  var ids = {
+    playersPage:    'playersBackBtn',
+    summaryPage:    'summaryBackBtn',
+    fixedPairsPage: 'fixedPairsBackBtn'
+  };
+  var btnId = ids[pageId];
+  if (btnId) {
+    var btn = document.getElementById(btnId);
     if (btn) btn.textContent = label;
   }
 }

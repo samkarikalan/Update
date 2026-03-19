@@ -443,8 +443,7 @@ function addPlayersFromInputUI() {
 
   hideImportModal();
   newImportState.selectedPlayers = [];
-  const playersBtn = document.querySelector('.tab-btn[onclick*="playersPage"]');
-  showPage('playersPage', playersBtn);
+  showPage('playersPage', null);
   updatePlayerList();
   syncRatings();
 
