@@ -634,3 +634,5 @@ body.app-light .tile-pairs { background: rgba(245,158,11,0.12); }
   color: var(--text);
   pointer-events: none;
 }
+
+.tile-profile { background: var(--surface2); font-size: 1.6rem; }

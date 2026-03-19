@@ -191,6 +191,14 @@
         <div class="home-tile-name">Summary</div>
         <div class="home-tile-sub">Session stats</div>
       </div>
+      <div class="home-tile" id="homeTileProfile" onclick="openProfileDrawer()">
+        <div class="home-tile-icon tile-profile">
+          <img id="homeTileAvatar" src="male.png" style="width:28px;height:28px;border-radius:50%;display:none;">
+          <span id="homeTileIcon">👤</span>
+        </div>
+        <div class="home-tile-name" id="homeTileName">My Profile</div>
+        <div class="home-tile-sub" id="homeTileRating">Not selected</div>
+      </div>
     </div>
 
     <button class="home-help-btn" onclick="homeGo('helpPage',null)">❓ Help &amp; Guide</button>
@@ -834,12 +842,6 @@
         <div id="pcLosses" class="profile-stat-value losses">—</div>
         <div class="profile-stat-label">All-time Losses</div>
       </div>
-    </div>
-
-    <!-- Recent Sessions -->
-    <div class="profile-sessions-title">Recent Sessions</div>
-    <div id="pcSessions" class="profile-sessions-list">
-      <div class="profile-sessions-loading">Loading...</div>
     </div>
 
     <!-- End Session button -->

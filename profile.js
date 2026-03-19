@@ -34,7 +34,7 @@ function updateProfileBtn() {
   const player = getMyPlayer();
   const src = player ? (player.gender === 'Female' ? 'female.png' : 'male.png') : null;
 
-  // Update all profile buttons (main top bar + home overlay)
+  // Update profile buttons (main top bar + home overlay)
   [
     { avatar: 'profileBtnAvatar',  icon: 'profileBtnIcon'  },
     { avatar: 'homeProfileAvatar', icon: 'homeProfileIcon' },
@@ -51,6 +51,30 @@ function updateProfileBtn() {
       iconEl.style.display   = 'block';
     }
   });
+
+  // Update home profile tile
+  const tileAvatar = document.getElementById('homeTileAvatar');
+  const tileIcon   = document.getElementById('homeTileIcon');
+  const tileName   = document.getElementById('homeTileName');
+  const tileRating = document.getElementById('homeTileRating');
+
+  if (player) {
+    if (tileAvatar) { tileAvatar.src = src; tileAvatar.style.display = 'block'; }
+    if (tileIcon)   tileIcon.style.display = 'none';
+    if (tileName)   tileName.textContent = player.name;
+    // Club rating from master DB cache
+    const master = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
+    const hp = master.find(function(h) {
+      return h.displayName && h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase();
+    });
+    const clubRating = parseFloat(hp && hp.clubRating) || 1.0;
+    if (tileRating) tileRating.textContent = 'Club ' + clubRating.toFixed(1);
+  } else {
+    if (tileAvatar) tileAvatar.style.display = 'none';
+    if (tileIcon)   { tileIcon.style.display = ''; tileIcon.textContent = '👤'; }
+    if (tileName)   tileName.textContent = 'My Profile';
+    if (tileRating) tileRating.textContent = 'Not selected';
+  }
 }
 
 /* ── End Session from profile drawer ── */
@@ -413,52 +437,22 @@ async function showProfileCard(player) {
   document.getElementById('pcTier').style.background  = tier.color + '22';
   document.getElementById('pcTier').style.color       = tier.color;
 
-  // Current session stats now computed inside renderSessions
-  document.getElementById('pcWins').textContent    = '…';
-  document.getElementById('pcLosses').textContent  = '…';
-  document.getElementById('pcSessions').innerHTML  =
-    '<div class="profile-sessions-loading">Loading...</div>';
-
-  // Fetch players.sessions + live_sessions in parallel
+  // Fetch wins/losses from DB
+  document.getElementById('pcWins').textContent   = '…';
+  document.getElementById('pcLosses').textContent = '…';
   try {
-    const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
-    const today = new Date().toISOString().split('T')[0];
-
-    const [playerRows, liveRows] = await Promise.all([
-      sbGet('players', `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`),
-      club.id
-        ? sbGet('live_sessions',
-            `player_name=ilike.${encodeURIComponent(player.name)}&club_id=eq.${club.id}&date=eq.${today}`)
-        : Promise.resolve([])
-    ]);
-
-    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
-    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
-
-    // Live session row from DB (visible from any device)
-    const liveRow     = liveRows && liveRows.length ? liveRows[0] : null;
-    const liveMatches = liveRow
-      ? (typeof liveRow.matches === 'string' ? JSON.parse(liveRow.matches) : (liveRow.matches || []))
-      : null;
-
+    const playerRows = await sbGet('players',
+      `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses`);
     if (playerRows && playerRows.length) {
-      const data           = playerRows[0];
-      const remoteSessions = data.sessions || [];
-      const merged         = mergeSessions(localSessions, remoteSessions);
-      document.getElementById('pcWins').textContent   = (data.wins   || 0);
-      document.getElementById('pcLosses').textContent = (data.losses || 0);
-      renderSessions(merged, player.name, liveMatches);
+      document.getElementById('pcWins').textContent   = (playerRows[0].wins   || 0);
+      document.getElementById('pcLosses').textContent = (playerRows[0].losses || 0);
     } else {
       document.getElementById('pcWins').textContent   = '—';
       document.getElementById('pcLosses').textContent = '—';
-      renderSessions(localSessions, player.name, liveMatches);
     }
-  } catch (e) {
-    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
-    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
+  } catch(e) {
     document.getElementById('pcWins').textContent   = '—';
     document.getElementById('pcLosses').textContent = '—';
-    renderSessions(localSessions, player.name, null);
   }
 }
 
