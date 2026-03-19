@@ -69,10 +69,6 @@
 
     <!-- Top bar -->
     <div class="home-topbar">
-      <div class="mode-pill" id="homeModeПill">
-        <button class="mode-pill-btn" id="homePillViewer"  onclick="switchMode('viewer')">👁 Viewer</button>
-        <button class="mode-pill-btn active" id="homePillOrganiser" onclick="switchMode('organiser')">🏆 Organiser</button>
-      </div>
       <span class="home-logo">🏸 CLUB Scheduler</span>
       <button class="profile-btn" onclick="openProfileDrawer()" aria-label="Profile">
         <img id="homeProfileAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
@@ -80,11 +76,16 @@
       </button>
     </div>
 
-    <!-- Club status bar -->
-    <div class="home-status-bar disconnected" id="homeStatusBar">
-      <span class="home-status-dot"></span>
-      <span class="home-status-name" id="homeStatusName">Not connected</span>
-      <span class="home-status-role" id="homeStatusRole"></span>
+    <!-- Combined mode + status bar -->
+    <div class="home-mode-status" id="homeStatusBar">
+      <div class="mode-pill" id="homeModeP">
+        <button class="mode-pill-btn" id="homePillViewer"  onclick="switchMode('viewer')">👁 Viewer</button>
+        <button class="mode-pill-btn active" id="homePillOrganiser" onclick="switchMode('organiser')">🏆 Organiser</button>
+      </div>
+      <div class="home-mode-status-right">
+        <span class="home-status-dot"></span>
+        <span class="home-status-name" id="homeStatusName">Not connected</span>
+      </div>
     </div>
 
     <!-- SESSION STEPPER (organiser) -->
@@ -200,10 +201,6 @@
   <!--           TOP BAR             -->
   <!-- ============================= -->
   <div class="top-bar">
-    <div class="mode-pill" id="modePill">
-      <button class="mode-pill-btn" id="modePillViewer"  onclick="switchMode('viewer')">👁 Viewer</button>
-      <button class="mode-pill-btn active" id="modePillOrganiser" onclick="switchMode('organiser')">🏆 Organiser</button>
-    </div>
     <span class="app-logo-premium">CLUB Scheduler</span>
     <button class="profile-btn" id="profileBtn" onclick="openProfileDrawer()" aria-label="Profile" title="My Profile">
       <img id="profileBtnAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">

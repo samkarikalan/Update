@@ -23,15 +23,11 @@ function applyMode(mode) {
   // Body class for organiser scrollable tabs (kept for any CSS that uses it)
   document.body.classList.toggle('organiser-tabs', mode === 'organiser');
 
-  // Sync mode pill buttons in top bar and home bar
-  ['modePillViewer', 'homePillViewer'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.classList.toggle('active', mode === 'viewer');
-  });
-  ['modePillOrganiser', 'homePillOrganiser'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.classList.toggle('active', mode === 'organiser');
-  });
+  // Sync home mode pill buttons
+  var hpv = document.getElementById('homePillViewer');
+  var hpo = document.getElementById('homePillOrganiser');
+  if (hpv) hpv.classList.toggle('active', mode === 'viewer');
+  if (hpo) hpo.classList.toggle('active', mode === 'organiser');
 
   // Apply viewer restrictions
   if (mode === 'viewer') {

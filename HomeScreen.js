@@ -68,28 +68,23 @@ function showHomeScreen() {
   homeEl.style.display = 'flex';
 
 
-  // Status bar
+  // Mode + status bar
   var isOrganiser = (typeof appMode !== 'undefined') && appMode === 'organiser';
   var statusBar  = document.getElementById('homeStatusBar');
   var statusName = document.getElementById('homeStatusName');
-  var statusRole = document.getElementById('homeStatusRole');
-
   var club   = (typeof getMyClub   === 'function') ? getMyClub()   : null;
   var player = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
   var isAdmin = (typeof isClubAdmin === 'function') ? isClubAdmin() : false;
 
   if (club && club.name) {
-    statusName.textContent = club.name;
-    statusRole.textContent = isAdmin ? 'ADMIN' : (isOrganiser ? 'ORGANISER' : 'VIEWER');
-    statusBar.classList.remove('disconnected');
+    if (statusName) statusName.textContent = (isAdmin ? '★ ' : '') + club.name;
+    if (statusBar)  statusBar.classList.remove('disconnected');
   } else if (player && player.displayName) {
-    statusName.textContent = player.displayName;
-    statusRole.textContent = isOrganiser ? 'ORGANISER' : 'VIEWER';
-    statusBar.classList.remove('disconnected');
+    if (statusName) statusName.textContent = player.displayName;
+    if (statusBar)  statusBar.classList.remove('disconnected');
   } else {
-    statusName.textContent = 'Not connected';
-    statusRole.textContent = '';
-    statusBar.classList.add('disconnected');
+    if (statusName) statusName.textContent = 'Not connected';
+    if (statusBar)  statusBar.classList.add('disconnected');
   }
 
   // Show correct flow
