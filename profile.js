@@ -30,7 +30,7 @@ function ratingTierLabel(r) {
 }
 
 /* ── Update header profile button appearance ── */
-function updateProfileBtn() {
+async function updateProfileBtn() {
   const player = getMyPlayer();
   const src = player ? (player.gender === 'Female' ? 'female.png' : 'male.png') : null;
 
@@ -58,38 +58,54 @@ function updateProfileBtn() {
   const tileName   = document.getElementById('homeTileName');
   const tileRating = document.getElementById('homeTileRating');
 
-  if (player) {
-    if (tileAvatar) { tileAvatar.src = src; tileAvatar.style.display = 'block'; }
-    if (tileIcon)   tileIcon.style.display = 'none';
-    if (tileName)   tileName.textContent = player.name;
+  if (!player) {
+    if (tileAvatar) tileAvatar.style.display = 'none';
+    if (tileIcon)   { tileIcon.style.display = ''; tileIcon.textContent = '👤'; }
+    if (tileName)   tileName.textContent = 'My Profile';
+    if (tileRating) tileRating.textContent = 'Not selected';
+    return;
+  }
 
-    // Show club rating + today session stats from local cache
+  if (tileAvatar) { tileAvatar.src = src; tileAvatar.style.display = 'block'; }
+  if (tileIcon)   tileIcon.style.display = 'none';
+  if (tileName)   tileName.textContent = player.name;
+  if (tileRating) tileRating.textContent = 'Loading...';
+
+  try {
     const master = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
     const hp = master.find(function(h) {
       return h.displayName && h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase();
     });
     const clubRating = parseFloat(hp && hp.clubRating) || 1.0;
 
-    // Today session wins/losses from local storage
-    const lsKey = 'kbrr_sessions_' + player.name.toLowerCase().replace(/\s+/g, '_');
-    const sessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
+    const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
     const today = new Date().toISOString().split('T')[0];
-    const todaySession = sessions.find(function(s) { return s.date === today; });
-    const todayWins   = todaySession ? (todaySession.wins   || 0) : 0;
-    const todayLosses = todaySession ? (todaySession.losses || 0) : 0;
+    let wins = 0, losses = 0, hasSession = false;
 
-    if (tileRating) {
-      if (todaySession) {
-        tileRating.textContent = 'Club ' + clubRating.toFixed(1) + '  ·  W:' + todayWins + ' L:' + todayLosses;
-      } else {
-        tileRating.textContent = 'Club ' + clubRating.toFixed(1);
+    if (club.id) {
+      const liveRows = await sbGet('live_sessions',
+        'player_name=ilike.' + encodeURIComponent(player.name) + '&club_id=eq.' + club.id + '&date=eq.' + today);
+      if (liveRows && liveRows.length) {
+        const matches = typeof liveRows[0].matches === 'string'
+          ? JSON.parse(liveRows[0].matches) : (liveRows[0].matches || []);
+        wins   = matches.filter(function(m) { return m.result === 'W'; }).length;
+        losses = matches.filter(function(m) { return m.result === 'L'; }).length;
+        hasSession = matches.length > 0;
       }
     }
-  } else {
-    if (tileAvatar) tileAvatar.style.display = 'none';
-    if (tileIcon)   { tileIcon.style.display = ''; tileIcon.textContent = '👤'; }
-    if (tileName)   tileName.textContent = 'My Profile';
-    if (tileRating) tileRating.textContent = 'Not selected';
+
+    if (tileRating) {
+      tileRating.textContent = hasSession
+        ? 'Club ' + clubRating.toFixed(1) + '  ·  W:' + wins + ' L:' + losses
+        : 'Club ' + clubRating.toFixed(1);
+    }
+  } catch(e) {
+    const master = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
+    const hp = master.find(function(h) {
+      return h.displayName && h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase();
+    });
+    const clubRating = parseFloat(hp && hp.clubRating) || 1.0;
+    if (tileRating) tileRating.textContent = 'Club ' + clubRating.toFixed(1);
   }
 }
 
@@ -394,22 +410,49 @@ async function showProfileCard(player) {
   document.getElementById('pcTier').style.background  = tier.color + '22';
   document.getElementById('pcTier').style.color       = tier.color;
 
-  // Fetch wins/losses from DB
-  document.getElementById('pcWins').textContent   = '…';
-  document.getElementById('pcLosses').textContent = '…';
+  // Fetch wins/losses + sessions from DB
+  document.getElementById('pcWins').textContent    = '…';
+  document.getElementById('pcLosses').textContent  = '…';
+  document.getElementById('pcSessions').innerHTML  =
+    '<div class="profile-sessions-loading">Loading...</div>';
+
   try {
-    const playerRows = await sbGet('players',
-      `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses`);
+    const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+    const today = new Date().toISOString().split('T')[0];
+
+    const [playerRows, liveRows] = await Promise.all([
+      sbGet('players', `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`),
+      club.id
+        ? sbGet('live_sessions',
+            `player_name=ilike.${encodeURIComponent(player.name)}&club_id=eq.${club.id}&date=eq.${today}`)
+        : Promise.resolve([])
+    ]);
+
+    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
+    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
+    const liveRow       = liveRows && liveRows.length ? liveRows[0] : null;
+    const liveMatches   = liveRow
+      ? (typeof liveRow.matches === 'string' ? JSON.parse(liveRow.matches) : (liveRow.matches || []))
+      : null;
+
     if (playerRows && playerRows.length) {
-      document.getElementById('pcWins').textContent   = (playerRows[0].wins   || 0);
-      document.getElementById('pcLosses').textContent = (playerRows[0].losses || 0);
+      const data = playerRows[0];
+      const remoteSessions = data.sessions || [];
+      const merged = mergeSessions(localSessions, remoteSessions);
+      document.getElementById('pcWins').textContent   = (data.wins   || 0);
+      document.getElementById('pcLosses').textContent = (data.losses || 0);
+      renderSessions(merged, player.name, liveMatches);
     } else {
       document.getElementById('pcWins').textContent   = '—';
       document.getElementById('pcLosses').textContent = '—';
+      renderSessions(localSessions, player.name, liveMatches);
     }
   } catch(e) {
+    const lsKey = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
+    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
     document.getElementById('pcWins').textContent   = '—';
     document.getElementById('pcLosses').textContent = '—';
+    renderSessions(localSessions, player.name, null);
   }
 }
 
