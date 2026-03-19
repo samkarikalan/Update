@@ -51,6 +51,8 @@ function viewerGoBack() {
 
 /* ── Show/hide viewerPage only ── */
 function _vShowPage() {
+  // Hide home overlay if open
+  if (typeof homeHideScreen === 'function') homeHideScreen();
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   const vPage = document.getElementById('viewerPage');
   if (vPage) vPage.style.display = 'block';
@@ -61,9 +63,7 @@ function _vShowPage() {
     vBtn.style.pointerEvents = 'auto';
     vBtn.style.opacity       = '1';
     vBtn.classList.add('active');
-    vBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
-  // Pin the Session tab so it stays visible when navigating to other tabs
   window._vSessionTabPinned = true;
   if (typeof lastPage !== 'undefined') lastPage = 'dashboardPage';
 }
