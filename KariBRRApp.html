@@ -127,7 +127,10 @@
           <div class="step-card-title" id="stepCardTitle">Select Players</div>
           <div class="step-card-sub"   id="stepCardSub">Add at least 4 players</div>
         </div>
-        <button class="step-card-btn" id="stepCardBtn" onclick="stepAction()">Go ›</button>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+          <button class="step-card-btn" id="stepCardBtn" onclick="stepAction()">Go ›</button>
+          <button class="step-card-skip" id="stepSkipBtn" onclick="stepSkip()" style="display:none;">Skip</button>
+        </div>
       </div>
 
       <!-- Courts inline panel (step 3) -->

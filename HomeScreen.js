@@ -194,6 +194,10 @@ function homeUpdateStepper() {
       btn.textContent = 'Go \u203a';
     }
   }
+
+  // Show Skip only on step 2 (Fixed Pairs) when not yet done
+  var skipBtn = document.getElementById('stepSkipBtn');
+  if (skipBtn) skipBtn.style.display = (current === 1 && !isDoneCurrent) ? '' : 'none';
 }
 
 /* ── Step card button tapped ── */
@@ -201,6 +205,12 @@ function stepAction() {
   var step = STEP_DEFS[_homeCurrentStep];
   if (_homeCurrentStep === 1) _stepPairsSeen = true;
   step.go();
+}
+
+/* ── Skip Fixed Pairs ── */
+function stepSkip() {
+  _stepPairsSeen = true;
+  homeUpdateStepper();
 }
 
 /* ── Courts panel ── */

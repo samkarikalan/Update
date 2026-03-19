@@ -402,3 +402,17 @@ body.app-light .tile-players { background: rgba(108,99,255,0.1); }
   font-size: 0.75rem;
   color: var(--muted);
 }
+
+.step-card-skip {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s;
+}
+.step-card-skip:hover { background: var(--surface2); color: var(--text); }
