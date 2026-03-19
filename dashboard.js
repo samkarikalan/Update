@@ -294,44 +294,30 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
   return card;
 }
 
-/* ── Open rounds view — opens bottom sheet ── */
+/* ── Inner tab switcher ── */
+function dashSwitchTab(tab) {
+  var sessBtn  = document.getElementById('dashTabSessionsBtn');
+  var liveBtn  = document.getElementById('dashTabLiveBtn');
+  var sessPanel = document.getElementById('dashPanelSessions');
+  var livePanel = document.getElementById('dashPanelLive');
+  if (!sessBtn || !liveBtn || !sessPanel || !livePanel) return;
+
+  var showSessions = (tab === 'sessions');
+  sessBtn.classList.toggle('active', showSessions);
+  liveBtn.classList.toggle('active', !showSessions);
+  sessPanel.style.display = showSessions ? '' : 'none';
+  livePanel.style.display = showSessions ? 'none' : '';
+
+  if (showSessions) {
+    // Stop viewer poll when leaving Live tab
+    if (typeof viewerStopPoll === 'function') viewerStopPoll();
+  }
+}
+
+/* ── Open rounds view — switches to Live tab inline ── */
 function _openSessionRounds(sessionId) {
-  sessionSheetOpen();
+  dashSwitchTab('live');
   if (typeof viewerOpen === 'function') viewerOpen(sessionId);
-}
-
-/* ── Bottom sheet open / close ── */
-function sessionSheetOpen() {
-  var sheet = document.getElementById('sessionSheet');
-  if (!sheet) return;
-  sheet.style.display = 'flex';
-  // Animate in
-  requestAnimationFrame(function() {
-    sheet.classList.add('open');
-  });
-  // Reset to Live tab
-  sheetSwitchTab('live');
-}
-
-function sessionSheetDismiss() {
-  var sheet = document.getElementById('sessionSheet');
-  if (!sheet) return;
-  sheet.classList.remove('open');
-  if (typeof viewerStopPoll === 'function') viewerStopPoll();
-  setTimeout(function() { sheet.style.display = 'none'; }, 280);
-}
-
-function sessionSheetClose(e) {
-  // Dismiss if tapping the dark overlay (not the sheet itself)
-  if (e.target === document.getElementById('sessionSheet')) sessionSheetDismiss();
-}
-
-function sheetSwitchTab(tab) {
-  var liveBtn    = document.getElementById('sheetTabLive');
-  var summaryBtn = document.getElementById('sheetTabSummary');
-  if (liveBtn)    liveBtn.classList.toggle('active',    tab === 'live');
-  if (summaryBtn) summaryBtn.classList.toggle('active', tab === 'summary');
-  if (typeof vSwitchTab === 'function') vSwitchTab(tab);
 }
 
 /* ── Format date ── */
