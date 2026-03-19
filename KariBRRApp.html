@@ -11,8 +11,10 @@
   <link rel="stylesheet" href="Export.css">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="BRRStyle3.css">
+  <link rel="stylesheet" href="HomeStyle.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="supabase.js" defer></script>
+  <script src="HomeScreen.js" defer></script>
   <script src="main.js" defer></script>
   <script src="engjap.js" defer></script>
   <script src="competitive_algorithm.js" defer></script>
@@ -62,144 +64,131 @@
   <!--        CLUB JOIN OVERLAY      -->
 
 
-  <!-- ============================= -->
-  <!--         HOME PAGE OVERLAY     -->
-  <!-- ============================= -->
+  <!-- HOME SCREEN -->
   <div id="homePageOverlay" class="home-overlay" style="display:none;">
+
+    <!-- Top bar -->
     <div class="home-topbar">
       <div class="lang-wrapper">
-        <button class="lang-btn" onclick="toggleLangMenu()" aria-label="Language">
+        <button class="lang-btn" onclick="homeLangToggle()" aria-label="Language">
           <span id="homeFlagDisplay">🇺🇸</span>
         </button>
         <div class="lang-menu" id="homeLangMenu">
-          <div data-lang="en" data-flag="🇺🇸" onclick="homeLangSelect(this)">🇺🇸 English</div>
-          <div data-lang="jp" data-flag="🇯🇵" onclick="homeLangSelect(this)">🇯🇵 日本語</div>
-          <div data-lang="kr" data-flag="🇰🇷" onclick="homeLangSelect(this)">🇰🇷 한국어</div>
-          <div data-lang="zh" data-flag="🇨🇳" onclick="homeLangSelect(this)">🇨🇳 中文</div>
-          <div data-lang="vi" data-flag="🇻🇳" onclick="homeLangSelect(this)">🇻🇳 Tiếng Việt</div>
+          <div onclick="homeLangSelect('en','🇺🇸')">🇺🇸 English</div>
+          <div onclick="homeLangSelect('jp','🇯🇵')">🇯🇵 日本語</div>
+          <div onclick="homeLangSelect('kr','🇰🇷')">🇰🇷 한국어</div>
+          <div onclick="homeLangSelect('zh','🇨🇳')">🇨🇳 中文</div>
+          <div onclick="homeLangSelect('vi','🇻🇳')">🇻🇳 Tiếng Việt</div>
         </div>
       </div>
       <span class="home-logo">🏸 CLUB Scheduler</span>
-      <button class="profile-btn" onclick="homeOpenProfile()" aria-label="Profile">
+      <button class="profile-btn" onclick="openProfileDrawer()" aria-label="Profile">
         <img id="homeProfileAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
         <span id="homeProfileIcon" class="profile-btn-icon">👤</span>
       </button>
     </div>
 
-    <!-- Club / User Status Bar -->
-    <div class="home-status-bar" id="homeStatusBar">
+    <!-- Club status bar -->
+    <div class="home-status-bar disconnected" id="homeStatusBar">
       <span class="home-status-dot"></span>
-      <span class="home-status-name" id="homeStatusName">Not logged in</span>
+      <span class="home-status-name" id="homeStatusName">Not connected</span>
       <span class="home-status-role" id="homeStatusRole"></span>
     </div>
 
-    <!-- Session Stepper (Organiser) / Watch card (Viewer) -->
-    <div id="homeOrganizerFlow">
+    <!-- SESSION STEPPER (organiser) -->
+    <div id="homeOrganizerFlow" style="display:none;">
 
-      <!-- Step progress bar -->
-      <div class="session-stepper" id="sessionStepper">
-        <div class="stepper-step active" id="step-players" onclick="homeStepGo(0)">
-          <div class="stepper-dot">
-            <span class="stepper-check" style="display:none">✓</span>
-            <span class="stepper-num">1</span>
-          </div>
+      <div class="session-stepper">
+        <div class="stepper-step" id="stepDot0">
+          <div class="stepper-dot"><span class="sn">1</span></div>
           <div class="stepper-label">Players</div>
         </div>
-        <div class="stepper-line" id="stepline-1"></div>
-        <div class="stepper-step locked" id="step-pairs" onclick="homeStepGo(1)">
-          <div class="stepper-dot">
-            <span class="stepper-check" style="display:none">✓</span>
-            <span class="stepper-num">2</span>
-          </div>
-          <div class="stepper-label">Fixed Pairs</div>
+        <div class="stepper-line" id="stepLine0"></div>
+        <div class="stepper-step" id="stepDot1">
+          <div class="stepper-dot"><span class="sn">2</span></div>
+          <div class="stepper-label">Pairs</div>
         </div>
-        <div class="stepper-line" id="stepline-2"></div>
-        <div class="stepper-step locked" id="step-courts" onclick="homeStepGo(2)">
-          <div class="stepper-dot">
-            <span class="stepper-check" style="display:none">✓</span>
-            <span class="stepper-num">3</span>
-          </div>
+        <div class="stepper-line" id="stepLine1"></div>
+        <div class="stepper-step" id="stepDot2">
+          <div class="stepper-dot"><span class="sn">3</span></div>
           <div class="stepper-label">Courts</div>
         </div>
-        <div class="stepper-line" id="stepline-3"></div>
-        <div class="stepper-step locked" id="step-rounds" onclick="homeStepGo(3)">
-          <div class="stepper-dot">
-            <span class="stepper-check" style="display:none">✓</span>
-            <span class="stepper-num">4</span>
-          </div>
+        <div class="stepper-line" id="stepLine2"></div>
+        <div class="stepper-step" id="stepDot3">
+          <div class="stepper-dot"><span class="sn">4</span></div>
           <div class="stepper-label">Rounds</div>
         </div>
       </div>
 
-      <!-- Step detail card — shows current action -->
-      <div class="session-step-card" id="sessionStepCard">
+      <!-- Current step action card -->
+      <div class="step-card" id="stepCard">
         <div class="step-card-icon" id="stepCardIcon">👥</div>
         <div class="step-card-body">
           <div class="step-card-title" id="stepCardTitle">Select Players</div>
-          <div class="step-card-sub" id="stepCardSub">Add at least 4 players to begin</div>
+          <div class="step-card-sub"   id="stepCardSub">Add at least 4 players</div>
         </div>
-        <button class="step-card-btn" id="stepCardBtn" onclick="homeStepAction()">Go →</button>
+        <button class="step-card-btn" id="stepCardBtn" onclick="stepAction()">Go ›</button>
       </div>
 
-      <!-- Courts inline mini-panel (shown at step 3) -->
-      <div class="step-courts-panel" id="stepCourtsPanel" style="display:none">
+      <!-- Courts inline panel (step 3) -->
+      <div class="step-courts-panel" id="stepCourtsPanel" style="display:none;">
         <div class="step-courts-row">
           <span class="step-courts-label">Courts</span>
           <div class="counter">
-            <button class="circle-btn" onclick="stepCourtMinus()">−</button>
+            <button class="circle-btn" onclick="stepCourtAdj(-1)">−</button>
             <span id="stepNumCourts">1</span>
-            <button class="circle-btn" onclick="stepCourtPlus()">+</button>
+            <button class="circle-btn" onclick="stepCourtAdj(1)">+</button>
           </div>
         </div>
-        <div class="step-courts-row" style="margin-top:10px">
+        <div class="step-courts-row">
           <span class="step-courts-label">🏆 Competitive</span>
           <label class="switch">
             <input type="checkbox" id="stepModeToggle" onchange="stepSyncMode()">
             <span class="slider"></span>
           </label>
         </div>
-        <button class="step-courts-done" onclick="homeStepCourtsDone()">Start Rounds →</button>
+        <button class="step-courts-go" onclick="stepCourtsDone()">Start Rounds ›</button>
       </div>
 
     </div>
 
-    <!-- Viewer watch card -->
-    <div id="homeViewerFlow" style="display:none">
-      <div class="home-hero-card viewer-hero" onclick="homeNavigate('dashboardPage','tabBtnDashboard')">
-        <div class="home-hero-label">VIEWER</div>
-        <div class="home-hero-title">Watch Session</div>
+    <!-- VIEWER FLOW -->
+    <div id="homeViewerFlow" style="display:none;">
+      <div class="home-hero-card viewer-hero" onclick="homeGo('dashboardPage','tabBtnDashboard')">
+        <div>
+          <div class="home-hero-label">VIEWER</div>
+          <div class="home-hero-title">Watch Session</div>
+        </div>
         <div class="home-hero-play">▶</div>
       </div>
     </div>
 
-    <!-- Bottom tiles -->
-    <div class="home-grid home-grid-bottom">
-      <div class="home-tile" onclick="homeNavigate('dashboardPage','tabBtnDashboard')">
+    <!-- Bottom tiles (always visible) -->
+    <div class="home-grid">
+      <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
         <div class="home-tile-icon">📡</div>
         <div class="home-tile-name">Dashboard</div>
         <div class="home-tile-sub">Live sessions</div>
       </div>
-      <div class="home-tile" onclick="homeNavigate('vaultPage','tabBtnVault')">
-        <div class="home-tile-icon home-tile-icon-vault">⚡</div>
+      <div class="home-tile home-tile-org" onclick="homeGo('vaultPage','tabBtnVault')">
+        <div class="home-tile-icon tile-vault">⚡</div>
         <div class="home-tile-name">Vault</div>
         <div class="home-tile-sub">Club data</div>
       </div>
-      <div class="home-tile" onclick="homeNavigate('settingsPage',null)">
-        <div class="home-tile-icon home-tile-icon-settings">⚙️</div>
+      <div class="home-tile" onclick="homeGo('settingsPage',null)">
+        <div class="home-tile-icon tile-settings">⚙️</div>
         <div class="home-tile-name">Settings</div>
         <div class="home-tile-sub">Theme · Font</div>
       </div>
-      <div class="home-tile" onclick="homeNavigate('summaryPage','tabBtnSummary')" id="homeTileSummary">
-        <div class="home-tile-icon home-tile-icon-summary">📊</div>
+      <div class="home-tile" onclick="homeGo('summaryPage','tabBtnSummary')">
+        <div class="home-tile-icon tile-summary">📊</div>
         <div class="home-tile-name">Summary</div>
         <div class="home-tile-sub">Session stats</div>
       </div>
     </div>
 
-    <!-- Help Button -->
-    <button class="home-help-btn" onclick="homeNavigate('helpPage',null)">
-      ❓ Help &amp; Guide
-    </button>
+    <button class="home-help-btn" onclick="homeGo('helpPage',null)">❓ Help &amp; Guide</button>
+
   </div>
 
   <!-- ============================= -->
@@ -218,7 +207,7 @@
         <div data-lang="vi" data-flag="🇻🇳">🇻🇳 Tiếng Việt</div>
       </div>
     </div>
-    <span class="app-logo-premium" onclick="showHomeScreen()" style="cursor:pointer" title="Home">CLUB Scheduler</span>
+    <span class="app-logo-premium">CLUB Scheduler</span>
     <button class="profile-btn" id="profileBtn" onclick="openProfileDrawer()" aria-label="Profile" title="My Profile">
       <img id="profileBtnAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
       <span id="profileBtnIcon" class="profile-btn-icon">👤</span>
@@ -228,23 +217,19 @@
   <!-- ============================= -->
   <!--       TOP TAB NAVIGATION      -->
   <!-- ============================= -->
-  <!-- Tab buttons removed — navigation via home screen only -->
-  <!-- Ghost IDs preserved so JS references don't break -->
-  <span id="tabBtnVault"    style="display:none"></span>
-  <span id="tabBtnPlayers"  style="display:none"></span>
-  <span id="tabBtnRounds"   style="display:none"></span>
-  <span id="tabBtnSummary"  style="display:none"></span>
+  <!-- Ghost IDs — tab bar removed, navigation via home screen only -->
+  <span id="tabBtnVault"     style="display:none"></span>
+  <span id="tabBtnPlayers"   style="display:none"></span>
+  <span id="tabBtnRounds"    style="display:none"></span>
+  <span id="tabBtnSummary"   style="display:none"></span>
   <span id="tabBtnDashboard" style="display:none"></span>
-  <span id="tabBtnViewer"   style="display:none"></span>
+  <span id="tabBtnViewer"    style="display:none"></span>
 
   <!-- ============================= -->
   <!--         SETTINGS PAGE         -->
   <!-- ============================= -->
   <div id="settingsPage" class="page" style="display:none;">
-  <div class="page-back-bar">
-    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-    <span class="page-back-title">⚙️ Settings</span>
-  </div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">⚙️ Settings</span></div>
     <div class="settings-wrap">
 
       <!-- Mode switch card -->
@@ -422,10 +407,7 @@
   <!--           VAULT PAGE          -->
   <!-- ============================= -->
   <div id="vaultPage" class="page" style="display:none;">
-  <div class="page-back-bar">
-    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-    <span class="page-back-title">⚡ Vault</span>
-  </div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">⚡ Vault</span></div>
     <div class="settings-wrap">
 
       <!-- Club Login -->
@@ -496,10 +478,7 @@
   </div>
 
  <div id="playersPage" class="page">
-  <div class="page-back-bar">
-    <button class="page-back-btn" onclick="homeReturnRefresh()"">‹ Home</button>
-    <span class="page-back-title">👥 Players</span>
-  </div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">👥 Players</span></div>
 
   <div class="card browse-card" onclick="newImportShowModal()">
     <div class="browse-left">
@@ -550,10 +529,7 @@
   <!--          ROUNDS PAGE          -->
   <!-- ============================= -->
   <div id="roundsPage" class="page" style="display:none;">
-  <div class="page-back-bar">
-    <button class="page-back-btn" onclick="homeReturnRefresh()"">‹ Home</button>
-    <span class="page-back-title">🏸 Rounds</span>
-  </div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">🏸 Rounds</span></div>
 
     <div class="title-card">
       <div id="roundTitle">R</div>
@@ -618,10 +594,7 @@
   <!--         SUMMARY PAGE          -->
   <!-- ============================= -->
   <div id="summaryPage" class="page" style="display:none;">
-  <div class="page-back-bar">
-    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-    <span class="page-back-title">📊 Summary</span>
-  </div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">📊 Summary</span></div>
     <div class="exp_btn" onclick="exportBRR2HTML()" data-i18n="exporthtml">📄</div>
     <div id="reportContainer"></div>
     <div id="export"></div>
@@ -631,10 +604,7 @@
   <!--        DASHBOARD PAGE         -->
   <!-- ============================= -->
   <div id="dashboardPage" class="page" style="display:none;">
-  <div class="page-back-bar">
-    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-    <span class="page-back-title">📡 Dashboard</span>
-  </div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">📡 Dashboard</span></div>
     <div id="dashboardContainer" class="dashboard-container">
       <div class="dashboard-loading"><div class="help-spinner"></div></div>
     </div>
@@ -651,10 +621,7 @@
   <!--           HELP PAGE           -->
   <!-- ============================= -->
   <div id="helpPage" class="page" style="display:none;">
-  <div class="page-back-bar">
-    <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-    <span class="page-back-title">❓ Help</span>
-  </div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">❓ Help</span></div>
 
     <!-- Search bar -->
     <div class="help-search-wrap">

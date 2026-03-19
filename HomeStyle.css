@@ -1,0 +1,359 @@
+/* =============================================
+   HOME SCREEN & SESSION STEPPER
+   HomeStyle.css — loaded after BRRStyle files
+   ============================================= */
+
+/* Hide tab bar always */
+.top-tabs { display: none !important; }
+
+/* Hide original top-bar when home overlay is active */
+.home-open .top-bar { display: none !important; }
+
+/* ── Home Overlay ── */
+.home-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: 32px;
+}
+
+/* ── Home Top Bar ── */
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.home-logo {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── Status Bar ── */
+.home-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 16px 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid rgba(45,206,137,0.3);
+  border-radius: 14px;
+}
+.home-status-bar.disconnected {
+  border-color: var(--border2);
+}
+.home-status-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  flex-shrink: 0;
+}
+.home-status-bar.disconnected .home-status-dot {
+  background: var(--muted);
+  box-shadow: none;
+}
+.home-status-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  flex: 1;
+}
+.home-status-role {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--green);
+  text-transform: uppercase;
+}
+
+/* ── Organiser Flow container ── */
+#homeOrganizerFlow {
+  margin: 14px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Stepper ── */
+.session-stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+.stepper-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  transition: all 0.25s;
+}
+.stepper-step.s-active .stepper-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.stepper-step.s-done .stepper-dot {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.stepper-step.s-locked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.stepper-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+}
+.stepper-step.s-active .stepper-label { color: var(--accent); }
+.stepper-step.s-done   .stepper-label { color: var(--green); }
+.stepper-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 17px 4px 0;
+}
+.stepper-line.s-done { background: var(--green); }
+
+/* ── Step Card ── */
+.step-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.step-card-icon {
+  font-size: 1.8rem;
+  width: 48px; height: 48px;
+  background: var(--surface2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-card-body { flex: 1; min-width: 0; }
+.step-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.step-card-sub {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.step-card-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: filter 0.15s;
+}
+.step-card-btn:hover   { filter: brightness(1.1); }
+.step-card-btn:active  { filter: brightness(0.9); }
+.step-card-btn.btn-done {
+  background: var(--green);
+}
+
+/* ── Courts Panel ── */
+.step-courts-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.step-courts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.step-courts-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.step-courts-go {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, #9b60ff 100%);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.step-courts-go:hover { filter: brightness(1.08); }
+
+/* ── Viewer Hero Card ── */
+.home-hero-card {
+  margin: 14px 16px 0;
+  padding: 24px 20px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.home-hero-card:active { filter: brightness(0.92); }
+.home-hero-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 4px;
+}
+.home-hero-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+.home-hero-play {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  color: #fff;
+  padding-left: 3px;
+}
+
+/* ── Bottom Tiles ── */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 16px 0;
+}
+.home-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.home-tile:active { background: var(--surface2); }
+.home-tile-icon {
+  width: 44px; height: 44px;
+  border-radius: 11px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+.tile-vault    { background: #3d2b00; }
+.tile-settings { background: var(--surface3); }
+.tile-summary  { background: rgba(45,206,137,0.15); }
+body.app-light .tile-vault    { background: #fef3c7; }
+body.app-light .tile-settings { background: var(--surface3); }
+.home-tile-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.home-tile-sub {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ── Help Button ── */
+.home-help-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 14px 16px 0;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+.home-help-btn:hover { background: var(--surface2); }
+
+/* ── Page Back Bar ── */
+.top-tabs    { display: none !important; }
+.page-back-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.page-back-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.page-back-btn:hover { background: var(--surface3); }
+.page-back-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
