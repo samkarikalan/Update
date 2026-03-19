@@ -32,18 +32,25 @@ function ratingTierLabel(r) {
 /* ── Update header profile button appearance ── */
 function updateProfileBtn() {
   const player = getMyPlayer();
-  const avatarEl = document.getElementById('profileBtnAvatar');
-  const iconEl   = document.getElementById('profileBtnIcon');
-  if (!avatarEl || !iconEl) return;
+  const src = player ? (player.gender === 'Female' ? 'female.png' : 'male.png') : null;
 
-  if (player) {
-    avatarEl.src = player.gender === 'Female' ? 'female.png' : 'male.png';
-    avatarEl.style.display = 'block';
-    iconEl.style.display   = 'none';
-  } else {
-    avatarEl.style.display = 'none';
-    iconEl.style.display   = 'block';
-  }
+  // Update all profile buttons (main top bar + home overlay)
+  [
+    { avatar: 'profileBtnAvatar',  icon: 'profileBtnIcon'  },
+    { avatar: 'homeProfileAvatar', icon: 'homeProfileIcon' },
+  ].forEach(function(ids) {
+    const avatarEl = document.getElementById(ids.avatar);
+    const iconEl   = document.getElementById(ids.icon);
+    if (!avatarEl || !iconEl) return;
+    if (player) {
+      avatarEl.src           = src;
+      avatarEl.style.display = 'block';
+      iconEl.style.display   = 'none';
+    } else {
+      avatarEl.style.display = 'none';
+      iconEl.style.display   = 'block';
+    }
+  });
 }
 
 /* ── End Session from profile drawer ── */
