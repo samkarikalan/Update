@@ -256,8 +256,9 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
     card.addEventListener('click', () => _openSessionRounds(sessionId));
   }
 
-  // End Session button — admin only, live cards only
-  if (isLive && typeof isAdminMode === 'function' && isAdminMode()) {
+  // End Session button — admin only, live cards only, never in viewer mode
+  const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
+  if (isLive && !isViewer && typeof isAdminMode === 'function' && isAdminMode()) {
     const endBtn = document.createElement('button');
     endBtn.style.cssText = 'width:100%;margin-top:10px;padding:8px;background:#e63757;color:#fff;border:none;border-radius:8px;font-size:0.85rem;font-weight:700;cursor:pointer;';
     endBtn.textContent = '⏹ End Session';
