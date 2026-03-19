@@ -624,7 +624,14 @@ function ratingToColor(r) {
 
 function report() {
   const container = document.getElementById("reportContainer");
+  if (!container) return;
   container.innerHTML = "";
+
+  // Guard: nothing to show if no players in session
+  if (!schedulerState.allPlayers || schedulerState.allPlayers.length === 0) {
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.9rem;">No session data yet.<br>Complete some rounds first.</div>';
+    return;
+  }
 
   const playMode = getPlayMode(); // "competitive" | "random"
 

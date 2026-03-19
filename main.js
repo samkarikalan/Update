@@ -424,8 +424,7 @@ function showPage(pageID, el) {
   }
 
   if (pageID === "summaryPage") {
-    report();
-    renderRounds();
+    if (typeof renderSummaryFromSession === 'function') renderSummaryFromSession();
   }
 
   if (pageID === "helpPage") {

@@ -253,16 +253,11 @@ function homeGoSummary() {
   homeGo('summaryPage', 'tabBtnSummary');
 }
 
-/* ── Refresh Summary tile dim state ── */
+/* ── Refresh Summary tile — always active since it fetches from Supabase ── */
 function homeRefreshSummaryTile() {
-  var hasData = typeof schedulerState !== 'undefined'
-    && schedulerState.allPlayers
-    && schedulerState.allPlayers.length > 0
-    && Array.isArray(allRounds)
-    && allRounds.length > 0;
   document.querySelectorAll('.home-tile-summary').forEach(function(tile) {
-    tile.style.opacity       = hasData ? '1' : '0.4';
-    tile.style.pointerEvents = hasData ? '' : 'none';
+    tile.style.opacity       = '1';
+    tile.style.pointerEvents = '';
   });
 }
 
