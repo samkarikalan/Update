@@ -410,49 +410,22 @@ async function showProfileCard(player) {
   document.getElementById('pcTier').style.background  = tier.color + '22';
   document.getElementById('pcTier').style.color       = tier.color;
 
-  // Fetch wins/losses + sessions from DB
-  document.getElementById('pcWins').textContent    = '…';
-  document.getElementById('pcLosses').textContent  = '…';
-  document.getElementById('pcSessions').innerHTML  =
-    '<div class="profile-sessions-loading">Loading...</div>';
-
+  // Fetch wins/losses only
+  document.getElementById('pcWins').textContent   = '…';
+  document.getElementById('pcLosses').textContent = '…';
   try {
-    const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
-    const today = new Date().toISOString().split('T')[0];
-
-    const [playerRows, liveRows] = await Promise.all([
-      sbGet('players', `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`),
-      club.id
-        ? sbGet('live_sessions',
-            `player_name=ilike.${encodeURIComponent(player.name)}&club_id=eq.${club.id}&date=eq.${today}`)
-        : Promise.resolve([])
-    ]);
-
-    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
-    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
-    const liveRow       = liveRows && liveRows.length ? liveRows[0] : null;
-    const liveMatches   = liveRow
-      ? (typeof liveRow.matches === 'string' ? JSON.parse(liveRow.matches) : (liveRow.matches || []))
-      : null;
-
+    const playerRows = await sbGet('players',
+      `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses`);
     if (playerRows && playerRows.length) {
-      const data = playerRows[0];
-      const remoteSessions = data.sessions || [];
-      const merged = mergeSessions(localSessions, remoteSessions);
-      document.getElementById('pcWins').textContent   = (data.wins   || 0);
-      document.getElementById('pcLosses').textContent = (data.losses || 0);
-      renderSessions(merged, player.name, liveMatches);
+      document.getElementById('pcWins').textContent   = (playerRows[0].wins   || 0);
+      document.getElementById('pcLosses').textContent = (playerRows[0].losses || 0);
     } else {
       document.getElementById('pcWins').textContent   = '—';
       document.getElementById('pcLosses').textContent = '—';
-      renderSessions(localSessions, player.name, liveMatches);
     }
   } catch(e) {
-    const lsKey = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
-    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
     document.getElementById('pcWins').textContent   = '—';
     document.getElementById('pcLosses').textContent = '—';
-    renderSessions(localSessions, player.name, null);
   }
 }
 
@@ -494,6 +467,66 @@ function renderMatchRow(m, playerName) {
       </div>
       <div class="match-pair">${oppPair}</div>
     </div>`;
+}
+
+/* ── My Sessions Sheet ── */
+async function openMySessionsSheet() {
+  const player = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+  if (!player) { openProfileDrawer(); return; }
+
+  const sheet = document.getElementById('mySessionsSheet');
+  const content = document.getElementById('mySessionsContent');
+  if (!sheet || !content) return;
+
+  sheet.style.display = 'flex';
+  requestAnimationFrame(function() { sheet.classList.add('open'); });
+  content.innerHTML = '<div class="profile-sessions-loading">Loading...</div>';
+
+  try {
+    const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+    const today = new Date().toISOString().split('T')[0];
+
+    const [playerRows, liveRows] = await Promise.all([
+      sbGet('players', `name=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`),
+      club.id
+        ? sbGet('live_sessions',
+            `player_name=ilike.${encodeURIComponent(player.name)}&club_id=eq.${club.id}&date=eq.${today}`)
+        : Promise.resolve([])
+    ]);
+
+    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
+    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
+    const liveRow       = liveRows && liveRows.length ? liveRows[0] : null;
+    const liveMatches   = liveRow
+      ? (typeof liveRow.matches === 'string' ? JSON.parse(liveRow.matches) : (liveRow.matches || []))
+      : null;
+
+    let sessions = localSessions;
+    if (playerRows && playerRows.length) {
+      const remoteSessions = playerRows[0].sessions || [];
+      sessions = mergeSessions(localSessions, remoteSessions);
+    }
+
+    // Render into sheet content using existing renderSessions logic
+    const tempContainer = document.createElement('div');
+    tempContainer.id = 'pcSessions'; // borrow ID temporarily
+    content.innerHTML = '';
+    content.appendChild(tempContainer);
+    renderSessions(sessions, player.name, liveMatches);
+    // Move rendered content out of temp
+    const rendered = tempContainer.innerHTML;
+    content.innerHTML = rendered || '<div class="profile-sessions-empty">No sessions recorded yet.</div>';
+
+  } catch(e) {
+    content.innerHTML = '<div class="profile-sessions-empty">Could not load sessions.</div>';
+  }
+}
+
+function closeMySessionsSheet() {
+  const sheet = document.getElementById('mySessionsSheet');
+  if (!sheet) return;
+  sheet.classList.remove('open');
+  setTimeout(function() { sheet.style.display = 'none'; }, 280);
 }
 
 /* ── Render sessions with PDF-style match history ── */

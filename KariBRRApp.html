@@ -191,13 +191,35 @@
         <div class="home-tile-name">Summary</div>
         <div class="home-tile-sub">Session stats</div>
       </div>
-      <div class="home-tile" id="homeTileProfile" onclick="openProfileDrawer()">
-        <div class="home-tile-icon tile-profile">
-          <img id="homeTileAvatar" src="male.png" style="width:28px;height:28px;border-radius:50%;display:none;">
-          <span id="homeTileIcon">👤</span>
+    </div>
+
+    <!-- My Sessions full-width card -->
+    <div class="home-sessions-card" id="homeSessionsCard" onclick="openMySessionsSheet()">
+      <div class="home-sessions-left">
+        <div class="home-sessions-avatar-wrap">
+          <img id="homeTileAvatar" src="male.png" class="home-sessions-avatar" style="display:none;">
+          <span id="homeTileIcon" class="home-sessions-icon">👤</span>
         </div>
-        <div class="home-tile-name" id="homeTileName">My Profile</div>
-        <div class="home-tile-sub" id="homeTileRating">Not selected</div>
+        <div class="home-sessions-info">
+          <div class="home-sessions-name" id="homeTileName">My Sessions</div>
+          <div class="home-sessions-sub" id="homeTileRating">Select your profile to view</div>
+        </div>
+      </div>
+      <span class="home-sessions-arrow">›</span>
+    </div>
+
+    <!-- My Sessions bottom sheet -->
+    <div id="mySessionsSheet" class="session-sheet-overlay" style="display:none;" onclick="if(event.target===this)closeMySessionsSheet()">
+      <div class="session-sheet">
+        <div class="session-sheet-header">
+          <div class="session-sheet-handle"></div>
+          <button class="session-sheet-close" onclick="closeMySessionsSheet()">✕</button>
+        </div>
+        <div class="session-sheet-body">
+          <div id="mySessionsContent" style="padding:4px 0;">
+            <div class="profile-sessions-loading">Loading...</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -842,12 +864,6 @@
         <div id="pcLosses" class="profile-stat-value losses">—</div>
         <div class="profile-stat-label">All-time Losses</div>
       </div>
-    </div>
-
-    <!-- Recent Sessions -->
-    <div class="profile-sessions-title">Recent Sessions</div>
-    <div id="pcSessions" class="profile-sessions-list">
-      <div class="profile-sessions-loading">Loading...</div>
     </div>
 
   </div>
