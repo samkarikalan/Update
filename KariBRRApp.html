@@ -193,34 +193,19 @@
       </div>
     </div>
 
-    <!-- My Sessions full-width card -->
-    <div class="home-sessions-card" id="homeSessionsCard" onclick="openMySessionsSheet()">
+    <!-- My Card full-width card -->
+    <div class="home-sessions-card" id="homeSessionsCard" onclick="homeGo('myCardPage',null)">
       <div class="home-sessions-left">
         <div class="home-sessions-avatar-wrap">
           <img id="homeTileAvatar" src="male.png" class="home-sessions-avatar" style="display:none;">
           <span id="homeTileIcon" class="home-sessions-icon">👤</span>
         </div>
         <div class="home-sessions-info">
-          <div class="home-sessions-name" id="homeTileName">My Sessions</div>
+          <div class="home-sessions-name" id="homeTileName">My Card</div>
           <div class="home-sessions-sub" id="homeTileRating">Select your profile to view</div>
         </div>
       </div>
       <span class="home-sessions-arrow">›</span>
-    </div>
-
-    <!-- My Sessions bottom sheet -->
-    <div id="mySessionsSheet" class="session-sheet-overlay" style="display:none;" onclick="if(event.target===this)closeMySessionsSheet()">
-      <div class="session-sheet">
-        <div class="session-sheet-header">
-          <div class="session-sheet-handle"></div>
-          <button class="session-sheet-close" onclick="closeMySessionsSheet()">✕</button>
-        </div>
-        <div class="session-sheet-body">
-          <div id="mySessionsContent" style="padding:4px 0;">
-            <div class="profile-sessions-loading">Loading...</div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <button class="home-help-btn" onclick="homeGo('helpPage',null)">❓ Help &amp; Guide</button>
@@ -243,6 +228,7 @@
   <!-- ============================= -->
   <!-- Ghost IDs — tab bar removed, navigation via home screen only -->
   <span id="tabBtnVault"     style="display:none"></span>
+  <span id="tabBtnMyCard"    style="display:none"></span>
   <span id="tabBtnFixedPairs" style="display:none"></span>
   <span id="tabBtnPlayers"   style="display:none"></span>
   <span id="tabBtnRounds"    style="display:none"></span>
@@ -644,6 +630,72 @@
       <button class="page-back-btn" onclick="viewerGoBack()">📡 Dashboard</button>
     </div>
     <div id="viewerResults"></div>
+  </div>
+
+  <!-- ============================= -->
+  <!--          MY CARD PAGE         -->
+  <!-- ============================= -->
+  <div id="myCardPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
+      <span class="page-back-title">My Card</span>
+    </div>
+
+    <!-- Not logged in state -->
+    <div id="myCardEmpty" style="display:none;">
+      <div class="dash-empty">
+        <div class="dash-empty-icon">👤</div>
+        <p>No profile selected.</p>
+        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px">Tap the profile icon to select your name.</p>
+        <button class="btn-save" style="margin-top:14px" onclick="openProfileDrawer()">Select Profile</button>
+      </div>
+    </div>
+
+    <!-- Profile content -->
+    <div id="myCardContent" style="display:none;">
+
+      <!-- Identity -->
+      <div class="mycard-identity">
+        <img id="mcAvatar" src="male.png" class="mycard-avatar">
+        <div class="mycard-identity-info">
+          <div class="mycard-name" id="mcName"></div>
+          <div id="mcTier" class="profile-tier"></div>
+        </div>
+      </div>
+
+      <!-- Ratings -->
+      <div class="mycard-ratings">
+        <div class="mycard-rating-box">
+          <div class="mycard-rating-value" id="mcGlobalRating">—</div>
+          <div class="mycard-rating-label">Global Rating</div>
+        </div>
+        <div class="mycard-rating-divider"></div>
+        <div class="mycard-rating-box">
+          <div class="mycard-rating-value club" id="mcClubRating">—</div>
+          <div class="mycard-rating-label">Club Rating</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="profile-stats-row" style="margin:0 16px 14px;">
+        <div class="profile-stat-box">
+          <div id="mcWins" class="profile-stat-value wins">—</div>
+          <div class="profile-stat-label">All-time Wins</div>
+        </div>
+        <div class="profile-stat-divider"></div>
+        <div class="profile-stat-box">
+          <div id="mcLosses" class="profile-stat-value losses">—</div>
+          <div class="profile-stat-label">All-time Losses</div>
+        </div>
+      </div>
+
+      <!-- Sessions -->
+      <div class="profile-sessions-title" style="padding:0 16px 8px;">Sessions</div>
+      <div id="mcSessions" class="profile-sessions-list" style="padding:0 16px 32px;">
+        <div class="profile-sessions-loading">Loading...</div>
+      </div>
+
+    </div>
   </div>
 
   <!-- ============================= -->

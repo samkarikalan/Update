@@ -428,6 +428,10 @@ function showPage(pageID, el) {
     if (typeof renderSummaryFromSession === 'function') renderSummaryFromSession();
   }
 
+  if (pageID === "myCardPage") {
+    if (typeof renderMyCard === 'function') renderMyCard();
+  }
+
   if (pageID === "helpPage") {
     if (typeof onHelpTabOpen === "function") onHelpTabOpen();
   }

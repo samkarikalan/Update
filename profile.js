@@ -469,18 +469,51 @@ function renderMatchRow(m, playerName) {
     </div>`;
 }
 
-/* ── My Sessions Sheet ── */
-async function openMySessionsSheet() {
+/* ── My Card Page ── */
+async function renderMyCard() {
   const player = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
-  if (!player) { openProfileDrawer(); return; }
 
-  const sheet = document.getElementById('mySessionsSheet');
-  const content = document.getElementById('mySessionsContent');
-  if (!sheet || !content) return;
+  const emptyEl   = document.getElementById('myCardEmpty');
+  const contentEl = document.getElementById('myCardContent');
 
-  sheet.style.display = 'flex';
-  requestAnimationFrame(function() { sheet.classList.add('open'); });
-  content.innerHTML = '<div class="profile-sessions-loading">Loading...</div>';
+  if (!player) {
+    if (emptyEl)   emptyEl.style.display   = '';
+    if (contentEl) contentEl.style.display = 'none';
+    return;
+  }
+
+  if (emptyEl)   emptyEl.style.display   = 'none';
+  if (contentEl) contentEl.style.display = '';
+
+  // Avatar + Name
+  const avatar = document.getElementById('mcAvatar');
+  if (avatar) avatar.src = player.gender === 'Female' ? 'female.png' : 'male.png';
+  const nameEl = document.getElementById('mcName');
+  if (nameEl) nameEl.textContent = player.name;
+
+  // Ratings from local cache
+  await syncToLocal();
+  const master       = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
+  const hp           = master.find(h => h.displayName && h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase());
+  const globalRating = parseFloat(hp && hp.rating)       || 1.0;
+  const clubRating   = parseFloat(hp && hp.clubRating)   || 1.0;
+  const activeRating = parseFloat(hp && hp.activeRating) || 1.0;
+  const tier         = ratingTierLabel(activeRating);
+
+  const grEl = document.getElementById('mcGlobalRating');
+  const crEl = document.getElementById('mcClubRating');
+  const tierEl = document.getElementById('mcTier');
+  if (grEl)   grEl.textContent  = globalRating.toFixed(1);
+  if (crEl)   crEl.textContent  = clubRating.toFixed(1);
+  if (tierEl) { tierEl.textContent = tier.label; tierEl.style.background = tier.color + '22'; tierEl.style.color = tier.color; }
+
+  // Wins / Losses + Sessions from DB
+  const winsEl   = document.getElementById('mcWins');
+  const lossesEl = document.getElementById('mcLosses');
+  const sessEl   = document.getElementById('mcSessions');
+  if (winsEl)   winsEl.textContent   = '…';
+  if (lossesEl) lossesEl.textContent = '…';
+  if (sessEl)   sessEl.innerHTML     = '<div class="profile-sessions-loading">Loading...</div>';
 
   try {
     const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
@@ -503,30 +536,28 @@ async function openMySessionsSheet() {
 
     let sessions = localSessions;
     if (playerRows && playerRows.length) {
-      const remoteSessions = playerRows[0].sessions || [];
-      sessions = mergeSessions(localSessions, remoteSessions);
+      const data = playerRows[0];
+      sessions   = mergeSessions(localSessions, data.sessions || []);
+      if (winsEl)   winsEl.textContent   = (data.wins   || 0);
+      if (lossesEl) lossesEl.textContent = (data.losses || 0);
+    } else {
+      if (winsEl)   winsEl.textContent   = '—';
+      if (lossesEl) lossesEl.textContent = '—';
     }
 
-    // Render into sheet content using existing renderSessions logic
-    const tempContainer = document.createElement('div');
-    tempContainer.id = 'pcSessions'; // borrow ID temporarily
-    content.innerHTML = '';
-    content.appendChild(tempContainer);
-    renderSessions(sessions, player.name, liveMatches);
-    // Move rendered content out of temp
-    const rendered = tempContainer.innerHTML;
-    content.innerHTML = rendered || '<div class="profile-sessions-empty">No sessions recorded yet.</div>';
+    // Render sessions into mcSessions using a temp swap
+    if (sessEl) {
+      const prev = sessEl.id;
+      sessEl.id  = 'pcSessions';
+      renderSessions(sessions, player.name, liveMatches);
+      sessEl.id  = prev;
+    }
 
   } catch(e) {
-    content.innerHTML = '<div class="profile-sessions-empty">Could not load sessions.</div>';
+    if (winsEl)   winsEl.textContent   = '—';
+    if (lossesEl) lossesEl.textContent = '—';
+    if (sessEl)   sessEl.innerHTML     = '<div class="profile-sessions-empty">Could not load sessions.</div>';
   }
-}
-
-function closeMySessionsSheet() {
-  const sheet = document.getElementById('mySessionsSheet');
-  if (!sheet) return;
-  sheet.classList.remove('open');
-  setTimeout(function() { sheet.style.display = 'none'; }, 280);
 }
 
 /* ── Render sessions with PDF-style match history ── */

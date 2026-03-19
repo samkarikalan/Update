@@ -700,3 +700,57 @@ body.app-light .tile-pairs { background: rgba(245,158,11,0.12); }
   color: var(--muted);
   flex-shrink: 0;
 }
+
+/* ── My Card Page ── */
+.mycard-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 16px 14px;
+}
+.mycard-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.mycard-identity-info { flex: 1; min-width: 0; }
+.mycard-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.mycard-ratings {
+  display: flex;
+  align-items: center;
+  margin: 0 16px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.mycard-rating-box {
+  flex: 1;
+  padding: 14px 16px;
+  text-align: center;
+}
+.mycard-rating-value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.mycard-rating-value.club { color: var(--green); }
+.mycard-rating-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.mycard-rating-divider {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+}
