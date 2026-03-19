@@ -361,3 +361,6 @@ body.app-light .tile-settings { background: var(--surface3); }
 /* inner tab CSS removed — replaced by bottom sheet */
 
 /* session bottom sheet CSS removed */
+
+.tile-players { background: rgba(108,99,255,0.15); }
+body.app-light .tile-players { background: rgba(108,99,255,0.1); }
