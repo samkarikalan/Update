@@ -100,6 +100,101 @@ function showHomeScreen() {
 
   if (isOrganiser) homeUpdateStepper();
   homeRefreshSummaryTile();
+  homeRefreshTiles();
+}
+
+/* ── Refresh all tile subtitles with live data ── */
+async function homeRefreshTiles() {
+  var isOrganiser = (typeof appMode !== 'undefined') && appMode === 'organiser';
+
+  // ── Vault ──
+  var club   = (typeof getMyClub   === 'function') ? getMyClub()   : null;
+  var isAdmin = (typeof isClubAdmin === 'function') ? isClubAdmin() : false;
+  var vaultSub = document.getElementById('tileSubVault');
+  if (vaultSub) {
+    if (club && club.name) {
+      vaultSub.textContent = club.name + (isAdmin ? ' · Admin' : ' · User');
+    } else {
+      vaultSub.textContent = 'Not connected';
+    }
+  }
+
+  // ── Players ──
+  var playersSub = document.getElementById('tileSubPlayers');
+  if (playersSub) {
+    if (typeof schedulerState !== 'undefined' && schedulerState.allPlayers) {
+      var total  = schedulerState.allPlayers.length;
+      var active = schedulerState.activeplayers.length;
+      playersSub.textContent = total > 0
+        ? total + ' players · ' + active + ' active'
+        : 'Add · Remove';
+    } else {
+      playersSub.textContent = 'Add · Remove';
+    }
+  }
+
+  // ── Fixed Pairs ──
+  var pairsSub = document.getElementById('tileSubPairs');
+  if (pairsSub) {
+    var pairCount = (typeof schedulerState !== 'undefined' && schedulerState.fixedPairs)
+      ? schedulerState.fixedPairs.length : 0;
+    pairsSub.textContent = pairCount > 0
+      ? pairCount + ' pair' + (pairCount !== 1 ? 's' : '') + ' set'
+      : 'Optional';
+  }
+
+  // ── Settings ──
+  var settingsSub = document.getElementById('tileSubSettings');
+  if (settingsSub) {
+    var theme    = localStorage.getItem('app-theme')    || 'dark';
+    var fontSize = localStorage.getItem('appFontSize')  || 'medium';
+    settingsSub.textContent = (theme.charAt(0).toUpperCase() + theme.slice(1))
+      + ' · ' + (fontSize.charAt(0).toUpperCase() + fontSize.slice(1));
+  }
+
+  // ── My Card tile ──
+  var tileRating = document.getElementById('homeTileRating');
+  var tileName   = document.getElementById('homeTileName');
+  var tileAvatar = document.getElementById('homeTileAvatar');
+  var tileIcon   = document.getElementById('homeTileIcon');
+  var player = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
+  if (player) {
+    if (tileName)   tileName.textContent = player.name;
+    if (tileAvatar) { tileAvatar.src = player.gender === 'Female' ? 'female.png' : 'male.png'; tileAvatar.style.display = 'block'; }
+    if (tileIcon)   tileIcon.style.display = 'none';
+    if (tileRating) tileRating.textContent = 'Loading...';
+    // Async: fetch club rating
+    try {
+      var master = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
+      var hp = master.find(function(h) {
+        return h.displayName && h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase();
+      });
+      var clubRating = parseFloat(hp && hp.clubRating) || 1.0;
+      if (tileRating) tileRating.textContent = 'Club ' + clubRating.toFixed(1);
+    } catch(e) {
+      if (tileRating) tileRating.textContent = 'Tap to view';
+    }
+  } else {
+    if (tileName)   tileName.textContent = 'My Card';
+    if (tileAvatar) tileAvatar.style.display = 'none';
+    if (tileIcon)   { tileIcon.style.display = ''; tileIcon.textContent = '👤'; }
+    if (tileRating) tileRating.textContent = 'Not selected';
+  }
+
+  // ── Dashboard — async fetch live session count ──
+  var dashSub = document.getElementById('tileSubDashboard');
+  if (dashSub) {
+    dashSub.textContent = 'Loading...';
+    try {
+      var sessions = (typeof dbGetLiveSessions === 'function') ? await dbGetLiveSessions() : [];
+      var count = (sessions || []).length;
+      dashSub.textContent = count > 0
+        ? count + ' live session' + (count !== 1 ? 's' : '')
+        : 'No live sessions';
+    } catch(e) {
+      dashSub.textContent = 'Live sessions';
+    }
+  }
 }
 
 /* ── Hide home screen (go to inner page) ── */
