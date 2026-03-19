@@ -567,7 +567,7 @@ function sbRenderClubStatus() {
 /* ── Vault tab functions ── */
 function vaultShowTab(tab, btn) {
   document.querySelectorAll('.vault-inner-content').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.vault-inner-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.vault-inner-tab, .vault-tab').forEach(b => b.classList.remove('active'));
   const content = document.getElementById('vaultTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
   if (content) content.classList.add('active');
   if (btn) btn.classList.add('active');

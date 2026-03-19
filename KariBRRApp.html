@@ -337,28 +337,33 @@
   <!--           VAULT PAGE          -->
   <!-- ============================= -->
   <div id="vaultPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">⚡ Vault</span></div>
-    <div class="settings-wrap">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
+      <span class="page-back-title">&#9889; Vault</span>
+    </div>
+    <div class="vault-wrap">
 
-      <!-- Club Login -->
-      <div class="settings-card" id="clubLoginCard" style="padding:14px">
-        <div style="font-size:0.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">🏢 Club</div>
-
-        <!-- Logged in state -->
+      <!-- Club card -->
+      <div class="vault-club-card" id="clubLoginCard">
+        <!-- Connected state -->
         <div id="clubLoggedInState" style="display:none">
-          <div class="vault-status-strip" style="margin-bottom:8px">
-            <div class="vault-status-dot" id="clubLoginDot"></div>
-            <span id="clubLoginName" style="font-weight:600;font-size:0.9rem"></span>
-            <span id="clubLoginRole" style="font-size:0.72rem;padding:2px 8px;border-radius:20px;margin-left:6px"></span>
+          <div class="vault-club-connected">
+            <div class="vault-club-left">
+              <div class="vault-status-dot" id="clubLoginDot"></div>
+              <div>
+                <div class="vault-club-name" id="clubLoginName"></div>
+                <span class="vault-club-role" id="clubLoginRole"></span>
+              </div>
+            </div>
+            <button class="vault-change-btn" onclick="clubLoginSwitch()">Change</button>
           </div>
-          <button class="btn-clear" style="width:100%;font-size:0.82rem" onclick="clubLoginSwitch()">🔄 Change Club</button>
         </div>
-
         <!-- Login form -->
         <div id="clubLoginForm">
+          <div class="vault-section-label">&#127970; Connect to Club</div>
           <div class="club-row">
             <select id="sbClubSelectViewer" class="club-select" style="flex:1">
-              <option value="">— Select club —</option>
+              <option value="">&#8212; Select club &#8212;</option>
             </select>
           </div>
           <div class="club-row" style="margin-top:8px">
@@ -371,40 +376,31 @@
         </div>
       </div>
 
-      <!-- Vault content -->
-      <div class="settings-card" style="padding:14px;margin-top:10px">
+      <!-- Sync row -->
+      <div class="vault-sync-row">
+        <span id="sbSyncStatus" class="vault-sync-text"></span>
+        <button class="vault-sync-btn" onclick="syncToLocal()">&#8635; Sync</button>
+      </div>
 
-        <div class="vault-sync-row">
-          <span id="sbSyncStatus" class="vault-sync-text"></span>
-          <button class="vault-sync-btn" onclick="syncToLocal()">🔄 Sync</button>
+      <!-- Vault tabs -->
+      <div class="vault-tabs-card">
+        <div class="vault-tab-bar">
+          <button class="vault-tab active" id="vaultTabPlayersBtn" onclick="vaultShowTab('players',this)">&#128308; Playing</button>
+          <button class="vault-tab" id="vaultTabRegisterBtn" onclick="vaultShowTab('register',this)">&#128203; Register</button>
+          <button class="vault-tab" id="vaultTabModifyBtn" onclick="vaultShowTab('modify',this)">&#9999;&#65039; Modify</button>
         </div>
-
-        <!-- Vault inner tabs -->
-        <div class="vault-inner-tabs">
-          <button class="vault-inner-tab active" id="vaultTabPlayersBtn" onclick="vaultShowTab('players',this)">🔴 Playing</button>
-          <button class="vault-inner-tab" id="vaultTabRegisterBtn" onclick="vaultShowTab('register',this)">📋 Register</button>
-          <button class="vault-inner-tab" id="vaultTabModifyBtn" onclick="vaultShowTab('modify',this)">✏️ Modify</button>
-        </div>
-
-        <!-- PLAYING inner tab -->
         <div class="vault-inner-content active" id="vaultTabPlayers">
           <div id="playerPlayingList" class="player-mgmt-list"></div>
         </div>
-
-        <!-- REGISTER inner tab -->
         <div class="vault-inner-content" id="vaultTabRegister">
           <div id="vaultRegisterContainer"></div>
         </div>
-
-        <!-- MODIFY inner tab -->
         <div class="vault-inner-content" id="vaultTabModify">
           <div id="vaultModifyList" class="player-mgmt-list"></div>
         </div>
-
         <div id="vaultFeedback"></div>
       </div>
 
-      <!-- Club Management — moved from Settings, admin only -->
       <div class="settings-card" style="padding:0;overflow:hidden;margin-top:10px" id="vaultClubMgmtCard">
         <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
           🏢 Club Management <span id="clubMgmtArrow">▶</span>
@@ -469,8 +465,8 @@
         </div>
       </div>
 
-    </div>
-  </div>
+    </div><!-- vault-wrap -->
+  </div><!-- vaultPage -->
 
  <div id="playersPage" class="page">
   <div class="page-back-bar"><button class="page-back-btn" id="playersBackBtn" onclick="navBack()">‹ Home</button><span class="page-back-title">👥 Players</span></div>
