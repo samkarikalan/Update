@@ -21,7 +21,7 @@ var STEP_DEFS = [
       return n + ' player' + (n !== 1 ? 's' : '') + ' selected';
     },
     isDone: function() { return schedulerState.activeplayers.length >= 4; },
-    go: function() { homeGo('fixedPairsPage', 'tabBtnFixedPairs'); }
+    go: function() { homeGo('playersPage', 'tabBtnPlayers'); }
   },
   {
     icon: '🤝',
@@ -32,7 +32,7 @@ var STEP_DEFS = [
       return n ? n + ' pair' + (n !== 1 ? 's' : '') + ' set' : 'Skipped (optional)';
     },
     isDone: function() { return _stepPairsSeen; },
-    go: function() { homeGo('playersPage', 'tabBtnPlayers'); }
+    go: function() { homeGo('fixedPairsPage', 'tabBtnFixedPairs'); }
   },
   {
     icon: '🏟',
