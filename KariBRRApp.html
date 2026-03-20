@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
   <link rel="apple-touch-icon" href="cs.PNG">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6c63ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CLUB Scheduler">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,6 +20,7 @@
   <link rel="stylesheet" href="HomeStyle.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="supabase.js" defer></script>
+  <script src="subscription.js" defer></script>
   <script src="HomeScreen.js" defer></script>
   <script src="main.js" defer></script>
   <script src="engjap.js" defer></script>
@@ -87,6 +94,9 @@
         <span class="home-status-name" id="homeStatusName">Not connected</span>
       </div>
     </div>
+
+    <!-- Trial banner -->
+    <div id="trialBanner" class="trial-banner" style="display:none;"></div>
 
     <!-- SESSION STEPPER (organiser) -->
     <div id="homeOrganizerFlow" style="display:none;">
@@ -911,5 +921,37 @@
 
 </div>
 
+  <!-- PAYWALL OVERLAY -->
+  <div id="paywallOverlay" class="paywall-overlay" style="display:none;">
+    <div class="paywall-card">
+      <div class="paywall-icon">🏸</div>
+      <div class="paywall-title">Club Scheduler Pro</div>
+      <div class="paywall-subtitle">Your free trial has ended</div>
+
+      <div class="paywall-features">
+        <div class="paywall-feature">✓ Organiser mode — run sessions</div>
+        <div class="paywall-feature">✓ Players &amp; Fixed Pairs management</div>
+        <div class="paywall-feature">✓ Live rounds &amp; scoring</div>
+        <div class="paywall-feature">✓ Full stats &amp; session history</div>
+        <div class="paywall-feature">✓ Viewer mode — watch live scores</div>
+      </div>
+
+      <div class="paywall-price">¥500 <span>/ year</span></div>
+      <div class="paywall-note">Less than one shuttle per year</div>
+
+      <button class="paywall-btn-primary" onclick="subPurchase()">Subscribe Now</button>
+      <button class="paywall-btn-restore" onclick="subRestore()">Restore Purchase</button>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(reg) { console.log('SW registered'); })
+          .catch(function(err) { console.log('SW failed:', err); });
+      });
+    }
+  </script>
 </body>
 </html>

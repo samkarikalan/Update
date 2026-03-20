@@ -1,0 +1,26 @@
+{
+  "name": "CLUB Scheduler",
+  "short_name": "CLUB",
+  "description": "Badminton club session scheduler and player manager",
+  "start_url": "/KariBRRApp.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f13",
+  "theme_color": "#6c63ff",
+  "icons": [
+    {
+      "src": "cs.PNG",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "cs.PNG",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "utilities"],
+  "lang": "en"
+}

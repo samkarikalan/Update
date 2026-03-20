@@ -101,6 +101,9 @@ function showHomeScreen() {
   if (isOrganiser) homeUpdateStepper();
   homeRefreshSummaryTile();
   homeRefreshTiles();
+  // Init subscription and show trial banner
+  if (typeof subInit === 'function') subInit();
+  if (typeof subShowTrialBanner === 'function') subShowTrialBanner();
 }
 
 /* ── Refresh all tile subtitles with live data ── */
