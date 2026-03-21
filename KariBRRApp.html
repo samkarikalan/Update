@@ -249,6 +249,24 @@
     </div>
     <div class="pref-wrap">
 
+      <!-- LANGUAGE -->
+      <div class="pref-section-label">Language</div>
+      <div class="pref-card">
+        <div class="pref-row pref-row-tap" onclick="settingsToggleLangPicker()">
+          <span class="pref-row-label">Language</span>
+          <span class="pref-row-value" id="settingsLangValue">🇺🇸 English</span>
+          <span class="pref-row-chevron">›</span>
+        </div>
+        <div class="pref-lang-picker" id="settingsLangPicker" style="display:none;">
+          <div class="pref-divider"></div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('en','🇺🇸','English')">🇺🇸 English</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('jp','🇯🇵','日本語')">🇯🇵 日本語</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('kr','🇰🇷','한국어')">🇰🇷 한국어</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('zh','🇨🇳','中文')">🇨🇳 中文</div>
+          <div class="pref-lang-option" onclick="settingsSelectLang('vi','🇻🇳','Tiếng Việt')">🇻🇳 Tiếng Việt</div>
+        </div>
+      </div>
+
       <!-- APPEARANCE -->
       <div class="pref-section-label">Appearance</div>
       <div class="pref-card">
@@ -267,24 +285,6 @@
             <button class="pref-pill" id="font_medium" onclick="setFontSize('medium')" style="font-size:0.9rem" data-i18n="medium">M</button>
             <button class="pref-pill" id="font_large" onclick="setFontSize('large')" style="font-size:1rem" data-i18n="large">L</button>
           </div>
-        </div>
-      </div>
-
-      <!-- LANGUAGE -->
-      <div class="pref-section-label">Language</div>
-      <div class="pref-card">
-        <div class="pref-row pref-row-tap" onclick="settingsToggleLangPicker()">
-          <span class="pref-row-label">Language</span>
-          <span class="pref-row-value" id="settingsLangValue">🇺🇸 English</span>
-          <span class="pref-row-chevron">›</span>
-        </div>
-        <div class="pref-lang-picker" id="settingsLangPicker" style="display:none;">
-          <div class="pref-divider"></div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('en','🇺🇸','English')">🇺🇸 English</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('jp','🇯🇵','日本語')">🇯🇵 日本語</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('kr','🇰🇷','한국어')">🇰🇷 한국어</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('zh','🇨🇳','中文')">🇨🇳 中文</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('vi','🇻🇳','Tiếng Việt')">🇻🇳 Tiếng Việt</div>
         </div>
       </div>
 
@@ -483,8 +483,8 @@
 
   <div class="card browse-card" onclick="newImportShowModal()">
     <div class="browse-left">
-      <span class="browse-title" data-i18n="importPlayers"></span>
-      <span class="browse-sub" data-i18n="browsePlayersSub"></span>
+      <span class="browse-title">➕ Add Players</span>
+      <span class="browse-sub">Select from saved players</span>
     </div>
     <div class="browse-arrow">›</div>
   </div>
@@ -739,7 +739,8 @@
           <button class="newImport-clear-btn" onclick="newImportClearSelected()">Clear</button>
         </div>
         <div class="newImport-footer">
-          <button class="newImport-ok-btn" onclick="addPlayersFromInputUI()">OK</button>
+          <button class="newImport-ok-btn" onclick="addPlayersFromInputUI(false)">Add</button>
+          <button class="newImport-replace-btn" id="newImportReplaceBtn" onclick="addPlayersFromInputUI(true)" style="display:none;">Replace</button>
           <button class="newImport-cancel-btn" onclick="newImportHideModal()">Cancel</button>
         </div>
       </div>
@@ -747,14 +748,14 @@
       <div class="newImport-select-section">
         <div class="newImport-subtabs">
           <button class="newImport-subtab-btn active"
-                  id="newImportHistoryBtn"
-                  onclick="newImportShowSelectMode('history')">History</button>
+                  id="newImportAddplayersBtn"
+                  onclick="newImportShowSelectMode('addplayers')">Players</button>
           <button class="newImport-subtab-btn"
                   id="newImportFavoritesBtn"
-                  onclick="newImportShowSelectMode('favorites')">Favorites</button>
+                  onclick="newImportShowSelectMode('favorites')">Favourite</button>
           <button class="newImport-subtab-btn"
-                  id="newImportAddplayersBtn"
-                  onclick="newImportShowSelectMode('addplayers')">Add Players</button>
+                  id="newImportHistoryBtn"
+                  onclick="newImportShowSelectMode('history')">History</button>
 
         </div>
 

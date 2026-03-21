@@ -1020,3 +1020,131 @@ body.app-light .tile-pairs { background: rgba(245,158,11,0.12); }
   padding: 6px;
   text-decoration: underline;
 }
+
+/* ── Player delete button ── */
+.pec-delete { flex: 0 0 auto; }
+.pec-delete-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  color: var(--red);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+.pec-delete-btn:hover { opacity: 1; }
+
+/* ── Replace button in modal ── */
+.newImport-replace-btn {
+  background: var(--surface2);
+  border: 1.5px solid var(--accent);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.newImport-replace-btn:hover { background: var(--accent); color: #fff; }
+
+/* ── Player already in session — greyed out ── */
+.player-in-session {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.player-in-session .circle-btn.add { display: none; }
+
+/* ── Match card — pkuru style ── */
+.mc-match-card {
+  background: var(--surface);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+
+.mc-match-card.mc-win { border-left: 4px solid var(--green); }
+.mc-match-card.mc-loss { border-left: 4px solid var(--red); }
+
+.mc-match-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.mc-match-team.mc-win  { background: rgba(45,206,137,0.06); }
+.mc-match-team.mc-loss { background: rgba(239,68,68,0.04); }
+
+.mc-match-players {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.mc-match-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-match-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.mc-match-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mc-match-cup {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.mc-match-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+.mc-match-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.mc-match-result-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.mc-badge-win {
+  background: rgba(45,206,137,0.15);
+  color: var(--green);
+  border: 1px solid rgba(45,206,137,0.3);
+}
+
+.mc-badge-loss {
+  background: rgba(239,68,68,0.1);
+  color: var(--red);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+
+.mc-match-date {
+  padding: 6px 14px 10px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}

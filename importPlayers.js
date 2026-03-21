@@ -147,6 +147,13 @@ function newImportShowModal() {
   _newImportFilterToClub(); // filter both to current club (async, refreshes cards when done)
   newImportRefreshSelectCards();
   newImportRefreshSelectedCards();
+  // Show Replace button only if players already in session
+  var replaceBtn = document.getElementById('newImportReplaceBtn');
+  if (replaceBtn) {
+    var hasPlayers = typeof schedulerState !== 'undefined' &&
+      schedulerState.allPlayers && schedulerState.allPlayers.length > 0;
+    replaceBtn.style.display = hasPlayers ? '' : 'none';
+  }
   // Load availability status in background — refresh cards when done
   if (typeof dbGetUnavailablePlayers === "function") {
     dbGetUnavailablePlayers().then(unavailable => {
@@ -381,9 +388,12 @@ function newImportRefreshSelectCards() {
         ? true
         : newImportState.favoritePlayers.some(fp => fp.displayName.trim().toLowerCase() === nameNorm);
       const busy      = unavailable.has(nameNorm);
+      // Grey out players already in the current session player list
+      const inSession = typeof schedulerState !== 'undefined' && schedulerState.allPlayers &&
+        schedulerState.allPlayers.some(sp => sp.name.trim().toLowerCase() === nameNorm);
 
       const card = document.createElement("div");
-      card.className = "newImport-player-card" + (busy ? " player-busy" : "") + (added ? " player-added" : "");
+      card.className = "newImport-player-card" + (busy ? " player-busy" : "") + (added ? " player-added" : "") + (inSession ? " player-in-session" : "");
       const rating1 = getActiveRating(p.displayName).toFixed(1);
       const statusDot = busy
         ? `<span class="avail-dot busy" title="Already playing in another session">🔴</span>`
@@ -392,20 +402,20 @@ function newImportRefreshSelectCards() {
       card.innerHTML = `
         <div class="newImport-player-top">
           <img src="${p.gender === "Male" ? "male.png" : "female.png"}"
-               style="${busy ? "opacity:0.4" : ""}; cursor:default">
-          <div class="newImport-player-name" style="${busy ? "opacity:0.5" : ""}">${p.displayName}</div>
+               style="${(busy || inSession) ? "opacity:0.4" : ""}; cursor:default">
+          <div class="newImport-player-name" style="${(busy || inSession) ? "opacity:0.5" : ""}">${p.displayName}${inSession ? ' <span style="font-size:0.7rem;color:var(--muted);">✓ added</span>' : ''}</div>
           ${statusDot}
         </div>
         <div class="newImport-player-actions">
-          <span class="rating-badge" data-player="${p.displayName}" style="${busy ? "opacity:0.4" : ""}">${rating1}</span>
+          <span class="rating-badge" data-player="${p.displayName}" style="${(busy || inSession) ? "opacity:0.4" : ""}">${rating1}</span>
           <button class="circle-btn favorite ${fav ? 'active-favorite' : ''}"
             data-action="favorite" data-player="${p.displayName}">
             ${fav ? "★" : "☆"}
           </button>
           <button class="circle-btn delete" data-action="delete" data-player="${p.displayName}">×</button>
-          <button class="circle-btn add ${added ? 'active-added' : ''} ${busy ? 'disabled-btn' : ''}"
-            data-action="${busy ? '' : 'add'}" data-player="${p.displayName}"
-            ${busy ? "disabled title='Already playing in another session'" : ""}>
+          <button class="circle-btn add ${added ? 'active-added' : ''} ${(busy || inSession) ? 'disabled-btn' : ''}"
+            data-action="${(busy || inSession) ? '' : 'add'}" data-player="${p.displayName}"
+            ${(busy || inSession) ? "disabled title='Already in session'" : ""}>
             ${added ? "−" : "+"}
           </button>
         </div>

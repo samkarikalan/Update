@@ -448,24 +448,33 @@ function renderMatchRow(m, playerName) {
   const opponents      = m.opponents      || [];
   const oppGenders     = m.opponentGenders || opponents.map(() => 'Male');
   const myGender       = m.myGender || 'Male';
+  const date           = m.date || '';
 
-  const makeChip = (name, gender) =>
-    `<div class="match-player-chip">
-      <img src="${gender === 'Female' ? 'female.png' : 'male.png'}" class="match-avatar">
-      <span class="match-player-name">${name}</span>
+  const makePlayer = (name, gender) =>
+    `<div class="mc-match-player">
+      <img src="${gender === 'Female' ? 'female.png' : 'male.png'}" class="mc-match-avatar">
+      <span class="mc-match-name">${name}</span>
     </div>`;
 
-  const myPair  = [makeChip(playerName, myGender), ...partner.map((n, i) => makeChip(n, partnerGenders[i]))].join('');
-  const oppPair = opponents.map((n, i) => makeChip(n, oppGenders[i])).join('');
+  const myTeam  = [makePlayer(playerName, myGender), ...partner.map((n, i) => makePlayer(n, partnerGenders[i]))].join('');
+  const oppTeam = opponents.map((n, i) => makePlayer(n, oppGenders[i])).join('');
 
   return `
-    <div class="match-row ${isWin ? 'win' : 'loss'}">
-      <div class="match-pair">${myPair}</div>
-      <div class="match-vs-col">
-        <span class="match-vs">vs</span>
-        <span class="match-result-pill ${isWin ? 'win' : 'loss'}">${isWin ? 'WIN' : 'LOSS'}</span>
+    <div class="mc-match-card ${isWin ? 'mc-win' : 'mc-loss'}">
+      <div class="mc-match-team mc-match-top">
+        <div class="mc-match-players">${myTeam}</div>
+        ${isWin ? '<div class="mc-match-cup">🏆</div>' : ''}
       </div>
-      <div class="match-pair">${oppPair}</div>
+      <div class="mc-match-divider">
+        <div class="mc-match-divider-line"></div>
+        <span class="mc-match-result-badge ${isWin ? 'mc-badge-win' : 'mc-badge-loss'}">${isWin ? 'WIN' : 'LOSS'}</span>
+        <div class="mc-match-divider-line"></div>
+      </div>
+      <div class="mc-match-team mc-match-bottom">
+        <div class="mc-match-players">${oppTeam}</div>
+        ${!isWin ? '<div class="mc-match-cup">🏆</div>' : ''}
+      </div>
+      ${date ? `<div class="mc-match-date">${date}</div>` : ''}
     </div>`;
 }
 

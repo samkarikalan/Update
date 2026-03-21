@@ -418,16 +418,13 @@ function hideImportModal() {
 }
 
 // OK button — moves selectedPlayers into scheduler
-function addPlayersFromInputUI() {
+function addPlayersFromInputUI(replace) {
   const importPlayers = newImportState.selectedPlayers;
-  if (!importPlayers || importPlayers.length === 0) { alert('No players to add!'); return; }
+  if (!importPlayers || importPlayers.length === 0) { alert('No players selected!'); return; }
 
-  // If existing players, ask replace or add
-  if (schedulerState.allPlayers.length > 0) {
-    const replace = confirm("Replace current players?\nOK = Replace  /  Cancel = Add to existing");
-    if (replace) {
-      schedulerState.allPlayers.splice(0, schedulerState.allPlayers.length);
-    }
+  // Replace clears existing list first
+  if (replace) {
+    schedulerState.allPlayers.splice(0, schedulerState.allPlayers.length);
   }
 
   importPlayers.forEach(p => {
@@ -578,6 +575,9 @@ function createPlayerCard(player, index) {
     <div class="pec-col pec-name">${player.name}</div>
     <div class="pec-col pec-rating">
       <span class="rating-badge" data-player="${player.name}">${(typeof getActiveRating === 'function' ? getActiveRating(player.name) : getRating(player.name)).toFixed(1)}</span>
+    </div>
+    <div class="pec-col pec-delete">
+      <button class="pec-delete-btn" onclick="deletePlayer(${index})" title="Remove player">🗑</button>
     </div>
   `;
   return card;
