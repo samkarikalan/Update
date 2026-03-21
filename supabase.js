@@ -110,7 +110,16 @@ async function dbGetPlayers(forceFresh = false) {
   const cached    = localStorage.getItem(CACHE_PLAYERS);
   const club      = getMyClub();
 
-  if (!forceFresh && cached && (now - lastFetch) < CACHE_TTL_MS) {
+  // Invalidate cache if club has changed
+  const cachedClubId = localStorage.getItem("kbrr_cache_club_id");
+  const currentClubId = club.id ? String(club.id) : "none";
+  if (cachedClubId !== currentClubId) {
+    localStorage.removeItem(CACHE_PLAYERS);
+    localStorage.removeItem(CACHE_TIMESTAMP);
+    localStorage.setItem("kbrr_cache_club_id", currentClubId);
+  }
+
+  if (!forceFresh && cached && cachedClubId === currentClubId && (now - lastFetch) < CACHE_TTL_MS) {
     return JSON.parse(cached);
   }
 

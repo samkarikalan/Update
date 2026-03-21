@@ -126,12 +126,68 @@ function switchMode(mode) {
 }
 
 function initModeOnLoad() {
-  // Keep home hidden until mode is chosen
+  // Keep home hidden
   var homeEl = document.getElementById('homePageOverlay');
   if (homeEl) homeEl.style.display = 'none';
-  // Show mode select overlay
+  // Run smart startup flow
+  initAppFlow();
+}
+
+async function initAppFlow() {
+  var club = (typeof getMyClub === 'function') ? getMyClub() : { id: null, name: null };
+
+  // ── Not logged in → show mode select (which leads to vault) ──
+  if (!club || !club.id) {
+    showOnboardingOverlay('notLoggedIn');
+    return;
+  }
+
+  // ── Logged in — check if club has players ──
+  try {
+    var players = await dbGetPlayers(true);
+    if (!players || players.length === 0) {
+      // No players — open Vault with banner
+      showOnboardingOverlay('noPlayers');
+      return;
+    }
+  } catch(e) {
+    // On error just show mode select normally
+  }
+
+  // ── All good — show mode select ──
   var overlay = document.getElementById('modeSelectOverlay');
   if (overlay) overlay.style.display = 'flex';
+}
+
+function showOnboardingOverlay(reason) {
+  var overlay = document.getElementById('onboardingOverlay');
+  var title   = document.getElementById('onboardingTitle');
+  var msg     = document.getElementById('onboardingMsg');
+  var btn     = document.getElementById('onboardingBtn');
+  if (!overlay) return;
+
+  var goToVault = function() {
+    overlay.style.display = 'none';
+    // Hide home overlay if visible
+    var homeEl = document.getElementById('homePageOverlay');
+    if (homeEl) homeEl.style.display = 'none';
+    // Hide mode select if visible
+    var modeEl = document.getElementById('modeSelectOverlay');
+    if (modeEl) modeEl.style.display = 'none';
+    // Show vault page
+    showPage('vaultPage', null);
+  };
+
+  if (reason === 'notLoggedIn') {
+    if (title) title.textContent = 'Welcome to Sports Club Scheduler';
+    if (msg)   msg.textContent   = 'Connect to your club to get started.';
+    if (btn)   { btn.textContent = 'Connect to Club'; btn.onclick = goToVault; }
+  } else if (reason === 'noPlayers') {
+    if (title) title.textContent = 'No players found';
+    if (msg)   msg.textContent   = 'Your club has no players yet. Add players in the Vault to get started.';
+    if (btn)   { btn.textContent = 'Go to Vault'; btn.onclick = goToVault; }
+  }
+  overlay.style.display = 'flex';
 }
 
 /* ============================================================

@@ -1293,8 +1293,8 @@ async function addPlayersBrowseLoad() {
   try {
     let players = [];
     if (scope === "club") {
-      // Fetch club members directly from DB (respects current club filter)
-      const clubPlayers = await dbGetPlayers();
+      // Fetch club members directly from DB — always fresh to avoid stale cache
+      const clubPlayers = await dbGetPlayers(true);
       players = (clubPlayers || []).map(p => ({
         displayName: p.name,
         gender:      p.gender || "Male",

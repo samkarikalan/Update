@@ -1,5 +1,5 @@
 {
-  "appId": "com.samkarikalan.badmintonscheduler",
+  "appId": "com.samkarikalan.sportclubscheduler",
   "appName": "Club Scheduler",
   "webDir": ".",
   "bundledWebRuntime": false,
