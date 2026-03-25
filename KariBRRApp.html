@@ -20,6 +20,8 @@
   <link rel="stylesheet" href="HomeStyle.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="supabase.js" defer></script>
+  <script src="auth.js" defer></script>
+  <script src="authUI.js" defer></script>
   <script src="subscription.js" defer></script>
   <script src="HomeScreen.js" defer></script>
   <script src="main.js" defer></script>
@@ -41,13 +43,14 @@
   <!-- ============================= -->
   <!--       MODE SELECT OVERLAY     -->
   <!-- ============================= -->
-  <div id="modeSelectOverlay" class="mode-select-overlay">
+  <!-- Keep ghost for compatibility  -->
+  <div id="modeSelectOverlay" class="mode-select-overlay" style="display:none;">
     <div class="mode-select-card">
       <div class="mode-select-logo">🏸</div>
-      <div class="mode-select-title">CLUB Scheduler</div>
-      <div class="mode-select-subtitle">How are you joining today?</div>
+      <div class="mode-select-title">Choose Mode</div>
+      <div class="mode-select-subtitle">How are you using the app today?</div>
       <div class="mode-select-options">
-        <button class="mode-select-btn viewer" onclick="selectMode('viewer')">
+        <button class="mode-select-btn viewer" onclick="document.getElementById('modeSelectOverlay').style.display='none';selectMode('viewer')">
           <span class="mode-select-btn-icon">👁</span>
           <div class="mode-select-btn-info">
             <div class="mode-select-btn-name">Viewer</div>
@@ -55,16 +58,152 @@
           </div>
           <span class="mode-select-btn-arrow">›</span>
         </button>
-        <button class="mode-select-btn organiser" onclick="selectMode('organiser')">
-          <span class="mode-select-btn-icon"><img src="win-cup.png" style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3))"></span>
+        <button class="mode-select-btn organiser" onclick="document.getElementById('modeSelectOverlay').style.display='none';switchMode('organiser')">
+          <span class="mode-select-btn-icon">🏆</span>
           <div class="mode-select-btn-info">
-            <div class="mode-select-btn-name">Organiser</div>
+            <div class="mode-select-btn-name">Round Organiser</div>
             <div class="mode-select-btn-desc">Run session, score games, manage players</div>
+          </div>
+          <span class="mode-select-btn-arrow">›</span>
+        </button>
+        <button class="mode-select-btn vault" onclick="document.getElementById('modeSelectOverlay').style.display='none';requestVaultMode()">
+          <span class="mode-select-btn-icon">🔑</span>
+          <div class="mode-select-btn-info">
+            <div class="mode-select-btn-name">Vault Manager</div>
+            <div class="mode-select-btn-desc">Club admin — players, requests, management</div>
           </div>
           <span class="mode-select-btn-arrow">›</span>
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- ============================= -->
+  <!--        AUTH SCREENS           -->
+  <!-- ============================= -->
+  <div id="authOverlay" class="auth-overlay" style="display:none;">
+
+    <!-- WELCOME screen -->
+    <div id="authWelcome" class="auth-screen">
+      <div class="auth-logo">🏸</div>
+      <div class="auth-app-name">Sports Club Scheduler</div>
+      <div class="auth-tagline">Badminton &amp; Pickleball</div>
+      <div class="auth-welcome-btns">
+        <button class="auth-btn-primary" onclick="authShowScreen('login')">Login</button>
+        <button class="auth-btn-secondary" onclick="authShowScreen('signup')">Create Account</button>
+      </div>
+    </div>
+
+    <!-- LOGIN screen -->
+    <div id="authLogin" class="auth-screen" style="display:none;">
+      <div class="auth-back-row">
+        <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
+        <span class="auth-screen-title">Login</span>
+      </div>
+      <div class="auth-form">
+        <div class="auth-field">
+          <label class="auth-label">User ID</label>
+          <input type="text" id="loginUserId" class="auth-input" placeholder="e.g. kari123" autocapitalize="none">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
+        </div>
+        <div id="loginError" class="auth-error" style="display:none;"></div>
+        <button class="auth-btn-primary" onclick="authDoLogin()">Login</button>
+        <button class="auth-btn-link" onclick="authShowScreen('forgot')">Forgot password?</button>
+      </div>
+    </div>
+
+    <!-- SIGN UP screen -->
+    <div id="authSignup" class="auth-screen" style="display:none;">
+      <div class="auth-back-row">
+        <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
+        <span class="auth-screen-title">Create Account</span>
+      </div>
+      <div class="auth-form">
+        <div class="auth-field">
+          <label class="auth-label">User ID <span class="auth-hint">unique, e.g. kari123</span></label>
+          <input type="text" id="signupUserId" class="auth-input" placeholder="kari123" autocapitalize="none">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Nickname <span class="auth-hint">shown to others</span></label>
+          <input type="text" id="signupNickname" class="auth-input" placeholder="Kari">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Email <span class="auth-hint">for password recovery</span></label>
+          <input type="email" id="signupEmail" class="auth-input" placeholder="kari@email.com">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input type="password" id="signupPassword" class="auth-input" placeholder="Min 6 characters">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Confirm Password</label>
+          <input type="password" id="signupConfirm" class="auth-input" placeholder="Repeat password">
+        </div>
+        <div id="signupError" class="auth-error" style="display:none;"></div>
+        <button class="auth-btn-primary" onclick="authDoSignup()">Create Account</button>
+      </div>
+    </div>
+
+    <!-- FORGOT PASSWORD screen -->
+    <div id="authForgot" class="auth-screen" style="display:none;">
+      <div class="auth-back-row">
+        <button class="auth-back-btn" onclick="authShowScreen('login')">&#8249;</button>
+        <span class="auth-screen-title">Reset Password</span>
+      </div>
+      <div class="auth-form">
+        <!-- Step 1: Email -->
+        <div id="forgotStep1">
+          <div class="auth-field">
+            <label class="auth-label">Email address</label>
+            <input type="email" id="forgotEmail" class="auth-input" placeholder="your@email.com">
+          </div>
+          <div id="forgotError" class="auth-error" style="display:none;"></div>
+          <button class="auth-btn-primary" onclick="authDoForgotSend()">Send OTP</button>
+        </div>
+        <!-- Step 2: OTP + new password -->
+        <div id="forgotStep2" style="display:none;">
+          <div class="auth-field">
+            <label class="auth-label">OTP Code</label>
+            <input type="text" id="forgotOtp" class="auth-input" placeholder="6-digit code" maxlength="6">
+          </div>
+          <div class="auth-field">
+            <label class="auth-label">New Password</label>
+            <input type="password" id="forgotNewPw" class="auth-input" placeholder="Min 6 characters">
+          </div>
+          <div id="forgotError2" class="auth-error" style="display:none;"></div>
+          <button class="auth-btn-primary" onclick="authDoForgotVerify()">Reset Password</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOIN CLUB screen -->
+    <div id="authJoinClub" class="auth-screen" style="display:none;">
+      <div class="auth-back-row">
+        <div style="flex:1"></div>
+        <button class="auth-btn-link" onclick="authSkipJoin()">Skip</button>
+      </div>
+      <div class="auth-logo" style="font-size:2.5rem;">🏢</div>
+      <div class="auth-screen-title" style="margin-bottom:6px;">Find Your Club</div>
+      <div class="auth-tagline">Search by club name and request to join</div>
+      <div class="auth-form" style="margin-top:24px;">
+        <div class="auth-field">
+          <label class="auth-label">Search Club</label>
+          <input type="text" id="joinClubSearch" class="auth-input"
+            placeholder="Type club name..."
+            oninput="authSearchClubsUI(this.value)">
+        </div>
+        <div id="joinClubResults" class="auth-club-results" style="display:none;"></div>
+        <div id="joinClubError" class="auth-error" style="display:none;"></div>
+        <div id="joinClubPending" class="auth-pending" style="display:none;">
+          <div class="auth-pending-icon">⏳</div>
+          <div class="auth-pending-text">Request sent! Waiting for admin approval.</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============================= -->
@@ -86,8 +225,9 @@
     <!-- Combined mode + status bar -->
     <div class="home-mode-status" id="homeStatusBar">
       <div class="mode-pill" id="homeModeP">
-        <button class="mode-pill-btn" id="homePillViewer"  onclick="switchMode('viewer')">👁 Viewer</button>
+        <button class="mode-pill-btn" id="homePillViewer"    onclick="switchMode('viewer')">👁 Viewer</button>
         <button class="mode-pill-btn active" id="homePillOrganiser" onclick="switchMode('organiser')">🏆 Organiser</button>
+        <button class="mode-pill-btn" id="homePillVault"     onclick="requestVaultMode()">🔑 Vault</button>
       </div>
       <div class="home-mode-status-right">
         <span class="home-status-dot"></span>
@@ -169,46 +309,102 @@
       </div>
     </div>
 
-    <!-- 3x2 Tile Grid -->
-    <div class="home-grid-3col">
-
-      <!-- Row 1: Vault · Players · Fixed Pairs -->
-      <div class="home-tile home-tile-org" onclick="homeGo('vaultPage','tabBtnVault')">
-        <div class="home-tile-icon tile-vault">⚡</div>
-        <div class="home-tile-name">Vault</div>
-        <div class="home-tile-sub" id="tileSubVault">Club data</div>
-      </div>
-      <div class="home-tile home-tile-org" onclick="homeGo('playersPage','tabBtnPlayers')">
-        <div class="home-tile-icon tile-players">👥</div>
-        <div class="home-tile-name">Players</div>
-        <div class="home-tile-sub" id="tileSubPlayers">Add · Remove</div>
-      </div>
-      <div class="home-tile home-tile-org" onclick="homeGo('fixedPairsPage','tabBtnFixedPairs')">
-        <div class="home-tile-icon tile-pairs">🤝</div>
-        <div class="home-tile-name">Fixed Pairs</div>
-        <div class="home-tile-sub" id="tileSubPairs">Always together</div>
-      </div>
-
-      <!-- Row 2: My Card · Dashboard · Settings -->
-      <div class="home-tile" onclick="homeGo('myCardPage',null)">
-        <div class="home-tile-icon tile-profile">
-          <img id="homeTileAvatar" src="male.png" style="width:26px;height:26px;border-radius:50%;display:none;">
-          <span id="homeTileIcon">👤</span>
+    <!-- ── ORGANISER GRID ── -->
+    <!-- ── ORGANISER GRID (Vault + My Card removed) ── -->
+    <div id="homeOrgGrid" style="display:none;">
+      <div class="home-grid">
+        <div class="home-tile" onclick="homeGo('playersPage','tabBtnPlayers')">
+          <div class="home-tile-icon tile-players">👥</div>
+          <div class="home-tile-name">Players</div>
+          <div class="home-tile-sub" id="tileSubPlayers">Add · Remove</div>
         </div>
-        <div class="home-tile-name" id="homeTileName">My Card</div>
-        <div class="home-tile-sub" id="homeTileRating">Not selected</div>
+        <div class="home-tile" onclick="homeGo('fixedPairsPage','tabBtnFixedPairs')">
+          <div class="home-tile-icon tile-pairs">🤝</div>
+          <div class="home-tile-name">Fixed Pairs</div>
+          <div class="home-tile-sub" id="tileSubPairs">Always together</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
+          <div class="home-tile-icon">📡</div>
+          <div class="home-tile-name">Dashboard</div>
+          <div class="home-tile-sub" id="tileSubDashboard">Live sessions</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('settingsPage',null)">
+          <div class="home-tile-icon tile-settings">⚙️</div>
+          <div class="home-tile-name">Settings</div>
+          <div class="home-tile-sub" id="tileSubSettings">Theme · Font</div>
+        </div>
       </div>
-      <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
-        <div class="home-tile-icon">📡</div>
-        <div class="home-tile-name">Dashboard</div>
-        <div class="home-tile-sub" id="tileSubDashboard">Live sessions</div>
-      </div>
-      <div class="home-tile" onclick="homeGo('settingsPage',null)">
-        <div class="home-tile-icon tile-settings">⚙️</div>
-        <div class="home-tile-name">Settings</div>
-        <div class="home-tile-sub" id="tileSubSettings">Theme · Font</div>
-      </div>
+    </div>
 
+    <!-- ── VAULT MANAGER GRID (new) ── -->
+    <div id="homeVaultGrid" style="display:none;">
+      <div class="home-grid">
+        <div class="home-tile" onclick="homeGo('vaultPlayingPage',null)">
+          <div class="home-tile-icon tile-vault">⚡</div>
+          <div class="home-tile-name">Playing</div>
+          <div class="home-tile-sub">Who's on court</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('vaultRegisterPage',null)">
+          <div class="home-tile-icon" style="background:rgba(45,206,137,0.15)">📋</div>
+          <div class="home-tile-name">Register</div>
+          <div class="home-tile-sub">Add players to club</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('vaultModifyPage',null)">
+          <div class="home-tile-icon" style="background:rgba(108,99,255,0.15)">✏️</div>
+          <div class="home-tile-name">Modify</div>
+          <div class="home-tile-sub">Edit player data</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('vaultRequestsPage',null)">
+          <div class="home-tile-icon" style="background:rgba(245,158,11,0.15)">🔔</div>
+          <div class="home-tile-name">Requests</div>
+          <div class="home-tile-sub" id="tileSubRequests">Join requests</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('vaultClubMgmtPage',null)">
+          <div class="home-tile-icon" style="background:rgba(239,68,68,0.12)">🏢</div>
+          <div class="home-tile-name">Club Mgmt</div>
+          <div class="home-tile-sub">Create · Delete</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('settingsPage',null)">
+          <div class="home-tile-icon tile-settings">⚙️</div>
+          <div class="home-tile-name">Settings</div>
+          <div class="home-tile-sub" id="tileSubSettingsVM">Theme · Font</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEWER GRID ── -->
+    <div id="homeViewerGrid" style="display:none;">
+      <div class="home-grid-3col">
+        <div class="home-tile" onclick="homeGo('myCardPage',null)">
+          <div class="home-tile-icon tile-profile">
+            <img id="homeTileAvatarV" src="male.png" style="width:26px;height:26px;border-radius:50%;display:none;">
+            <span id="homeTileIconV">👤</span>
+          </div>
+          <div class="home-tile-name" id="homeTileNameV">My Card</div>
+          <div class="home-tile-sub" id="homeTileRatingV">Not selected</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
+          <div class="home-tile-icon">📡</div>
+          <div class="home-tile-name">Dashboard</div>
+          <div class="home-tile-sub" id="tileSubDashboardV">Live sessions</div>
+        </div>
+        <div class="home-tile" onclick="homeGo('settingsPage',null)">
+          <div class="home-tile-icon tile-settings">⚙️</div>
+          <div class="home-tile-name">Settings</div>
+          <div class="home-tile-sub" id="tileSubSettingsV">Theme · Font</div>
+        </div>
+      </div>
+      <!-- Join Club row -->
+      <div id="joinClubTileRow" style="margin:10px 16px 0;">
+        <div class="home-tile" id="tileJoinClub" onclick="homeGo('joinClubPage',null)" style="display:flex;flex-direction:row;align-items:center;gap:14px;padding:14px 16px;">
+          <div class="home-tile-icon" style="margin-bottom:0;flex-shrink:0;">🏢</div>
+          <div style="flex:1;">
+            <div class="home-tile-name">Join Club</div>
+            <div class="home-tile-sub" id="tileSubJoinClub">Find &amp; request</div>
+          </div>
+          <span style="color:var(--muted);font-size:1.1rem;">›</span>
+        </div>
+      </div>
     </div>
 
     <button class="home-help-btn" onclick="homeGo('helpPage',null)">❓ Help &amp; Guide</button>
@@ -238,6 +434,53 @@
   <span id="tabBtnSummary"   style="display:none"></span>
   <span id="tabBtnDashboard" style="display:none"></span>
   <span id="tabBtnViewer"    style="display:none"></span>
+  <span id="tabBtnJoinClub"  style="display:none"></span>
+
+  <!-- ============================= -->
+  <!--        JOIN CLUB PAGE         -->
+  <!-- ============================= -->
+  <div id="joinClubPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+      <span class="page-back-title">🏢 Join Club</span>
+    </div>
+
+    <!-- Status card — shown when already joined or pending -->
+    <div id="joinClubStatusCard" style="display:none; margin:16px; padding:20px; border-radius:16px; background:var(--card-bg,#1e1e2e); border:1px solid var(--border,#333); text-align:center;">
+      <div id="joinClubStatusIcon" style="font-size:2.5rem; margin-bottom:10px;">⏳</div>
+      <div id="joinClubStatusTitle" style="font-weight:700; font-size:1.05rem; color:var(--text); margin-bottom:6px;"></div>
+      <div id="joinClubStatusMsg" style="font-size:0.82rem; color:var(--muted); line-height:1.5;"></div>
+      <button id="joinClubLeaveBtn" onclick="joinClubLeave()" style="display:none; margin-top:16px; background:none; border:1px solid var(--red,#e63757); color:var(--red,#e63757); border-radius:10px; padding:8px 20px; font-size:0.82rem; cursor:pointer;">Leave Club</button>
+    </div>
+
+    <!-- Search section -->
+    <div id="joinClubSearchSection" style="margin:16px;">
+      <div style="position:relative; margin-bottom:10px;">
+        <input type="text" id="joinClubPageSearch" class="auth-input"
+          placeholder="Type club name to search..."
+          oninput="joinClubPageSearchUI(this.value)"
+          style="width:100%; box-sizing:border-box; padding-right:40px;">
+        <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;">🔍</span>
+      </div>
+      <div id="joinClubPageResults" style="display:none;"></div>
+      <div id="joinClubPageError" class="auth-error" style="display:none;"></div>
+
+      <!-- Nickname conflict section -->
+      <div id="joinClubNicknameSection" style="display:none; background:var(--card-bg,#1e1e2e); border:1px solid var(--border,#333); border-radius:14px; padding:16px; margin-top:10px;">
+        <div id="joinClubNicknameMsg" style="font-size:0.85rem; color:var(--text); margin-bottom:12px; line-height:1.5;"></div>
+        <input type="text" id="joinClubNicknameInput" class="auth-input"
+          placeholder="Enter your nickname for this club"
+          style="width:100%; box-sizing:border-box; margin-bottom:10px;"
+          onkeydown="if(event.key==='Enter') joinClubSubmitNickname()">
+        <button onclick="joinClubSubmitNickname()" style="width:100%; padding:12px; background:var(--accent,#6c63ff); color:#fff; border:none; border-radius:10px; font-size:0.95rem; font-weight:600; cursor:pointer;">Submit Request</button>
+      </div>
+      <div id="joinClubPageFeedback" style="display:none; text-align:center; padding:20px 12px; border-radius:14px; background:var(--card-bg,#1e1e2e); border:1px solid var(--border,#333); margin-top:10px;">
+        <div id="joinClubPageFeedbackIcon" style="font-size:2rem; margin-bottom:8px;">⏳</div>
+        <div id="joinClubPageFeedbackTitle" style="font-weight:600; color:var(--text); margin-bottom:4px;"></div>
+        <div id="joinClubPageFeedbackMsg" style="font-size:0.82rem; color:var(--muted);"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================= -->
   <!--         SETTINGS PAGE         -->
@@ -346,16 +589,151 @@
   <!-- ============================= -->
   <!--           VAULT PAGE          -->
   <!-- ============================= -->
-  <div id="vaultPage" class="page" style="display:none;">
+
+  <!-- ================================ -->
+  <!--   VAULT: PLAYING PAGE            -->
+  <!-- ================================ -->
+  <div id="vaultPlayingPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
-      <span class="page-back-title">&#9889; Vault</span>
+      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+      <span class="page-back-title">🔴 Playing Now</span>
+    </div>
+    <div class="vault-wrap">
+      <div class="vault-sync-row">
+        <span class="vault-sync-text" id="vaultPlayingSyncStatus"></span>
+        <button class="vault-sync-btn" onclick="playerPlayingRenderList()">↻ Refresh</button>
+      </div>
+      <div id="playerPlayingList" class="player-mgmt-list"></div>
+    </div>
+  </div>
+
+  <!-- ================================ -->
+  <!--   VAULT: REGISTER PAGE           -->
+  <!-- ================================ -->
+  <div id="vaultRegisterPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+      <span class="page-back-title">📋 Register Players</span>
+    </div>
+    <div class="vault-wrap">
+      <div id="vaultRegisterContainer"></div>
+    </div>
+  </div>
+
+  <!-- ================================ -->
+  <!--   VAULT: MODIFY PAGE             -->
+  <!-- ================================ -->
+  <div id="vaultModifyPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+      <span class="page-back-title">✏️ Modify Players</span>
+    </div>
+    <div class="vault-wrap">
+      <!-- Filter row -->
+      <div class="vm-filter-row">
+        <select id="vmFilterGender" class="vm-filter-select" onchange="vaultModifyFilter()">
+          <option value="">All</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+        <button class="vault-sync-btn" onclick="vaultRenderModify()">↻</button>
+      </div>
+      <!-- Search -->
+      <div class="vm-search-wrap">
+        <span class="vm-search-icon">🔍</span>
+        <input id="vmSearchInput" class="vm-search-input" type="text" placeholder="Search players…" oninput="vaultModifyFilter()">
+      </div>
+      <!-- Count + list -->
+      <div class="vm-count-row">
+        <span id="vmPlayerCount" class="vm-count-badge"></span>
+      </div>
+      <div id="vaultModifyList" class="vm-player-list"></div>
+    </div>
+  </div>
+
+  <!-- ================================ -->
+  <!--   VAULT MODIFY: EDIT MODAL       -->
+  <!-- ================================ -->
+  <div id="vmEditModal" class="vm-modal-backdrop" onclick="vmCloseEditModal(event)">
+    <div class="vm-modal-sheet">
+      <div class="vm-modal-handle"></div>
+      <div class="vm-modal-title">Edit Player</div>
+      <input type="hidden" id="vmEditPlayerId">
+      <input type="hidden" id="vmEditUserAccountId">
+      <div class="vm-field-group">
+        <label class="vm-field-label">Nickname</label>
+        <input id="vmEditName" class="vm-field-input" type="text" placeholder="Player name">
+      </div>
+      <div class="vm-field-row">
+        <div class="vm-field-group" style="flex:1">
+          <label class="vm-field-label">Gender</label>
+          <select id="vmEditGender" class="vm-field-input">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="vm-field-group" style="flex:1">
+          <label class="vm-field-label">Rating</label>
+          <input id="vmEditRating" class="vm-field-input" type="number" step="0.1" min="1.0" max="5.0" placeholder="1.0">
+        </div>
+      </div>
+      <div class="vm-field-row">
+        <div class="vm-field-group" style="flex:1">
+          <label class="vm-field-label">Wins</label>
+          <input id="vmEditWins" class="vm-field-input" type="number" min="0" placeholder="0">
+        </div>
+        <div class="vm-field-group" style="flex:1">
+          <label class="vm-field-label">Losses</label>
+          <input id="vmEditLosses" class="vm-field-input" type="number" min="0" placeholder="0">
+        </div>
+      </div>
+      <div class="vm-field-group">
+        <label class="vm-field-label">User ID</label>
+        <input id="vmEditUserId" class="vm-field-input" type="text" placeholder="user_id" autocapitalize="none">
+      </div>
+      <div class="vm-field-group">
+        <label class="vm-field-label">Password (leave blank to keep)</label>
+        <input id="vmEditPassword" class="vm-field-input" type="text" placeholder="••••••••">
+      </div>
+      <div id="vmEditFeedback" style="font-size:0.8rem;min-height:18px;margin-bottom:8px"></div>
+      <div class="vm-modal-actions">
+        <button class="vm-action-btn vm-ghost" onclick="vmCloseEditModal()">Cancel</button>
+        <button class="vm-action-btn vm-accent" onclick="vmSaveEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ -->
+  <!--   VAULT: REQUESTS PAGE           -->
+  <!-- ================================ -->
+  <div id="vaultRequestsPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+      <span class="page-back-title">🔔 Join Requests</span>
+    </div>
+    <div class="vault-wrap">
+      <div class="vault-sync-row">
+        <span class="vault-sync-text"></span>
+        <button class="vault-sync-btn" onclick="vaultLoadRequests()">↻ Refresh</button>
+      </div>
+      <div id="vaultRequestsList" class="vault-requests-list">
+        <div class="profile-sessions-loading">Loading requests...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================ -->
+  <!--   VAULT: CLUB MGMT PAGE          -->
+  <!-- ================================ -->
+  <div id="vaultClubMgmtPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
+      <span class="page-back-title">🏢 Club Management</span>
     </div>
     <div class="vault-wrap">
 
-      <!-- Club card -->
+      <!-- Club status card -->
       <div class="vault-club-card" id="clubLoginCard">
-        <!-- Connected state -->
         <div id="clubLoggedInState" style="display:none">
           <div class="vault-club-connected">
             <div class="vault-club-left">
@@ -368,7 +746,6 @@
             <button class="vault-change-btn" onclick="clubLoginSwitch()">Change</button>
           </div>
         </div>
-        <!-- Login form -->
         <div id="clubLoginForm">
           <div class="vault-section-label">&#127970; Connect to Club</div>
           <div class="club-row">
@@ -386,96 +763,85 @@
         </div>
       </div>
 
-      <!-- Sync row -->
+      <!-- Sync -->
       <div class="vault-sync-row">
         <span id="sbSyncStatus" class="vault-sync-text"></span>
         <button class="vault-sync-btn" onclick="syncToLocal()">&#8635; Sync</button>
       </div>
 
-      <!-- Vault tabs -->
-      <div class="vault-tabs-card">
-        <div class="vault-tab-bar">
-          <button class="vault-tab active" id="vaultTabPlayersBtn" onclick="vaultShowTab('players',this)">&#128308; Playing</button>
-          <button class="vault-tab" id="vaultTabRegisterBtn" onclick="vaultShowTab('register',this)">&#128203; Register</button>
-          <button class="vault-tab" id="vaultTabModifyBtn" onclick="vaultShowTab('modify',this)">&#9999;&#65039; Modify</button>
+      <!-- CREATE CLUB -->
+      <div class="settings-card" style="padding:14px;margin-top:10px;">
+        <div class="manage-section-title">Create New Club</div>
+        <div class="club-row">
+          <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
         </div>
-        <div class="vault-inner-content active" id="vaultTabPlayers">
-          <div id="playerPlayingList" class="player-mgmt-list"></div>
+        <div class="club-row" style="margin-top:6px">
+          <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
         </div>
-        <div class="vault-inner-content" id="vaultTabRegister">
-          <div id="vaultRegisterContainer"></div>
+        <div class="club-row" style="margin-top:6px">
+          <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
         </div>
-        <div class="vault-inner-content" id="vaultTabModify">
-          <div id="vaultModifyList" class="player-mgmt-list"></div>
+        <div class="club-row" style="margin-top:6px">
+          <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
         </div>
-        <div id="vaultFeedback"></div>
+        <div id="clubCreateStep1">
+          <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
+        </div>
+        <div id="clubCreateStep2" style="display:none">
+          <div class="club-row" style="margin-top:8px">
+            <input type="text" id="sbNewClubOtp" class="club-input"
+                   placeholder="Enter 8-digit OTP" maxlength="8"
+                   onkeydown="if(event.key==='Enter')clubCreateVerify()">
+            <button class="btn-save" onclick="clubCreateVerify()">Verify &amp; Create</button>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+            OTP sent to <span id="clubCreateEmailMasked"></span>
+            · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
+          </div>
+        </div>
+        <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
       </div>
 
-      <div class="settings-card" style="padding:0;overflow:hidden;margin-top:10px" id="vaultClubMgmtCard">
-        <button class="club-mgmt-toggle" onclick="toggleClubMgmt()" id="clubMgmtToggleBtn">
-          🏢 Club Management <span id="clubMgmtArrow">▶</span>
-        </button>
-        <div id="clubMgmtPanel" style="display:none;padding:14px">
-
-          <!-- CREATE CLUB -->
-          <div class="manage-section-title">Create New Club</div>
-          <div class="club-row">
-            <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
-          </div>
-          <div class="club-row" style="margin-top:6px">
-            <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
-          </div>
-          <div id="clubCreateStep1">
-            <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
-          </div>
-          <div id="clubCreateStep2" style="display:none">
-            <div class="club-row" style="margin-top:8px">
-              <input type="text" id="sbNewClubOtp" class="club-input"
-                     placeholder="Enter 8-digit OTP" maxlength="8"
-                     onkeydown="if(event.key==='Enter')clubCreateVerify()">
-              <button class="btn-save" onclick="clubCreateVerify()">Verify & Create</button>
-            </div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-              OTP sent to <span id="clubCreateEmailMasked"></span>
-              · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
-            </div>
-          </div>
-          <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
-          <!-- DELETE CLUB -->
-          <div class="manage-section-title manage-section-danger" style="margin-top:20px">Delete Club</div>
-          <div class="club-row">
-            <select id="sbDeleteClubSelect" class="club-select">
-              <option value="">— Select club to delete —</option>
-            </select>
-          </div>
-          <div id="clubDeleteStep1">
-            <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
-          </div>
-          <div id="clubDeleteStep2" style="display:none">
-            <div class="club-row" style="margin-top:8px">
-              <input type="text" id="sbDeleteOtp" class="club-input"
-                     placeholder="Enter 8-digit OTP" maxlength="8"
-                     onkeydown="if(event.key==='Enter')clubDeleteVerify()">
-              <button class="btn-clear" onclick="clubDeleteVerify()">Verify & Delete</button>
-            </div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-              OTP sent to <span id="clubDeleteEmailMasked"></span>
-              · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
-            </div>
-          </div>
-          <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-
+      <!-- DELETE CLUB -->
+      <div class="settings-card" style="padding:14px;margin-top:10px;">
+        <div class="manage-section-title manage-section-danger">Delete Club</div>
+        <div class="club-row">
+          <select id="sbDeleteClubSelect" class="club-select">
+            <option value="">— Select club to delete —</option>
+          </select>
         </div>
+        <div id="clubDeleteStep1">
+          <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
+        </div>
+        <div id="clubDeleteStep2" style="display:none">
+          <div class="club-row" style="margin-top:8px">
+            <input type="text" id="sbDeleteOtp" class="club-input"
+                   placeholder="Enter 8-digit OTP" maxlength="8"
+                   onkeydown="if(event.key==='Enter')clubDeleteVerify()">
+            <button class="btn-clear" onclick="clubDeleteVerify()">Verify &amp; Delete</button>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+            OTP sent to <span id="clubDeleteEmailMasked"></span>
+            · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
+          </div>
+        </div>
+        <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
       </div>
 
-    </div><!-- vault-wrap -->
+    </div>
+  </div>
+
+  <!-- vaultPage kept as minimal stub for organiser mode -->
+  <div id="vaultPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
+      <span class="page-back-title">&#9889; Vault</span>
+    </div>
+    <div class="vault-wrap">
+      <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.9rem;">
+        Use <strong>Vault Manager</strong> mode for full admin access.
+      </div>
+    </div>
   </div><!-- vaultPage -->
 
  <div id="playersPage" class="page">
@@ -879,6 +1245,7 @@
       <span class="profile-drawer-title">My Profile</span>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="profile-switch-btn" onclick="switchProfilePlayer()">Switch</button>
+        <button class="profile-switch-btn" style="color:var(--red)" onclick="authDoLogout()">Logout</button>
         <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
       </div>
     </div>
@@ -958,7 +1325,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('/SCSWork/sw.js')
           .then(function(reg) { console.log('SW registered'); })
           .catch(function(err) { console.log('SW failed:', err); });
       });

@@ -423,7 +423,7 @@ async function viewerJoinClub() {
 
     if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
     localStorage.setItem('kbrr_club_mode', role);
-    localStorage.setItem('kbrr_rating_field', 'club_ratings');
+    localStorage.setItem('kbrr_rating_field', 'club_rating');
     if (pwInput) pwInput.value = '';
     setFb(role === 'admin' ? '✅ Joined as Admin' : '✅ Joined successfully', true);
     clubLoginRefresh();

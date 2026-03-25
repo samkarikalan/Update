@@ -3,46 +3,47 @@
    Caches app shell for offline use
    ============================================= */
 
-const CACHE_NAME = 'club-scheduler-v1';
+const CACHE_NAME = 'club-scheduler-v17';
 
 const ASSETS = [
-  '/KariBRRApp.html',
-  '/BRRStyle1.css',
-  '/BRRStyle2.css',
-  '/BRRStyle3.css',
-  '/Export.css',
-  '/HomeStyle.css',
-  '/main.js',
-  '/HomeScreen.js',
-  '/home.js',
-  '/settings.js',
-  '/players.js',
-  '/rounds.js',
-  '/games.js',
-  '/summary.js',
-  '/dashboard.js',
-  '/viewer.js',
-  '/profile.js',
-  '/supabase.js',
-  '/importPlayers.js',
-  '/competitive_algorithm.js',
-  '/engjap.js',
-  '/ExportCSS.js',
-  '/github.js',
-  '/help.js',
-  '/male.png',
-  '/female.png',
-  '/win-cup.png',
-  '/lock.png',
-  '/unlock.png',
-  '/power.png',
-  '/cs.PNG',
-  '/timer.mp3',
-  '/help_en.json',
-  '/help_jp.json',
-  '/help_kr.json',
-  '/help_zh.json',
-  '/help_vi.json'
+  '/SCSWork/KariBRRApp.html',
+  '/SCSWork/BRRStyle1.css',
+  '/SCSWork/BRRStyle2.css',
+  '/SCSWork/BRRStyle3.css',
+  '/SCSWork/Export.css',
+  '/SCSWork/HomeStyle.css',
+  '/SCSWork/HomeStyle-new.css',
+  '/SCSWork/main.js',
+  '/SCSWork/HomeScreen.js',
+
+  '/SCSWork/settings.js',
+  '/SCSWork/players.js',
+  '/SCSWork/rounds.js',
+  '/SCSWork/games.js',
+  '/SCSWork/summary.js',
+  '/SCSWork/dashboard.js',
+  '/SCSWork/viewer.js',
+  '/SCSWork/profile.js',
+  '/SCSWork/supabase.js',
+  '/SCSWork/importPlayers.js',
+  '/SCSWork/competitive_algorithm.js',
+  '/SCSWork/engjap.js',
+  '/SCSWork/ExportCSS.js',
+  '/SCSWork/github.js',
+  '/SCSWork/help.js',
+  '/SCSWork/male.png',
+  '/SCSWork/female.png',
+  '/SCSWork/win-cup.png',
+  '/SCSWork/lock.png',
+  '/SCSWork/unlock.png',
+  '/SCSWork/power.png',
+  '/SCSWork/cs.PNG',
+  '/SCSWork/timer.mp3',
+  '/SCSWork/help_en.json',
+  '/SCSWork/help_jp.json',
+  '/SCSWork/help_kr.json',
+  '/SCSWork/help_zh.json',
+  '/SCSWork/help_vi.json'
 ];
 
 /* ── Install: cache all assets ── */
@@ -91,7 +92,7 @@ self.addEventListener('fetch', function(event) {
     }).catch(function() {
       // Offline fallback — return cached HTML
       if (event.request.destination === 'document') {
-        return caches.match('/KariBRRApp.html');
+        return caches.match('/SCSWork/KariBRRApp.html');
       }
     })
   );

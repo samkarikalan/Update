@@ -1203,3 +1203,418 @@ body.app-light .tile-pairs { background: rgba(245,158,11,0.12); }
   transition: filter 0.15s;
 }
 .onboarding-btn:hover { filter: brightness(1.08); }
+
+/* =============================================
+   AUTH SCREENS
+   ============================================= */
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.auth-screen {
+  width: 100%;
+  max-width: 400px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 28px 40px;
+  overflow-y: auto;
+}
+
+/* Welcome screen */
+.auth-logo {
+  font-size: 4rem;
+  margin-bottom: 12px;
+}
+
+.auth-app-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+.auth-tagline {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 4px;
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+.auth-welcome-btns {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Back row */
+.auth-back-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.auth-back-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.auth-screen-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Form */
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.auth-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.auth-input {
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-input:focus { border-color: var(--accent); }
+
+.auth-input-code {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* Buttons */
+.auth-btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--accent) 0%, #9b60ff 100%);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: filter 0.15s, opacity 0.15s;
+}
+.auth-btn-primary:hover { filter: brightness(1.08); }
+.auth-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.auth-btn-secondary {
+  width: 100%;
+  padding: 15px;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 14px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background 0.15s;
+}
+.auth-btn-secondary:hover { background: var(--surface2); }
+
+.auth-btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 6px;
+  text-align: center;
+  font-family: var(--font-body);
+}
+
+/* Error */
+.auth-error {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--red);
+}
+
+/* ── Club search results ── */
+.auth-club-results {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.auth-club-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.auth-club-item:last-child { border-bottom: none; }
+.auth-club-item:active { background: var(--surface2); }
+
+.auth-club-item-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.auth-club-item-btn {
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auth-club-loading,
+.auth-club-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+/* ── Pending state ── */
+.auth-pending {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.auth-pending-icon { font-size: 2.5rem; }
+
+.auth-pending-text {
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Vault request cards ── */
+.vault-requests-list {
+  padding: 12px 0;
+}
+
+.vault-request-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.vault-request-card:last-child { border-bottom: none; }
+
+.vault-request-info { flex: 1; min-width: 0; }
+
+.vault-request-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.vault-request-id {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.vault-request-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.vault-request-accept {
+  background: rgba(45,206,137,0.15);
+  border: 1px solid rgba(45,206,137,0.4);
+  border-radius: 10px;
+  color: var(--green);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.vault-request-reject {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 10px;
+  color: var(--red);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+
+/* =============================================
+   VAULT MANAGER MODE — 3rd mode styles
+   ============================================= */
+
+/* Vault mode select button */
+.mode-select-btn.vault {
+  border-color: rgba(245,158,11,0.3);
+}
+.mode-select-btn.vault::before {
+  background: rgba(245,158,11,0.07);
+}
+.mode-select-btn.vault .mode-select-btn-icon {
+  background: rgba(245,158,11,0.15);
+}
+.mode-select-btn.vault .mode-select-btn-name {
+  color: var(--amber);
+}
+
+/* Mode switch sheet — vault button */
+.mode-sheet-btn.vault {
+  border-color: rgba(245,158,11,0.3);
+}
+.mode-sheet-btn.active-vault {
+  border-color: rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.1);
+}
+.mode-sheet-btn.active-vault .mode-sheet-name {
+  color: var(--amber);
+}
+
+/* Vault pill button */
+#homePillVault.active {
+  background: var(--amber);
+  color: #000;
+}
+
+/* Status bar amber accent in vault mode */
+body.vault-mode #homeStatusBar {
+  border-color: rgba(245,158,11,0.3);
+}
+body.vault-mode .home-status-dot {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+  animation: none;
+}
+body.vault-mode .home-status-role {
+  background: rgba(245,158,11,0.15);
+  border-color: rgba(245,158,11,0.3);
+  color: var(--amber);
+}
+
+/* Vault password bottom sheet */
+.vault-pw-sheet {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 22px 22px 0 0;
+  padding: 8px 20px 40px;
+  width: 100%;
+  max-width: 480px;
+  animation: slideUp 0.22s cubic-bezier(.4,0,.2,1);
+}
+
+/* Vault grid tile colours */
+.tile-pairs { background: rgba(45,206,137,0.15); }
+body.app-light .tile-pairs { background: rgba(45,206,137,0.12); }
+
+/* ── Club Setup Sheet ── */
+.club-setup-sheet {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 22px 22px 0 0;
+  padding: 8px 20px 40px;
+  width: 100%;
+  max-width: 480px;
+  animation: slideUp 0.22s cubic-bezier(.4,0,.2,1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.club-setup-tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 4px;
+}
+.club-setup-tab {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.club-setup-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}

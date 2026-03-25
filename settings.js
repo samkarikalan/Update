@@ -286,14 +286,13 @@ async function playerPlayingRenderList() {
     let rows;
     if (club.id) {
       // Get only players belonging to this club
-      const members = await sbGet('club_members', `club_id=eq.${club.id}&select=player_id`);
+      const members = await sbGet('players', `club_id=eq.${club.id}&select=id,nickname,gender,rating,club_rating,wins,losses`);
       if (!members || !members.length) {
         container.innerHTML = '<p class="player-mgmt-empty">No players currently locked.</p>';
         return;
       }
-      const idList = '(' + members.map(m => m.player_id).join(',') + ')';
       rows = await sbGet('players',
-        `id=in.${idList}&is_playing=eq.true&select=name,gender,session_id,session_started_at&order=name.asc`
+        `club_id=eq.${club.id}&is_playing=eq.true&select=nickname,gender,session_id,session_started_at&order=nickname.asc`
       );
     } else {
       // No club logged in — show nothing
@@ -366,7 +365,7 @@ async function playerPlayingRenderList() {
 async function playerPlayingRelease(name) {
   if (!confirm('Release "' + name + '" from active session?')) return;
   try {
-    await sbPatch('players', 'name=ilike.' + encodeURIComponent(name), {
+    await sbPatch('players', `club_id=eq.${(getMyClub&&getMyClub()||{}).id||''}&nickname=ilike.` + encodeURIComponent(name), {
       is_playing: false, session_id: null, session_started_at: null
     });
     playerPlayingRenderList();
@@ -378,9 +377,9 @@ async function playerPlayingReleaseAll() {
   try {
     const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
     if (!club.id) { alert('No club logged in.'); return; }
-    const members = await sbGet('club_members', `club_id=eq.${club.id}&select=player_id`);
+    const members = await sbGet('players', `club_id=eq.${club.id}&select=id,nickname,gender,rating,club_rating,wins,losses`);
     if (!members || !members.length) return;
-    const idList = '(' + members.map(m => m.player_id).join(',') + ')';
+    const idList = '(' + members.map(m => `"${m.id}"`).join(',') + ')';
     await sbPatch('players', `id=in.${idList}&is_playing=eq.true`, {
       is_playing: false, session_id: null, session_started_at: null
     });
@@ -448,7 +447,7 @@ async function playerMgmtToggleGender(displayName) {
   localStorage.setItem("newImportHistory", JSON.stringify(newImportState.historyPlayers));
   // Sync gender to Supabase
   try {
-    await sbPatch("players", `name=ilike.${encodeURIComponent(displayName.trim())}`, { gender: hp.gender });
+    await sbPatch("players", `club_id=eq.${(getMyClub&&getMyClub()||{}).id||""}&nickname=ilike.${encodeURIComponent(displayName.trim())}`, { gender: hp.gender });
   } catch(e) { /* silent */ }
   syncPlayersFromMaster();
   updatePlayerList();
@@ -462,10 +461,10 @@ async function playerMgmtDelete(displayName) {
 
   // Remove from Supabase club_members
   try {
-    const players = await sbGet("players", `name=ilike.${encodeURIComponent(displayName.trim())}&select=id`);
+    const club = getMyClub();
+    const players = await sbGet("players", `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}&select=id`);
     if (players.length) {
-      const club = getMyClub();
-      await sbDelete("club_members", `player_id=eq.${players[0].id}&club_id=eq.${club.id}`);
+      await sbDelete("players", `id=eq.${players[0].id}&club_id=eq.${club.id}`);
     }
   } catch(e) { /* silent */ }
 
@@ -574,9 +573,14 @@ function vaultShowTab(tab, btn) {
   if (tab === 'players')  playerPlayingRenderList();
   if (tab === 'register') vaultRenderRegister();
   if (tab === 'modify')   vaultRenderModify();
+  if (tab === 'requests') { if (typeof vaultLoadRequests === 'function') vaultLoadRequests(); }
 }
 
 /* ── Vault Modify tab — admin-only player edits ── */
+/* ── Vault Modify — SCS-style player list ── */
+
+var _vmAllPlayers = []; // full loaded list for client-side filter
+
 async function vaultRenderModify() {
   const container = document.getElementById('vaultModifyList');
   if (!container) return;
@@ -592,111 +596,199 @@ async function vaultRenderModify() {
     return;
   }
 
-  container.innerHTML = '<p style="color:#aaa;font-size:0.85rem">Loading...</p>';
+  container.innerHTML = '<p class="player-mgmt-empty"><span class="vm-spinner"></span> Loading…</p>';
 
   try {
-    const clubPlayers = await dbGetPlayers(true); // force fresh from DB
-    const players = (clubPlayers || []).map(p => ({
-      displayName: p.name,
-      gender: p.gender || 'Male',
-      rating: parseFloat(p.rating) || 1.0
+    const [clubPlayers, userAccounts] = await Promise.all([
+      dbGetPlayers(true),
+      sbGet('user_accounts', 'select=id,user_id,password_hash').catch(() => [])
+    ]);
+
+    const userMap = {};
+    (userAccounts || []).forEach(u => { userMap[u.id] = { userId: u.user_id, password: u.password_hash }; });
+
+    _vmAllPlayers = (clubPlayers || []).map(p => ({
+      id:            p.id,
+      displayName:   p.name,
+      gender:        p.gender || 'Male',
+      rating:        parseFloat(p.clubRating) || parseFloat(p.rating) || 1.0,
+      wins:          p.wins   || 0,
+      losses:        p.losses || 0,
+      userAccountId: p.userAccountId || null,
+      userId:        p.userAccountId && userMap[p.userAccountId] ? userMap[p.userAccountId].userId : null,
+      password:      p.userAccountId && userMap[p.userAccountId] ? userMap[p.userAccountId].password : null,
     })).sort((a, b) => a.displayName.localeCompare(b.displayName));
 
-    if (!players.length) {
-      container.innerHTML = '<p class="player-mgmt-empty">No players in club yet.</p>';
-      return;
-    }
-
-    container.innerHTML = '';
-    players.forEach(p => {
-      const row = document.createElement('div');
-      row.className = 'player-mgmt-row';
-      const safeName = p.displayName.replace(/'/g, "\\'");
-      const genderImg = p.gender === 'Female' ? 'female.png' : 'male.png';
-      const currentRating = (typeof getActiveRating === 'function' ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
-      row.innerHTML = `
-        <img src="${genderImg}" class="player-mgmt-avatar vault-gender-toggle"
-             onclick="vaultToggleGender('${safeName}', this)"
-             title="Tap to toggle gender">
-        <span class="player-mgmt-name vault-name-edit"
-              onclick="vaultEditName('${safeName}')"
-              title="Tap to edit name">${p.displayName}</span>
-        <input type="number" class="rating-edit-input vault-rating-input"
-               value="${currentRating}" min="1.0" max="5.0" step="0.1"
-               onchange="vaultSaveRating('${safeName}', this.value)"
-               title="Edit rating">
-        <button class="player-mgmt-del-btn"
-                onclick="vaultDeletePlayer('${safeName}')">🗑</button>
-      `;
-      container.appendChild(row);
-    });
+    vaultModifyFilter();
   } catch(e) {
     container.innerHTML = '<p class="player-mgmt-empty">Failed to load players.</p>';
+    console.error('vaultRenderModify error:', e);
   }
 }
 
-function vaultSaveRating(displayName, value) {
-  const rating = parseFloat(value);
-  if (isNaN(rating) || rating < 1.0 || rating > 5.0) return;
-  if (typeof setRating === 'function') setRating(displayName, rating);
-  if (typeof syncRatings === 'function') syncRatings();
-  if (typeof updatePlayerList === 'function') updatePlayerList();
+function vaultModifyFilter() {
+  const search = (document.getElementById('vmSearchInput')?.value || '').toLowerCase();
+  const gender = document.getElementById('vmFilterGender')?.value || '';
+  const container = document.getElementById('vaultModifyList');
+  const countEl   = document.getElementById('vmPlayerCount');
+  if (!container) return;
+
+  let filtered = _vmAllPlayers;
+  if (search) filtered = filtered.filter(p => p.displayName.toLowerCase().includes(search));
+  if (gender) filtered = filtered.filter(p => (p.gender || 'Male') === gender);
+
+  if (countEl) countEl.textContent = filtered.length + ' player' + (filtered.length !== 1 ? 's' : '');
+
+  if (!filtered.length) {
+    container.innerHTML = '<p class="player-mgmt-empty">No players match your search.</p>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => {
+    const g   = p.gender === 'Female' ? 'female' : 'male';
+    const ini = (p.displayName || '?')[0].toUpperCase();
+    const rating = p.rating.toFixed(1);
+    const userIdTag = p.userId
+      ? `<span class="vm-userid-chip">@${_vmEsc(p.userId)}</span>`
+      : `<span class="vm-userid-chip vm-unlinked">no account</span>`;
+    const safeId = _vmEsc(p.id);
+    return `<div class="vm-player-row ${g}">
+      <div class="vm-avatar ${g}">${ini}</div>
+      <div class="vm-player-info">
+        <div class="vm-player-name-row">
+          <span class="vm-player-name">${_vmEsc(p.displayName)}</span>
+          ${userIdTag}
+        </div>
+        <div class="vm-player-meta">${p.gender || 'Male'} · ★${rating} · ${p.wins}W ${p.losses}L</div>
+      </div>
+      <div class="vm-row-actions">
+        <button class="vm-edit-btn" onclick="vmOpenEditModal('${safeId}')" title="Edit">✎</button>
+        <button class="vm-delete-btn" onclick="vmDeletePlayer('${safeId}','${_vmEsc(p.displayName)}')" title="Delete">✕</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-async function vaultEditName(displayName) {
-  const newName = prompt('Edit player name:', displayName);
-  if (!newName || !newName.trim() || newName.trim() === displayName) return;
-  const trimmed = newName.trim();
-  const dup = (newImportState.historyPlayers || []).some(
-    p => p.displayName.trim().toLowerCase() === trimmed.toLowerCase() &&
-         p.displayName.trim().toLowerCase() !== displayName.trim().toLowerCase()
-  );
-  if (dup) { alert('Name already exists!'); return; }
+function _vmEsc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function vmOpenEditModal(playerId) {
+  const p = _vmAllPlayers.find(x => x.id === playerId);
+  if (!p) return;
+  document.getElementById('vmEditPlayerId').value    = p.id;
+  document.getElementById('vmEditUserAccountId').value = p.userAccountId || '';
+  document.getElementById('vmEditName').value        = p.displayName;
+  document.getElementById('vmEditGender').value      = p.gender || 'Male';
+  document.getElementById('vmEditRating').value      = p.rating.toFixed(1);
+  document.getElementById('vmEditWins').value        = p.wins;
+  document.getElementById('vmEditLosses').value      = p.losses;
+  document.getElementById('vmEditUserId').value      = p.userId || '';
+  document.getElementById('vmEditPassword').value    = '';
+  const fb = document.getElementById('vmEditFeedback');
+  if (fb) { fb.textContent = ''; fb.style.color = ''; }
+  document.getElementById('vmEditModal').classList.add('open');
+}
+
+function vmCloseEditModal(e) {
+  if (!e || e.target === document.getElementById('vmEditModal')) {
+    document.getElementById('vmEditModal').classList.remove('open');
+  }
+}
+
+async function vmSaveEdit() {
+  const playerId     = document.getElementById('vmEditPlayerId').value;
+  const userAcctId   = document.getElementById('vmEditUserAccountId').value;
+  const name         = document.getElementById('vmEditName').value.trim();
+  const gender       = document.getElementById('vmEditGender').value;
+  const rating       = parseFloat(document.getElementById('vmEditRating').value) || 1.0;
+  const wins         = parseInt(document.getElementById('vmEditWins').value)   || 0;
+  const losses       = parseInt(document.getElementById('vmEditLosses').value) || 0;
+  const newUserId    = document.getElementById('vmEditUserId').value.trim().toLowerCase();
+  const newPassword  = document.getElementById('vmEditPassword').value.trim();
+  const fb           = document.getElementById('vmEditFeedback');
+  const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? 'var(--green)' : 'var(--red)'; } };
+
+  if (!name) { setFb('Name cannot be empty.', false); return; }
+
+  setFb('Saving…', true);
   try {
-    await sbPatch('players', `name=ilike.${encodeURIComponent(displayName.trim())}`, { name: trimmed });
+    const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+
+    // 1. Update player row
+    await sbPatch('players', `id=eq.${playerId}`, {
+      nickname:    name,
+      gender,
+      club_rating: Math.round(rating * 10) / 10,
+      rating:      Math.round(rating * 10) / 10,
+      wins,
+      losses
+    });
+
+    // 2. Update user_account if exists
+    if (userAcctId) {
+      const acctPatch = {};
+      if (newUserId)   acctPatch.user_id       = newUserId;
+      if (newPassword) acctPatch.password_hash  = newPassword;
+      if (newUserId)   acctPatch.nickname        = name;
+      if (Object.keys(acctPatch).length) {
+        await sbPatch('user_accounts', `id=eq.${userAcctId}`, acctPatch);
+      }
+    }
+
+    // 3. Update local state
     const hp = (newImportState.historyPlayers || []).find(
-      p => p.displayName.trim().toLowerCase() === displayName.trim().toLowerCase()
+      p => p.displayName && p.displayName.trim().toLowerCase() === _vmAllPlayers.find(x => x.id === playerId)?.displayName.trim().toLowerCase()
     );
-    if (hp) hp.displayName = trimmed;
+    if (hp) {
+      hp.displayName = name;
+      hp.gender      = gender;
+      hp.activeRating = Math.round(rating * 10) / 10;
+      hp.clubRating   = Math.round(rating * 10) / 10;
+    }
     localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
-    syncPlayersFromMaster();
-    updatePlayerList();
-    vaultRenderModify();
-  } catch(e) { alert('Failed to save. Check connection.'); }
+    if (typeof syncPlayersFromMaster === 'function') syncPlayersFromMaster();
+    if (typeof updatePlayerList === 'function') updatePlayerList();
+
+    setFb('✅ Saved!', true);
+    setTimeout(() => {
+      document.getElementById('vmEditModal').classList.remove('open');
+      vaultRenderModify();
+    }, 600);
+  } catch(e) {
+    setFb('❌ ' + e.message, false);
+  }
 }
 
-async function vaultToggleGender(displayName, imgEl) {
-  const hp = (newImportState.historyPlayers || []).find(
-    p => p.displayName.trim().toLowerCase() === displayName.trim().toLowerCase()
-  );
-  if (!hp) return;
-  hp.gender = hp.gender === 'Female' ? 'Male' : 'Female';
-  imgEl.src = hp.gender === 'Female' ? 'female.png' : 'male.png';
-  localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
-  try {
-    await sbPatch('players', `name=ilike.${encodeURIComponent(displayName.trim())}`, { gender: hp.gender });
-    syncPlayersFromMaster();
-    updatePlayerList();
-  } catch(e) { /* silent — local already updated */ }
-}
-
-async function vaultDeletePlayer(displayName) {
+async function vmDeletePlayer(playerId, displayName) {
   if (!confirm(`Remove "${displayName}" from this club?`)) return;
   try {
-    const players = await sbGet('players', `name=ilike.${encodeURIComponent(displayName.trim())}&select=id`);
-    if (players.length) {
-      const club = getMyClub();
-      await sbDelete('club_members', `player_id=eq.${players[0].id}&club_id=eq.${club.id}`);
+    const p = _vmAllPlayers.find(x => x.id === playerId);
+    await sbDelete('players', `id=eq.${playerId}`);
+    if (p && p.userAccountId) {
+      await sbDelete('user_accounts', `id=eq.${p.userAccountId}`).catch(() => {});
     }
-  } catch(e) { /* silent */ }
-  newImportState.historyPlayers = (newImportState.historyPlayers || []).filter(
-    p => p.displayName.trim().toLowerCase() !== displayName.trim().toLowerCase()
-  );
-  localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
-  syncPlayersFromMaster();
-  updatePlayerList();
-  vaultRenderModify();
+    _vmAllPlayers = _vmAllPlayers.filter(x => x.id !== playerId);
+    // also update local history
+    if (newImportState && newImportState.historyPlayers) {
+      newImportState.historyPlayers = newImportState.historyPlayers.filter(
+        h => h.displayName?.trim().toLowerCase() !== displayName.trim().toLowerCase()
+      );
+      localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
+    }
+    if (typeof syncPlayersFromMaster === 'function') syncPlayersFromMaster();
+    if (typeof updatePlayerList === 'function') updatePlayerList();
+    vaultModifyFilter();
+  } catch(e) {
+    alert('Failed to remove player: ' + e.message);
+  }
 }
+
+// vaultToggleGender and vaultDeletePlayer replaced by vmSaveEdit / vmDeletePlayer above
+
+
 
 // ── Club Management — OTP-based create/delete ──
 
@@ -767,7 +859,7 @@ async function clubCreateVerify() {
     const club = await dbAddClub(name, selPw, adminPw, _clubCreateEmail);
     setMyClub(club.id, club.name);
     localStorage.setItem('kbrr_club_mode',    'admin');
-    localStorage.setItem('kbrr_rating_field', 'club_ratings');
+    localStorage.setItem('kbrr_rating_field', 'club_rating');
     // Reset form
     ['sbNewClubName','sbNewClubEmail','sbNewClubSelectPw','sbNewClubAdminPw','sbNewClubOtp'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';

@@ -8,6 +8,7 @@ var appMode = null; // 'viewer' | 'organiser'
 function selectMode(mode) {
   appMode = mode;
   sessionStorage.setItem('appMode', mode);
+  localStorage.setItem('kbrr_app_mode', mode);
   // Hide mode select overlay
   var overlay = document.getElementById('modeSelectOverlay');
   if (overlay) overlay.style.display = 'none';
@@ -22,12 +23,15 @@ function applyMode(mode) {
 
   // Body class for organiser scrollable tabs (kept for any CSS that uses it)
   document.body.classList.toggle('organiser-tabs', mode === 'organiser');
+  document.body.classList.toggle('vault-mode',     mode === 'vault');
 
-  // Sync home mode pill buttons
-  var hpv = document.getElementById('homePillViewer');
-  var hpo = document.getElementById('homePillOrganiser');
-  if (hpv) hpv.classList.toggle('active', mode === 'viewer');
-  if (hpo) hpo.classList.toggle('active', mode === 'organiser');
+  // Sync home mode pill buttons (3 modes)
+  var hpv  = document.getElementById('homePillViewer');
+  var hpo  = document.getElementById('homePillOrganiser');
+  var hpvm = document.getElementById('homePillVault');
+  if (hpv)  hpv.classList.toggle('active',  mode === 'viewer');
+  if (hpo)  hpo.classList.toggle('active',  mode === 'organiser');
+  if (hpvm) hpvm.classList.toggle('active', mode === 'vault');
 
   // Apply viewer restrictions
   if (mode === 'viewer') {
@@ -84,28 +88,36 @@ function openModeSwitcher() {
 
   const sheet = document.createElement('div');
   sheet.className = 'mode-switch-sheet';
-  const isViewer = appMode === 'viewer';
   sheet.innerHTML = `
     <div class="mode-sheet-handle"></div>
     <div class="mode-sheet-title">Switch Mode</div>
     <div class="mode-sheet-options">
-      <button class="mode-sheet-btn viewer ${isViewer ? 'active-viewer' : ''}"
+      <button class="mode-sheet-btn viewer ${appMode === 'viewer' ? 'active-viewer' : ''}"
               onclick="switchMode('viewer')">
         <div class="mode-sheet-icon">👁</div>
         <div class="mode-sheet-info">
           <div class="mode-sheet-name">Viewer</div>
           <div class="mode-sheet-desc">Watch live rounds &amp; scores</div>
         </div>
-        ${isViewer ? '<span class="mode-sheet-check">✅</span>' : ''}
+        ${appMode === 'viewer' ? '<span class="mode-sheet-check">✅</span>' : ''}
       </button>
-      <button class="mode-sheet-btn organiser ${!isViewer ? 'active-organiser' : ''}"
+      <button class="mode-sheet-btn organiser ${appMode === 'organiser' ? 'active-organiser' : ''}"
               onclick="switchMode('organiser')">
         <div class="mode-sheet-icon"><img src="win-cup.png" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.25))"></div>
         <div class="mode-sheet-info">
-          <div class="mode-sheet-name">Organiser</div>
+          <div class="mode-sheet-name">Round Organiser</div>
           <div class="mode-sheet-desc">Run session, score games, manage players</div>
         </div>
-        ${!isViewer ? '<span class="mode-sheet-check">✅</span>' : ''}
+        ${appMode === 'organiser' ? '<span class="mode-sheet-check">✅</span>' : ''}
+      </button>
+      <button class="mode-sheet-btn vault ${appMode === 'vault' ? 'active-vault' : ''}"
+              onclick="requestVaultMode()">
+        <div class="mode-sheet-icon" style="background:rgba(245,158,11,0.18)">🔑</div>
+        <div class="mode-sheet-info">
+          <div class="mode-sheet-name">Vault Manager</div>
+          <div class="mode-sheet-desc">Club admin — players, requests, management</div>
+        </div>
+        ${appMode === 'vault' ? '<span class="mode-sheet-check">✅</span>' : ''}
       </button>
     </div>
   `;
@@ -118,10 +130,34 @@ function openModeSwitcher() {
 function switchMode(mode) {
   const overlay = document.getElementById('modeSheetOverlay');
   if (overlay) overlay.remove();
+
+  // Viewer needs no club
+  if (mode === 'viewer') {
+    appMode = mode;
+    sessionStorage.setItem('appMode', mode);
+    localStorage.setItem('kbrr_app_mode', mode);
+    applyMode(mode);
+    if (typeof showHomeScreen === 'function') showHomeScreen();
+    return;
+  }
+
+  // Organiser / Vault — check club first
+  var club = (typeof getMyClub === 'function') ? getMyClub() : null;
+  if (!club || !club.id) {
+    _showClubSetupSheet(mode);
+    return;
+  }
+
+  // Vault — also needs admin auth
+  if (mode === 'vault') {
+    requestVaultMode();
+    return;
+  }
+
   appMode = mode;
   sessionStorage.setItem('appMode', mode);
+  localStorage.setItem('kbrr_app_mode', mode);
   applyMode(mode);
-  // Refresh home screen to reflect new mode (flows, stepper, status)
   if (typeof showHomeScreen === 'function') showHomeScreen();
 }
 
@@ -134,29 +170,52 @@ function initModeOnLoad() {
 }
 
 async function initAppFlow() {
-  var club = (typeof getMyClub === 'function') ? getMyClub() : { id: null, name: null };
-
-  // ── Not logged in → show mode select (which leads to vault) ──
-  if (!club || !club.id) {
-    showOnboardingOverlay('notLoggedIn');
+  // ── Step 1: Check auth ──
+  if (typeof authIsLoggedIn === 'function' && !authIsLoggedIn()) {
+    authShowScreen('welcome');
     return;
   }
 
-  // ── Logged in — check if club has players ──
-  try {
-    var players = await dbGetPlayers(true);
-    if (!players || players.length === 0) {
-      // No players — open Vault with banner
-      showOnboardingOverlay('noPlayers');
-      return;
-    }
-  } catch(e) {
-    // On error just show mode select normally
+  // ── Step 2: Show mode select if no saved mode ──
+  var savedMode = localStorage.getItem('kbrr_app_mode') || sessionStorage.getItem('appMode') || '';
+  if (!savedMode) {
+    // First launch — show mode select screen
+    var overlay = document.getElementById('modeSelectOverlay');
+    if (overlay) overlay.style.display = 'flex';
+    return;
   }
 
-  // ── All good — show mode select ──
-  var overlay = document.getElementById('modeSelectOverlay');
-  if (overlay) overlay.style.display = 'flex';
+  // Vault requires admin auth, downgrade if needed
+  if (savedMode === 'vault' && localStorage.getItem('kbrr_club_mode') !== 'admin') {
+    savedMode = 'viewer';
+  }
+
+  // ── Step 3: Check club for organiser/vault ──
+  var club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+
+  if (!club || !club.id) {
+    if (savedMode === 'viewer') {
+      selectMode('viewer');
+      return;
+    }
+    // Organiser or vault without club — show club setup
+    _showClubSetupSheet(savedMode);
+    return;
+  }
+
+  // ── Step 4: Check players (organiser only) ──
+  if (savedMode === 'organiser') {
+    try {
+      var players = await dbGetPlayers(true);
+      if (!players || players.length === 0) {
+        showOnboardingOverlay('noPlayers');
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // ── All good — show home ──
+  selectMode(savedMode);
 }
 
 function showOnboardingOverlay(reason) {
@@ -488,6 +547,10 @@ function showPage(pageID, el) {
     if (typeof renderMyCard === 'function') renderMyCard();
   }
 
+  if (pageID === "joinClubPage") {
+    if (typeof joinClubPageOpen === 'function') joinClubPageOpen();
+  }
+
   if (pageID === "helpPage") {
     if (typeof onHelpTabOpen === "function") onHelpTabOpen();
   }
@@ -500,6 +563,28 @@ function showPage(pageID, el) {
   }
 
   if (pageID === "vaultPage") {
+    if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
+    if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
+    if (typeof sbPopulateDeleteDropdown === 'function') sbPopulateDeleteDropdown();
+  }
+
+  if (pageID === "vaultPlayingPage") {
+    if (typeof playerPlayingRenderList === 'function') playerPlayingRenderList();
+  }
+
+  if (pageID === "vaultRegisterPage") {
+    if (typeof vaultRenderRegister === 'function') vaultRenderRegister();
+  }
+
+  if (pageID === "vaultModifyPage") {
+    if (typeof vaultRenderModify === 'function') vaultRenderModify();
+  }
+
+  if (pageID === "vaultRequestsPage") {
+    if (typeof vaultLoadRequests === 'function') vaultLoadRequests();
+  }
+
+  if (pageID === "vaultClubMgmtPage") {
     if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
     if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
     if (typeof sbPopulateDeleteDropdown === 'function') sbPopulateDeleteDropdown();
@@ -586,18 +671,15 @@ async function syncToLocal() {
       return;
     }
 
-    // kbrr_rating_field set at login — single decision point for READ
-    const ratingField = localStorage.getItem("kbrr_rating_field") || "club_ratings";
+    // Always use clubRating (club_rating column) as the active rating
     const synced = players.map(gp => {
-      const activeRating = ratingField === "club_ratings"
-        ? (parseFloat(gp.clubRating) || 1.0)
-        : (parseFloat(gp.rating)     || 1.0);
+      const activeRating = parseFloat(gp.clubRating) || parseFloat(gp.rating) || 1.0;
       return {
         displayName:  gp.name.trim(),
         gender:       gp.gender || "Male",
-        rating:       parseFloat(gp.rating)     || 1.0,  // raw global — for profile display only
-        clubRating:   parseFloat(gp.clubRating) || 1.0,  // raw club   — for profile display only
-        activeRating,                                     // what everything else reads
+        rating:       parseFloat(gp.rating)     || 1.0,
+        clubRating:   parseFloat(gp.clubRating) || 1.0,
+        activeRating,
         id:           gp.id
       };
     });
@@ -651,6 +733,344 @@ function restoreSyncIndicator() {
   } catch(e) {}
 }
 
+
+
+/* =============================================================
+   VAULT MODE — Admin password gate
+============================================================= */
+function requestVaultMode() {
+  const overlay = document.getElementById('modeSheetOverlay');
+  if (overlay) overlay.remove();
+
+  if (appMode === 'vault') { switchMode('vault'); return; }
+
+  // Check club first
+  var club = (typeof getMyClub === 'function') ? getMyClub() : null;
+  if (!club || !club.id) {
+    _showClubSetupSheet('vault');
+    return;
+  }
+
+  // Already authenticated as admin this session
+  if (localStorage.getItem('kbrr_club_mode') === 'admin') {
+    appMode = 'vault';
+    sessionStorage.setItem('appMode', 'vault');
+    localStorage.setItem('kbrr_app_mode', 'vault');
+    applyMode('vault');
+    if (typeof showHomeScreen === 'function') showHomeScreen();
+    return;
+  }
+  _showVaultPasswordPrompt();
+}
+
+/* =============================================================
+   CLUB SETUP SHEET — shown when entering Organiser or Vault without a club
+   Provides: Join existing club | Create new club
+============================================================= */
+var _clubSetupTargetMode = null; // mode to enter after club is set up
+var _clubSetupCreateEmail = '';  // email during create-club OTP flow
+
+function _showClubSetupSheet(targetMode) {
+  _clubSetupTargetMode = targetMode;
+  const existing = document.getElementById('clubSetupSheetOverlay');
+  if (existing) existing.remove();
+
+  const modeLabel = targetMode === 'vault' ? '🔑 Vault Manager' : '🏆 Round Organiser';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'clubSetupSheetOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
+  overlay.innerHTML = `
+    <div class="club-setup-sheet" id="clubSetupSheet">
+      <div class="mode-sheet-handle"></div>
+      <div class="mode-sheet-title">${modeLabel}</div>
+      <p style="font-size:0.84rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5">
+        You need to be connected to a club. Join an existing club or create a new one.
+      </p>
+
+      <!-- TAB SWITCHER -->
+      <div class="club-setup-tabs" id="clubSetupTabs">
+        <button class="club-setup-tab active" id="clubSetupTabJoin" onclick="_clubSetupShowTab('join')">Join Club</button>
+        <button class="club-setup-tab" id="clubSetupTabCreate" onclick="_clubSetupShowTab('create')">Create Club</button>
+      </div>
+
+      <!-- JOIN PANEL -->
+      <div id="clubSetupPanelJoin" style="margin-top:14px">
+        <select id="csJoinClubSelect" class="auth-input" style="margin-bottom:10px">
+          <option value="">— Loading clubs… —</option>
+        </select>
+        <input type="password" id="csJoinPassword" class="auth-input" placeholder="Club password" style="margin-bottom:10px">
+        <div id="csJoinFeedback" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:10px">
+          <button class="admin-modal-cancel" style="flex:1" onclick="document.getElementById('clubSetupSheetOverlay').remove()">Cancel</button>
+          <button class="admin-modal-ok" style="flex:1" onclick="_clubSetupJoin()">Join</button>
+        </div>
+      </div>
+
+      <!-- CREATE PANEL -->
+      <div id="clubSetupPanelCreate" style="display:none;margin-top:14px">
+        <div id="clubSetupCreateStep1">
+          <input type="text"     id="csCreateName"    class="auth-input" placeholder="Club name"       style="margin-bottom:8px">
+          <input type="email"    id="csCreateEmail"   class="auth-input" placeholder="Your email (OTP)" style="margin-bottom:8px">
+          <input type="password" id="csCreateUserPw"  class="auth-input" placeholder="User password"   style="margin-bottom:8px">
+          <input type="password" id="csCreateAdminPw" class="auth-input" placeholder="Admin password"  style="margin-bottom:10px">
+          <div id="csCreateFeedback" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:10px"></div>
+          <div style="display:flex;gap:10px">
+            <button class="admin-modal-cancel" style="flex:1" onclick="document.getElementById('clubSetupSheetOverlay').remove()">Cancel</button>
+            <button class="admin-modal-ok" style="flex:1" onclick="_clubSetupCreateSendOtp()">📧 Send OTP</button>
+          </div>
+        </div>
+        <div id="clubSetupCreateStep2" style="display:none">
+          <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px">
+            OTP sent to <strong id="csCreateEmailMasked"></strong>
+            · <button class="link-btn" onclick="_clubSetupCreateResend()">Resend</button>
+          </p>
+          <input type="text" id="csCreateOtp" class="auth-input" placeholder="Enter 8-digit OTP" maxlength="8"
+                 onkeydown="if(event.key==='Enter')_clubSetupCreateVerify()" style="margin-bottom:10px">
+          <div id="csCreateFeedback2" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:10px"></div>
+          <div style="display:flex;gap:10px">
+            <button class="admin-modal-cancel" style="flex:1" onclick="_clubSetupShowTab('create')">Back</button>
+            <button class="admin-modal-ok" style="flex:1" onclick="_clubSetupCreateVerify()">Create Club</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  document.getElementById('clubSetupSheet').addEventListener('click', e => e.stopPropagation());
+
+  // Load clubs for join dropdown
+  _clubSetupLoadClubs();
+}
+
+function _clubSetupShowTab(tab) {
+  document.getElementById('clubSetupTabJoin').classList.toggle('active', tab === 'join');
+  document.getElementById('clubSetupTabCreate').classList.toggle('active', tab === 'create');
+  document.getElementById('clubSetupPanelJoin').style.display   = tab === 'join'   ? '' : 'none';
+  document.getElementById('clubSetupPanelCreate').style.display = tab === 'create' ? '' : 'none';
+  // Reset create steps
+  if (tab === 'create') {
+    document.getElementById('clubSetupCreateStep1').style.display = '';
+    document.getElementById('clubSetupCreateStep2').style.display = 'none';
+    _clubSetupCreateEmail = '';
+  }
+}
+
+async function _clubSetupLoadClubs() {
+  const select = document.getElementById('csJoinClubSelect');
+  if (!select) return;
+  try {
+    const clubs = await sbGet('clubs', 'select=id,name&order=name.asc');
+    select.innerHTML = '<option value="">— Select club —</option>';
+    clubs.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+  } catch(e) {
+    select.innerHTML = '<option value="">— Could not load clubs —</option>';
+  }
+}
+
+async function _clubSetupJoin() {
+  const select = document.getElementById('csJoinClubSelect');
+  const pwInput = document.getElementById('csJoinPassword');
+  const fb = document.getElementById('csJoinFeedback');
+  const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
+
+  if (!select || !select.value) { setFb('Please select a club.', false); return; }
+  const pw = pwInput ? pwInput.value.trim() : '';
+  if (!pw) { setFb('Enter the club password.', false); return; }
+
+  setFb('Checking…', true);
+  try {
+    const isVault = _clubSetupTargetMode === 'vault';
+    const fields = isVault ? 'id,name,select_password,admin_password' : 'id,name,select_password,admin_password';
+    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=${fields}`);
+    if (!clubs.length) throw new Error('Club not found.');
+
+    let role = 'user';
+    if (pw === clubs[0].admin_password) {
+      role = 'admin';
+    } else if (pw !== clubs[0].select_password) {
+      throw new Error('Wrong password.');
+    }
+
+    if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
+    localStorage.setItem('kbrr_club_mode', role);
+    localStorage.setItem('kbrr_rating_field', 'club_rating');
+    if (pwInput) pwInput.value = '';
+
+    setFb(role === 'admin' ? '✅ Joined as Admin' : '✅ Joined successfully', true);
+
+    // Small delay so user sees success, then enter the mode
+    setTimeout(() => {
+      const ov = document.getElementById('clubSetupSheetOverlay');
+      if (ov) ov.remove();
+      if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
+      if (typeof syncToLocal === 'function') syncToLocal();
+
+      const mode = _clubSetupTargetMode;
+      if (mode === 'vault') {
+        // Vault: if admin just joined as admin, go straight in; else ask for admin pw
+        if (role === 'admin') {
+          appMode = 'vault';
+          sessionStorage.setItem('appMode', 'vault');
+          localStorage.setItem('kbrr_app_mode', 'vault');
+          applyMode('vault');
+          if (typeof showHomeScreen === 'function') showHomeScreen();
+        } else {
+          _showVaultPasswordPrompt();
+        }
+      } else {
+        appMode = mode;
+        sessionStorage.setItem('appMode', mode);
+        localStorage.setItem('kbrr_app_mode', mode);
+        applyMode(mode);
+        if (typeof showHomeScreen === 'function') showHomeScreen();
+      }
+    }, 700);
+  } catch(e) { setFb('❌ ' + e.message, false); }
+}
+
+async function _clubSetupCreateSendOtp() {
+  const name    = document.getElementById('csCreateName')?.value.trim();
+  const email   = document.getElementById('csCreateEmail')?.value.trim();
+  const userPw  = document.getElementById('csCreateUserPw')?.value.trim();
+  const adminPw = document.getElementById('csCreateAdminPw')?.value.trim();
+  const fb      = document.getElementById('csCreateFeedback');
+  const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
+
+  if (!name)    { setFb('Enter club name.', false); return; }
+  if (!email || !email.includes('@')) { setFb('Enter a valid email.', false); return; }
+  if (!userPw)  { setFb('Enter user password.', false); return; }
+  if (!adminPw) { setFb('Enter admin password.', false); return; }
+
+  setFb('Sending OTP…', true);
+  try {
+    // Store form values so they survive the step switch
+    document.getElementById('csCreateName')._savedVal    = name;
+    document.getElementById('csCreateUserPw')._savedVal  = userPw;
+    document.getElementById('csCreateAdminPw')._savedVal = adminPw;
+
+    await dbSendOtp(email);
+    _clubSetupCreateEmail = email;
+
+    const masked = document.getElementById('csCreateEmailMasked');
+    if (masked) masked.textContent = maskEmail ? maskEmail(email) : email.replace(/(.{2}).+(@.+)/, '$1…$2');
+
+    document.getElementById('clubSetupCreateStep1').style.display = 'none';
+    document.getElementById('clubSetupCreateStep2').style.display = '';
+    document.getElementById('csCreateOtp').value = '';
+    document.getElementById('csCreateOtp').focus();
+    setFb('OTP sent! Check your email.', true);
+  } catch(e) { setFb('❌ ' + e.message, false); }
+}
+
+async function _clubSetupCreateResend() {
+  if (!_clubSetupCreateEmail) return;
+  try {
+    await dbSendOtp(_clubSetupCreateEmail);
+    const fb2 = document.getElementById('csCreateFeedback2');
+    if (fb2) { fb2.textContent = 'OTP resent.'; fb2.style.color = '#2dce89'; }
+  } catch(e) {}
+}
+
+async function _clubSetupCreateVerify() {
+  const otp     = document.getElementById('csCreateOtp')?.value.trim();
+  const name    = document.getElementById('csCreateName')?._savedVal    || document.getElementById('csCreateName')?.value.trim();
+  const userPw  = document.getElementById('csCreateUserPw')?._savedVal  || document.getElementById('csCreateUserPw')?.value.trim();
+  const adminPw = document.getElementById('csCreateAdminPw')?._savedVal || document.getElementById('csCreateAdminPw')?.value.trim();
+  const fb      = document.getElementById('csCreateFeedback2');
+  const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
+
+  if (!otp || otp.length < 8) { setFb('Enter the 8-digit OTP.', false); return; }
+  setFb('Creating club…', true);
+  try {
+    await dbVerifyOtp(_clubSetupCreateEmail, otp);
+    const club = await dbAddClub(name, userPw, adminPw, _clubSetupCreateEmail);
+    if (typeof setMyClub === 'function') setMyClub(club.id, club.name);
+    localStorage.setItem('kbrr_club_mode', 'admin');
+    localStorage.setItem('kbrr_rating_field', 'club_rating');
+    setFb(`✅ Club "${club.name}" created! You are now Admin.`, true);
+    _clubSetupCreateEmail = '';
+
+    setTimeout(() => {
+      const ov = document.getElementById('clubSetupSheetOverlay');
+      if (ov) ov.remove();
+      if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
+      if (typeof syncToLocal === 'function') syncToLocal();
+
+      const mode = _clubSetupTargetMode;
+      // Creator is always admin — go straight into requested mode
+      appMode = mode;
+      sessionStorage.setItem('appMode', mode);
+      localStorage.setItem('kbrr_app_mode', mode);
+      applyMode(mode);
+      if (typeof showHomeScreen === 'function') showHomeScreen();
+    }, 1000);
+  } catch(e) { setFb('❌ ' + e.message, false); }
+}
+
+function _showVaultPasswordPrompt() {
+  const existing = document.getElementById('vaultPromptOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'vaultPromptOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
+  overlay.innerHTML = `
+    <div class="vault-pw-sheet" id="vaultPwSheet">
+      <div class="mode-sheet-handle"></div>
+      <div class="mode-sheet-title">🔑 Vault Manager</div>
+      <p style="font-size:0.84rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5">
+        Enter the club admin password to access Vault Manager.
+      </p>
+      <input type="password" id="vaultPwInput" class="admin-password-input"
+             placeholder="Admin password"
+             onkeydown="if(event.key==='Enter')verifyVaultPassword()"
+             style="margin-bottom:12px;width:100%">
+      <div id="vaultPwError" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:12px"></div>
+      <div style="display:flex;gap:10px">
+        <button class="admin-modal-cancel" style="flex:1"
+                onclick="document.getElementById('vaultPromptOverlay').remove()">Cancel</button>
+        <button class="admin-modal-ok" style="flex:1"
+                onclick="verifyVaultPassword()">Enter Vault</button>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  document.getElementById('vaultPwSheet').addEventListener('click', e => e.stopPropagation());
+  setTimeout(() => document.getElementById('vaultPwInput')?.focus(), 100);
+}
+
+async function verifyVaultPassword() {
+  const input = document.getElementById('vaultPwInput');
+  const errEl = document.getElementById('vaultPwError');
+  const pw    = (input ? input.value : '').trim();
+  if (!pw) { if (errEl) errEl.textContent = 'Enter the admin password'; return; }
+
+  const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+  if (!club || !club.id) { if (errEl) errEl.textContent = 'No club selected'; return; }
+
+  if (errEl) errEl.textContent = 'Checking...';
+  try {
+    const rows = await sbGet('clubs', `id=eq.${club.id}&select=admin_password`);
+    if (!rows || !rows.length || rows[0].admin_password !== pw) {
+      if (errEl) errEl.textContent = 'Wrong admin password';
+      if (input) input.value = '';
+      return;
+    }
+    localStorage.setItem('kbrr_club_mode', 'admin');
+    const ov = document.getElementById('vaultPromptOverlay');
+    if (ov) ov.remove();
+    switchMode('vault');
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Error: ' + e.message;
+  }
+}
 
 /* =============================================================
    POWER BUTTON — End Session

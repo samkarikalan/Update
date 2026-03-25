@@ -2476,12 +2476,7 @@ modeToggle.addEventListener("change", () => {
 // Min Rounds value
 // minRoundsRow removed from UI — no warm-up concept
 
-function toggleRoundSettings() {
-  const body = document.getElementById('roundSettingsBody');
-  const isOpen = body.classList.toggle('open');
-  const gearBtn = document.querySelector('.action-card .action.mid.small:last-child');
-  if (gearBtn) gearBtn.classList.toggle('settings-active', isOpen);
-}
+
 
 function toggleMinRoundsVisibility() {
   // no-op: minRoundsRow removed
@@ -2492,8 +2487,7 @@ function updateModeLabel() {
   if (lbl) lbl.textContent = getPlayMode() === "competitive" ? "🏆" : "🎲";
 }
 
-// Patched toggleRoundSettings — no chevron ref
-var _origToggle = toggleRoundSettings;
+// toggleRoundSettings — unified version
 function toggleRoundSettings() {
   const body = document.getElementById('roundSettingsBody');
   const isOpen = body.classList.toggle('open');

@@ -1,132 +1,89 @@
--- ============================================================
---  BRR App — Supabase Table Setup
---  Run in: Supabase Dashboard → SQL Editor → New Query
---  Safe to run multiple times (uses IF NOT EXISTS + ADD COLUMN IF NOT EXISTS)
--- ============================================================
+-- =============================================
+-- Sports Club Scheduler — Database Setup
+-- Run this in Supabase SQL Editor
+-- =============================================
 
-
--- ── 1. CLUBS ─────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS clubs (
-  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name             text NOT NULL UNIQUE,
-  select_password  text,
-  admin_password   text,
-  registered_date  date DEFAULT CURRENT_DATE
+-- 1. User Accounts
+create table user_accounts (
+  id            uuid default gen_random_uuid() primary key,
+  user_id       text unique not null,
+  nickname      text not null,
+  email         text unique not null,
+  password_hash text not null,
+  created_at    timestamptz default now()
 );
 
-
--- ── 2. PLAYERS ───────────────────────────────────────────────
--- club_ratings: jsonb map of { "club_id": rating_value }
--- sessions:     jsonb array of { date, wins, losses, rating, matches[] }
--- is_playing / session_id / session_started_at: slot tracking (Update 3)
-CREATE TABLE IF NOT EXISTS players (
-  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name                text NOT NULL UNIQUE,
-  gender              text DEFAULT 'Male',
-  rating              numeric DEFAULT 1.0,
-  registered_date     date DEFAULT CURRENT_DATE,
-  club_ratings        jsonb DEFAULT '{}',
-  sessions            jsonb DEFAULT '[]',
-  wins                int DEFAULT 0,
-  losses              int DEFAULT 0,
-  is_playing          boolean DEFAULT false,
-  session_id          text DEFAULT null,
-  session_started_at  timestamptz DEFAULT null
+-- 2. Clubs
+create table clubs (
+  id             uuid default gen_random_uuid() primary key,
+  name           text not null,
+  user_password  text not null,
+  admin_password text not null,
+  admin_email    text,
+  created_at     timestamptz default now()
 );
 
-
--- ── 3. CLUB MEMBERS ──────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS club_members (
-  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  club_id    uuid REFERENCES clubs(id) ON DELETE CASCADE,
-  player_id  uuid REFERENCES players(id) ON DELETE CASCADE,
-  UNIQUE (club_id, player_id)
+-- 3. Club Join Requests
+create table club_join_requests (
+  id              uuid default gen_random_uuid() primary key,
+  club_id         uuid references clubs(id) on delete cascade,
+  user_account_id uuid references user_accounts(id) on delete cascade,
+  status          text default 'pending',
+  requested_at    timestamptz default now(),
+  reviewed_at     timestamptz,
+  unique(club_id, user_account_id)
 );
 
-
--- ── 4. LIVE SESSIONS ─────────────────────────────────────────
--- Temporary real-time data written after each round via syncLiveSession().
--- Flushed to players.sessions on End Session, then deleted.
--- Dashboard reads this for the "Live Now" section.
--- Upserted on conflict (player_name, club_id, date).
-CREATE TABLE IF NOT EXISTS live_sessions (
-  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  player_name  text NOT NULL,
-  club_id      uuid REFERENCES clubs(id) ON DELETE CASCADE,
-  date         date NOT NULL DEFAULT CURRENT_DATE,
-  wins         int DEFAULT 0,
-  losses       int DEFAULT 0,
-  rating       numeric DEFAULT 1.0,
-  matches      jsonb DEFAULT '[]',
-  started_by   text,
-  updated_at   timestamptz DEFAULT now(),
-  UNIQUE (player_name, club_id, date)
+-- 4. Club Members
+create table club_members (
+  id              uuid default gen_random_uuid() primary key,
+  club_id         uuid references clubs(id) on delete cascade,
+  user_account_id uuid references user_accounts(id) on delete cascade,
+  joined_at       timestamptz default now(),
+  is_active       boolean default true,
+  unique(club_id, user_account_id)
 );
 
-
--- ── 5. PLAYER SESSIONS ───────────────────────────────────────
--- Historical archive per player. date is stored as text (YYYY-MM-DD).
--- Written by savePlayerSession(), read by getPlayerSessions().
-CREATE TABLE IF NOT EXISTS player_sessions (
-  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  player_name  text NOT NULL,
-  date         text NOT NULL,
-  wins         int DEFAULT 0,
-  losses       int DEFAULT 0,
-  rating       numeric DEFAULT 1.0,
-  UNIQUE (player_name, date)
+-- 5. Players
+create table players (
+  id              uuid default gen_random_uuid() primary key,
+  user_account_id uuid references user_accounts(id) on delete set null,
+  club_id         uuid references clubs(id) on delete cascade,
+  nickname        text not null,
+  gender          text default 'Male',
+  rating          float default 1.0,
+  club_rating     float default 1.0,
+  wins            int default 0,
+  losses          int default 0,
+  sessions        jsonb default '[]',
+  created_at      timestamptz default now()
 );
 
+-- 6. Live Sessions
+create table live_sessions (
+  id         uuid default gen_random_uuid() primary key,
+  club_id    uuid references clubs(id) on delete cascade,
+  date       text not null,
+  rounds     jsonb default '[]',
+  matches    jsonb default '[]',
+  started_by text,
+  status     text default 'active',
+  updated_at timestamptz default now()
+);
 
--- ============================================================
---  ADD MISSING COLUMNS TO EXISTING TABLES
---  Safe if tables already exist from a previous setup
--- ============================================================
+-- =============================================
+-- Row Level Security
+-- =============================================
+alter table user_accounts      enable row level security;
+alter table clubs               enable row level security;
+alter table club_join_requests  enable row level security;
+alter table club_members        enable row level security;
+alter table players             enable row level security;
+alter table live_sessions       enable row level security;
 
-ALTER TABLE players ADD COLUMN IF NOT EXISTS sessions           jsonb DEFAULT '[]';
-ALTER TABLE players ADD COLUMN IF NOT EXISTS club_ratings       jsonb DEFAULT '{}';
-ALTER TABLE players ADD COLUMN IF NOT EXISTS wins               int DEFAULT 0;
-ALTER TABLE players ADD COLUMN IF NOT EXISTS losses             int DEFAULT 0;
-ALTER TABLE players ADD COLUMN IF NOT EXISTS is_playing         boolean DEFAULT false;
-ALTER TABLE players ADD COLUMN IF NOT EXISTS session_id         text DEFAULT null;
-ALTER TABLE players ADD COLUMN IF NOT EXISTS session_started_at timestamptz DEFAULT null;
-
-
--- ============================================================
---  ROW LEVEL SECURITY
---  App uses anon key — needs full read/write on all tables
--- ============================================================
-
-ALTER TABLE clubs           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE players         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE club_members    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE live_sessions   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE player_sessions ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies before recreating (safe to re-run)
-DROP POLICY IF EXISTS "anon_read"  ON clubs;
-DROP POLICY IF EXISTS "anon_write" ON clubs;
-DROP POLICY IF EXISTS "anon_read"  ON players;
-DROP POLICY IF EXISTS "anon_write" ON players;
-DROP POLICY IF EXISTS "anon_read"  ON club_members;
-DROP POLICY IF EXISTS "anon_write" ON club_members;
-DROP POLICY IF EXISTS "anon_read"  ON live_sessions;
-DROP POLICY IF EXISTS "anon_write" ON live_sessions;
-DROP POLICY IF EXISTS "anon_read"  ON player_sessions;
-DROP POLICY IF EXISTS "anon_write" ON player_sessions;
-
-CREATE POLICY "anon_read"  ON clubs           FOR SELECT USING (true);
-CREATE POLICY "anon_write" ON clubs           FOR ALL    USING (true);
-CREATE POLICY "anon_read"  ON players         FOR SELECT USING (true);
-CREATE POLICY "anon_write" ON players         FOR ALL    USING (true);
-CREATE POLICY "anon_read"  ON club_members    FOR SELECT USING (true);
-CREATE POLICY "anon_write" ON club_members    FOR ALL    USING (true);
-CREATE POLICY "anon_read"  ON live_sessions   FOR SELECT USING (true);
-CREATE POLICY "anon_write" ON live_sessions   FOR ALL    USING (true);
-CREATE POLICY "anon_read"  ON player_sessions FOR SELECT USING (true);
-CREATE POLICY "anon_write" ON player_sessions FOR ALL    USING (true);
-
-
--- ============================================================
---  DONE
--- ============================================================
+create policy "allow_all" on user_accounts      for all using (true) with check (true);
+create policy "allow_all" on clubs              for all using (true) with check (true);
+create policy "allow_all" on club_join_requests for all using (true) with check (true);
+create policy "allow_all" on club_members       for all using (true) with check (true);
+create policy "allow_all" on players            for all using (true) with check (true);
+create policy "allow_all" on live_sessions      for all using (true) with check (true);
