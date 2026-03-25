@@ -125,8 +125,9 @@ async function renderDashboard() {
 
     if (liveSessions.length) {
       liveSessions.forEach(sess => {
-        const players     = _extractPlayersFromRounds(sess.rounds_data || []);
-        const totalRounds = (sess.rounds_data || []).length;
+        // live_sessions are grouped by club — players array is from per-player rows
+        const players     = (sess.players && sess.players.length) ? sess.players : _extractPlayersFromRounds(sess.rounds_data || []);
+        const totalRounds = (sess.rounds_data || []).length || null;
         const cardClubName = isViewer ? (sess.club_name || sess.club_id || '') : (club ? club.name : '');
         const card = _buildSessionCard({
           clubName:   cardClubName,

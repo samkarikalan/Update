@@ -727,28 +727,53 @@ async function dbGetPlayerClubs(playerName) {
 async function dbGetLiveSessions() {
   try {
     const isViewer = (typeof appMode !== 'undefined') && appMode === 'viewer';
+    const today    = new Date().toISOString().split('T')[0];
 
+    let rows = [];
     if (isViewer) {
-      // Viewer — show sessions from all clubs the player belongs to
+      // Viewer -- show live_sessions rows from all clubs the player belongs to
       const myPlayer = (typeof getMyPlayer === 'function') ? getMyPlayer() : null;
       if (!myPlayer) return [];
       const clubIds = await dbGetPlayerClubs(myPlayer.name);
       if (!clubIds.length) return [];
       const inList = '(' + clubIds.join(',') + ')';
-      const rows = await sbGet('sessions',
-        `club_id=in.${inList}&status=eq.live&order=created_at.asc&select=id,rounds_data,started_by,updated_at,club_id`
+      rows = await sbGet('live_sessions',
+        `club_id=in.${inList}&date=eq.${today}&select=player_name,club_id,date,wins,losses,matches,started_by,updated_at`
       );
-      return rows || [];
     } else {
-      // Organiser — show sessions for their selected club
+      // Organiser/Vault -- show today's live_sessions for their club
       const club = getMyClub();
       if (!club.id) return [];
-      const rows = await sbGet('sessions',
-        `club_id=eq.${club.id}&status=eq.live&order=created_at.asc&select=id,rounds_data,started_by,updated_at`
+      rows = await sbGet('live_sessions',
+        `club_id=eq.${club.id}&date=eq.${today}&select=player_name,club_id,date,wins,losses,matches,started_by,updated_at`
       );
-      return rows || [];
     }
+
+    if (!rows || !rows.length) return [];
+
+    // Group per-player rows into a single session object per club
+    const sessionMap = {};
+    rows.forEach(r => {
+      const key = r.club_id;
+      if (!sessionMap[key]) {
+        sessionMap[key] = {
+          id:          `live-${key}-${today}`,
+          club_id:     r.club_id,
+          started_by:  r.started_by,
+          updated_at:  r.updated_at,
+          players:     [],
+          rounds_data: []
+        };
+      }
+      if (r.updated_at > sessionMap[key].updated_at) {
+        sessionMap[key].updated_at = r.updated_at;
+      }
+      sessionMap[key].players.push(r.player_name);
+    });
+
+    return Object.values(sessionMap);
   } catch (e) {
+    console.warn('dbGetLiveSessions error:', e.message);
     return [];
   }
 }
