@@ -1301,12 +1301,15 @@ async function addPlayersBrowseLoad() {
         rating:      parseFloat(p.rating) || 1.0
       }));
     } else {
-      // Fetch ALL players globally (bypass club filter)
-      const raw = await sbGet("players", "order=name.asc");
-      players = raw.map(p => ({
-        displayName: p.name,
-        gender:      p.gender || "Male",
-        rating:      parseFloat(p.rating) || 1.0
+      // Fetch all memberships for this club
+      const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+      const raw = club.id
+        ? await sbGet("memberships", `club_id=eq.${club.id}&order=nickname.asc&select=nickname,club_rating,players(gender,global_rating)`)
+        : [];
+      players = raw.map(m => ({
+        displayName: m.nickname,
+        gender:      m.players?.gender || "Male",
+        rating:      parseFloat(m.club_rating) || 1.0
       }));
     }
     _browseAllPlayers = players;

@@ -1098,3 +1098,642 @@ display: block;
   transition: color 0.15s;
 }
 .club-mgmt-toggle:hover { color: var(--text); }
+
+
+/* ── Vault Tiles (Option B — Dark Glass) ── */
+.vault-tile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 6px 0;
+  margin: 0 16px;
+}
+.vault-tile {
+  border-radius: 20px;
+  padding: 20px 16px 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: var(--surface2, #1a1a2e);
+  border: 1px solid var(--border, #2a2a40);
+  transition: transform 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.vault-tile::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 18px 18px 0 0;
+}
+.vault-tile:active { transform: scale(0.97); }
+
+.vt-playing::before  { background: #f5a623; box-shadow: 0 0 12px rgba(245,166,35,0.6); }
+.vt-register::before { background: #6c8cff; box-shadow: 0 0 12px rgba(108,140,255,0.6); }
+.vt-modify::before   { background: #2dce89; box-shadow: 0 0 12px rgba(45,206,137,0.6); }
+.vt-requests::before { background: #e63757; box-shadow: 0 0 12px rgba(230,55,87,0.6); }
+.vt-club::before     { background: #a78bfa; box-shadow: 0 0 12px rgba(167,139,250,0.6); }
+
+.vt-club {
+  min-height: 72px;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  justify-content: flex-start;
+  padding: 18px 20px;
+}
+
+.vt-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+.vt-playing  .vt-badge { background: rgba(245,166,35,0.18); color: #f5a623; }
+.vt-requests .vt-badge { background: rgba(230,55,87,0.18);  color: #e63757; }
+
+.vt-icon {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+.vt-stat {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text, #fff);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.vt-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted, #888);
+  margin-bottom: 2px;
+}
+.vt-sub {
+  font-size: 0.68rem;
+  color: var(--muted, #666);
+  opacity: 0.7;
+}
+
+/* ── Vault Club Status Tile ── */
+.vault-club-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  padding: 16px 18px;
+  margin: 6px 16px 0;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+.vault-club-tile::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: #e63757;
+  border-radius: 18px 18px 0 0;
+}
+
+/* Dark mode */
+body:not(.app-light) .vault-club-tile {
+  background: var(--surface2, #1a1a2e);
+  border: 1px solid var(--border, #2a2a40);
+  box-shadow: 0 0 14px rgba(230,55,87,0.15);
+}
+body:not(.app-light) .vault-club-tile::before {
+  box-shadow: 0 0 14px rgba(230,55,87,0.8);
+}
+body:not(.app-light) .vct-name { color: #fff; }
+body:not(.app-light) .vct-change-btn { background: rgba(255,255,255,0.08); color: #aaa; border: 1px solid #2a2a40; }
+
+/* Light mode */
+body.app-light .vault-club-tile {
+  background: #fff0f2;
+  border: 1.5px solid #ffd0d8;
+  box-shadow: 0 2px 12px rgba(230,55,87,0.08);
+}
+body.app-light .vct-name { color: #1a1a2e; }
+body.app-light .vct-change-btn { background: #ffe8ec; color: #c0392b; border: none; }
+
+.vct-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #2dce89; flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(45,206,137,0.2);
+}
+.vct-info { flex: 1; }
+.vct-name { font-size: 1rem; font-weight: 800; }
+.vct-badge {
+  display: inline-block;
+  font-size: 0.65rem; font-weight: 800;
+  padding: 2px 8px; border-radius: 6px;
+  background: #2dce89; color: #000;
+  margin-top: 4px; letter-spacing: 0.05em;
+}
+.vct-change-btn {
+  border: none; border-radius: 10px;
+  padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── Rounds Page — Single Tight Top Bar ── */
+.rounds-top-bar {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 14px;
+  background: var(--bg, #fff);
+  border-bottom: 1px solid var(--border, #eee);
+}
+.rtb-back {
+  color: var(--accent, #6c8cff);
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.rtb-spacer { flex: 1; }
+.rtb-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rtb-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #2dce89;
+  box-shadow: 0 0 5px #2dce89;
+  animation: rtbPulse 1.5s infinite;
+}
+.rtb-live-txt {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #2dce89;
+  letter-spacing: 0.05em;
+}
+.rtb-end {
+  background: none;
+  border: 1px solid rgba(230,55,87,0.3);
+  color: #e63757;
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: background 0.15s;
+}
+.rtb-end:active { background: rgba(230,55,87,0.1); }
+@keyframes rtbPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Dashboard Force End Button ── */
+.dash-card-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #2a2a40);
+}
+.dash-force-end-btn {
+  width: 100%;
+  padding: 8px;
+  background: rgba(230,55,87,0.08);
+  border: 1px solid rgba(230,55,87,0.25);
+  color: #e63757;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dash-force-end-btn:active {
+  background: rgba(230,55,87,0.18);
+}
+.dash-force-end-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── My Card Period Stats — Style C ── */
+.mc-period-list {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #eee);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 8px 16px 12px;
+}
+.mc-period-row {
+  display: flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border, #f5f5f5);
+}
+.mc-period-row:last-child { border-bottom: none; }
+.mc-period-label {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted, #888);
+}
+.mc-period-stats-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  color: var(--muted, #aaa);
+  font-weight: 600;
+}
+.mc-period-val {
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.mc-period-val.wins   { color: #2dce89; }
+.mc-period-val.losses { color: #e63757; }
+.mc-period-val.points {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f5a623;
+  background: rgba(245,166,35,0.1);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.mc-period-val.cost {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6c8cff;
+  background: rgba(108,140,255,0.1);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* ── My Card Session Rows ── */
+.mc-session-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border, #eee);
+  font-size: 0.82rem;
+}
+.mc-session-date {
+  flex: 1;
+  color: var(--muted, #888);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.mc-session-stat {
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.mc-session-stat.wins   { color: #2dce89; background: rgba(45,206,137,0.1); }
+.mc-session-stat.losses { color: #e63757; background: rgba(230,55,87,0.1); }
+.mc-session-stat.points { color: #f5a623; background: rgba(245,166,35,0.1); }
+
+/* ── Shuttle Cost Sheet ── */
+.shuttle-sheet {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 16px 16px 32px;
+  width: 100%;
+}
+.shuttle-handle {
+  width: 36px; height: 4px;
+  background: #ddd; border-radius: 2px;
+  margin: 0 auto 12px;
+}
+.shuttle-title {
+  font-size: 1rem; font-weight: 800;
+  color: var(--text, #1a1a2e); margin-bottom: 12px;
+}
+.shuttle-mode-toggle {
+  display: flex; background: #ebebf5;
+  border-radius: 10px; padding: 3px; margin-bottom: 14px;
+}
+.shuttle-mode-btn {
+  flex: 1; text-align: center; padding: 7px 4px;
+  border-radius: 7px; font-size: 0.7rem; font-weight: 700;
+  color: #888; cursor: pointer; border: none; background: none;
+}
+.shuttle-mode-btn.active {
+  background: #fff; color: #1a1a2e;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.shuttle-2col { display: flex; gap: 8px; margin-bottom: 8px; }
+.shuttle-input-group { flex: 1; margin-bottom: 8px; }
+.shuttle-input-label {
+  font-size: 0.68rem; font-weight: 700;
+  color: #888; margin-bottom: 4px;
+}
+.shuttle-input {
+  width: 100%; padding: 8px 10px;
+  border: 1.5px solid #e0e0f0; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 600;
+  color: var(--text, #1a1a2e); background: #f8f8ff;
+}
+.shuttle-input-lg {
+  font-size: 1.3rem; text-align: center; padding: 12px;
+}
+.shuttle-divider {
+  display: flex; align-items: center;
+  gap: 8px; margin: 6px 0 10px;
+}
+.shuttle-div-line { flex: 1; height: 1px; background: #eee; }
+.shuttle-div-txt { font-size: 0.62rem; color: #bbb; font-weight: 600; }
+.shuttle-calc-box {
+  background: #f0f4ff; border-radius: 10px;
+  padding: 10px 12px; margin: 10px 0;
+}
+.shuttle-calc-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 3px 0;
+}
+.shuttle-calc-total {
+  border-top: 1px solid #dde;
+  margin-top: 6px; padding-top: 8px !important;
+}
+.shuttle-calc-label { font-size: 0.7rem; color: #888; font-weight: 600; }
+.shuttle-calc-val { font-size: 0.8rem; font-weight: 800; color: var(--text, #1a1a2e); }
+.shuttle-calc-big { font-size: 1rem; color: #6c8cff; }
+.shuttle-btn-end {
+  width: 100%; padding: 12px;
+  background: #e63757; color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 0.9rem; font-weight: 800;
+  cursor: pointer; margin-top: 8px;
+}
+.shuttle-btn-skip {
+  width: 100%; padding: 7px;
+  background: none; border: none;
+  color: #bbb; font-size: 0.72rem;
+  cursor: pointer; margin-top: 4px;
+}
+
+/* ── Dashboard shuttle info ── */
+.dash-shuttle-row {
+  display: flex; align-items: center;
+  gap: 6px; background: #f8f8ff;
+  border-radius: 8px; padding: 6px 10px;
+  border: 1px solid #e8e8ff; margin-top: 8px;
+}
+.dash-shuttle-info { flex: 1; font-size: 0.72rem; color: #888; }
+.dash-shuttle-info strong { color: #6c8cff; }
+.dash-shuttle-cost { font-size: 0.82rem; font-weight: 800; color: #2dce89; }
+
+/* ── My Card session cost tag ── */
+.mc-session-stat.cost {
+  color: #6c8cff;
+  background: rgba(108,140,255,0.1);
+}
+
+/* ── Shuttle Cost Sheet ── */
+.shuttle-sheet {
+  background: var(--surface, #fff);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 18px 32px;
+  width: 100%;
+}
+.shuttle-handle {
+  width: 36px; height: 4px;
+  background: var(--border, #ddd);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+.shuttle-title {
+  font-size: 1rem; font-weight: 800;
+  color: var(--text, #1a1a2e);
+  margin-bottom: 4px;
+}
+.shuttle-sub {
+  font-size: 0.75rem; color: var(--muted, #888);
+  margin-bottom: 18px;
+}
+.shuttle-input-row {
+  display: flex; align-items: center;
+  gap: 10px; margin-bottom: 12px;
+}
+.shuttle-input-icon { font-size: 1.3rem; flex-shrink: 0; }
+.shuttle-input-info { flex: 1; }
+.shuttle-input-label {
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--muted, #888); margin-bottom: 4px;
+}
+.shuttle-input {
+  width: 100%; padding: 8px 10px;
+  border: 1.5px solid var(--border, #e0e0f0);
+  border-radius: 8px; font-size: 0.9rem;
+  font-weight: 600; color: var(--text, #1a1a2e);
+  background: var(--bg, #f8f8ff);
+}
+.shuttle-calc-box {
+  background: rgba(108,140,255,0.06);
+  border: 1px solid rgba(108,140,255,0.15);
+  border-radius: 10px; padding: 10px 12px;
+  margin: 14px 0;
+}
+.shuttle-calc-row {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 6px;
+  font-size: 0.75rem;
+}
+.shuttle-calc-row:last-child {
+  margin-bottom: 0; padding-top: 8px;
+  border-top: 1px solid rgba(108,140,255,0.15);
+  margin-top: 4px;
+}
+.shuttle-calc-label { color: var(--muted, #888); font-weight: 600; }
+.shuttle-calc-val { font-weight: 800; color: var(--text, #1a1a2e); }
+.shuttle-calc-val.total { color: #6c8cff; font-size: 1rem; }
+.shuttle-btn-end {
+  width: 100%; padding: 12px;
+  background: #e63757; color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 0.95rem; font-weight: 800;
+  cursor: pointer; margin-top: 6px;
+}
+.shuttle-btn-skip {
+  width: 100%; padding: 8px;
+  background: none; border: none;
+  color: var(--muted, #aaa);
+  font-size: 0.75rem; cursor: pointer;
+  margin-top: 4px;
+}
+
+/* ── Dashboard Shuttle Row ── */
+.dash-shuttle-row {
+  display: flex; align-items: center;
+  gap: 6px; margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(108,140,255,0.06);
+  border: 1px solid rgba(108,140,255,0.15);
+  border-radius: 8px;
+  font-size: 0.72rem;
+}
+.dash-shuttle-icon { font-size: 0.9rem; flex-shrink: 0; }
+.dash-shuttle-info { flex: 1; color: var(--muted, #888); font-weight: 600; }
+.dash-shuttle-cost { font-weight: 800; color: #2dce89; }
+
+/* ── My Card Session Cost tag ── */
+.mc-session-stat.cost {
+  color: #6c8cff;
+  background: rgba(108,140,255,0.1);
+}
+
+/* ── My Card Match History ── */
+.mc-match-row {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #eee);
+}
+.mc-match-left-bar {
+  width: 4px;
+  flex-shrink: 0;
+}
+.mc-match-win  .mc-match-left-bar { background: #2dce89; }
+.mc-match-loss .mc-match-left-bar { background: #e63757; }
+.mc-match-content {
+  flex: 1;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mc-match-teams { flex: 1; }
+.mc-match-pair {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text, #1a1a2e);
+}
+.mc-match-pair.opp {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted, #888);
+}
+.mc-match-vs {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #bbb;
+  margin: 2px 0;
+}
+.mc-match-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.mc-match-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.mc-match-badge.win  { background: rgba(45,206,137,0.15); color: #2dce89; }
+.mc-match-badge.loss { background: rgba(230,55,87,0.12);  color: #e63757; }
+.mc-match-delta {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.mc-match-delta.win  { color: #2dce89; }
+.mc-match-delta.loss { color: #e63757; }
+.mc-match-date {
+  font-size: 0.62rem;
+  color: #bbb;
+  font-weight: 600;
+}
+
+/* ── My Card logout button ── */
+.mc-logout-btn {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: #e63757;
+  background: rgba(230,55,87,0.08);
+  border: 1px solid rgba(230,55,87,0.2);
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+
+
+/* ── Mode Pill Button (top bar) ── */
+.mode-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(45,206,137,0.3);
+  background: rgba(45,206,137,0.1);
+  color: #2dce89;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.mode-pill-btn:active { opacity: 0.8; }
+
+/* ── Auth Club Picker ── */
+.auth-club-pick-btn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--surface, #fff);
+  border: 1.5px solid var(--border, #eee);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.auth-club-pick-btn strong { color: var(--text, #1a1a2e); font-weight: 700; }
+.auth-club-pick-btn span   { color: var(--muted, #888); font-size: 0.78rem; }
+
+/* ── My Clubs Page ── */
+.jc-section-title {
+  font-size: 0.65rem; font-weight: 700;
+  color: var(--muted, #555);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.jc-divider { height: 1px; background: var(--border, #2a2a40); margin: 4px 0; }
+.jc-empty {
+  font-size: 0.78rem; color: var(--muted, #555);
+  text-align: center; padding: 16px 0;
+}
+.jc-club-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card-bg, #1e1e2e);
+  border: 1px solid var(--border, #2a2a40);
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 8px;
+}
+.jc-club-icon { font-size: 1.2rem; flex-shrink: 0; }
+.jc-club-info { flex: 1; }
+.jc-club-name { font-size: 0.82rem; font-weight: 700; color: var(--text, #fff); }
+.jc-club-nick { font-size: 0.68rem; color: var(--muted, #555); margin-top: 1px; }
+.jc-club-badge {
+  font-size: 0.6rem; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; background: rgba(45,206,137,0.15); color: #2dce89;
+  flex-shrink: 0;
+}
+.jc-club-pending {
+  font-size: 0.6rem; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; background: rgba(245,166,35,0.15); color: #f5a623;
+  flex-shrink: 0;
+}

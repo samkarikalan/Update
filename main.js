@@ -137,6 +137,7 @@ function switchMode(mode) {
     sessionStorage.setItem('appMode', mode);
     localStorage.setItem('kbrr_app_mode', mode);
     applyMode(mode);
+    updateModePill(mode);
     if (typeof showHomeScreen === 'function') showHomeScreen();
     return;
   }
@@ -158,13 +159,37 @@ function switchMode(mode) {
   sessionStorage.setItem('appMode', mode);
   localStorage.setItem('kbrr_app_mode', mode);
   applyMode(mode);
+  updateModePill(mode);
   if (typeof showHomeScreen === 'function') showHomeScreen();
+}
+
+function updateModePill(mode) {
+  const icons  = { viewer: '👁', organiser: '🏸', vault: '🔒' };
+  const labels = { viewer: 'Viewer', organiser: 'Organiser', vault: 'Vault' };
+  const colors = { viewer: '#6c8cff', organiser: '#2dce89', vault: '#f5a623' };
+  const icon  = icons[mode]  || '🏸';
+  const label = labels[mode] || 'Mode';
+  const color = colors[mode] || '#6c8cff';
+  ['', '2'].forEach(suffix => {
+    const iconEl  = document.getElementById('modePillIcon'  + suffix);
+    const labelEl = document.getElementById('modePillLabel' + suffix);
+    const btnEl   = document.getElementById('modePillBtn'   + suffix);
+    if (iconEl)  iconEl.textContent  = icon;
+    if (labelEl) labelEl.textContent = label;
+    if (btnEl)   { btnEl.style.color = color; btnEl.style.borderColor = color + '44'; btnEl.style.background = color + '11'; }
+  });
+  // Update Settings page mode value
+  const settingsModeEl = document.getElementById('settingsModeValue');
+  if (settingsModeEl) { settingsModeEl.textContent = icon + ' ' + label; settingsModeEl.style.color = color; }
 }
 
 function initModeOnLoad() {
   // Keep home hidden
   var homeEl = document.getElementById('homePageOverlay');
   if (homeEl) homeEl.style.display = 'none';
+  // Update mode pill to reflect saved mode
+  const savedMode = localStorage.getItem('kbrr_app_mode') || 'organiser';
+  updateModePill(savedMode);
   // Run smart startup flow
   initAppFlow();
 }
@@ -533,10 +558,10 @@ function showPage(pageID, el) {
     if (allRounds.length <= 1) {
       resetRounds();
     } else {
-      if (lastPage === "playersPage") {
-        goToRounds();
-      }
+      // Session in progress — just re-render current round, never regenerate
+      if (typeof showRound === 'function') showRound(currentRoundIndex);
     }
+    updateSessionLiveBar();
   }
 
   if (pageID === "summaryPage") {
@@ -549,6 +574,11 @@ function showPage(pageID, el) {
 
   if (pageID === "joinClubPage") {
     if (typeof joinClubPageOpen === 'function') joinClubPageOpen();
+  }
+
+  if (pageID === "settingsPage") {
+    if (typeof subShowTrialBanner === 'function') subShowTrialBanner();
+    updateModePill(localStorage.getItem('kbrr_app_mode') || 'organiser');
   }
 
   if (pageID === "helpPage") {
@@ -736,6 +766,17 @@ function restoreSyncIndicator() {
 
 
 /* =============================================================
+   SESSION LIVE BAR
+============================================================= */
+function updateSessionLiveBar() {
+  const bar = document.getElementById('sessionLiveBar');
+  if (!bar) return;
+  const sessionId = (typeof getMySessionId === 'function') ? getMySessionId() : null;
+  const hasRounds = typeof allRounds !== 'undefined' && allRounds.length > 0;
+  bar.style.display = (sessionId || hasRounds) ? 'flex' : 'none';
+}
+
+/* =============================================================
    VAULT MODE — Admin password gate
 ============================================================= */
 function requestVaultMode() {
@@ -809,28 +850,14 @@ function _showClubSetupSheet(targetMode) {
 
       <!-- CREATE PANEL -->
       <div id="clubSetupPanelCreate" style="display:none;margin-top:14px">
-        <div id="clubSetupCreateStep1">
-          <input type="text"     id="csCreateName"    class="auth-input" placeholder="Club name"       style="margin-bottom:8px">
-          <input type="email"    id="csCreateEmail"   class="auth-input" placeholder="Your email (OTP)" style="margin-bottom:8px">
-          <input type="password" id="csCreateUserPw"  class="auth-input" placeholder="User password"   style="margin-bottom:8px">
+        <div id="clubSetupPanelCreateForm">
+          <input type="text"     id="csCreateName"    class="auth-input" placeholder="Club name"      style="margin-bottom:8px">
+          <input type="password" id="csCreateUserPw"  class="auth-input" placeholder="Member password" style="margin-bottom:8px">
           <input type="password" id="csCreateAdminPw" class="auth-input" placeholder="Admin password"  style="margin-bottom:10px">
-          <div id="csCreateFeedback" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:10px"></div>
+          <div id="csCreateFeedback" style="font-size:0.82rem;min-height:18px;margin-bottom:10px"></div>
           <div style="display:flex;gap:10px">
             <button class="admin-modal-cancel" style="flex:1" onclick="document.getElementById('clubSetupSheetOverlay').remove()">Cancel</button>
-            <button class="admin-modal-ok" style="flex:1" onclick="_clubSetupCreateSendOtp()">📧 Send OTP</button>
-          </div>
-        </div>
-        <div id="clubSetupCreateStep2" style="display:none">
-          <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px">
-            OTP sent to <strong id="csCreateEmailMasked"></strong>
-            · <button class="link-btn" onclick="_clubSetupCreateResend()">Resend</button>
-          </p>
-          <input type="text" id="csCreateOtp" class="auth-input" placeholder="Enter 8-digit OTP" maxlength="8"
-                 onkeydown="if(event.key==='Enter')_clubSetupCreateVerify()" style="margin-bottom:10px">
-          <div id="csCreateFeedback2" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:10px"></div>
-          <div style="display:flex;gap:10px">
-            <button class="admin-modal-cancel" style="flex:1" onclick="_clubSetupShowTab('create')">Back</button>
-            <button class="admin-modal-ok" style="flex:1" onclick="_clubSetupCreateVerify()">Create Club</button>
+            <button class="admin-modal-ok" style="flex:1" onclick="_clubSetupCreateDirect()">Create Club</button>
           </div>
         </div>
       </div>
@@ -849,10 +876,8 @@ function _clubSetupShowTab(tab) {
   document.getElementById('clubSetupTabCreate').classList.toggle('active', tab === 'create');
   document.getElementById('clubSetupPanelJoin').style.display   = tab === 'join'   ? '' : 'none';
   document.getElementById('clubSetupPanelCreate').style.display = tab === 'create' ? '' : 'none';
-  // Reset create steps
+  // Reset create form
   if (tab === 'create') {
-    document.getElementById('clubSetupCreateStep1').style.display = '';
-    document.getElementById('clubSetupCreateStep2').style.display = 'none';
     _clubSetupCreateEmail = '';
   }
 }
@@ -885,17 +910,15 @@ async function _clubSetupJoin() {
 
   setFb('Checking…', true);
   try {
-    const isVault = _clubSetupTargetMode === 'vault';
-    const fields = isVault ? 'id,name,select_password,admin_password' : 'id,name,select_password,admin_password';
-    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=${fields}`);
-    if (!clubs.length) throw new Error('Club not found.');
+    // Use server-side filter — avoids RLS blocking password column reads
+    const encodedPw = encodeURIComponent(pw);
+    const asAdmin = await sbGet('clubs', `id=eq.${select.value}&admin_password=eq.${encodedPw}&select=id,name`);
+    const asUser  = await sbGet('clubs', `id=eq.${select.value}&select_password=eq.${encodedPw}&select=id,name`);
 
-    let role = 'user';
-    if (pw === clubs[0].admin_password) {
-      role = 'admin';
-    } else if (pw !== clubs[0].select_password) {
-      throw new Error('Wrong password.');
-    }
+    if (!asAdmin.length && !asUser.length) throw new Error('Wrong password.');
+
+    let role = asAdmin.length ? 'admin' : 'user';
+    const clubs = asAdmin.length ? asAdmin : asUser;
 
     if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
     localStorage.setItem('kbrr_club_mode', role);
@@ -934,67 +957,30 @@ async function _clubSetupJoin() {
   } catch(e) { setFb('❌ ' + e.message, false); }
 }
 
-async function _clubSetupCreateSendOtp() {
+async function _clubSetupCreateSendOtp() { _clubSetupCreateDirect(); } // legacy alias
+async function _clubSetupCreateResend()  { } // no longer needed
+
+async function _clubSetupCreateVerify() { _clubSetupCreateDirect(); } // legacy alias
+
+async function _clubSetupCreateDirect() {
   const name    = document.getElementById('csCreateName')?.value.trim();
-  const email   = document.getElementById('csCreateEmail')?.value.trim();
   const userPw  = document.getElementById('csCreateUserPw')?.value.trim();
   const adminPw = document.getElementById('csCreateAdminPw')?.value.trim();
   const fb      = document.getElementById('csCreateFeedback');
   const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
   if (!name)    { setFb('Enter club name.', false); return; }
-  if (!email || !email.includes('@')) { setFb('Enter a valid email.', false); return; }
-  if (!userPw)  { setFb('Enter user password.', false); return; }
+  if (!userPw)  { setFb('Enter member password.', false); return; }
   if (!adminPw) { setFb('Enter admin password.', false); return; }
+  if (userPw === adminPw) { setFb('Member and admin passwords must be different.', false); return; }
 
-  setFb('Sending OTP…', true);
-  try {
-    // Store form values so they survive the step switch
-    document.getElementById('csCreateName')._savedVal    = name;
-    document.getElementById('csCreateUserPw')._savedVal  = userPw;
-    document.getElementById('csCreateAdminPw')._savedVal = adminPw;
-
-    await dbSendOtp(email);
-    _clubSetupCreateEmail = email;
-
-    const masked = document.getElementById('csCreateEmailMasked');
-    if (masked) masked.textContent = maskEmail ? maskEmail(email) : email.replace(/(.{2}).+(@.+)/, '$1…$2');
-
-    document.getElementById('clubSetupCreateStep1').style.display = 'none';
-    document.getElementById('clubSetupCreateStep2').style.display = '';
-    document.getElementById('csCreateOtp').value = '';
-    document.getElementById('csCreateOtp').focus();
-    setFb('OTP sent! Check your email.', true);
-  } catch(e) { setFb('❌ ' + e.message, false); }
-}
-
-async function _clubSetupCreateResend() {
-  if (!_clubSetupCreateEmail) return;
-  try {
-    await dbSendOtp(_clubSetupCreateEmail);
-    const fb2 = document.getElementById('csCreateFeedback2');
-    if (fb2) { fb2.textContent = 'OTP resent.'; fb2.style.color = '#2dce89'; }
-  } catch(e) {}
-}
-
-async function _clubSetupCreateVerify() {
-  const otp     = document.getElementById('csCreateOtp')?.value.trim();
-  const name    = document.getElementById('csCreateName')?._savedVal    || document.getElementById('csCreateName')?.value.trim();
-  const userPw  = document.getElementById('csCreateUserPw')?._savedVal  || document.getElementById('csCreateUserPw')?.value.trim();
-  const adminPw = document.getElementById('csCreateAdminPw')?._savedVal || document.getElementById('csCreateAdminPw')?.value.trim();
-  const fb      = document.getElementById('csCreateFeedback2');
-  const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
-
-  if (!otp || otp.length < 8) { setFb('Enter the 8-digit OTP.', false); return; }
   setFb('Creating club…', true);
   try {
-    await dbVerifyOtp(_clubSetupCreateEmail, otp);
-    const club = await dbAddClub(name, userPw, adminPw, _clubSetupCreateEmail);
+    const club = await dbAddClub(name, userPw, adminPw);
     if (typeof setMyClub === 'function') setMyClub(club.id, club.name);
     localStorage.setItem('kbrr_club_mode', 'admin');
     localStorage.setItem('kbrr_rating_field', 'club_rating');
-    setFb(`✅ Club "${club.name}" created! You are now Admin.`, true);
-    _clubSetupCreateEmail = '';
+    setFb('✅ Club "' + club.name + '" created! You are now Admin.', true);
 
     setTimeout(() => {
       const ov = document.getElementById('clubSetupSheetOverlay');
@@ -1057,8 +1043,8 @@ async function verifyVaultPassword() {
 
   if (errEl) errEl.textContent = 'Checking...';
   try {
-    const rows = await sbGet('clubs', `id=eq.${club.id}&select=admin_password`);
-    if (!rows || !rows.length || rows[0].admin_password !== pw) {
+    const rows = await sbGet('clubs', `id=eq.${club.id}&admin_password=eq.${encodeURIComponent(pw)}&select=id`);
+    if (!rows || !rows.length) {
       if (errEl) errEl.textContent = 'Wrong admin password';
       if (input) input.value = '';
       return;
@@ -1076,10 +1062,181 @@ async function verifyVaultPassword() {
    POWER BUTTON — End Session
 ============================================================= */
 async function endSession(fromProfile = false) {
-  if (!confirm('End session?')) return;
+  // Show shuttle cost sheet instead of plain confirm
+  showShuttleSheet();
+}
+
+function showShuttleSheet() {
+  const existing = document.getElementById('shuttleSheetOverlay');
+  if (existing) existing.remove();
+
+  const playerCount = (typeof schedulerState !== 'undefined') ? schedulerState.allPlayers.length : 0;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'shuttleSheetOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end;';
+  overlay.innerHTML = `
+    <div class="shuttle-sheet" id="shuttleSheet">
+      <div class="shuttle-handle"></div>
+      <div class="shuttle-title">💰 Session Cost</div>
+
+      <div class="shuttle-mode-toggle">
+        <button class="shuttle-mode-btn active" id="shuttleModeA" onclick="shuttleSwitchMode('itemized')">📋 Itemized</button>
+        <button class="shuttle-mode-btn" id="shuttleModeB" onclick="shuttleSwitchMode('flat')">💴 Flat Fee</button>
+      </div>
+
+      <!-- Itemized mode -->
+      <div id="shuttleModeItemized">
+        <div class="shuttle-2col">
+          <div class="shuttle-input-group">
+            <div class="shuttle-input-label">🪶 Price/tube</div>
+            <input type="number" id="shuttleTubePrice" class="shuttle-input" placeholder="e.g. 6000" oninput="shuttleCalc()">
+          </div>
+          <div class="shuttle-input-group">
+            <div class="shuttle-input-label">Shuttles used</div>
+            <input type="number" id="shuttleCount" class="shuttle-input" placeholder="e.g. 16" oninput="shuttleCalc()">
+          </div>
+        </div>
+        <div class="shuttle-divider"><div class="shuttle-div-line"></div><span class="shuttle-div-txt">optional</span><div class="shuttle-div-line"></div></div>
+        <div class="shuttle-input-group">
+          <div class="shuttle-input-label">🏟 Court fee (total)</div>
+          <input type="number" id="shuttleCourtFee" class="shuttle-input" placeholder="¥0" oninput="shuttleCalc()">
+        </div>
+        <div class="shuttle-input-group" style="margin-top:8px">
+          <div class="shuttle-input-label">📦 Misc fee (total)</div>
+          <input type="number" id="shuttleMiscFee" class="shuttle-input" placeholder="¥0" oninput="shuttleCalc()">
+        </div>
+      </div>
+
+      <!-- Flat fee mode -->
+      <div id="shuttleModeFlat" style="display:none">
+        <div class="shuttle-input-group" style="margin-top:4px">
+          <div class="shuttle-input-label">💴 Amount per player</div>
+          <input type="number" id="shuttleFlatFee" class="shuttle-input shuttle-input-lg" placeholder="¥0" oninput="shuttleCalc()">
+        </div>
+      </div>
+
+      <!-- Calc result -->
+      <div class="shuttle-calc-box" id="shuttleCalcBox" style="display:none">
+        <div class="shuttle-calc-row" id="shuttleCalcShuttles" style="display:none">
+          <span class="shuttle-calc-label">🪶 Shuttles</span>
+          <span class="shuttle-calc-val" id="shuttleCostShuttles">—</span>
+        </div>
+        <div class="shuttle-calc-row" id="shuttleCalcCourt" style="display:none">
+          <span class="shuttle-calc-label">🏟 Court</span>
+          <span class="shuttle-calc-val" id="shuttleCostCourt">—</span>
+        </div>
+        <div class="shuttle-calc-row" id="shuttleCalcMisc" style="display:none">
+          <span class="shuttle-calc-label">📦 Misc</span>
+          <span class="shuttle-calc-val" id="shuttleCostMisc">—</span>
+        </div>
+        <div class="shuttle-calc-row shuttle-calc-total">
+          <span class="shuttle-calc-label">Per player (${playerCount})</span>
+          <span class="shuttle-calc-val shuttle-calc-big" id="shuttleCostPerPlayer">—</span>
+        </div>
+      </div>
+
+      <button class="shuttle-btn-end" onclick="confirmEndSession()">⏹ End Session</button>
+      <button class="shuttle-btn-skip" onclick="skipShuttleAndEnd()">Skip — end without recording</button>
+    </div>`;
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  document.getElementById('shuttleSheet').addEventListener('click', e => e.stopPropagation());
+}
+
+function shuttleSwitchMode(mode) {
+  const isItemized = mode === 'itemized';
+  document.getElementById('shuttleModeItemized').style.display = isItemized ? '' : 'none';
+  document.getElementById('shuttleModeFlat').style.display     = isItemized ? 'none' : '';
+  document.getElementById('shuttleModeA').classList.toggle('active', isItemized);
+  document.getElementById('shuttleModeB').classList.toggle('active', !isItemized);
+  document.getElementById('shuttleCalcBox').style.display = 'none';
+}
+
+function shuttleCalc() {
+  const players = (typeof schedulerState !== 'undefined') ? schedulerState.allPlayers.length : 0;
+  const isFlat  = document.getElementById('shuttleModeFlat')?.style.display !== 'none';
+
+  if (isFlat) {
+    const flat = parseFloat(document.getElementById('shuttleFlatFee')?.value) || 0;
+    if (!flat) { document.getElementById('shuttleCalcBox').style.display = 'none'; return; }
+    document.getElementById('shuttleCalcBox').style.display = '';
+    document.getElementById('shuttleCalcShuttles').style.display = 'none';
+    document.getElementById('shuttleCalcCourt').style.display    = 'none';
+    document.getElementById('shuttleCalcMisc').style.display     = 'none';
+    document.getElementById('shuttleCostPerPlayer').textContent  = '¥' + Math.round(flat).toLocaleString();
+    return;
+  }
+
+  // Itemized
+  const tubePrice  = parseFloat(document.getElementById('shuttleTubePrice')?.value) || 0;
+  const count      = parseFloat(document.getElementById('shuttleCount')?.value) || 0;
+  const courtFee   = parseFloat(document.getElementById('shuttleCourtFee')?.value) || 0;
+  const miscFee    = parseFloat(document.getElementById('shuttleMiscFee')?.value) || 0;
+
+  const shuttleCost = tubePrice && count ? (tubePrice / 12) * count : 0;
+  const total       = shuttleCost + courtFee + miscFee;
+  const perPlayer   = players > 0 ? total / players : 0;
+
+  if (!total) { document.getElementById('shuttleCalcBox').style.display = 'none'; return; }
+
+  document.getElementById('shuttleCalcBox').style.display = '';
+
+  const showRow = (rowId, valId, val) => {
+    document.getElementById(rowId).style.display = val > 0 ? '' : 'none';
+    if (val > 0) document.getElementById(valId).textContent = '¥' + Math.round(val / players).toLocaleString() + '/player';
+  };
+  showRow('shuttleCalcShuttles', 'shuttleCostShuttles', shuttleCost);
+  showRow('shuttleCalcCourt',    'shuttleCostCourt',    courtFee);
+  showRow('shuttleCalcMisc',     'shuttleCostMisc',     miscFee);
+  document.getElementById('shuttleCostPerPlayer').textContent = '¥' + Math.round(perPlayer).toLocaleString();
+}
+
+async function confirmEndSession() {
+  const players  = (typeof schedulerState !== 'undefined') ? schedulerState.allPlayers.length : 0;
+  const isFlat   = document.getElementById('shuttleModeFlat')?.style.display !== 'none';
+  let shuttleData = null;
+
+  if (isFlat) {
+    const flat = parseFloat(document.getElementById('shuttleFlatFee')?.value) || 0;
+    if (flat) shuttleData = { mode: 'flat', cost_per_player: Math.round(flat), player_count: players };
+  } else {
+    const tubePrice = parseFloat(document.getElementById('shuttleTubePrice')?.value) || 0;
+    const count     = parseFloat(document.getElementById('shuttleCount')?.value) || 0;
+    const courtFee  = parseFloat(document.getElementById('shuttleCourtFee')?.value) || 0;
+    const miscFee   = parseFloat(document.getElementById('shuttleMiscFee')?.value) || 0;
+    const shuttleCost = tubePrice && count ? (tubePrice / 12) * count : 0;
+    const total       = shuttleCost + courtFee + miscFee;
+    const perPlayer   = players > 0 ? Math.round(total / players) : 0;
+    if (total) shuttleData = {
+      mode: 'itemized',
+      tube_price: tubePrice, shuttles_used: count,
+      court_fee: courtFee,   misc_fee: miscFee,
+      total_cost: Math.round(total),
+      cost_per_player: perPlayer,
+      player_count: players
+    };
+  }
+
+  document.getElementById('shuttleSheetOverlay')?.remove();
+  await _doEndSession(shuttleData);
+}
+
+async function skipShuttleAndEnd() {
+  document.getElementById('shuttleSheetOverlay')?.remove();
+  await _doEndSession(null);
+}
+
+async function _doEndSession(shuttleData) {
+  // Show ending feedback
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a2e;color:#fff;padding:16px 24px;border-radius:14px;font-size:0.9rem;font-weight:700;z-index:99999;text-align:center;';
+  toast.textContent = '⏹ Ending session…';
+  document.body.appendChild(toast);
 
   // Mark session completed in sessions table
-  if (typeof dbCompleteSession === 'function') await dbCompleteSession();
+  if (typeof dbCompleteSession === 'function') await dbCompleteSession(shuttleData);
 
   // Flush live_sessions → players.sessions, then delete temp rows
   if (typeof flushLiveSession === 'function') await flushLiveSession();
@@ -1102,6 +1259,16 @@ async function endSession(fromProfile = false) {
     if (schedulerState.PlayedCount) schedulerState.PlayedCount.clear();
     if (schedulerState.restCount)   schedulerState.restCount.clear();
   }
+
+  // Stop heartbeat
+  if (typeof stopSessionHeartbeat === 'function') stopSessionHeartbeat();
+
+  // Hide live bar
+  updateSessionLiveBar();
+
+  // Remove toast
+  toast.textContent = '✅ Session ended';
+  setTimeout(() => toast.remove(), 1500);
 
   // Stay on dashboard and refresh it
   if (typeof showPage === 'function') {

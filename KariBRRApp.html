@@ -91,6 +91,7 @@
       <div class="auth-welcome-btns">
         <button class="auth-btn-primary" onclick="authShowScreen('login')">Login</button>
         <button class="auth-btn-secondary" onclick="authShowScreen('signup')">Create Account</button>
+        <button class="auth-btn-secondary" onclick="authShowScreen('claim')" style="margin-top:8px">Claim My Account</button>
       </div>
     </div>
 
@@ -102,12 +103,12 @@
       </div>
       <div class="auth-form">
         <div class="auth-field">
-          <label class="auth-label">User ID</label>
-          <input type="text" id="loginUserId" class="auth-input" placeholder="e.g. kari123" autocapitalize="none">
+          <label class="auth-label">Email</label>
+          <input type="email" id="loginEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none" autocomplete="email">
         </div>
         <div class="auth-field">
           <label class="auth-label">Password</label>
-          <input type="password" id="loginPassword" class="auth-input" placeholder="Password">
+          <input type="password" id="loginPassword" class="auth-input" placeholder="Password" autocomplete="current-password">
         </div>
         <div id="loginError" class="auth-error" style="display:none;"></div>
         <button class="auth-btn-primary" onclick="authDoLogin()">Login</button>
@@ -123,24 +124,31 @@
       </div>
       <div class="auth-form">
         <div class="auth-field">
-          <label class="auth-label">User ID <span class="auth-hint">unique, e.g. kari123</span></label>
-          <input type="text" id="signupUserId" class="auth-input" placeholder="kari123" autocapitalize="none">
+          <label class="auth-label">Email</label>
+          <input type="email" id="signupEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none" autocomplete="email">
         </div>
         <div class="auth-field">
-          <label class="auth-label">Nickname <span class="auth-hint">shown to others</span></label>
-          <input type="text" id="signupNickname" class="auth-input" placeholder="Kari">
+          <label class="auth-label">Display Name <span class="auth-hint">your name or alias</span></label>
+          <input type="text" id="signupDisplayName" class="auth-input" placeholder="e.g. Kari">
         </div>
         <div class="auth-field">
-          <label class="auth-label">Email <span class="auth-hint">for password recovery</span></label>
-          <input type="email" id="signupEmail" class="auth-input" placeholder="kari@email.com">
+          <label class="auth-label">Gender</label>
+          <select id="signupGender" class="auth-input">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
         </div>
         <div class="auth-field">
-          <label class="auth-label">Password</label>
-          <input type="password" id="signupPassword" class="auth-input" placeholder="Min 6 characters">
+          <label class="auth-label">Password <span class="auth-hint">min 6 characters</span></label>
+          <input type="password" id="signupPassword" class="auth-input" placeholder="Password" autocomplete="new-password">
         </div>
         <div class="auth-field">
           <label class="auth-label">Confirm Password</label>
-          <input type="password" id="signupConfirm" class="auth-input" placeholder="Repeat password">
+          <input type="password" id="signupConfirm" class="auth-input" placeholder="Repeat password" autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Recovery Keyword <span class="auth-hint">to reset password if forgotten</span></label>
+          <input type="text" id="signupRecoveryWord" class="auth-input" placeholder="e.g. mango, sunflower..." autocapitalize="none">
         </div>
         <div id="signupError" class="auth-error" style="display:none;"></div>
         <button class="auth-btn-primary" onclick="authDoSignup()">Create Account</button>
@@ -154,28 +162,69 @@
         <span class="auth-screen-title">Reset Password</span>
       </div>
       <div class="auth-form">
-        <!-- Step 1: Email -->
-        <div id="forgotStep1">
-          <div class="auth-field">
-            <label class="auth-label">Email address</label>
-            <input type="email" id="forgotEmail" class="auth-input" placeholder="your@email.com">
-          </div>
-          <div id="forgotError" class="auth-error" style="display:none;"></div>
-          <button class="auth-btn-primary" onclick="authDoForgotSend()">Send OTP</button>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input type="email" id="forgotEmail" class="auth-input" placeholder="your@email.com">
         </div>
-        <!-- Step 2: OTP + new password -->
-        <div id="forgotStep2" style="display:none;">
-          <div class="auth-field">
-            <label class="auth-label">OTP Code</label>
-            <input type="text" id="forgotOtp" class="auth-input" placeholder="6-digit code" maxlength="6">
-          </div>
-          <div class="auth-field">
-            <label class="auth-label">New Password</label>
-            <input type="password" id="forgotNewPw" class="auth-input" placeholder="Min 6 characters">
-          </div>
-          <div id="forgotError2" class="auth-error" style="display:none;"></div>
-          <button class="auth-btn-primary" onclick="authDoForgotVerify()">Reset Password</button>
+        <div class="auth-field">
+          <label class="auth-label">Recovery Keyword</label>
+          <input type="text" id="forgotRecoveryWord" class="auth-input" placeholder="Your recovery keyword" autocapitalize="none">
         </div>
+        <div class="auth-field">
+          <label class="auth-label">New Password</label>
+          <input type="password" id="forgotNewPw" class="auth-input" placeholder="Min 6 characters">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Confirm New Password</label>
+          <input type="password" id="forgotConfirmPw" class="auth-input" placeholder="Repeat new password">
+        </div>
+        <div id="forgotError" class="auth-error" style="display:none;"></div>
+        <button class="auth-btn-primary" onclick="authDoForgotReset()">Reset Password</button>
+      </div>
+    </div>
+
+    <!-- CLAIM ACCOUNT screen -->
+    <div id="authClaim" class="auth-screen" style="display:none;">
+      <div class="auth-back-row">
+        <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
+        <span class="auth-screen-title">Claim My Account</span>
+      </div>
+      <div class="auth-form">
+        <p class="auth-hint-block" style="margin-bottom:16px;color:var(--text-dim,#888);font-size:0.85rem;">
+          Your admin has registered you. Enter your club, nickname and the default password they gave you to set up your account.
+        </p>
+        <div class="auth-field">
+          <label class="auth-label">Club</label>
+          <select id="claimClubSelect" class="auth-input">
+            <option value="">— Loading clubs… —</option>
+          </select>
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Nickname <span class="auth-hint">as registered by admin</span></label>
+          <input type="text" id="claimNickname" class="auth-input" placeholder="Your nickname">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Default Password <span class="auth-hint">given by admin</span></label>
+          <input type="password" id="claimDefaultPassword" class="auth-input" placeholder="Default password">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Your Email</label>
+          <input type="email" id="claimEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">New Password</label>
+          <input type="password" id="claimPassword" class="auth-input" placeholder="Min 6 characters">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Confirm Password</label>
+          <input type="password" id="claimConfirm" class="auth-input" placeholder="Repeat password">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Recovery Keyword</label>
+          <input type="text" id="claimRecoveryWord" class="auth-input" placeholder="e.g. mango, sunflower..." autocapitalize="none">
+        </div>
+        <div id="claimError" class="auth-error" style="display:none;"></div>
+        <button class="auth-btn-primary" onclick="authDoClaimAccount()">Claim Account</button>
       </div>
     </div>
 
@@ -216,27 +265,15 @@
     <!-- Top bar -->
     <div class="home-topbar">
       <span class="home-logo">🏸 CLUB Scheduler</span>
-      <button class="profile-btn" onclick="openProfileDrawer()" aria-label="Profile">
-        <img id="homeProfileAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
-        <span id="homeProfileIcon" class="profile-btn-icon">👤</span>
+      <button class="mode-pill-btn" id="modePillBtn" onclick="openModeSwitcher()">
+        <span id="modePillIcon">🏸</span>
+        <span id="modePillLabel">Organiser</span>
+        <span>▾</span>
       </button>
     </div>
 
-    <!-- Combined mode + status bar -->
-    <div class="home-mode-status" id="homeStatusBar">
-      <div class="mode-pill" id="homeModeP">
-        <button class="mode-pill-btn" id="homePillViewer"    onclick="switchMode('viewer')">👁 Viewer</button>
-        <button class="mode-pill-btn active" id="homePillOrganiser" onclick="switchMode('organiser')">🏆 Organiser</button>
-        <button class="mode-pill-btn" id="homePillVault"     onclick="requestVaultMode()">🔑 Vault</button>
-      </div>
-      <div class="home-mode-status-right">
-        <span class="home-status-dot"></span>
-        <span class="home-status-name" id="homeStatusName">Not connected</span>
-      </div>
-    </div>
-
-    <!-- Trial banner -->
-    <div id="trialBanner" class="trial-banner" style="display:none;"></div>
+    <!-- Trial banner moved to Settings page -->
+    <div id="trialBanner" style="display:none;"></div>
 
     <!-- SESSION STEPPER (organiser) -->
     <div id="homeOrganizerFlow" style="display:none;">
@@ -338,37 +375,51 @@
 
     <!-- ── VAULT MANAGER GRID (new) ── -->
     <div id="homeVaultGrid" style="display:none;">
-      <div class="home-grid">
-        <div class="home-tile" onclick="homeGo('vaultPlayingPage',null)">
-          <div class="home-tile-icon tile-vault">⚡</div>
-          <div class="home-tile-name">Playing</div>
-          <div class="home-tile-sub">Who's on court</div>
+
+      <!-- Club status tile -->
+      <div class="vault-club-tile" id="vaultClubStatusTile">
+        <div class="vct-dot" id="vctDot"></div>
+        <div class="vct-info">
+          <div class="vct-name" id="vctName">No club selected</div>
+          <span class="vct-badge" id="vctBadge" style="display:none">ADMIN</span>
         </div>
-        <div class="home-tile" onclick="homeGo('vaultRegisterPage',null)">
-          <div class="home-tile-icon" style="background:rgba(45,206,137,0.15)">📋</div>
-          <div class="home-tile-name">Register</div>
-          <div class="home-tile-sub">Add players to club</div>
+        <button class="vct-change-btn" onclick="homeGo('vaultClubMgmtPage',null)">Change</button>
+      </div>
+
+      <div class="vault-tile-grid">
+
+        <div class="vault-tile vt-playing" onclick="homeGo('vaultPlayingPage',null)">
+          <div class="vt-badge" id="vtBadgePlaying" style="display:none">LIVE</div>
+          <div class="vt-icon">⚡</div>
+          <div class="vt-stat" id="vtStatPlaying">—</div>
+          <div class="vt-name">Playing</div>
+          <div class="vt-sub">on court now</div>
         </div>
-        <div class="home-tile" onclick="homeGo('vaultModifyPage',null)">
-          <div class="home-tile-icon" style="background:rgba(108,99,255,0.15)">✏️</div>
-          <div class="home-tile-name">Modify</div>
-          <div class="home-tile-sub">Edit player data</div>
+
+        <div class="vault-tile vt-register" onclick="homeGo('vaultRegisterPage',null)">
+          <div class="vt-icon">📋</div>
+          <div class="vt-stat" id="vtStatRegister">—</div>
+          <div class="vt-name">Register</div>
+          <div class="vt-sub">players in club</div>
         </div>
-        <div class="home-tile" onclick="homeGo('vaultRequestsPage',null)">
-          <div class="home-tile-icon" style="background:rgba(245,158,11,0.15)">🔔</div>
-          <div class="home-tile-name">Requests</div>
-          <div class="home-tile-sub" id="tileSubRequests">Join requests</div>
+
+        <div class="vault-tile vt-modify" onclick="homeGo('vaultModifyPage',null)">
+          <div class="vt-icon">✏️</div>
+          <div class="vt-stat" id="vtStatModify">—</div>
+          <div class="vt-name">Modify</div>
+          <div class="vt-sub">tap to edit</div>
         </div>
-        <div class="home-tile" onclick="homeGo('vaultClubMgmtPage',null)">
-          <div class="home-tile-icon" style="background:rgba(239,68,68,0.12)">🏢</div>
-          <div class="home-tile-name">Club Mgmt</div>
-          <div class="home-tile-sub">Create · Delete</div>
+
+        <div class="vault-tile vt-requests" onclick="homeGo('vaultRequestsPage',null)">
+          <div class="vt-badge" id="vtBadgeRequests" style="display:none">NEW</div>
+          <div class="vt-icon">🔔</div>
+          <div class="vt-stat" id="vtStatRequests">—</div>
+          <div class="vt-name">Requests</div>
+          <div class="vt-sub">pending approval</div>
         </div>
-        <div class="home-tile" onclick="homeGo('settingsPage',null)">
-          <div class="home-tile-icon tile-settings">⚙️</div>
-          <div class="home-tile-name">Settings</div>
-          <div class="home-tile-sub" id="tileSubSettingsVM">Theme · Font</div>
-        </div>
+
+
+
       </div>
     </div>
 
@@ -399,7 +450,7 @@
         <div class="home-tile" id="tileJoinClub" onclick="homeGo('joinClubPage',null)" style="display:flex;flex-direction:row;align-items:center;gap:14px;padding:14px 16px;">
           <div class="home-tile-icon" style="margin-bottom:0;flex-shrink:0;">🏢</div>
           <div style="flex:1;">
-            <div class="home-tile-name">Join Club</div>
+            <div class="home-tile-name">My Clubs</div>
             <div class="home-tile-sub" id="tileSubJoinClub">Find &amp; request</div>
           </div>
           <span style="color:var(--muted);font-size:1.1rem;">›</span>
@@ -416,10 +467,11 @@
   <!-- ============================= -->
   <div class="top-bar">
     <span class="app-logo-premium">CLUB Scheduler</span>
-    <button class="profile-btn" id="profileBtn" onclick="openProfileDrawer()" aria-label="Profile" title="My Profile">
-      <img id="profileBtnAvatar" src="male.png" class="profile-btn-avatar" style="display:none;">
-      <span id="profileBtnIcon" class="profile-btn-icon">👤</span>
-    </button>
+    <button class="mode-pill-btn" id="modePillBtn2" onclick="openModeSwitcher()">
+        <span id="modePillIcon2">🏸</span>
+        <span id="modePillLabel2">Organiser</span>
+        <span>▾</span>
+      </button>
   </div>
 
   <!-- ============================= -->
@@ -442,19 +494,24 @@
   <div id="joinClubPage" class="page" style="display:none;">
     <div class="page-back-bar">
       <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">🏢 Join Club</span>
+      <span class="page-back-title">🏢 My Clubs</span>
     </div>
 
-    <!-- Status card — shown when already joined or pending -->
-    <div id="joinClubStatusCard" style="display:none; margin:16px; padding:20px; border-radius:16px; background:var(--card-bg,#1e1e2e); border:1px solid var(--border,#333); text-align:center;">
-      <div id="joinClubStatusIcon" style="font-size:2.5rem; margin-bottom:10px;">⏳</div>
-      <div id="joinClubStatusTitle" style="font-weight:700; font-size:1.05rem; color:var(--text); margin-bottom:6px;"></div>
-      <div id="joinClubStatusMsg" style="font-size:0.82rem; color:var(--muted); line-height:1.5;"></div>
-      <button id="joinClubLeaveBtn" onclick="joinClubLeave()" style="display:none; margin-top:16px; background:none; border:1px solid var(--red,#e63757); color:var(--red,#e63757); border-radius:10px; padding:8px 20px; font-size:0.82rem; cursor:pointer;">Leave Club</button>
-    </div>
+    <div style="padding:14px;">
 
-    <!-- Search section -->
-    <div id="joinClubSearchSection" style="margin:16px;">
+      <!-- My Clubs list -->
+      <div id="myClubsList" style="margin-bottom:14px;">
+        <div class="jc-section-title">My Clubs</div>
+        <div id="myClubsListInner">
+          <div class="jc-empty">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="jc-divider"></div>
+
+      <!-- Search section -->
+      <div class="jc-section-title" style="margin-top:14px;">Find a Club</div>
       <div style="position:relative; margin-bottom:10px;">
         <input type="text" id="joinClubPageSearch" class="auth-input"
           placeholder="Type club name to search..."
@@ -479,6 +536,10 @@
         <div id="joinClubPageFeedbackTitle" style="font-weight:600; color:var(--text); margin-bottom:4px;"></div>
         <div id="joinClubPageFeedbackMsg" style="font-size:0.82rem; color:var(--muted);"></div>
       </div>
+
+      <!-- Keep legacy IDs for compatibility -->
+      <div id="joinClubStatusCard" style="display:none;"></div>
+      <div id="joinClubSearchSection" style="display:none;"></div>
     </div>
   </div>
 
@@ -491,6 +552,25 @@
       <span class="page-back-title">⚙️ Settings</span>
     </div>
     <div class="pref-wrap">
+
+      <!-- SUBSCRIPTION / TRIAL -->
+      <div class="pref-section-label">Subscription</div>
+      <div class="pref-card" id="settingsTrialCard">
+        <div class="pref-row">
+          <span class="pref-row-label" id="settingsTrialLabel">Free Trial</span>
+          <span class="pref-row-value" id="settingsTrialValue">—</span>
+        </div>
+      </div>
+
+      <!-- MODE -->
+      <div class="pref-section-label">Mode</div>
+      <div class="pref-card">
+        <div class="pref-row pref-row-tap" onclick="openModeSwitcher()">
+          <span class="pref-row-label">Current Mode</span>
+          <span class="pref-row-value" id="settingsModeValue">—</span>
+          <span class="pref-row-chevron">›</span>
+        </div>
+      </div>
 
       <!-- LANGUAGE -->
       <div class="pref-section-label">Language</div>
@@ -776,29 +856,12 @@
           <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
         </div>
         <div class="club-row" style="margin-top:6px">
-          <input type="email" id="sbNewClubEmail" class="club-input" placeholder="Your email (for OTP)">
-        </div>
-        <div class="club-row" style="margin-top:6px">
-          <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="User password">
+          <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="Member password">
         </div>
         <div class="club-row" style="margin-top:6px">
           <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
         </div>
-        <div id="clubCreateStep1">
-          <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">📧 Send OTP</button>
-        </div>
-        <div id="clubCreateStep2" style="display:none">
-          <div class="club-row" style="margin-top:8px">
-            <input type="text" id="sbNewClubOtp" class="club-input"
-                   placeholder="Enter 8-digit OTP" maxlength="8"
-                   onkeydown="if(event.key==='Enter')clubCreateVerify()">
-            <button class="btn-save" onclick="clubCreateVerify()">Verify &amp; Create</button>
-          </div>
-          <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-            OTP sent to <span id="clubCreateEmailMasked"></span>
-            · <button class="link-btn" onclick="clubCreateResend()">Resend</button>
-          </div>
-        </div>
+        <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">Create Club</button>
         <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
       </div>
 
@@ -893,7 +956,17 @@
   <!--          ROUNDS PAGE          -->
   <!-- ============================= -->
   <div id="roundsPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">🏸 Rounds</span></div>
+
+    <!-- Single tight top bar -->
+    <div class="rounds-top-bar">
+      <button class="rtb-back" onclick="showHomeScreen()">‹ Home</button>
+      <div class="rtb-spacer"></div>
+      <div class="rtb-live" id="sessionLiveBar" style="display:none;">
+        <div class="rtb-dot"></div>
+        <span class="rtb-live-txt">LIVE</span>
+        <button class="rtb-end" onclick="endSession()">End</button>
+      </div>
+    </div>
 
     <div class="title-card">
       <div id="roundTitle">R</div>
@@ -1010,9 +1083,9 @@
     <div id="myCardEmpty" style="display:none;">
       <div class="dash-empty">
         <div class="dash-empty-icon">👤</div>
-        <p>No profile selected.</p>
-        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px">Tap the profile icon to select your name.</p>
-        <button class="btn-save" style="margin-top:14px" onclick="openProfileDrawer()">Select Profile</button>
+        <p style="font-weight:700;margin-bottom:6px">Sign in to view your stats</p>
+        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px">Track your ratings, wins and match history.</p>
+        <button class="btn-save" style="margin-top:16px" onclick="authShowScreen('login')">Login</button>
       </div>
     </div>
 
@@ -1026,9 +1099,10 @@
           <div class="mycard-name" id="mcName"></div>
           <div id="mcTier" class="profile-tier"></div>
         </div>
+        <button id="mcLogoutBtn" class="mc-logout-btn" style="display:none" onclick="if(typeof authLogout==='function')authLogout()">Logout</button>
       </div>
 
-      <!-- Ratings -->
+      <!-- Ratings + Points -->
       <div class="mycard-ratings">
         <div class="mycard-rating-box">
           <div class="mycard-rating-value" id="mcGlobalRating">—</div>
@@ -1040,9 +1114,20 @@
           <div class="mycard-rating-label">Club Rating</div>
         </div>
       </div>
+      <div class="mycard-ratings" style="margin-top:8px;">
+        <div class="mycard-rating-box">
+          <div class="mycard-rating-value" id="mcGlobalPoints" style="color:var(--accent)">—</div>
+          <div class="mycard-rating-label">Global Points</div>
+        </div>
+        <div class="mycard-rating-divider"></div>
+        <div class="mycard-rating-box">
+          <div class="mycard-rating-value club" id="mcClubPoints" style="color:#f5a623">—</div>
+          <div class="mycard-rating-label">Club Points</div>
+        </div>
+      </div>
 
-      <!-- Stats -->
-      <div class="profile-stats-row" style="margin:0 16px 14px;">
+      <!-- All-time Wins/Losses -->
+      <div class="profile-stats-row" style="margin:12px 16px 8px;">
         <div class="profile-stat-box">
           <div id="mcWins" class="profile-stat-value wins">—</div>
           <div class="profile-stat-label">All-time Wins</div>
@@ -1054,9 +1139,46 @@
         </div>
       </div>
 
+      <!-- Period Stats — Style C -->
+      <div class="mc-period-list" id="mcPeriodStats">
+        <div class="mc-period-row">
+          <span class="mc-period-label">This Week</span>
+          <div class="mc-period-stats-inner">
+            <span class="mc-period-val wins" id="mcWeekWins">—</span>W
+            <span class="mc-period-val losses" id="mcWeekLosses">—</span>L
+            <span class="mc-period-val points" id="mcWeekPoints">—</span>pts
+            <span class="mc-period-val cost" id="mcWeekCost"></span>
+          </div>
+        </div>
+        <div class="mc-period-row">
+          <span class="mc-period-label">This Month</span>
+          <div class="mc-period-stats-inner">
+            <span class="mc-period-val wins" id="mcMonthWins">—</span>W
+            <span class="mc-period-val losses" id="mcMonthLosses">—</span>L
+            <span class="mc-period-val points" id="mcMonthPoints">—</span>pts
+            <span class="mc-period-val cost" id="mcMonthCost"></span>
+          </div>
+        </div>
+        <div class="mc-period-row">
+          <span class="mc-period-label">This Year</span>
+          <div class="mc-period-stats-inner">
+            <span class="mc-period-val wins" id="mcYearWins">—</span>W
+            <span class="mc-period-val losses" id="mcYearLosses">—</span>L
+            <span class="mc-period-val points" id="mcYearPoints">—</span>pts
+            <span class="mc-period-val cost" id="mcYearCost"></span>
+          </div>
+        </div>
+      </div>
+
       <!-- Sessions -->
-      <div class="profile-sessions-title" style="padding:0 16px 8px;">Sessions</div>
-      <div id="mcSessions" class="profile-sessions-list" style="padding:0 16px 32px;">
+      <div class="profile-sessions-title" style="padding:8px 16px;">Sessions</div>
+      <div id="mcSessions" class="profile-sessions-list" style="padding:0 16px 12px;">
+        <div class="profile-sessions-loading">Loading...</div>
+      </div>
+
+      <!-- Recent Matches -->
+      <div class="profile-sessions-title" style="padding:8px 16px;">Recent Matches</div>
+      <div id="mcMatches" style="padding:0 16px 32px;">
         <div class="profile-sessions-loading">Loading...</div>
       </div>
 

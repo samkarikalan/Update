@@ -33,7 +33,12 @@ async function viewerOpen(sessionId) {
     };
     _vShowPage();
     _vRender(_vRoundsData);
-    if (sess.status === 'live') viewerStartPoll();
+    if (sess.status === 'live') {
+      viewerStartPoll();
+    } else {
+      // Past session — go straight to Summary tab
+      vSwitchTab('summary');
+    }
   } catch (e) {
     console.warn('viewerOpen error:', e.message);
     alert('Could not load session.');
@@ -90,10 +95,11 @@ function _vRender(roundsData) {
 function _vBuildSubTabs() {
   const bar = document.createElement('div');
   bar.className = 'viewer-subtabs';
-  bar.innerHTML = `
-    <button class="viewer-subtab-btn active" id="vTabLive" onclick="vSwitchTab('live')">🏸 Live</button>
-    <button class="viewer-subtab-btn" id="vTabSummary" onclick="vSwitchTab('summary')">📊 Summary</button>
-  `;
+  const isLive = _vMeta && _vMeta.status === 'live';
+  bar.innerHTML = isLive
+    ? `<button class="viewer-subtab-btn active" id="vTabLive" onclick="vSwitchTab('live')">🏸 Live</button>
+       <button class="viewer-subtab-btn" id="vTabSummary" onclick="vSwitchTab('summary')">📊 Summary</button>`
+    : `<button class="viewer-subtab-btn active" id="vTabSummary" onclick="vSwitchTab('summary')">📊 Summary</button>`;
   return bar;
 }
 

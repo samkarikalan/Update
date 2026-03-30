@@ -285,17 +285,11 @@ async function playerPlayingRenderList() {
 
     let rows;
     if (club.id) {
-      // Get only players belonging to this club
-      const members = await sbGet('players', `club_id=eq.${club.id}&select=id,nickname,gender,rating,club_rating,wins,losses`);
-      if (!members || !members.length) {
-        container.innerHTML = '<p class="player-mgmt-empty">No players currently locked.</p>';
-        return;
-      }
-      rows = await sbGet('players',
-        `club_id=eq.${club.id}&is_playing=eq.true&select=nickname,gender,session_id,session_started_at&order=nickname.asc`
+      rows = await sbGet('memberships',
+        `club_id=eq.${club.id}&is_playing=eq.true&select=nickname,players(gender)&order=nickname.asc`
       );
+      rows = (rows || []).map(m => ({ name: m.nickname, gender: m.players?.gender || 'Male' }));
     } else {
-      // No club logged in — show nothing
       container.innerHTML = '<p class="player-mgmt-empty">Join a club to view playing players.</p>';
       return;
     }
@@ -338,7 +332,7 @@ async function playerPlayingRenderList() {
 
       const timeSpan = document.createElement('span');
       timeSpan.style.cssText = 'font-size:0.75rem;color:var(--muted);margin-right:8px';
-      timeSpan.textContent = 'since ' + started;
+      timeSpan.textContent = '';  // no session time in new schema
 
       row.appendChild(img);
       row.appendChild(nameSpan);
@@ -365,8 +359,9 @@ async function playerPlayingRenderList() {
 async function playerPlayingRelease(name) {
   if (!confirm('Release "' + name + '" from active session?')) return;
   try {
-    await sbPatch('players', `club_id=eq.${(getMyClub&&getMyClub()||{}).id||''}&nickname=ilike.` + encodeURIComponent(name), {
-      is_playing: false, session_id: null, session_started_at: null
+    const _rc = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+    await sbPatch('memberships', `club_id=eq.${_rc.id}&nickname=ilike.${encodeURIComponent(name)}`, {
+      is_playing: false
     });
     playerPlayingRenderList();
   } catch(e) { alert('Failed to release: ' + e.message); }
@@ -377,12 +372,7 @@ async function playerPlayingReleaseAll() {
   try {
     const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
     if (!club.id) { alert('No club logged in.'); return; }
-    const members = await sbGet('players', `club_id=eq.${club.id}&select=id,nickname,gender,rating,club_rating,wins,losses`);
-    if (!members || !members.length) return;
-    const idList = '(' + members.map(m => `"${m.id}"`).join(',') + ')';
-    await sbPatch('players', `id=in.${idList}&is_playing=eq.true`, {
-      is_playing: false, session_id: null, session_started_at: null
-    });
+    await sbPatch('memberships', `club_id=eq.${club.id}&is_playing=eq.true`, { is_playing: false });
     playerPlayingRenderList();
   } catch(e) { alert('Failed: ' + e.message); }
 }
@@ -447,7 +437,12 @@ async function playerMgmtToggleGender(displayName) {
   localStorage.setItem("newImportHistory", JSON.stringify(newImportState.historyPlayers));
   // Sync gender to Supabase
   try {
-    await sbPatch("players", `club_id=eq.${(getMyClub&&getMyClub()||{}).id||""}&nickname=ilike.${encodeURIComponent(displayName.trim())}`, { gender: hp.gender });
+    // gender is on players table — find player_id via membership
+    const _gc = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+    if (_gc.id) {
+      const _mrows = await sbGet('memberships', `club_id=eq.${_gc.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}&select=player_id`).catch(()=>[]);
+      if (_mrows.length) await sbPatch('players', `id=eq.${_mrows[0].player_id}`, { gender: hp.gender });
+    }
   } catch(e) { /* silent */ }
   syncPlayersFromMaster();
   updatePlayerList();
@@ -462,9 +457,8 @@ async function playerMgmtDelete(displayName) {
   // Remove from Supabase club_members
   try {
     const club = getMyClub();
-    const players = await sbGet("players", `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}&select=id`);
-    if (players.length) {
-      await sbDelete("players", `id=eq.${players[0].id}&club_id=eq.${club.id}`);
+    if (club.id) {
+      await sbDelete('memberships', `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}`);
     }
   } catch(e) { /* silent */ }
 
@@ -599,24 +593,16 @@ async function vaultRenderModify() {
   container.innerHTML = '<p class="player-mgmt-empty"><span class="vm-spinner"></span> Loading…</p>';
 
   try {
-    const [clubPlayers, userAccounts] = await Promise.all([
-      dbGetPlayers(true),
-      sbGet('user_accounts', 'select=id,user_id,password_hash').catch(() => [])
-    ]);
-
-    const userMap = {};
-    (userAccounts || []).forEach(u => { userMap[u.id] = { userId: u.user_id, password: u.password_hash }; });
+    const clubPlayers = await dbGetPlayers(true);
 
     _vmAllPlayers = (clubPlayers || []).map(p => ({
-      id:            p.id,
+      id:            p.membershipId || p.id,
+      playerId:      p.id,
       displayName:   p.name,
       gender:        p.gender || 'Male',
       rating:        parseFloat(p.clubRating) || parseFloat(p.rating) || 1.0,
       wins:          p.wins   || 0,
       losses:        p.losses || 0,
-      userAccountId: p.userAccountId || null,
-      userId:        p.userAccountId && userMap[p.userAccountId] ? userMap[p.userAccountId].userId : null,
-      password:      p.userAccountId && userMap[p.userAccountId] ? userMap[p.userAccountId].password : null,
     })).sort((a, b) => a.displayName.localeCompare(b.displayName));
 
     vaultModifyFilter();
@@ -716,26 +702,19 @@ async function vmSaveEdit() {
   setFb('Saving…', true);
   try {
     const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+    const _vm  = _vmAllPlayers.find(x => x.id === playerId);
 
-    // 1. Update player row
-    await sbPatch('players', `id=eq.${playerId}`, {
-      nickname:    name,
-      gender,
-      club_rating: Math.round(rating * 10) / 10,
-      rating:      Math.round(rating * 10) / 10,
-      wins,
-      losses
-    });
+    // 1. Update membership (nickname + club_rating)
+    if (club?.id) {
+      await sbPatch('memberships', `id=eq.${playerId}`, {
+        nickname:    name,
+        club_rating: Math.round(rating * 10) / 10
+      });
+    }
 
-    // 2. Update user_account if exists
-    if (userAcctId) {
-      const acctPatch = {};
-      if (newUserId)   acctPatch.user_id       = newUserId;
-      if (newPassword) acctPatch.password_hash  = newPassword;
-      if (newUserId)   acctPatch.nickname        = name;
-      if (Object.keys(acctPatch).length) {
-        await sbPatch('user_accounts', `id=eq.${userAcctId}`, acctPatch);
-      }
+    // 2. Update player (gender)
+    if (_vm?.playerId) {
+      await sbPatch('players', `id=eq.${_vm.playerId}`, { name, gender });
     }
 
     // 3. Update local state
@@ -765,11 +744,9 @@ async function vmSaveEdit() {
 async function vmDeletePlayer(playerId, displayName) {
   if (!confirm(`Remove "${displayName}" from this club?`)) return;
   try {
-    const p = _vmAllPlayers.find(x => x.id === playerId);
-    await sbDelete('players', `id=eq.${playerId}`);
-    if (p && p.userAccountId) {
-      await sbDelete('user_accounts', `id=eq.${p.userAccountId}`).catch(() => {});
-    }
+    // Remove from club only — delete membership, keep global player
+    const _dclub = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+    await sbDelete('memberships', `id=eq.${playerId}&club_id=eq.${_dclub.id}`);
     _vmAllPlayers = _vmAllPlayers.filter(x => x.id !== playerId);
     // also update local history
     if (newImportState && newImportState.historyPlayers) {
@@ -805,75 +782,39 @@ function toggleClubMgmt(forceOpen) {
   if (open) sbPopulateDeleteDropdown();
 }
 
-/* ── CREATE CLUB — Step 1: Send OTP ── */
+/* ── CREATE CLUB — Direct (no OTP needed) ── */
 async function clubCreateSendOtp() {
-  const name    = document.getElementById('sbNewClubName')?.value.trim();
-  const email   = document.getElementById('sbNewClubEmail')?.value.trim();
-  const selPw   = document.getElementById('sbNewClubSelectPw')?.value.trim();
-  const adminPw = document.getElementById('sbNewClubAdminPw')?.value.trim();
-  const fb      = document.getElementById('clubCreateFeedback');
-
-  const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
-
-  if (!name)    { setFb('Enter club name.', false); return; }
-  if (!email || !email.includes('@')) { setFb('Enter a valid email.', false); return; }
-  if (!selPw)   { setFb('Enter user password.', false); return; }
-  if (!adminPw) { setFb('Enter admin password.', false); return; }
-
-  setFb('Sending OTP...', true);
-  try {
-    await dbSendOtp(email);
-    _clubCreateEmail = email;
-    document.getElementById('clubCreateEmailMasked').textContent = maskEmail(email);
-    document.getElementById('clubCreateStep1').style.display = 'none';
-    document.getElementById('clubCreateStep2').style.display = '';
-    document.getElementById('sbNewClubOtp').value = '';
-    document.getElementById('sbNewClubOtp').focus();
-    setFb('OTP sent! Check your email.', true);
-  } catch (e) { setFb('❌ ' + e.message, false); }
-}
-
-async function clubCreateResend() {
-  if (!_clubCreateEmail) return;
-  try {
-    await dbSendOtp(_clubCreateEmail);
-    document.getElementById('clubCreateFeedback').textContent = 'OTP resent.';
-    document.getElementById('clubCreateFeedback').style.color = '#2dce89';
-  } catch (e) {}
-}
-
-/* ── CREATE CLUB — Step 2: Verify OTP & Create ── */
-async function clubCreateVerify() {
-  const otp     = document.getElementById('sbNewClubOtp')?.value.trim();
+  // Renamed but now creates directly without OTP
   const name    = document.getElementById('sbNewClubName')?.value.trim();
   const selPw   = document.getElementById('sbNewClubSelectPw')?.value.trim();
   const adminPw = document.getElementById('sbNewClubAdminPw')?.value.trim();
   const fb      = document.getElementById('clubCreateFeedback');
   const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
-  if (!otp || otp.length < 8) { setFb('Enter the 8-digit OTP.', false); return; }
-  setFb('Verifying...', true);
+  if (!name)    { setFb('Enter club name.', false); return; }
+  if (!selPw)   { setFb('Enter member password.', false); return; }
+  if (!adminPw) { setFb('Enter admin password.', false); return; }
+  if (selPw === adminPw) { setFb('Member and admin passwords must be different.', false); return; }
+
+  setFb('Creating club...', true);
   try {
-    await dbVerifyOtp(_clubCreateEmail, otp);
-    // OTP verified — create the club
-    const club = await dbAddClub(name, selPw, adminPw, _clubCreateEmail);
+    const club = await dbAddClub(name, selPw, adminPw);
     setMyClub(club.id, club.name);
     localStorage.setItem('kbrr_club_mode',    'admin');
     localStorage.setItem('kbrr_rating_field', 'club_rating');
-    // Reset form
-    ['sbNewClubName','sbNewClubEmail','sbNewClubSelectPw','sbNewClubAdminPw','sbNewClubOtp'].forEach(id => {
+    ['sbNewClubName','sbNewClubSelectPw','sbNewClubAdminPw'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
-    document.getElementById('clubCreateStep1').style.display = '';
-    document.getElementById('clubCreateStep2').style.display = 'none';
-    _clubCreateEmail = '';
     setFb('✅ Club "' + club.name + '" created! You are now Admin.', true);
     sbRenderClubStatus();
     vaultSyncStatus();
     if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
     await syncToLocal();
-  } catch (e) { setFb('❌ ' + e.message, false); }
+  } catch(e) { setFb('❌ ' + e.message, false); }
 }
+
+async function clubCreateResend() { /* no longer needed */ }
+async function clubCreateVerify() { /* no longer needed */ }
 
 /* ── DELETE CLUB — Step 1: Send OTP ── */
 async function clubDeleteSendOtp() {
@@ -939,14 +880,219 @@ function vaultRenderRegister() {
   const container = document.getElementById('vaultRegisterContainer');
   if (!container) return;
   const club = (typeof getMyClub === 'function') ? getMyClub() : { name: null };
-  if (typeof newImportRenderRegister === 'function') {
-    // Temporarily swap the render target so register renders into vault container
-    const original = document.getElementById('newImportSelectCards');
-    if (original) original.id = '_newImportSelectCards_hidden';
-    container.id = 'newImportSelectCards';
-    newImportRenderRegister();
-    container.id = 'vaultRegisterContainer';
-    if (original) original.id = 'newImportSelectCards';
+
+  if (!club.name) {
+    container.innerHTML = '<div class="register-club-label">⚠️ No club selected. Join a club first.</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="register-form">
+      <div class="register-club-label">🏸 Registering for: <strong>${club.name}</strong></div>
+
+      <!-- Tabs -->
+      <div class="vault-inner-tabs">
+        <button id="vregTabIndividual" class="vault-inner-tab active" onclick="vaultRegisterShowTab('individual')">Individual</button>
+        <button id="vregTabBulk"       class="vault-inner-tab"        onclick="vaultRegisterShowTab('bulk')">Bulk Import</button>
+      </div>
+
+      <!-- Individual tab -->
+      <div id="vregPanelIndividual">
+        <div class="register-field">
+          <label class="register-label">Nickname</label>
+          <input type="text" id="vregNickname" class="register-input" placeholder="Player nickname">
+        </div>
+        <div class="register-field">
+          <label class="register-label">Gender</label>
+          <select id="vregGender" class="register-input">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="register-field">
+          <label class="register-label">Rating <span class="register-hint">default 1.0</span></label>
+          <input type="number" id="vregRating" class="register-input register-rating-input" value="1.0" min="1.0" max="5.0" step="0.1">
+        </div>
+        <div class="register-field">
+          <label class="register-label">Default Password <span class="register-hint">player uses this to claim account</span></label>
+          <input type="text" id="vregDefaultPassword" class="register-input" placeholder="e.g. club123">
+        </div>
+        <div id="vregFeedback" class="register-feedback" style="min-height:18px;margin-bottom:10px"></div>
+        <button class="register-save-btn" onclick="vaultDoRegisterPlayer()">✅ Register Player</button>
+      </div>
+
+      <!-- Bulk tab -->
+      <div id="vregPanelBulk" style="display:none">
+        <div class="auth-field" style="margin-bottom:10px">
+          <label class="register-label">Paste names (one per line)</label>
+          <textarea id="regNamesArea" class="register-textarea" rows="5"
+            placeholder="Raja&#10;Kari, Female&#10;Venkat"></textarea>
+        </div>
+        <div class="register-gender-row" style="margin-bottom:10px">
+          <span class="register-label" style="margin:0 8px 0 0">Default gender:</span>
+          <button id="regDefaultMale"   class="register-gender-img-btn active" onclick="regSetDefaultGender('Male')">
+            <img src="male.png" class="reg-gender-img"><span>Male</span>
+          </button>
+          <button id="regDefaultFemale" class="register-gender-img-btn" onclick="regSetDefaultGender('Female')">
+            <img src="female.png" class="reg-gender-img"><span>Female</span>
+          </button>
+        </div>
+        <div class="register-field">
+          <label class="register-label">Default Password for all <span class="register-hint">players use this to claim account</span></label>
+          <input type="text" id="vregBulkDefaultPassword" class="register-input" placeholder="e.g. club123">
+        </div>
+        <button class="register-add-btn" onclick="regAddToStaging()">Add to List</button>
+        <div id="regStagingContainer" class="reg-staging-container"></div>
+        <div id="registerFeedback" class="register-feedback"></div>
+        <button class="register-save-btn" id="regRegisterAllBtn" onclick="vaultRegisterAll()" style="display:none">
+          ✅ Register All
+        </button>
+      </div>
+    </div>`;
+
+  window._regDefaultGender = 'Male';
+  if (typeof _regStagingList !== 'undefined') _regStagingList = [];
+}
+
+function vaultRegisterShowTab(tab) {
+  document.getElementById('vregTabIndividual').classList.toggle('active', tab === 'individual');
+  document.getElementById('vregTabBulk').classList.toggle('active',       tab === 'bulk');
+  document.getElementById('vregPanelIndividual').style.display = tab === 'individual' ? '' : 'none';
+  document.getElementById('vregPanelBulk').style.display       = tab === 'bulk'       ? '' : 'none';
+  if (tab === 'bulk' && typeof _regStagingList !== 'undefined') {
+    _regStagingList = [];
+    if (typeof regRenderStaging === 'function') regRenderStaging();
+  }
+}
+
+async function vaultRegisterAll() {
+  // Same as regRegisterAll but uses bulk default password for all players
+  const defPw = document.getElementById('vregBulkDefaultPassword')?.value.trim();
+  const fb    = document.getElementById('registerFeedback');
+  const btn   = document.getElementById('regRegisterAllBtn');
+  const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.className = 'register-feedback ' + (ok ? 'success' : 'error'); } };
+
+  if (!defPw) { setFb('Please enter a default password for all players.', false); return; }
+
+  const club    = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+  if (!club.id) { setFb('No club selected.', false); return; }
+
+  const pending = _regStagingList.filter(p => p.status === 'pending' || p.status === 'error');
+  if (!pending.length) return;
+
+  btn.disabled = true;
+  setFb('Registering...', true);
+
+  let successCount = 0, failCount = 0;
+
+  for (let i = 0; i < _regStagingList.length; i++) {
+    const p = _regStagingList[i];
+    if (p.status === 'success') continue;
+    try {
+      // Check duplicate
+      const existing = await sbGet('memberships',
+        'club_id=eq.' + club.id + '&nickname=ilike.' + encodeURIComponent(p.name) + '&select=id');
+      if (existing && existing.length) { _regStagingList[i].status = 'duplicate'; failCount++; continue; }
+
+      // Create player row
+      const created = await sbPost('players', {
+        name:             p.name,
+        gender:           p.gender,
+        global_rating:    p.rating || 1.0,
+        global_points:    0,
+        default_password: defPw
+      });
+      const player = created[0];
+
+      // Auto-link user_account if exists with same nickname
+      const uaRows1 = await sbGet('user_accounts',
+        'nickname=ilike.' + encodeURIComponent(p.name) + '&select=id').catch(() => []);
+      const uaId1 = uaRows1.length ? uaRows1[0].id : null;
+
+      // Create membership
+      await sbPost('memberships', {
+        player_id:       player.id,
+        club_id:         club.id,
+        nickname:        p.name,
+        club_rating:     p.rating || 1.0,
+        club_points:     0,
+        user_account_id: uaId1 || undefined
+      });
+
+      _regStagingList[i].status = 'success';
+      successCount++;
+    } catch(e) {
+      _regStagingList[i].status = 'error';
+      failCount++;
+    }
+    if (typeof regRenderStaging === 'function') regRenderStaging();
+  }
+
+  btn.disabled = false;
+  const parts = [];
+  if (successCount) parts.push('✅ ' + successCount + ' registered');
+  if (failCount)    parts.push('⚠️ ' + failCount + ' skipped');
+  setFb(parts.join('  '), !failCount);
+
+  localStorage.removeItem('kbrr_cache_players');
+  localStorage.removeItem('kbrr_cache_ts');
+}
+
+async function vaultDoRegisterPlayer() {
+  const club     = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+  const nickname = document.getElementById('vregNickname')?.value.trim();
+  const gender   = document.getElementById('vregGender')?.value || 'Male';
+  const rating   = parseFloat(document.getElementById('vregRating')?.value) || 1.0;
+  const defPw    = document.getElementById('vregDefaultPassword')?.value.trim();
+  const fb       = document.getElementById('vregFeedback');
+  const setFb    = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? 'var(--green,#2dce89)' : 'var(--red,#e63757)'; } };
+
+  if (!club.id)   { setFb('No club selected.', false); return; }
+  if (!nickname)  { setFb('Please enter a nickname.', false); return; }
+  if (!defPw)     { setFb('Please set a default password.', false); return; }
+
+  setFb('Registering...', true);
+  try {
+    // Check nickname not already in this club
+    const existing = await sbGet('memberships',
+      'club_id=eq.' + club.id + '&nickname=ilike.' + encodeURIComponent(nickname) + '&select=id');
+    if (existing && existing.length) { setFb('Nickname already exists in this club.', false); return; }
+
+    // Create player row
+    const created = await sbPost('players', {
+      name:             nickname,
+      gender:           gender,
+      global_rating:    rating,
+      global_points:    0,
+      default_password: defPw
+    });
+    const player = created[0];
+
+    // Auto-link user_account if exists with same nickname
+    const uaRows2 = await sbGet('user_accounts',
+      'nickname=ilike.' + encodeURIComponent(nickname) + '&select=id').catch(() => []);
+    const uaId2 = uaRows2.length ? uaRows2[0].id : null;
+
+    // Create membership
+    await sbPost('memberships', {
+      player_id:       player.id,
+      club_id:         club.id,
+      nickname:        nickname,
+      club_rating:     rating,
+      club_points:     0,
+      user_account_id: uaId2 || undefined
+    });
+
+    setFb('✅ ' + nickname + ' registered!', true);
+    // Clear fields for next entry
+    document.getElementById('vregNickname').value = '';
+    document.getElementById('vregDefaultPassword').value = '';
+    document.getElementById('vregRating').value = '1.0';
+    // Invalidate player cache
+    localStorage.removeItem('kbrr_cache_players');
+    localStorage.removeItem('kbrr_cache_ts');
+  } catch(e) {
+    setFb('❌ ' + e.message, false);
   }
 }
 

@@ -28,6 +28,7 @@ const roundStates = {
   }
 };
 function getPairKey(a, b) {
+  if (!a || !b) return null; // invalid pair — no key
   return [a, b].sort().join("|");
 }
 
@@ -1295,12 +1296,14 @@ function renderGames(data, roundIndex) {
       const pair1Key = getPairKey(g.pair1[0], g.pair1[1]);
       const pair2Key = getPairKey(g.pair2[0], g.pair2[1]);
 
-      previousPairSet.add(pair1Key);
-      previousPairSet.add(pair2Key);
+      if (pair1Key) previousPairSet.add(pair1Key);
+      if (pair2Key) previousPairSet.add(pair2Key);
 
       // ✅ FIXED — store game as pair-vs-pair (NOT 4 flattened players)
-      const gameKey = [pair1Key, pair2Key].sort().join("|");
-      previousGameSet.add(gameKey);
+      if (pair1Key && pair2Key) {
+        const gameKey = [pair1Key, pair2Key].sort().join("|");
+        previousGameSet.add(gameKey);
+      }
     });
   }
 
@@ -1326,9 +1329,9 @@ function renderGames(data, roundIndex) {
       const teamPairs = teamSide === 'L' ? game.pair1 : game.pair2;
 
       // ⭐ Pair repetition detection
-      if (teamPairs) {
+      if (teamPairs && teamPairs.length === 2) {
         const pairKey = getPairKey(teamPairs[0], teamPairs[1]);
-        if (previousPairSet.has(pairKey)) {
+        if (pairKey && previousPairSet.has(pairKey)) {
           teamDiv.classList.add('repeated-pair');
         }
       }
@@ -1451,10 +1454,11 @@ function renderGames(data, roundIndex) {
       const pair1Key = getPairKey(game.pair1[0], game.pair1[1]);
       const pair2Key = getPairKey(game.pair2[0], game.pair2[1]);
 
-      const currentGameKey = [pair1Key, pair2Key].sort().join("|");
-
-      if (previousGameSet.has(currentGameKey)) {
-        courtDiv.classList.add('repeated-game');
+      if (pair1Key && pair2Key) {
+        const currentGameKey = [pair1Key, pair2Key].sort().join("|");
+        if (previousGameSet.has(currentGameKey)) {
+          courtDiv.classList.add('repeated-game');
+        }
       }
     }
 

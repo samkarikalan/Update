@@ -118,25 +118,26 @@ function subRestore() {
   }
 }
 
-/* ── Show trial banner on home if trial active ── */
+/* ── Show trial info in Settings page ── */
 function subShowTrialBanner() {
   if (!_subStatus) subInit();
-  var banner = document.getElementById('trialBanner');
-  if (!banner) return;
+
+  var labelEl = document.getElementById('settingsTrialLabel');
+  var valueEl = document.getElementById('settingsTrialValue');
 
   if (_subStatus === 'trial') {
     var days = subTrialDaysLeft();
-    banner.style.display = '';
-    banner.textContent   = days > 7
-      ? '🎉 Free trial — ' + days + ' days remaining'
-      : '⚠️ Trial ends in ' + days + ' day' + (days !== 1 ? 's' : '') + ' — Subscribe to continue';
-    banner.className = days > 7 ? 'trial-banner' : 'trial-banner trial-banner-warn';
+    if (labelEl) labelEl.textContent = '🎉 Free Trial';
+    if (valueEl) valueEl.textContent = days + ' days remaining';
+    if (valueEl) valueEl.style.color = days > 7 ? 'var(--green,#2dce89)' : 'var(--red,#e63757)';
   } else if (_subStatus === 'expired') {
-    banner.style.display = '';
-    banner.textContent   = '🔒 Trial ended — Subscribe to continue';
-    banner.className     = 'trial-banner trial-banner-expired';
+    if (labelEl) labelEl.textContent = '🔒 Trial Ended';
+    if (valueEl) valueEl.textContent = 'Subscribe to continue';
+    if (valueEl) valueEl.style.color = 'var(--red,#e63757)';
   } else {
-    banner.style.display = 'none';
+    if (labelEl) labelEl.textContent = '✅ Active';
+    if (valueEl) valueEl.textContent = 'Subscribed';
+    if (valueEl) valueEl.style.color = 'var(--green,#2dce89)';
   }
 }
 

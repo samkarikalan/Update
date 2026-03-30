@@ -162,14 +162,15 @@ function showProfilePicker() {
   if (searchEl) searchEl.value = '';
 
   // Load ALL players from server (no club filter)
-  sbGet('players', `club_id=eq.${(getMyClub&&getMyClub()||{}).id||''}&order=nickname.asc&select=id,nickname,gender,rating,club_rating,pin,recovery_word`).then(players => {
-    _pickerAllPlayers = (players || []).map(p => ({
-      name:          p.nickname,
-      gender:        p.gender || 'Male',
-      rating:        p.rating || 1.0,
-      club_rating:   parseFloat(p.club_rating) || 1.0,
-      pin:           p.pin || null,
-      recovery_word: p.recovery_word || null
+  const _club = (getMyClub && getMyClub()) || {};
+  sbGet('memberships', `club_id=eq.${_club.id||''}&order=nickname.asc&select=nickname,club_rating,is_playing,player_id,players(id,gender,global_rating)`).then(members => {
+    _pickerAllPlayers = (members || []).map(m => ({
+      name:          m.nickname,
+      gender:        m.players?.gender || 'Male',
+      rating:        parseFloat(m.players?.global_rating) || 1.0,
+      club_rating:   parseFloat(m.club_rating) || 1.0,
+      pin:           null,
+      recovery_word: null
     }));
     renderPickerList(_pickerAllPlayers);
   }).catch(() => {
@@ -264,9 +265,9 @@ async function confirmPinSetup(name) {
 
   err.textContent = '⏳ Saving...';
   try {
-    await sbPatch('players', `club_id=eq.${(getMyClub&&getMyClub()||{}).id||''}&nickname=ilike.${encodeURIComponent(name)}`, {
-      pin, recovery_word: recovery
-    });
+    // PIN/recovery stored in user_accounts via auth system — no DB patch needed here
+    // Just update local cache
+    
     const p = _pickerAllPlayers.find(x => x.name === name);
     if (p) { p.pin = pin; p.recovery_word = recovery; }
     err.textContent = '';
@@ -337,7 +338,7 @@ async function confirmPinRecovery(name) {
 
   err.textContent = '⏳ Saving...';
   try {
-    await sbPatch('players', `club_id=eq.${(getMyClub&&getMyClub()||{}).id||''}&nickname=ilike.${encodeURIComponent(name)}`, { pin: newPin });
+    // PIN stored in user_accounts — no direct players patch needed
     p.pin = newPin;
     err.textContent = '';
     _completeProfileSelection(name);
@@ -414,11 +415,19 @@ async function showProfileCard(player) {
   document.getElementById('pcWins').textContent   = '…';
   document.getElementById('pcLosses').textContent = '…';
   try {
-    const playerRows = await sbGet('players',
-      `club_id=eq.${(getMyClub&&getMyClub()||{}).id||''}&nickname=ilike.${encodeURIComponent(player.name)}&select=wins,losses`);
-    if (playerRows && playerRows.length) {
-      document.getElementById('pcWins').textContent   = (playerRows[0].wins   || 0);
-      document.getElementById('pcLosses').textContent = (playerRows[0].losses || 0);
+    // Look up via memberships → player_id → players
+    const _club = (getMyClub && getMyClub()) || {};
+    const _mrows = await sbGet('memberships',
+      `club_id=eq.${_club.id||''}&nickname=ilike.${encodeURIComponent(player.name)}&select=player_id`);
+    if (_mrows && _mrows.length) {
+      const _prows = await sbGet('players', `id=eq.${_mrows[0].player_id}&select=wins,losses`);
+      if (_prows && _prows.length) {
+        document.getElementById('pcWins').textContent   = (_prows[0].wins   || 0);
+        document.getElementById('pcLosses').textContent = (_prows[0].losses || 0);
+      } else {
+        document.getElementById('pcWins').textContent   = '—';
+        document.getElementById('pcLosses').textContent = '—';
+      }
     } else {
       document.getElementById('pcWins').textContent   = '—';
       document.getElementById('pcLosses').textContent = '—';
@@ -485,7 +494,9 @@ async function renderMyCard() {
   const emptyEl   = document.getElementById('myCardEmpty');
   const contentEl = document.getElementById('myCardContent');
 
-  if (!player) {
+  // Show empty/login state if not logged in via auth
+  const authUser = (typeof authGetUser === 'function') ? authGetUser() : null;
+  if (!player || !authUser) {
     if (emptyEl)   emptyEl.style.display   = '';
     if (contentEl) contentEl.style.display = 'none';
     return;
@@ -498,74 +509,178 @@ async function renderMyCard() {
   const avatar = document.getElementById('mcAvatar');
   if (avatar) avatar.src = player.gender === 'Female' ? 'female.png' : 'male.png';
   const nameEl = document.getElementById('mcName');
-  if (nameEl) nameEl.textContent = player.name;
+  if (nameEl) nameEl.textContent = player.displayName || player.name || '';
 
-  // Ratings from local cache
-  await syncToLocal();
-  const master       = JSON.parse(localStorage.getItem('newImportHistory') || '[]');
-  const hp           = master.find(h => h.displayName && h.displayName.trim().toLowerCase() === player.name.trim().toLowerCase());
-  const globalRating = parseFloat(hp && hp.rating)       || 1.0;
-  const clubRating   = parseFloat(hp && hp.clubRating)   || 1.0;
-  const activeRating = parseFloat(hp && hp.activeRating) || 1.0;
-  const tier         = ratingTierLabel(activeRating);
+  // Logout button — only show if logged in via auth
+  const logoutBtn = document.getElementById('mcLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.style.display = authUser ? '' : 'none';
+  }
 
-  const grEl = document.getElementById('mcGlobalRating');
-  const crEl = document.getElementById('mcClubRating');
-  const tierEl = document.getElementById('mcTier');
-  if (grEl)   grEl.textContent  = globalRating.toFixed(1);
-  if (crEl)   crEl.textContent  = clubRating.toFixed(1);
-  if (tierEl) { tierEl.textContent = tier.label; tierEl.style.background = tier.color + '22'; tierEl.style.color = tier.color; }
-
-  // Wins / Losses + Sessions from DB
-  const winsEl   = document.getElementById('mcWins');
-  const lossesEl = document.getElementById('mcLosses');
-  const sessEl   = document.getElementById('mcSessions');
-  if (winsEl)   winsEl.textContent   = '…';
-  if (lossesEl) lossesEl.textContent = '…';
-  if (sessEl)   sessEl.innerHTML     = '<div class="profile-sessions-loading">Loading...</div>';
+  const sessEl = document.getElementById('mcSessions');
+  if (sessEl) sessEl.innerHTML = '<div class="profile-sessions-loading">Loading...</div>';
 
   try {
-    const club  = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
-    const today = new Date().toISOString().split('T')[0];
+    const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
 
-    const [playerRows, liveRows] = await Promise.all([
-      sbGet('players', `club_id=eq.${(getMyClub&&getMyClub()||{}).id||''}&nickname=ilike.${encodeURIComponent(player.name)}&select=wins,losses,sessions`),
-      club.id
-        ? sbGet('live_sessions',
-            `player_name=ilike.${encodeURIComponent(player.name)}&club_id=eq.${club.id}&date=eq.${today}`)
-        : Promise.resolve([])
-    ]);
+    // Find player via membership — nickname lookup using logged-in user's nickname
+    const myNickname = player.displayName || player.name || player.nickname || '';
+    let globalRating = 1.0, globalPoints = 0, totalWins = 0, totalLosses = 0;
+    let clubRating = 1.0, clubPoints = 0;
+    let sessions = [];
+    let playerDbId = null;
 
-    const lsKey         = `kbrr_sessions_${player.name.toLowerCase().replace(/\s+/g, '_')}`;
-    const localSessions = JSON.parse(localStorage.getItem(lsKey) || '[]');
-    const liveRow       = liveRows && liveRows.length ? liveRows[0] : null;
-    const liveMatches   = liveRow
-      ? (typeof liveRow.matches === 'string' ? JSON.parse(liveRow.matches) : (liveRow.matches || []))
-      : null;
+    if (club.id && myNickname) {
+      // Get membership by club + nickname
+      const mrows = await sbGet('memberships',
+        `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(myNickname)}&select=player_id,club_rating,club_points`
+      ).catch(() => []);
 
-    let sessions = localSessions;
-    if (playerRows && playerRows.length) {
-      const data = playerRows[0];
-      sessions   = mergeSessions(localSessions, data.sessions || []);
-      if (winsEl)   winsEl.textContent   = (data.wins   || 0);
-      if (lossesEl) lossesEl.textContent = (data.losses || 0);
-    } else {
-      if (winsEl)   winsEl.textContent   = '—';
-      if (lossesEl) lossesEl.textContent = '—';
+      if (mrows.length) {
+        playerDbId = mrows[0].player_id;
+        clubRating = parseFloat(mrows[0].club_rating) || 1.0;
+        clubPoints = parseFloat(mrows[0].club_points) || 0;
+
+        // Get global data from players table using player_id
+        const prows = await sbGet('players',
+          `id=eq.${playerDbId}&select=global_rating,global_points,wins,losses,sessions`
+        ).catch(() => []);
+
+        if (prows.length) {
+          globalRating = parseFloat(prows[0].global_rating) || 1.0;
+          globalPoints = parseFloat(prows[0].global_points) || 0;
+          totalWins    = prows[0].wins    || 0;
+          totalLosses  = prows[0].losses  || 0;
+          sessions     = prows[0].sessions || [];
+        }
+      }
     }
 
-    // Render sessions into mcSessions using a temp swap
+    // 3. Tier
+    const tier = ratingTierLabel(clubRating || globalRating);
+
+    // 4. Update ratings + points
+    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setEl('mcGlobalRating', globalRating.toFixed(1));
+    setEl('mcClubRating',   clubRating.toFixed(1));
+    setEl('mcGlobalPoints', globalPoints.toFixed(1));
+    setEl('mcClubPoints',   clubPoints.toFixed(1));
+    setEl('mcWins',         totalWins);
+    setEl('mcLosses',       totalLosses);
+
+    const tierEl = document.getElementById('mcTier');
+    if (tierEl) { tierEl.textContent = tier.label; tierEl.style.background = tier.color + '22'; tierEl.style.color = tier.color; }
+
+    // 5. Period stats from sessions jsonb
+    const now       = new Date();
+    // Use date strings for comparison to avoid timezone issues
+    const todayStr  = now.toISOString().split('T')[0];
+    const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); 
+    const weekStr   = weekStart.toISOString().split('T')[0];
+    const monthStr  = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
+    const yearStr   = now.getFullYear() + '-01-01';
+
+    let wW=0,lW=0,pW=0,cW=0, wM=0,lM=0,pM=0,cM=0, wY=0,lY=0,pY=0,cY=0;
+    (sessions || []).forEach(s => {
+      const d = s.date;
+      if (!d) return;
+      const w = s.wins || 0, l = s.losses || 0;
+      const p = parseFloat(s.points_earned) || 0;
+      const c = parseFloat(s.cost_per_player) || 0;
+      if (d >= yearStr)  { wY += w; lY += l; pY += p; cY += c; }
+      if (d >= monthStr) { wM += w; lM += l; pM += p; cM += c; }
+      if (d >= weekStr)  { wW += w; lW += l; pW += p; cW += c; }
+    });
+
+    setEl('mcWeekWins',    wW); setEl('mcWeekLosses',    lW); setEl('mcWeekPoints',    pW.toFixed(1)); setEl('mcWeekCost',  cW > 0 ? '¥'+Math.round(cW).toLocaleString() : '—');
+    setEl('mcMonthWins',   wM); setEl('mcMonthLosses',   lM); setEl('mcMonthPoints',   pM.toFixed(1)); setEl('mcMonthCost', cM > 0 ? '¥'+Math.round(cM).toLocaleString() : '—');
+    setEl('mcYearWins',    wY); setEl('mcYearLosses',    lY); setEl('mcYearPoints',    pY.toFixed(1)); setEl('mcYearCost',  cY > 0 ? '¥'+Math.round(cY).toLocaleString() : '—');
+
+    // 6. Render sessions list
     if (sessEl) {
-      const prev = sessEl.id;
-      sessEl.id  = 'pcSessions';
-      renderSessions(sessions, player.name, liveMatches);
-      sessEl.id  = prev;
+      if (sessions.length) {
+        sessEl.innerHTML = sessions.slice(0, 10).map(s => {
+          const d    = new Date(s.date).toLocaleDateString(undefined, { month:'short', day:'numeric' });
+          const w    = s.wins   || 0;
+          const l    = s.losses || 0;
+          const pts  = parseFloat(s.points_earned || 0).toFixed(1);
+          const cost = s.cost_per_player ? `<span class="mc-session-stat cost">¥${Math.round(s.cost_per_player).toLocaleString()}</span>` : '';
+          return `<div class="mc-session-row">
+            <span class="mc-session-date">${d}</span>
+            <span class="mc-session-stat wins">${w}W</span>
+            <span class="mc-session-stat losses">${l}L</span>
+            <span class="mc-session-stat points">${pts}pts</span>
+            ${cost}
+          </div>`;
+        }).join('');
+      } else {
+        sessEl.innerHTML = '<div class="profile-sessions-empty">No sessions yet.</div>';
+      }
+    }
+
+    // 7. Render recent matches from matches table
+    const matchEl = document.getElementById('mcMatches');
+    if (matchEl && playerDbId && club.id) {
+      matchEl.innerHTML = '<div class="profile-sessions-loading">Loading matches...</div>';
+      try {
+        // Fetch all club memberships for UUID→nickname resolution
+        const allMembers = await sbGet('memberships',
+          `club_id=eq.${club.id}&select=player_id,nickname`
+        ).catch(() => []);
+        const uuidToNick = {};
+        (allMembers || []).forEach(m => { uuidToNick[m.player_id] = m.nickname; });
+
+        // Query matches where player appears in any slot
+        const matches = await sbGet('matches',
+          `club_id=eq.${club.id}&or=(pair1_player1.eq.${playerDbId},pair1_player2.eq.${playerDbId},pair2_player1.eq.${playerDbId},pair2_player2.eq.${playerDbId})&order=played_at.desc&limit=20`
+        ).catch(() => []);
+
+        if (!matches || !matches.length) {
+          matchEl.innerHTML = '<div class="profile-sessions-empty">No matches yet.</div>';
+        } else {
+          matchEl.innerHTML = matches.map(m => {
+            // Determine which pair I'm in
+            const inPair1 = m.pair1_player1 === playerDbId || m.pair1_player2 === playerDbId;
+            const myPair  = inPair1 ? [m.pair1_player1, m.pair1_player2] : [m.pair2_player1, m.pair2_player2];
+            const oppPair = inPair1 ? [m.pair2_player1, m.pair2_player2] : [m.pair1_player1, m.pair1_player2];
+            const won     = (inPair1 && m.winner_pair === 'pair1') || (!inPair1 && m.winner_pair === 'pair2');
+
+            const partner   = myPair.filter(id => id && id !== playerDbId).map(id => uuidToNick[id] || '?');
+            const opponents = oppPair.filter(id => id).map(id => uuidToNick[id] || '?');
+            const delta     = m.rating_delta ? (won ? '+' : '-') + parseFloat(m.rating_delta).toFixed(1) : '';
+            const date      = m.played_at ? new Date(m.played_at).toLocaleDateString(undefined, { month:'short', day:'numeric' }) : '';
+
+            const myNames  = [myNickname, ...partner].filter(Boolean).join(' & ');
+            const oppNames = opponents.join(' & ');
+
+            return `<div class="mc-match-row ${won ? 'mc-match-win' : 'mc-match-loss'}">
+              <div class="mc-match-left-bar"></div>
+              <div class="mc-match-content">
+                <div class="mc-match-teams">
+                  <div class="mc-match-pair">${myNames}</div>
+                  <div class="mc-match-vs">vs</div>
+                  <div class="mc-match-pair opp">${oppNames}</div>
+                </div>
+                <div class="mc-match-result">
+                  <span class="mc-match-badge ${won ? 'win' : 'loss'}">${won ? 'WIN' : 'LOSS'}</span>
+                  ${delta ? `<span class="mc-match-delta ${won ? 'win' : 'loss'}">${delta}</span>` : ''}
+                  ${date ? `<span class="mc-match-date">${date}</span>` : ''}
+                </div>
+              </div>
+            </div>`;
+          }).join('');
+        }
+      } catch(e) {
+        matchEl.innerHTML = '<div class="profile-sessions-empty">Could not load matches.</div>';
+      }
     }
 
   } catch(e) {
-    if (winsEl)   winsEl.textContent   = '—';
-    if (lossesEl) lossesEl.textContent = '—';
-    if (sessEl)   sessEl.innerHTML     = '<div class="profile-sessions-empty">Could not load sessions.</div>';
+    console.error('renderMyCard error:', e);
+    ['mcWins','mcLosses','mcGlobalRating','mcClubRating','mcGlobalPoints','mcClubPoints'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = '—';
+    });
+    if (sessEl) sessEl.innerHTML = '<div class="profile-sessions-empty">Could not load data.</div>';
   }
 }
 

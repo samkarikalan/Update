@@ -404,18 +404,18 @@ body.app-dark .rest-btn {
   display: flex !important;
   align-items: stretch !important;
   width: calc(100% - 20px) !important;
-  margin: 8px 10px !important;
-  border-radius: 14px !important;
+  margin: 6px 10px !important;
+  border-radius: 10px !important;
   overflow: hidden !important;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.18) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12) !important;
   gap: 0 !important;
 }
 
 /* Dice and gear side buttons */
 .action.mid.small {
-  flex: 0 0 52px !important;
+  flex: 0 0 42px !important;
   background: #f0f2f5 !important;
-  font-size: 1.35rem !important;
+  font-size: 1.15rem !important;
   border: none !important;
   padding: 0 !important;
   display: flex !important;
@@ -445,10 +445,10 @@ body.app-dark .action.mid.small:hover {
   background: linear-gradient(135deg, #2dce89 0%, #23b576 100%) !important;
   color: #ffffff !important;
   font-family: 'Nunito', sans-serif !important;
-  font-size: 1.05rem !important;
+  font-size: 0.95rem !important;
   font-weight: 800 !important;
   border: none !important;
-  padding: 14px 0 !important;
+  padding: 10px 0 !important;
   cursor: pointer !important;
   transition: filter 0.15s, transform 0.1s !important;
   display: flex !important;

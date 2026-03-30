@@ -27,13 +27,17 @@ function authShowScreen(screen) {
     'login':    'authLogin',
     'signup':   'authSignup',
     'forgot':   'authForgot',
+    'claim':    'authClaim',
     'joinClub': 'authJoinClub'
   };
   var el = document.getElementById(screenMap[screen]);
   if (el) el.style.display = 'flex';
 
+  // Load clubs for claim dropdown
+  if (screen === 'claim') authLoadClaimClubs();
+
   // Clear errors
-  ['loginError','signupError','forgotError','forgotError2','joinClubError'].forEach(function(id) {
+  ['loginError','signupError','forgotError','forgotError2','claimError','joinClubError'].forEach(function(id) {
     var err = document.getElementById(id);
     if (err) { err.style.display = 'none'; err.textContent = ''; }
   });
@@ -66,11 +70,11 @@ function authSetLoading(btnSelector, loading) {
 
 /* ── Do Login ── */
 async function authDoLogin() {
-  var userId   = (document.getElementById('loginUserId')?.value || '').trim();
+  var email    = (document.getElementById('loginEmail')?.value || '').trim();
   var password = (document.getElementById('loginPassword')?.value || '');
 
   authSetLoading('#authLogin .auth-btn-primary', true);
-  var result = await authLogin(userId, password);
+  var result = await authLogin(email, password);
   authSetLoading('#authLogin .auth-btn-primary', false);
 
   if (result.error) {
@@ -85,11 +89,12 @@ async function authDoLogin() {
 
 /* ── Do Sign Up ── */
 async function authDoSignup() {
-  var userId   = (document.getElementById('signupUserId')?.value || '').trim();
-  var nickname = (document.getElementById('signupNickname')?.value || '').trim();
-  var email    = (document.getElementById('signupEmail')?.value || '').trim();
-  var password = (document.getElementById('signupPassword')?.value || '');
-  var confirm  = (document.getElementById('signupConfirm')?.value || '');
+  var email        = (document.getElementById('signupEmail')?.value || '').trim();
+  var displayName  = (document.getElementById('signupDisplayName')?.value || '').trim();
+  var gender       = (document.getElementById('signupGender')?.value || 'Male');
+  var password     = (document.getElementById('signupPassword')?.value || '');
+  var confirm      = (document.getElementById('signupConfirm')?.value || '');
+  var recoveryWord = (document.getElementById('signupRecoveryWord')?.value || '').trim();
 
   if (password !== confirm) {
     authShowError('signupError', 'Passwords do not match');
@@ -97,7 +102,7 @@ async function authDoSignup() {
   }
 
   authSetLoading('#authSignup .auth-btn-primary', true);
-  var result = await authSignUp(userId, nickname, email, password);
+  var result = await authSignUp(email, password, displayName, gender, recoveryWord);
   authSetLoading('#authSignup .auth-btn-primary', false);
 
   if (result.error) {
@@ -106,7 +111,7 @@ async function authDoSignup() {
   }
 
   // Auto login after signup
-  var loginResult = await authLogin(userId, password);
+  var loginResult = await authLogin(email, password);
   if (loginResult.error) {
     authShowError('signupError', 'Account created! Please login.');
     authShowScreen('login');
@@ -133,73 +138,115 @@ async function authAfterLogin(user) {
     return;
   }
 
-  // Check if already in a club — verify player row still exists in DB
+  // Auto-find all clubs via memberships linked to this user_account
+  try {
+    var linkedMemberships = await sbGet('memberships',
+      'user_account_id=eq.' + user.id + '&select=club_id,nickname');
+
+    if (linkedMemberships && linkedMemberships.length) {
+      // Fetch club names separately
+      var clubIds = linkedMemberships.map(function(m) { return m.club_id; });
+      var clubs = [];
+      try {
+        clubs = await sbGet('clubs', 'id=in.(' + clubIds.join(',') + ')&select=id,name');
+      } catch(e) {}
+      var clubMap = {};
+      clubs.forEach(function(c) { clubMap[c.id] = c.name; });
+
+      // Enrich memberships with club names
+      linkedMemberships = linkedMemberships.map(function(m) {
+        return { club_id: m.club_id, nickname: m.nickname, club_name: clubMap[m.club_id] || '' };
+      });
+
+      if (linkedMemberships.length === 1) {
+        var m = linkedMemberships[0];
+        if (typeof setMyClub === 'function') setMyClub(m.club_id, m.club_name);
+        if (typeof setMyPlayer === 'function') setMyPlayer({ name: m.nickname, gender: 'Male' });
+        authHideOverlay();
+        if (typeof selectMode === 'function') selectMode(sessionStorage.getItem('appMode') || 'viewer');
+        return;
+      } else {
+        authShowClubPicker(linkedMemberships, user);
+        return;
+      }
+    }
+  } catch(e) { /* offline — fall through to cached club */ }
+
+  // Check cached club
   var club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
   if (club && club.id) {
-    try {
-      var playerCheck = await sbGet('players',
-        'club_id=eq.' + club.id + '&user_account_id=eq.' + user.id + '&select=nickname');
-      if (!playerCheck || !playerCheck.length) {
-        // Player was removed — clear club from localStorage
-        if (typeof clearMyClub === 'function') clearMyClub();
-        else { localStorage.removeItem('kbrr_my_club_id'); localStorage.removeItem('kbrr_my_club_name'); }
-        club = { id: null };
-      }
-    } catch(e) { /* offline — trust cached state */ }
-  }
-  if (club && club.id) {
-    // Already in club — go to app
     authHideOverlay();
-    selectMode(sessionStorage.getItem('appMode') || 'viewer');
+    if (typeof selectMode === 'function') selectMode(sessionStorage.getItem('appMode') || 'viewer');
     return;
   }
 
-  // No club — show join screen
+  // No club found — show join screen
   authShowScreen('joinClub');
 }
 
-/* ── Do Forgot Password — Send OTP ── */
-async function authDoForgotSend() {
-  var email = (document.getElementById('forgotEmail')?.value || '').trim();
+function authShowClubPicker(memberships, user) {
+  // Show a simple sheet to pick which club to enter
+  var overlay = document.getElementById('authOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
 
-  authSetLoading('#forgotStep1 .auth-btn-primary', true);
-  var result = await authForgotSendOtp(email);
-  authSetLoading('#forgotStep1 .auth-btn-primary', false);
+  // Hide all screens
+  ['authWelcome','authLogin','authSignup','authForgot','authJoinClub','authClaim'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Build club picker screen
+  var picker = document.getElementById('authClubPicker');
+  if (!picker) {
+    picker = document.createElement('div');
+    picker.id = 'authClubPicker';
+    picker.className = 'auth-screen';
+    overlay.appendChild(picker);
+  }
+  picker.style.display = '';
+  picker.innerHTML = '<div class="auth-title">Select Club</div>' +
+    '<div class="auth-sub">You are a member of multiple clubs</div>' +
+    memberships.map(function(m) {
+      var cid   = m.club_id;
+      var cname = m.club_name || cid;
+      var nick  = m.nickname;
+      return '<button class="auth-club-pick-btn" onclick="authPickClub(\''+cid+'\',\''+cname+'\',\''+nick+'\')">'+
+        '<strong>'+cname+'</strong><span>'+nick+'</span></button>';
+    }).join('');
+}
+
+async function authPickClub(clubId, clubName, nickname) {
+  if (typeof setMyClub   === 'function') setMyClub(clubId, clubName);
+  if (typeof setMyPlayer === 'function') setMyPlayer({ name: nickname, gender: 'Male' });
+  authHideOverlay();
+  if (typeof selectMode === 'function') selectMode(sessionStorage.getItem('appMode') || 'viewer');
+}
+
+/* ── Do Forgot Password — recovery keyword ── */
+async function authDoForgotReset() {
+  var email        = (document.getElementById('forgotEmail')?.value || '').trim();
+  var recoveryWord = (document.getElementById('forgotRecoveryWord')?.value || '').trim();
+  var newPw        = (document.getElementById('forgotNewPw')?.value || '');
+  var confirmPw    = (document.getElementById('forgotConfirmPw')?.value || '');
+
+  if (newPw !== confirmPw) {
+    authShowError('forgotError', 'Passwords do not match');
+    return;
+  }
+
+  authSetLoading('#authForgot .auth-btn-primary', true);
+  var result = await authResetPassword(email, recoveryWord, newPw);
+  authSetLoading('#authForgot .auth-btn-primary', false);
 
   if (result.error) {
     authShowError('forgotError', result.error);
     return;
   }
 
-  // Show OTP step
-  var step1 = document.getElementById('forgotStep1');
-  var step2 = document.getElementById('forgotStep2');
-  if (step1) step1.style.display = 'none';
-  if (step2) step2.style.display = 'block';
-
-  if (AUTH_MOCK_MODE) {
-    authShowError('forgotError2', '⚠️ Mock mode: check browser console for OTP');
-  }
-}
-
-/* ── Do Forgot Password — Verify OTP ── */
-async function authDoForgotVerify() {
-  var email  = (document.getElementById('forgotEmail')?.value || '').trim();
-  var otp    = (document.getElementById('forgotOtp')?.value || '').trim();
-  var newPw  = (document.getElementById('forgotNewPw')?.value || '');
-
-  authSetLoading('#forgotStep2 .auth-btn-primary', true);
-  var result = await authForgotVerify(email, otp, newPw);
-  authSetLoading('#forgotStep2 .auth-btn-primary', false);
-
-  if (result.error) {
-    authShowError('forgotError2', result.error);
-    return;
-  }
-
-  // Success — go to login
-  alert('Password reset successfully! Please login.');
-  authShowScreen('login');
+  authShowError('forgotError', '✅ Password reset! Please login.');
+  document.getElementById('forgotError').style.color = 'var(--green, #2dce89)';
+  setTimeout(function() { authShowScreen('login'); }, 1500);
 }
 
 /* ── Do Join Club ── */
@@ -340,7 +387,7 @@ async function vaultLoadRequests() {
     return '<div class="vault-request-card">' +
       '<div class="vault-request-info">' +
         '<div class="vault-request-name">' + req.nickname + '</div>' +
-        '<div class="vault-request-id">@' + req.userId + '</div>' +
+        '<div class="vault-request-id">' + req.email + '</div>' +
       '</div>' +
       '<div class="vault-request-actions">' +
         '<button class="vault-request-accept" onclick="vaultAcceptRequest(\'' + req.requestId + '\',\'' + req.userAccountId + '\',\'' + req.nickname.replace(/'/g, "\\'") + '\')">✓ Accept</button>' +

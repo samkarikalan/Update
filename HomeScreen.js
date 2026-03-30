@@ -130,6 +130,32 @@ async function homeRefreshTiles() {
     }
   }
 
+  // ── Vault club status tile ──
+  var vctName  = document.getElementById('vctName');
+  var vctBadge = document.getElementById('vctBadge');
+  var vctDot   = document.getElementById('vctDot');
+  if (vctName) {
+    if (club && club.name) {
+      vctName.textContent = club.name;
+      if (vctDot) vctDot.style.background = '#2dce89';
+      if (vctBadge) {
+        vctBadge.textContent = 'ADMIN';
+        vctBadge.style.background = '#2dce89';
+        vctBadge.style.color = '#000';
+        vctBadge.style.display = '';
+      }
+    } else {
+      vctName.textContent = 'No club selected';
+      if (vctBadge) vctBadge.style.display = 'none';
+      if (vctDot) vctDot.style.background = '#888';
+    }
+  }
+
+  // ── Vault gradient tiles — load live stats ──
+  if (club && club.id && document.getElementById('vtStatPlaying')) {
+    homeRefreshVaultTiles(club.id);
+  }
+
   // ── Players ──
   var playersSub = document.getElementById('tileSubPlayers');
   if (playersSub) {
@@ -444,10 +470,29 @@ function homeLangSelect() {}
    ══════════════════════════════════════════════ */
 
 /* Called every time home screen opens — show/hide tile, refresh status */
-function homeRefreshJoinClubTile() {
+async function homeRefreshJoinClubTile() {
   var sub = document.getElementById('tileSubJoinClub');
   if (!sub) return;
 
+  // Try to get all linked clubs from memberships
+  var user = (typeof authGetUser === 'function') ? authGetUser() : null;
+  if (user) {
+    try {
+      var memberships = await sbGet('memberships',
+        'user_account_id=eq.' + user.id + '&select=club_id');
+      if (memberships && memberships.length) {
+        var clubIds = memberships.map(function(m) { return m.club_id; });
+        var clubRows = await sbGet('clubs', 'id=in.(' + clubIds.join(',') + ')&select=id,name').catch(function(){ return []; });
+        var names = clubRows.map(function(c) { return c.name; }).filter(Boolean);
+        if (names.length) {
+          sub.textContent = names.join(' · ');
+          return;
+        }
+      }
+    } catch(e) { /* offline — fall through */ }
+  }
+
+  // Fallback to cached single club
   var club = (typeof getMyClub === 'function') ? getMyClub() : null;
   if (club && club.id && club.name) {
     sub.textContent = '✅ ' + club.name;
@@ -463,7 +508,7 @@ function homeRefreshJoinClubTile() {
 
 /* ── Join Club Page — initialise when page opens ── */
 async function joinClubPageOpen() {
-  // Reset search
+  // Reset search + feedback
   var searchInput = document.getElementById('joinClubPageSearch');
   if (searchInput) searchInput.value = '';
   var results = document.getElementById('joinClubPageResults');
@@ -472,88 +517,84 @@ async function joinClubPageOpen() {
   if (errEl) errEl.style.display = 'none';
   var fbEl = document.getElementById('joinClubPageFeedback');
   if (fbEl) fbEl.style.display = 'none';
+  var nickEl = document.getElementById('joinClubNicknameSection');
+  if (nickEl) nickEl.style.display = 'none';
 
-  var statusCard = document.getElementById('joinClubStatusCard');
-  var searchSection = document.getElementById('joinClubSearchSection');
+  // Load all my clubs
+  await _renderMyClubsList();
+}
 
-  // Already a member? — verify player row still exists in DB
-  var club = (typeof getMyClub === 'function') ? getMyClub() : null;
-  if (club && club.id && club.name) {
-    try {
-      var user = (typeof authGetUser === 'function') ? authGetUser() : null;
-      if (user) {
-        var playerCheck = await sbGet('players',
-          'club_id=eq.' + club.id + '&user_account_id=eq.' + user.id + '&select=nickname');
-        if (!playerCheck || !playerCheck.length) {
-          // Player was removed from club — clear local state
-          if (typeof clearMyClub === 'function') clearMyClub();
-          else { localStorage.removeItem('kbrr_my_club_id'); localStorage.removeItem('kbrr_my_club_name'); }
-          club = null;
-        }
-      }
-    } catch(e) { /* offline — trust cached state */ }
-  }
-  if (club && club.id && club.name) {
-    _joinClubShowStatus('joined', club.name);
-    if (statusCard) statusCard.style.display = '';
-    if (searchSection) searchSection.style.display = 'none';
+async function _renderMyClubsList() {
+  var inner = document.getElementById('myClubsListInner');
+  if (!inner) return;
+  inner.innerHTML = '<div class="jc-empty">Loading...</div>';
+
+  var user = (typeof authGetUser === 'function') ? authGetUser() : null;
+  if (!user) {
+    inner.innerHTML = '<div class="jc-empty">Login to see your clubs</div>';
     return;
   }
 
-  // Pending request?
-  var pendingName = localStorage.getItem('kbrr_pending_club_name');
-  var pendingId   = localStorage.getItem('kbrr_pending_club_id');
-  if (pendingId && pendingName) {
-    // Re-check from server in case it was approved
-    try {
-      var user = (typeof authGetUser === 'function') ? authGetUser() : null;
-      if (user) {
-        var rows = await sbGet('club_join_requests',
-          'club_id=eq.' + pendingId + '&user_account_id=eq.' + user.id + '&select=status');
-        if (rows && rows.length) {
-          if (rows[0].status === 'accepted') {
-            // Verify player row still exists (not left/deleted)
-            var playerCheck = await sbGet('players',
-              'club_id=eq.' + pendingId + '&user_account_id=eq.' + user.id + '&select=id');
-            if (!playerCheck || !playerCheck.length) {
-              // Player row gone — treat as not a member
-              localStorage.removeItem('kbrr_pending_club_id');
-              localStorage.removeItem('kbrr_pending_club_name');
-              // Fall through to search
-            } else {
-              setMyClub(pendingId, pendingName);
-              localStorage.removeItem('kbrr_pending_club_id');
-              localStorage.removeItem('kbrr_pending_club_name');
-              _joinClubShowStatus('joined', pendingName);
-              if (statusCard) statusCard.style.display = '';
-              if (searchSection) searchSection.style.display = 'none';
-              homeRefreshJoinClubTile();
-              return;
-            }
-          } else if (rows[0].status === 'rejected') {
-            localStorage.removeItem('kbrr_pending_club_id');
-            localStorage.removeItem('kbrr_pending_club_name');
-            // Fall through to search
-          } else {
-            _joinClubShowStatus('pending', pendingName);
-            if (statusCard) statusCard.style.display = '';
-            if (searchSection) searchSection.style.display = 'none';
-            return;
-          }
-        }
-      }
-    } catch(e) {
-      // Offline — show cached pending state
-      _joinClubShowStatus('pending', pendingName);
-      if (statusCard) statusCard.style.display = '';
-      if (searchSection) searchSection.style.display = 'none';
+  try {
+    // Get all memberships for this user
+    var memberships = await sbGet('memberships',
+      'user_account_id=eq.' + user.id + '&select=club_id,nickname');
+
+    // Also check pending requests
+    var pending = await sbGet('club_join_requests',
+      'user_account_id=eq.' + user.id + '&status=eq.pending&select=club_id').catch(function(){ return []; });
+    var pendingIds = (pending || []).map(function(p){ return p.club_id; });
+
+    if ((!memberships || !memberships.length) && !pendingIds.length) {
+      inner.innerHTML = '<div class="jc-empty">No clubs yet. Search below to join one.</div>';
       return;
     }
-  }
 
-  // No club — show search
-  if (statusCard) statusCard.style.display = 'none';
-  if (searchSection) searchSection.style.display = '';
+    // Fetch club names
+    var allIds = [...new Set([
+      ...(memberships||[]).map(function(m){ return m.club_id; }),
+      ...pendingIds
+    ])];
+    var clubs = allIds.length
+      ? await sbGet('clubs', 'id=in.(' + allIds.join(',') + ')&select=id,name').catch(function(){ return []; })
+      : [];
+    var clubMap = {};
+    clubs.forEach(function(c){ clubMap[c.id] = c.name; });
+
+    var html = '';
+
+    // Member clubs
+    (memberships || []).forEach(function(m) {
+      var cname = clubMap[m.club_id] || m.club_id;
+      html += '<div class="jc-club-row">' +
+        '<div class="jc-club-icon">🏸</div>' +
+        '<div class="jc-club-info">' +
+          '<div class="jc-club-name">' + cname + '</div>' +
+          '<div class="jc-club-nick">as ' + m.nickname + '</div>' +
+        '</div>' +
+        '<span class="jc-club-badge">Member</span>' +
+      '</div>';
+    });
+
+    // Pending clubs
+    pendingIds.forEach(function(cid) {
+      if ((memberships||[]).find(function(m){ return m.club_id === cid; })) return; // already shown
+      var cname = clubMap[cid] || cid;
+      html += '<div class="jc-club-row">' +
+        '<div class="jc-club-icon">⏳</div>' +
+        '<div class="jc-club-info">' +
+          '<div class="jc-club-name">' + cname + '</div>' +
+          '<div class="jc-club-nick">Request pending</div>' +
+        '</div>' +
+        '<span class="jc-club-pending">Pending</span>' +
+      '</div>';
+    });
+
+    inner.innerHTML = html || '<div class="jc-empty">No clubs yet.</div>';
+
+  } catch(e) {
+    inner.innerHTML = '<div class="jc-empty">Could not load clubs.</div>';
+  }
 }
 
 function _joinClubShowStatus(state, clubName) {
@@ -663,6 +704,20 @@ async function joinClubPageRequest(clubId, clubName, customNickname) {
     return;
   }
 
+  if (result.autoLinked) {
+    if (typeof setMyClub === 'function') setMyClub(result.clubId, result.clubName);
+    if (typeof setMyPlayer === 'function') setMyPlayer({ name: result.nickname, gender: 'Male' });
+    if (fbEl) {
+      if (fbIcon)  fbIcon.textContent  = '✅';
+      if (fbTitle) fbTitle.textContent = 'Joined ' + result.clubName;
+      if (fbMsg)   fbMsg.textContent   = 'Welcome back, ' + result.nickname + '!';
+      fbEl.style.display = '';
+    }
+    homeRefreshJoinClubTile();
+    _renderMyClubsList();
+    return;
+  }
+
   if (result.nicknameConflict) {
     // Nickname taken — ask user to pick a different one
     if (fbEl) fbEl.style.display = 'none';
@@ -720,7 +775,7 @@ async function joinClubLeave() {
   if (clubId && user) {
     try {
       // Delete player row for this user in this club
-      await sbDelete('players', 'club_id=eq.' + clubId + '&user_account_id=eq.' + user.id);
+      await sbDelete('memberships', 'club_id=eq.' + clubId + '&user_account_id=eq.' + user.id);
     } catch(e) { /* silent */ }
     try {
       // Delete join request so it doesn't restore on next login
@@ -743,4 +798,33 @@ async function joinClubLeave() {
   document.getElementById('joinClubStatusCard').style.display = 'none';
   document.getElementById('joinClubSearchSection').style.display = '';
   homeRefreshJoinClubTile();
+}
+
+/* ── Load live stats into vault gradient tiles ── */
+async function homeRefreshVaultTiles(clubId) {
+  try {
+    // Playing count
+    var playing = await sbGet('memberships', 'club_id=eq.' + clubId + '&is_playing=eq.true&select=id').catch(() => []);
+    var playingCount = (playing || []).length;
+    var vtPlaying = document.getElementById('vtStatPlaying');
+    if (vtPlaying) vtPlaying.textContent = playingCount;
+    var vtBadgePlaying = document.getElementById('vtBadgePlaying');
+    if (vtBadgePlaying) vtBadgePlaying.style.display = playingCount > 0 ? '' : 'none';
+
+    // Total players (register + modify share same count)
+    var members = await sbGet('memberships', 'club_id=eq.' + clubId + '&select=id').catch(() => []);
+    var memberCount = (members || []).length;
+    var vtRegister = document.getElementById('vtStatRegister');
+    if (vtRegister) vtRegister.textContent = memberCount;
+    var vtModify = document.getElementById('vtStatModify');
+    if (vtModify) vtModify.textContent = memberCount;
+
+    // Pending requests
+    var requests = await sbGet('club_join_requests', 'club_id=eq.' + clubId + '&status=eq.pending&select=id').catch(() => []);
+    var reqCount = (requests || []).length;
+    var vtRequests = document.getElementById('vtStatRequests');
+    if (vtRequests) vtRequests.textContent = reqCount;
+    var vtBadgeReq = document.getElementById('vtBadgeRequests');
+    if (vtBadgeReq) vtBadgeReq.style.display = reqCount > 0 ? '' : 'none';
+  } catch(e) { /* silent */ }
 }

@@ -42,102 +42,162 @@ function authIsLoggedIn() {
 }
 
 /* ── Sign up ── */
-async function authSignUp(userId, nickname, email, password) {
-  userId   = userId.trim().toLowerCase();
-  nickname = nickname.trim();
-  email    = email.trim().toLowerCase();
+async function authSignUp(email, password, displayName, gender, recoveryWord) {
+  email       = email.trim().toLowerCase();
+  displayName = (displayName || '').trim();
+  gender      = gender || 'Male';
 
-  // Validate
-  if (!userId || userId.length < 3)
-    return { error: 'User ID must be at least 3 characters' };
-  if (!/^[a-z0-9_]+$/.test(userId))
-    return { error: 'User ID can only contain letters, numbers and underscore' };
-  if (!nickname || nickname.length < 2)
-    return { error: 'Nickname must be at least 2 characters' };
   if (!email || !email.includes('@'))
     return { error: 'Please enter a valid email' };
+  if (!displayName || displayName.length < 2)
+    return { error: 'Display name must be at least 2 characters' };
   if (!password || password.length < 6)
     return { error: 'Password must be at least 6 characters' };
-
-  if (AUTH_MOCK_MODE) {
-    // Check duplicate userId
-    if (_mockUsers.find(function(u) { return u.userId === userId; }))
-      return { error: 'User ID already taken. Try another.' };
-    // Check duplicate email
-    if (_mockUsers.find(function(u) { return u.email === email; }))
-      return { error: 'Email already registered.' };
-
-    var user = {
-      id:       'mock_' + Date.now(),
-      userId:   userId,
-      nickname: nickname,
-      email:    email,
-      password: password, // plain text for mock only
-      createdAt: new Date().toISOString()
-    };
-    _mockUsers.push(user);
-    _saveMockUsers();
-    return { user: { id: user.id, userId: user.userId, nickname: user.nickname, email: user.email } };
-  }
+  if (!recoveryWord || recoveryWord.trim().length < 3)
+    return { error: 'Recovery keyword must be at least 3 characters' };
 
   // ── Real Supabase ──
   try {
-    // Check userId exists
-    var existing = await sbGet('user_accounts', 'user_id=eq.' + encodeURIComponent(userId) + '&select=id');
-    if (existing && existing.length) return { error: 'User ID already taken. Try another.' };
+    // Check email exists
+    var existing = await sbGet('user_accounts', 'email=eq.' + encodeURIComponent(email) + '&select=id');
+    if (existing && existing.length) return { error: 'Email already registered. Please login.' };
 
     var result = await sbPost('user_accounts', {
-      user_id:       userId,
-      nickname:      nickname,
+      user_id:       email,
+      nickname:      displayName,
       email:         email,
-      password_hash: password // TODO: hash in production
+      password_hash: password,
+      recovery_word: (recoveryWord || '').trim().toLowerCase()
     });
     var u = result[0];
-    return { user: { id: u.id, userId: u.user_id, nickname: u.nickname, email: u.email } };
+
+    // Also create player row
+    await sbPost('players', {
+      name:          displayName,
+      gender:        gender,
+      global_rating: 1.0,
+      global_points: 0
+    }).catch(() => {});
+
+    var authUser = { id: u.id, email: u.email, nickname: u.nickname, displayName: u.nickname };
+    return { user: authUser };
   } catch(e) {
     var msg = e.message || '';
-    if (msg.includes('user_accounts_email_key') || msg.includes('duplicate') && msg.includes('email'))
-      return { error: 'This email is already registered. Please use a different email.' };
-    if (msg.includes('user_accounts_user_id_key') || msg.includes('duplicate') && msg.includes('user_id'))
-      return { error: 'User ID already taken. Please choose another.' };
-    if (msg.includes('duplicate key') || msg.includes('unique constraint'))
-      return { error: 'Account already exists. Please try a different User ID or email.' };
+    if (msg.includes('duplicate') || msg.includes('already'))
+      return { error: 'Email already registered. Please login.' };
     return { error: 'Sign up failed. Please try again.' };
   }
 }
 
 /* ── Login ── */
-async function authLogin(userId, password) {
-  userId = userId.trim().toLowerCase();
+async function authLogin(email, password) {
+  email = email.trim().toLowerCase();
 
-  if (!userId) return { error: 'Please enter your User ID' };
+  if (!email) return { error: 'Please enter your email' };
   if (!password) return { error: 'Please enter your password' };
 
-  if (AUTH_MOCK_MODE) {
-    var user = _mockUsers.find(function(u) {
-      return u.userId === userId && u.password === password;
-    });
-    if (!user) return { error: 'Invalid User ID or password' };
-    var authUser = { id: user.id, userId: user.userId, nickname: user.nickname, email: user.email };
-    _authUser = authUser;
-    localStorage.setItem('auth_user', JSON.stringify(authUser));
-    return { user: authUser };
-  }
-
-  // ── Real Supabase ──
+  // ── Real Supabase — filter by email + password server-side ──
   try {
     var rows = await sbGet('user_accounts',
-      'user_id=eq.' + encodeURIComponent(userId) +
+      'email=eq.' + encodeURIComponent(email) +
       '&password_hash=eq.' + encodeURIComponent(password) +
-      '&select=id,user_id,nickname,email');
-    if (!rows || !rows.length) return { error: 'Invalid User ID or password' };
+      '&select=id,nickname,email');
+    if (!rows || !rows.length) {
+      // Check if email exists at all for better error message
+      var exists = await sbGet('user_accounts', 'email=eq.' + encodeURIComponent(email) + '&select=id').catch(() => []);
+      if (!exists || !exists.length) return { error: 'No account found with this email' };
+      return { error: 'Wrong password' };
+    }
     var u = rows[0];
-    var authUser = { id: u.id, userId: u.user_id, nickname: u.nickname, email: u.email };
+    var authUser = { id: u.id, email: u.email, nickname: u.nickname, displayName: u.nickname };
     _authUser = authUser;
     localStorage.setItem('auth_user', JSON.stringify(authUser));
     return { user: authUser };
   } catch(e) {
     return { error: e.message || 'Login failed. Please try again.' };
+  }
+}
+
+/* ── Reset Password via recovery word ── */
+async function authResetPassword(email, recoveryWord, newPassword) {
+  email        = email.trim().toLowerCase();
+  recoveryWord = recoveryWord.trim().toLowerCase();
+
+  if (!email || !email.includes('@')) return { error: 'Please enter your email' };
+  if (!recoveryWord) return { error: 'Please enter your recovery keyword' };
+  if (!newPassword || newPassword.length < 6) return { error: 'Password must be at least 6 characters' };
+
+  try {
+    var rows = await sbGet('user_accounts',
+      'email=eq.' + encodeURIComponent(email) +
+      '&recovery_word=eq.' + encodeURIComponent(recoveryWord) +
+      '&select=id');
+    if (!rows || !rows.length) return { error: 'Email or recovery keyword is incorrect' };
+
+    await sbPatch('user_accounts', 'id=eq.' + rows[0].id, { password_hash: newPassword });
+    return { success: true };
+  } catch(e) {
+    return { error: e.message || 'Reset failed. Please try again.' };
+  }
+}
+
+/* ── Claim Account — player already registered by admin ── */
+async function authClaimAccount(clubId, nickname, defaultPassword, email, newPassword, recoveryWord) {
+  try {
+    // 1. Find membership by club + nickname
+    var memberships = await sbGet('memberships',
+      'club_id=eq.' + clubId + '&nickname=ilike.' + encodeURIComponent(nickname) + '&select=id,player_id,user_account_id'
+    );
+    if (!memberships || !memberships.length)
+      return { error: 'Nickname not found in this club. Check with your admin.' };
+
+    var membership = memberships[0];
+
+    // 2. Already claimed?
+    if (membership.user_account_id)
+      return { error: 'This account has already been claimed. Please login or use Forgot Password.' };
+
+    // 3. Verify default password on player row
+    var players = await sbGet('players',
+      'id=eq.' + membership.player_id + '&default_password=eq.' + encodeURIComponent(defaultPassword) + '&select=id'
+    );
+    if (!players || !players.length)
+      return { error: 'Default password is incorrect. Check with your admin.' };
+
+    // 4. Check email not already used
+    var existing = await sbGet('user_accounts', 'email=eq.' + encodeURIComponent(email) + '&select=id');
+    if (existing && existing.length)
+      return { error: 'This email is already registered. Use a different email.' };
+
+    // 5. Create user_account
+    var result = await sbPost('user_accounts', {
+      user_id:       email,
+      nickname:      nickname,
+      email:         email,
+      password_hash: newPassword,
+      recovery_word: recoveryWord
+    });
+    var u = result[0];
+
+    // 6. Link THIS membership to user_account
+    await sbPatch('memberships', 'id=eq.' + membership.id, { user_account_id: u.id });
+
+    // 7. Also link any other clubs where same nickname is unlinked
+    try {
+      var otherMemberships = await sbGet('memberships',
+        'nickname=ilike.' + encodeURIComponent(nickname) + '&user_account_id=is.null&select=id');
+      for (var i = 0; i < (otherMemberships || []).length; i++) {
+        await sbPatch('memberships', 'id=eq.' + otherMemberships[i].id, { user_account_id: u.id }).catch(function(){});
+      }
+    } catch(e) { /* silent */ }
+
+    var authUser = { id: u.id, email: u.email, nickname: u.nickname, displayName: u.nickname };
+    _authUser = authUser;
+    localStorage.setItem('auth_user', JSON.stringify(authUser));
+    return { user: authUser };
+
+  } catch(e) {
+    return { error: e.message || 'Claim failed. Please try again.' };
   }
 }
 
@@ -281,8 +341,8 @@ async function authRequestJoin(clubId, chosenNickname) {
 
   try {
     // Check if already a member (by user_account_id)
-    var members = await sbGet('players',
-      'club_id=eq.' + clubId + '&user_account_id=eq.' + user.id + '&select=id');
+    var members = await sbGet('memberships',
+      'club_id=eq.' + clubId + '&user_account_id=eq.' + user.id + '&select=player_id');
     if (members && members.length) {
       var club = await sbGet('clubs', 'id=eq.' + clubId + '&select=id,name');
       if (club && club.length) setMyClub(club[0].id, club[0].name);
@@ -301,9 +361,25 @@ async function authRequestJoin(clubId, chosenNickname) {
     }
 
     // Check nickname conflict in this club
-    var conflict = await sbGet('players',
-      'club_id=eq.' + clubId + '&nickname=ilike.' + encodeURIComponent(nickname) + '&select=id');
+    var conflict = await sbGet('memberships',
+      'club_id=eq.' + clubId + '&nickname=ilike.' + encodeURIComponent(nickname) + '&select=id,player_id,user_account_id');
     if (conflict && conflict.length) {
+      var cm = conflict[0];
+      // If membership is unclaimed — this is the user's own account, auto-link it
+      if (!cm.user_account_id) {
+        await sbPatch('memberships', 'id=eq.' + cm.id, { user_account_id: user.id }).catch(function(){});
+        // Also link any other clubs with same nickname
+        var others = await sbGet('memberships',
+          'nickname=ilike.' + encodeURIComponent(nickname) + '&user_account_id=is.null&select=id').catch(function(){ return []; });
+        for (var i = 0; i < others.length; i++) {
+          await sbPatch('memberships', 'id=eq.' + others[i].id, { user_account_id: user.id }).catch(function(){});
+        }
+        // Get club name and auto-join
+        var clubInfo = await sbGet('clubs', 'id=eq.' + clubId + '&select=id,name').catch(function(){ return []; });
+        var cname = (clubInfo && clubInfo.length) ? clubInfo[0].name : '';
+        return { autoLinked: true, clubId: clubId, clubName: cname, nickname: nickname };
+      }
+      // Nickname taken by someone else
       return { nicknameConflict: true, conflictNickname: nickname };
     }
 
@@ -324,7 +400,7 @@ async function authRequestJoin(clubId, chosenNickname) {
 async function authGetJoinRequests(clubId) {
   try {
     var requests = await sbGet('club_join_requests',
-      'club_id=eq.' + clubId + '&status=eq.pending&select=id,user_account_id,nickname,requested_at');
+      'club_id=eq.' + clubId + '&status=eq.pending&select=id,user_account_id,requested_at');
 
     // Get user details for each request
     var result = [];
@@ -332,14 +408,13 @@ async function authGetJoinRequests(clubId) {
       var req = requests[i];
       try {
         var users = await sbGet('user_accounts',
-          'id=eq.' + req.user_account_id + '&select=id,user_id,nickname,email');
+          'id=eq.' + req.user_account_id + '&select=id,nickname,email');
         if (users && users.length) {
           result.push({
             requestId:     req.id,
             requestedAt:   req.requested_at,
             userAccountId: req.user_account_id,
-            userId:        users[0].user_id,
-            nickname:      req.nickname || users[0].nickname,  // use chosen nickname first
+            nickname:      users[0].nickname,
             email:         users[0].email
           });
         }
@@ -360,17 +435,31 @@ async function authAcceptRequest(requestId, clubId, userAccountId, nickname, gen
       reviewed_at: new Date().toISOString()
     });
 
-    // Create player row with club_id and user_account_id
-    await sbPost('players', {
-      club_id:         clubId,
-      user_account_id: userAccountId,
-      nickname:        nickname,
-      gender:          gender || 'Male',
-      rating:          1.0,
-      club_rating:     1.0,
-      wins:            0,
-      losses:          0
-    });
+    // Find existing membership by club + nickname and link user_account
+    var memberships = await sbGet('memberships',
+      'club_id=eq.' + clubId + '&nickname=ilike.' + encodeURIComponent(nickname) + '&select=id,player_id'
+    ).catch(() => []);
+
+    if (memberships && memberships.length) {
+      // Link existing membership to user account
+      await sbPatch('memberships', 'id=eq.' + memberships[0].id, { user_account_id: userAccountId });
+    } else {
+      // Create player + membership (player not pre-registered)
+      var created = await sbPost('players', {
+        name:          nickname,
+        gender:        gender || 'Male',
+        global_rating: 1.0,
+        global_points: 0
+      });
+      await sbPost('memberships', {
+        player_id:       created[0].id,
+        club_id:         clubId,
+        nickname:        nickname,
+        club_rating:     1.0,
+        club_points:     0,
+        user_account_id: userAccountId
+      });
+    }
 
     return { success: true };
   } catch(e) {
