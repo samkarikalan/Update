@@ -763,8 +763,9 @@ function requestVaultMode() {
     return;
   }
 
-  // Already authenticated as admin this session
-  if (localStorage.getItem('kbrr_club_mode') === 'admin') {
+  // Already authenticated as admin or user this session
+  const clubMode = localStorage.getItem('kbrr_club_mode');
+  if (clubMode === 'admin' || clubMode === 'user') {
     appMode = 'vault';
     sessionStorage.setItem('appMode', 'vault');
     localStorage.setItem('kbrr_app_mode', 'vault');
@@ -985,7 +986,7 @@ function _showVaultPasswordPrompt() {
       <div class="mode-sheet-handle"></div>
       <div class="mode-sheet-title">🔑 Vault Manager</div>
       <p style="font-size:0.84rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5">
-        Enter the club admin password to access Vault Manager.
+        Enter your club password (member or admin) to access Vault Manager.
       </p>
       <input type="password" id="vaultPwInput" class="admin-password-input"
              placeholder="${t('enterAdminPasswordPh')}"
@@ -1017,13 +1018,15 @@ async function verifyVaultPassword() {
 
   if (errEl) errEl.textContent = t('checkingDotDot');
   try {
-    const rows = await sbGet('clubs', `id=eq.${club.id}&admin_password=eq.${encodeURIComponent(pw)}&select=id`);
-    if (!rows || !rows.length) {
+    const adminRows = await sbGet('clubs', `id=eq.${club.id}&admin_password=eq.${encodeURIComponent(pw)}&select=id`);
+    const userRows  = await sbGet('clubs', `id=eq.${club.id}&select_password=eq.${encodeURIComponent(pw)}&select=id`);
+    if ((!adminRows || !adminRows.length) && (!userRows || !userRows.length)) {
       if (errEl) errEl.textContent = t('wrongAdminPw');
       if (input) input.value = '';
       return;
     }
-    localStorage.setItem('kbrr_club_mode', 'admin');
+    const role = (adminRows && adminRows.length) ? 'admin' : 'user';
+    localStorage.setItem('kbrr_club_mode', role);
     const ov = document.getElementById('vaultPromptOverlay');
     if (ov) ov.remove();
     switchMode('vault');
