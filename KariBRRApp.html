@@ -636,7 +636,6 @@
     </div>
     <div class="pref-wrap">
 
-```
   <!-- SUBSCRIPTION -->
   <div class="pref-section-label" data-i18n="subscription">Subscription</div>
   <div class="pref-card" id="settingsTrialCard">
@@ -648,14 +647,14 @@
 
   <!-- APPEARANCE — Theme + Font + Tile Style merged -->
   <div class="pref-section-label" data-i18n="appearance">Appearance</div>
-  <div class="pref-card">
+  <div class="pref-card" id="appearanceCard">
 
     <!-- Theme -->
     <div class="pref-row">
       <span class="pref-row-label" data-i18n="theme">Theme</span>
-      <div class="pref-pill-group">
-        <button class="pref-pill active" id="theme_light" onclick="setTheme('light')" data-i18n="light">Light</button>
-        <button class="pref-pill" id="theme_dark" onclick="setTheme('dark')" data-i18n="dark">Dark</button>
+      <div class="pref-pill-group appear-pill-group" id="themePillGroup">
+        <button class="pref-pill" id="theme_light" onclick="appearSelect('theme','light',this)" data-i18n="light">Light</button>
+        <button class="pref-pill" id="theme_dark"  onclick="appearSelect('theme','dark',this)"  data-i18n="dark">Dark</button>
       </div>
     </div>
     <div class="pref-divider"></div>
@@ -663,10 +662,10 @@
     <!-- Font Size -->
     <div class="pref-row">
       <span class="pref-row-label" data-i18n="fontSize">Font Size</span>
-      <div class="pref-pill-group">
-        <button class="pref-pill active" id="font_small" onclick="setFontSize('small')" data-i18n="small">S</button>
-        <button class="pref-pill" id="font_medium" onclick="setFontSize('medium')" data-i18n="medium">M</button>
-        <button class="pref-pill" id="font_large" onclick="setFontSize('large')" data-i18n="large">L</button>
+      <div class="pref-pill-group appear-pill-group" id="fontPillGroup">
+        <button class="pref-pill" id="font_small"  onclick="appearSelect('font','small',this)"  data-i18n="small">Small</button>
+        <button class="pref-pill" id="font_medium" onclick="appearSelect('font','medium',this)" data-i18n="medium">Medium</button>
+        <button class="pref-pill" id="font_large"  onclick="appearSelect('font','large',this)"  data-i18n="large">Large</button>
       </div>
     </div>
     <div class="pref-divider"></div>
@@ -675,9 +674,9 @@
     <div class="pref-row" style="flex-direction:column;align-items:stretch;gap:10px;">
       <span class="pref-row-label" data-i18n="tileStyle">Tile Style</span>
       <div style="display:flex;gap:8px;">
-        <button id="styleBtn1" onclick="setTileStyle('flat')" class="tile-style-btn active" data-i18n="flat">Flat</button>
-        <button id="styleBtn2" onclick="setTileStyle('glow')" class="tile-style-btn" data-i18n="glow">Glow</button>
-        <button id="styleBtn3" onclick="setTileStyle('color')" class="tile-style-btn" data-i18n="color">Color</button>
+        <button id="styleBtn1" onclick="appearSelect('tile','flat',this)"  class="tile-style-btn" data-i18n="flat">Flat</button>
+        <button id="styleBtn2" onclick="appearSelect('tile','glow',this)"  class="tile-style-btn" data-i18n="glow">Glow</button>
+        <button id="styleBtn3" onclick="appearSelect('tile','color',this)" class="tile-style-btn" data-i18n="color">Color</button>
       </div>
       <!-- Live Preview -->
       <div class="style-preview-box" id="stylePreviewBox">
@@ -693,6 +692,19 @@
           <span class="spw-arr">›</span>
         </div>
       </div>
+    </div>
+
+    <!-- Live preview bar -->
+    <div class="pref-divider"></div>
+    <div class="appear-preview-bar" id="appearPreviewBar" style="display:none;">
+      <span class="appear-preview-label" id="appearPreviewLabel"></span>
+    </div>
+
+    <!-- Apply Button -->
+    <div style="padding:14px 0 4px;">
+      <button class="appear-apply-btn" id="appearApplyBtn" onclick="appearApply()">
+        <span id="appearApplyIcon">✦</span> Apply Changes
+      </button>
     </div>
 
   </div>
@@ -712,7 +724,6 @@
   </div>
 
 </div>
-```
 
   </div>
 

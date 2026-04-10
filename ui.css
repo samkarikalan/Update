@@ -7099,3 +7099,58 @@ select.vm-field-input option { background: var(--surface2); }
 .mode-select-btn.settings { border-color: rgba(150,150,150,0.2); }
 .mode-select-btn.settings .mode-select-btn-icon { background: var(--surface2); }
 .mode-select-btn.settings .mode-select-btn-name { color: var(--text); }
+
+/* ── Appearance Panel Enhancements ── */
+.appear-pill-group { transition: all 0.2s; }
+
+@keyframes appearPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); box-shadow: 0 0 0 6px var(--accent-glow); }
+  100% { transform: scale(1); }
+}
+.appear-pulse { animation: appearPulse 0.4s ease; }
+
+body.appear-transitioning * { transition: background 0.5s ease, color 0.4s ease !important; }
+
+.appear-preview-bar {
+  padding: 8px 12px;
+  background: var(--accent-dim);
+  border-radius: 10px;
+  margin: 4px 0;
+}
+.appear-preview-label {
+  font-size: 0.82rem;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.appear-apply-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 2px solid var(--border2);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  letter-spacing: 0.02em;
+}
+.appear-apply-btn.appear-apply-ready {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 6px 20px var(--accent-glow);
+  transform: scale(1.02);
+}
+@keyframes applySuccess {
+  0%   { transform: scale(1.02); }
+  50%  { transform: scale(1.08); background: var(--green); border-color: var(--green); box-shadow: 0 6px 20px rgba(45,206,137,0.5); }
+  100% { transform: scale(1); }
+}
+.appear-apply-btn.appear-apply-success {
+  animation: applySuccess 0.5s ease forwards;
+}
+

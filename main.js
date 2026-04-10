@@ -542,6 +542,7 @@ function showPage(pageID, el) {
     if (typeof subShowTrialBanner === 'function') subShowTrialBanner();
     updateModePill(localStorage.getItem('kbrr_app_mode') || 'organiser');
     loadHomeStyle();
+    if (typeof appearSyncFromSaved === 'function') appearSyncFromSaved();
   }
 
   if (pageID === "helpPage") {

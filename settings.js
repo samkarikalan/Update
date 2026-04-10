@@ -90,95 +90,151 @@ setLanguage(lang);
 }
 
 function initTheme() {
-const saved = localStorage.getItem('app-theme');
-if (saved) {
-applyTheme(saved);
-} else {
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-applyTheme(prefersDark ? 'dark' : 'light');
-}
+  const saved = localStorage.getItem('app-theme');
+  if (saved) applyTheme(saved);
+  else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark ? 'dark' : 'light');
+  }
 }
 
 function initFontSize() {
-const savedSize = localStorage.getItem("appFontSize") || "medium";
-setFontSize(savedSize);
+  const savedSize = localStorage.getItem("appFontSize") || "medium";
+  setFontSize(savedSize);
 }
 
 function applyTheme(mode) {
-document.body.classList.toggle('app-light', mode === 'light');
-document.body.classList.toggle('app-dark',  mode === 'dark');
-document.getElementById('theme_light')?.classList.toggle('active', mode === 'light');
-document.getElementById('theme_dark')?.classList.toggle('active',  mode === 'dark');
-localStorage.setItem('app-theme', mode);
+  document.body.classList.toggle('app-light', mode === 'light');
+  document.body.classList.toggle('app-dark',  mode === 'dark');
+  document.getElementById('theme_light')?.classList.toggle('active', mode === 'light');
+  document.getElementById('theme_dark')?.classList.toggle('active',  mode === 'dark');
+  localStorage.setItem('app-theme', mode);
 }
 
 function setTheme(mode) {
-applyTheme(mode);
-}
-
-/* ===== Init ===== */
-initTheme();
-
-document.addEventListener("DOMContentLoaded", () => {
-initTheme();     // restore theme
-initFontSize();  // restore font size
-initLanguage();  // restore language
-});
-
-function setLanguage(lang) {
-currentLang = lang;
-localStorage.setItem("appLanguage", lang);
-
-document.querySelectorAll("[id^='lang_']").forEach(btn => {
-btn.classList.remove("active");
-});
-document.getElementById("lang_" + lang)?.classList.add("active");
-
-document.querySelectorAll("[data-i18n]").forEach(el => {
-const key = el.dataset.i18n;
-el.textContent = translations[lang][key] || key;
-});
-
-document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
-const key = el.dataset.i18nPlaceholder;
-el.placeholder = translations[lang][key] || "";
-});
-
-if (typeof loadHelp === "function") loadHelp(currentHelpSection);
-// Refresh all dynamic content after language change
-if (typeof homeUpdateStepper    === "function") homeUpdateStepper();
-if (typeof homeRefreshTiles     === "function") homeRefreshTiles();
-if (typeof updateModePill       === "function") updateModePill(localStorage.getItem('kbrr_app_mode') || 'viewer');
-if (typeof subShowTrialBanner   === "function") subShowTrialBanner();
-if (typeof clubLoginRefresh     === "function") clubLoginRefresh();
-if (typeof updateGearPairsSub   === "function") updateGearPairsSub();
-if (typeof renderRoundHistory   === "function") {
-var gearBody = document.getElementById('roundSettingsBody');
-if (gearBody && gearBody.classList.contains('open')) renderRoundHistory();
-}
-}
-
-function updateRoundTitle(round) {
-const roundTitle = document.getElementById("roundTitle");
-if (!roundTitle) return;
-
-roundTitle.innerText = `${translations[currentLang].nround} ${round}`;
+  applyTheme(mode);
 }
 
 function setFontSize(size) {
-const root = document.documentElement;
+  const root = document.documentElement;
+  if (size === "small")  root.style.setProperty("--base-font-size", "21px");
+  if (size === "medium") root.style.setProperty("--base-font-size", "24px");
+  if (size === "large")  root.style.setProperty("--base-font-size", "27px");
+  localStorage.setItem("appFontSize", size);
+  document.querySelectorAll("#font_small, #font_medium, #font_large").forEach(el => {
+    el.classList.remove("active");
+  });
+  document.getElementById(`font_${size}`)?.classList.add("active");
+}
 
-if (size === "small") root.style.setProperty("--base-font-size", "21px");
-if (size === "medium") root.style.setProperty("--base-font-size", "24px");
-if (size === "large") root.style.setProperty("--base-font-size", "27px");
+/* ── Appearance panel: pending selections ── */
+var _appearPending = { theme: null, font: null, tile: null };
 
-localStorage.setItem("appFontSize", size); // 👈 SAVE (ADD THIS)
+function appearSyncFromSaved() {
+  // Sync pill active states from saved prefs (called when settings page opens)
+  const theme = localStorage.getItem('app-theme') || 'dark';
+  const font  = localStorage.getItem('appFontSize') || 'medium';
+  const tile  = localStorage.getItem('kbrr_tile_style') || 'flat';
 
-document.querySelectorAll("#font_small, #font_medium, #font_large").forEach(el => {
-el.classList.remove("active");
-});
+  ['theme_light','theme_dark'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  document.getElementById(theme === 'light' ? 'theme_light' : 'theme_dark')?.classList.add('active');
 
-document.getElementById(`font_${size}`)?.classList.add("active");
+  ['font_small','font_medium','font_large'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  document.getElementById('font_' + font)?.classList.add('active');
+
+  ['styleBtn1','styleBtn2','styleBtn3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const tileMap = { flat: 'styleBtn1', glow: 'styleBtn2', color: 'styleBtn3' };
+  document.getElementById(tileMap[tile])?.classList.add('active');
+
+  // Reset pending
+  _appearPending = { theme: null, font: null, tile: null };
+  _appearUpdateApplyBtn();
+}
+
+function appearSelect(type, value, btn) {
+  // Animate pill selection
+  const group = btn.closest('.appear-pill-group') || btn.parentElement;
+  group.querySelectorAll('.pref-pill, .tile-style-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Pulse animation on button
+  btn.classList.add('appear-pulse');
+  setTimeout(() => btn.classList.remove('appear-pulse'), 400);
+
+  // Store pending
+  _appearPending[type] = value;
+
+  // Show live preview for theme and font immediately
+  if (type === 'theme') {
+    // Live preview: flash the body class temporarily with animation
+    document.body.classList.add('appear-transitioning');
+    applyTheme(value);
+    setTimeout(() => document.body.classList.remove('appear-transitioning'), 600);
+  }
+  if (type === 'font') {
+    setFontSize(value);
+  }
+  if (type === 'tile') {
+    setTileStyle(value);
+  }
+
+  _appearUpdateApplyBtn();
+}
+
+function _appearUpdateApplyBtn() {
+  const btn   = document.getElementById('appearApplyBtn');
+  const bar   = document.getElementById('appearPreviewBar');
+  const label = document.getElementById('appearPreviewLabel');
+  if (!btn) return;
+
+  const hasPending = Object.values(_appearPending).some(v => v !== null);
+  if (hasPending) {
+    btn.classList.add('appear-apply-ready');
+    if (bar) bar.style.display = '';
+    const parts = [];
+    if (_appearPending.theme) parts.push((_appearPending.theme === 'light' ? '☀️ Light' : '🌙 Dark') + ' theme');
+    if (_appearPending.font)  parts.push(_appearPending.font + ' font');
+    if (_appearPending.tile)  parts.push(_appearPending.tile + ' tiles');
+    if (label) label.textContent = '→ ' + parts.join(' · ');
+  } else {
+    btn.classList.remove('appear-apply-ready');
+    if (bar) bar.style.display = 'none';
+  }
+}
+
+function appearApply() {
+  const btn = document.getElementById('appearApplyBtn');
+  const icon = document.getElementById('appearApplyIcon');
+
+  // Apply all pending
+  if (_appearPending.theme) applyTheme(_appearPending.theme);
+  if (_appearPending.font)  setFontSize(_appearPending.font);
+  if (_appearPending.tile)  setTileStyle(_appearPending.tile);
+
+  // Success animation
+  if (btn) {
+    btn.classList.add('appear-apply-success');
+    if (icon) icon.textContent = '✓';
+    btn.textContent = '';
+    btn.innerHTML = '<span id="appearApplyIcon">✓</span> Applied!';
+    setTimeout(() => {
+      btn.classList.remove('appear-apply-ready', 'appear-apply-success');
+      btn.innerHTML = '<span id="appearApplyIcon">✦</span> Apply Changes';
+    }, 1500);
+  }
+
+  _appearPending = { theme: null, font: null, tile: null };
+  const bar = document.getElementById('appearPreviewBar');
+  if (bar) bar.style.display = 'none';
 }
 
 function ResetAll() {
