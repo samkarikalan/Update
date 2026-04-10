@@ -168,9 +168,9 @@ roundTitle.innerText = `${translations[currentLang].nround} ${round}`;
 function setFontSize(size) {
 const root = document.documentElement;
 
-if (size === "small") root.style.setProperty("-base-font-size", "16px");
-if (size === "medium") root.style.setProperty("-base-font-size", "19px");
-if (size === "large") root.style.setProperty("-base-font-size", "22px");
+if (size === "small") root.style.setProperty("--base-font-size", "21px");
+if (size === "medium") root.style.setProperty("--base-font-size", "24px");
+if (size === "large") root.style.setProperty("--base-font-size", "27px");
 
 localStorage.setItem("appFontSize", size); // 👈 SAVE (ADD THIS)
 
