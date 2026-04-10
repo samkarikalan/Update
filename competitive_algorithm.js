@@ -1,5 +1,5 @@
 /* ============================================================
-   ALGORITHM — Original Round Scheduler (restored)
+   ALGORITHM -- Original Round Scheduler (restored)
    
    Functions:
    - AischedulerNextRound   : main entry, rest + pair + matchup
@@ -704,7 +704,7 @@ function getMatchupScores(allPairs, opponentMap) {
       matchupScores.push({
         pair1: allPairs[i],
         pair2: allPairs[j],
-        freshness,         // 0–4
+        freshness,         // 0-4
         totalScore,        // numeric repetition penalty
         opponentFreshness, // for tie-breaking only
       });

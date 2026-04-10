@@ -1,5 +1,5 @@
 /* ============================================================
-   report.js — Club Monthly Report Generator
+   report.js -- Club Monthly Report Generator
    Reads from: players (via memberships), sessions array
    Exports to: kariscs/SCS_Report on GitHub Pages
    ============================================================ */
@@ -27,7 +27,7 @@ async function reportFetchData() {
 
   const month = reportCurrentMonth();
 
-  // 1. Get all completed sessions for this club this month — same as dashboard
+  // 1. Get all completed sessions for this club this month -- same as dashboard
   const allSessions = await sbGet('sessions',
     `club_id=eq.${club.id}&status=eq.completed&select=id,date,players,rounds_data,shuttle_data`
   );
@@ -101,9 +101,9 @@ function reportBuildHTML({ club, players, monthLabel }) {
   const maxPts     = Math.max(...players.map(p => p.points), 1);
 
   const totalCost  = players.reduce((a, p) => a + p.monthCost, 0);
-  const avgRating  = players.length ? (players.reduce((a,p) => a+p.rating,0)/players.length).toFixed(1) : '—';
-  const avgSess    = players.length ? (players.reduce((a,p) => a+p.sessCount,0)/players.length).toFixed(1) : '—';
-  const topRating  = players.length ? players[0].rating.toFixed(1) : '—';
+  const avgRating  = players.length ? (players.reduce((a,p) => a+p.rating,0)/players.length).toFixed(1) : '--';
+  const avgSess    = players.length ? (players.reduce((a,p) => a+p.sessCount,0)/players.length).toFixed(1) : '--';
+  const topRating  = players.length ? players[0].rating.toFixed(1) : '--';
   const mostActive = players.length ? [...players].sort((a,b)=>b.sessCount-a.sessCount)[0] : null;
   const topPts     = players.length ? [...players].sort((a,b)=>b.points-a.points)[0] : null;
 
@@ -135,7 +135,7 @@ function reportBuildHTML({ club, players, monthLabel }) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${club.name} — ${monthLabel} Report</title>
+<title>${club.name} -- ${monthLabel} Report</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -185,7 +185,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a12;color:#fff;padding:16px
 </head>
 <body>
 
-<!-- WIDGET 1 — RATING -->
+<!-- WIDGET 1 -- RATING -->
 <div class="widget w1">
   <div class="w-header">
     <div class="w-club">${club.name} · ${monthLabel}</div>
@@ -194,7 +194,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a12;color:#fff;padding:16px
     <div class="w-meta">
       <div class="w-meta-item">Top <strong>${topRating}</strong></div>
       <div class="w-meta-item">Avg <strong>${avgRating}</strong></div>
-      <div class="w-meta-item">Scale <strong>0 – 5</strong></div>
+      <div class="w-meta-item">Scale <strong>0 - 5</strong></div>
     </div>
   </div>
   <div class="w-divider"></div>
@@ -204,14 +204,14 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a12;color:#fff;padding:16px
   <div class="w-axis">${axisLabels(['0','1','2','3','4','5'])}</div>
 </div>
 
-<!-- WIDGET 2 — SESSIONS -->
+<!-- WIDGET 2 -- SESSIONS -->
 <div class="widget w2">
   <div class="w-header">
     <div class="w-club">${club.name} · ${monthLabel}</div>
     <div class="w-title">Sessions</div>
     <div class="w-icon">🎮</div>
     <div class="w-meta">
-      <div class="w-meta-item">Most <strong>${mostActive ? mostActive.sessCount : '—'}</strong></div>
+      <div class="w-meta-item">Most <strong>${mostActive ? mostActive.sessCount : '--'}</strong></div>
       <div class="w-meta-item">Avg <strong>${avgSess}</strong></div>
     </div>
   </div>
@@ -222,7 +222,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a12;color:#fff;padding:16px
   <div class="w-axis">${axisLabels(['0','','','','',maxSess])}</div>
 </div>
 
-<!-- WIDGET 3 — COST -->
+<!-- WIDGET 3 -- COST -->
 <div class="widget w3">
   <div class="w-header">
     <div class="w-club">${club.name} · ${monthLabel}</div>
@@ -240,14 +240,14 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a12;color:#fff;padding:16px
   <div class="w-axis">${axisLabels(['¥0','','','','','¥'+maxCost.toLocaleString()])}</div>
 </div>
 
-<!-- WIDGET 4 — POINTS -->
+<!-- WIDGET 4 -- POINTS -->
 <div class="widget w4">
   <div class="w-header">
     <div class="w-club">${club.name} · ${monthLabel}</div>
     <div class="w-title">Points</div>
     <div class="w-icon">🏆</div>
     <div class="w-meta">
-      <div class="w-meta-item">Top <strong>${topPts ? topPts.points : '—'} pts</strong></div>
+      <div class="w-meta-item">Top <strong>${topPts ? topPts.points : '--'} pts</strong></div>
     </div>
   </div>
   <div class="w-divider"></div>
@@ -323,19 +323,19 @@ async function reportGenerate() {
 
   if (btnEl) btnEl.disabled = true;
   if (linkEl) linkEl.style.display = 'none';
-  setStatus(t('loading') + '…');
+  setStatus(t('loading') + '...');
 
   try {
     // 1. Fetch data
-    setStatus('📊 ' + (t('loading') || 'Loading data…'));
+    setStatus('📊 ' + (t('loading') || 'Loading data...'));
     const data = await reportFetchData();
 
     // 2. Build HTML
-    setStatus('🎨 Building report…');
+    setStatus('🎨 Building report...');
     const html = reportBuildHTML(data);
 
     // 3. Export to GitHub
-    setStatus('☁️ Uploading…');
+    setStatus('☁️ Uploading...');
     const clubSlug = data.club.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g,'');
     const url = await reportExportToGitHub(html, clubSlug, data.month);
 

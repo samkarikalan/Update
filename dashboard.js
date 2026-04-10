@@ -1,5 +1,5 @@
 /* ============================================================
-   DASHBOARD — Live & past sessions for the club
+   DASHBOARD -- Live & past sessions for the club
    File: dashboard.js
    ============================================================ */
 
@@ -7,7 +7,7 @@ var _dashboardTimer     = null;
 var _dashboardPollTimer = null;
 var _dashboardLiveIds   = []; // track current live session IDs
 
-/* ── Dashboard polling — detects session status changes ── */
+/* ── Dashboard polling -- detects session status changes ── */
 function dashboardStartPoll() {
   dashboardStopPoll();
   _dashboardPollTimer = setInterval(async () => {
@@ -99,7 +99,7 @@ async function renderDashboard() {
 
     container.innerHTML = '';
 
-    // For viewer — enrich sessions with club names
+    // For viewer -- enrich sessions with club names
     if (isViewer && (liveSessions.length || pastSessions.length)) {
       try {
         const allClubIds = [...new Set([
@@ -125,7 +125,7 @@ async function renderDashboard() {
 
     if (liveSessions.length) {
       liveSessions.forEach(sess => {
-        // live_sessions are grouped by club — players array is from per-player rows
+        // live_sessions are grouped by club -- players array is from per-player rows
         const players     = (sess.players && sess.players.length) ? sess.players : _extractPlayersFromRounds(sess.rounds_data || []);
         const totalRounds = (sess.rounds_data || []).length || null;
         const cardClubName = isViewer ? (sess.club_name || sess.club_id || '') : (club ? club.name : '');
@@ -258,7 +258,7 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
     card.addEventListener('click', () => _openSessionRounds(sessionId));
   }
 
-  // Shuttle cost row — past sessions only
+  // Shuttle cost row -- past sessions only
   if (!isLive && shuttleData) {
     const shuttleRow = document.createElement('div');
     shuttleRow.className = 'dash-shuttle-row';
@@ -279,7 +279,7 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
     card.appendChild(shuttleRow);
   }
 
-  // Force End button — admin only, live sessions only
+  // Force End button -- admin only, live sessions only
   const isAdmin = (typeof isAdminMode === 'function') ? isAdminMode() : localStorage.getItem('kbrr_club_mode') === 'admin';
   if (isLive && isAdmin) {
     const footer = document.createElement('div');
@@ -308,7 +308,7 @@ function _buildSessionCard({ clubName, starter, players, totalRounds, isLive, se
   return card;
 }
 
-/* ── Open rounds view — navigates to viewerPage ── */
+/* ── Open rounds view -- navigates to viewerPage ── */
 function _openSessionRounds(sessionId) {
   if (typeof viewerOpen === 'function') viewerOpen(sessionId);
 }

@@ -7,7 +7,7 @@
    HELPERS
 ========================= */
 
-// Universal unique-add utility — used for all three lists
+// Universal unique-add utility -- used for all three lists
 function addToListIfNotExists(list, player) {
   const exists = list.findIndex(
     p => p.displayName.trim().toLowerCase() === player.displayName.trim().toLowerCase()
@@ -86,7 +86,7 @@ const newImportState = {
   unavailablePlayers: new Set()
 };
 
-/* ── Availability helper — used by ALL card renderers ── */
+/* ── Availability helper -- used by ALL card renderers ── */
 function playerAvailDot(displayName) {
   const busy = (newImportState.unavailablePlayers || new Set())
     .has((displayName || "").trim().toLowerCase());
@@ -156,7 +156,7 @@ function newImportShowModal() {
       schedulerState.allPlayers && schedulerState.allPlayers.length > 0;
     replaceBtn.style.display = hasPlayers ? '' : 'none';
   }
-  // Load availability status in background — refresh cards when done
+  // Load availability status in background -- refresh cards when done
   if (typeof dbGetUnavailablePlayers === "function") {
     dbGetUnavailablePlayers().then(unavailable => {
       newImportState.unavailablePlayers = unavailable;
@@ -206,7 +206,7 @@ function newImportShowSelectMode(mode) {
     return;
   }
 
-  // Leaving addplayers tab — reset star toggle state
+  // Leaving addplayers tab -- reset star toggle state
   newImportResetFavToggle();
 
   listContainer.style.display = "flex";
@@ -243,7 +243,7 @@ function isValidPlayerName(name) {
 }
 
 /* =========================
-   STORAGE — HISTORY
+   STORAGE -- HISTORY
 ========================= */
 function newImportLoadHistory() {
   const raw = JSON.parse(localStorage.getItem("newImportHistory") || "[]");
@@ -255,7 +255,7 @@ function newImportLoadHistory() {
 // Filter history and favourites to only players in the current club
 async function _newImportFilterToClub() {
   const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
-  if (!club.id) return; // no club — show all history as-is
+  if (!club.id) return; // no club -- show all history as-is
 
   try {
     const clubPlayers = await dbGetPlayers();
@@ -273,11 +273,11 @@ async function _newImportFilterToClub() {
     );
 
     newImportRefreshSelectCards();
-  } catch(e) { /* silent — fall back to unfiltered */ }
+  } catch(e) { /* silent -- fall back to unfiltered */ }
 }
 
 /* =========================
-   STORAGE — FAVORITES (individual players)
+   STORAGE -- FAVORITES (individual players)
 ========================= */
 function newImportLoadFavorites() {
   const data = localStorage.getItem("newImportFavorites");
@@ -290,7 +290,7 @@ function newImportSaveFavorites() {
 }
 
 /* =========================
-   STORAGE — FAVORITE SETS
+   STORAGE -- FAVORITE SETS
 ========================= */
 function newImportLoadFavoriteSets() {
   try { return JSON.parse(localStorage.getItem("newImportFavoriteSets") || "[]"); }
@@ -302,7 +302,7 @@ function newImportSaveFavoriteSets(sets) {
 }
 
 /* =========================
-   RENDER — SELECT CARDS
+   RENDER -- SELECT CARDS
 ========================= */
 function newImportRefreshSelectCards() {
   if (newImportState.currentSelectMode === "addplayers") return;
@@ -619,7 +619,7 @@ function newImportHandleCardClick(e) {
     return;
   }
 
-  // TOGGLE GENDER — disabled, edits only in Vault Modify
+  // TOGGLE GENDER -- disabled, edits only in Vault Modify
   if (action === "gender") { return; }
 
   // TOGGLE FAVORITE
@@ -777,7 +777,7 @@ function newImportClearFavorites() {
 }
 
 /* =========================
-   FAVORITE SETS — SAVE INPUT TOGGLE
+   FAVORITE SETS -- SAVE INPUT TOGGLE
 ========================= */
 function newImportResetFavToggle() {
   const row  = document.getElementById("newImportFavoriteSetRow");
@@ -798,13 +798,13 @@ function newImportToggleAddFav() {
   const isOpen = row.style.display !== "none";
 
   if (isOpen) {
-    // Close — turn star off
+    // Close -- turn star off
     row.style.display            = "none";
     icon.textContent             = "☆";
     icon.style.color             = "rgba(255,255,255,0.5)";
     newImportState.addToFavOnAdd = false;
   } else {
-    // Open — turn star on
+    // Open -- turn star on
     row.style.display            = "block";
     icon.textContent             = "★";
     icon.style.color             = "var(--amber)";
@@ -831,7 +831,7 @@ function newImportSaveFavoriteSet() {
     s => s.name.trim().toLowerCase() === setName.toLowerCase()
   );
   if (existingIdx >= 0) {
-    // Same name exists — ask user to confirm overwrite or pick a new name
+    // Same name exists -- ask user to confirm overwrite or pick a new name
     const overwrite = confirm(`"${sets[existingIdx].name}" ${t('alreadyExists')}.\n${t('replaceBtn')}?`);
     if (!overwrite) {
       setNameInput.focus();
@@ -910,7 +910,7 @@ function addPlayer() {
 
   // For names not in local history, check global players cache
   // Cache is synced on app load and after every round
-  // A player can't be deleted — if they exist anywhere they're valid
+  // A player can't be deleted -- if they exist anywhere they're valid
   let fromSupabase = [];
   if (notFoundNames.length) {
     const cached = typeof getGlobalPlayersCache === "function" ? getGlobalPlayersCache() : [];
@@ -983,7 +983,7 @@ function addPlayerSendToRegister(names) {
   }
 
   // Force-show Register tab button before switching (it may be hidden)
-  // (Vault tab removed from import modal — register now handled via Vault page)
+  // (Vault tab removed from import modal -- register now handled via Vault page)
 
   // Switch to addplayers tab as fallback
   const addBtn = document.getElementById("newImportAddplayersBtn");
@@ -1017,7 +1017,7 @@ function addPlayerSendToRegister(names) {
 }
 
 /* =========================
-   FINAL IMPORT — OK button
+   FINAL IMPORT -- OK button
 ========================= */
 function newImportAddPlayers() {
   if (!newImportState.selectedPlayers.length) { alert("No players selected"); return; }
@@ -1025,7 +1025,7 @@ function newImportAddPlayers() {
 }
 
 /* =============================================================
-   REGISTER TAB — Supabase DB player registration
+   REGISTER TAB -- Supabase DB player registration
    Added: step82
 ============================================================= */
 
@@ -1205,7 +1205,7 @@ async function regRegisterAll() {
     return;
   }
 
-  // Use a placeholder — actual auth done at club join time
+  // Use a placeholder -- actual auth done at club join time
   const adminPassword = "__session_admin__";
 
   const pending = _regStagingList.filter(p => p.status === "pending" || p.status === "error" || p.status === "duplicate");
@@ -1259,7 +1259,7 @@ async function regRegisterAll() {
 }
 
 /* =============================================================
-   ADD PLAYERS — BROWSE TAB
+   ADD PLAYERS -- BROWSE TAB
 ============================================================= */
 
 let _browseAllPlayers = []; // cached list for current scope
@@ -1295,7 +1295,7 @@ async function addPlayersBrowseLoad() {
   try {
     let players = [];
     if (scope === "club") {
-      // Fetch club members directly from DB — always fresh to avoid stale cache
+      // Fetch club members directly from DB -- always fresh to avoid stale cache
       const clubPlayers = await dbGetPlayers(true);
       players = (clubPlayers || []).map(p => ({
         displayName: p.name,

@@ -89,7 +89,7 @@ function subPurchase() {
       });
   } else {
     // Fallback for web testing
-    console.log('Billing not available — web mode');
+    console.log('Billing not available -- web mode');
     showToastMsg(t('billingAppOnly'));
   }
 }

@@ -1,5 +1,5 @@
 /* ============================================================
-   ROUNDS TAB — Court setup, scheduling algorithm, rest queue, global state
+   ROUNDS TAB -- Court setup, scheduling algorithm, rest queue, global state
    File: rounds.js
    ============================================================ */
 
@@ -168,7 +168,7 @@ function goToRounds() {
     allRounds.push(AischedulerNextRound(schedulerState));
     currentRoundIndex = 0;
     showRound(0);
-    // Ensure live session is registered — retries silently if it fails
+    // Ensure live session is registered -- retries silently if it fails
     ensureLiveSession();
   } else {   
       schedulerState.numCourts = numCourts;      
@@ -197,14 +197,14 @@ function goBack() {
   btn.disabled = false;
 }
 
-/* ── Ensure live session exists — retries silently until success ── */
+/* ── Ensure live session exists -- retries silently until success ── */
 async function ensureLiveSession() {
   try {
     const existingId = (typeof getMySessionId === 'function') ? getMySessionId() : null;
     if (existingId) return; // already registered
 
     const club = (typeof getMyClub === 'function') ? getMyClub() : null;
-    if (!club || !club.id) return; // no club yet — will retry next round
+    if (!club || !club.id) return; // no club yet -- will retry next round
 
     if (typeof dbStartSession === 'function') {
       await dbStartSession();
@@ -213,7 +213,7 @@ async function ensureLiveSession() {
       if (typeof startSessionHeartbeat === 'function') startSessionHeartbeat();
     }
   } catch(e) {
-    console.warn('ensureLiveSession failed — will retry next round:', e.message);
+    console.warn('ensureLiveSession failed -- will retry next round:', e.message);
   }
 }
 
@@ -518,7 +518,7 @@ for (const game of games) {
   }
 }
 
-// Rating updates — all modes
+// Rating updates -- all modes
 // Also track wins/losses per player this round
 const roundWins         = new Map();
 const roundLosses       = new Map();
@@ -620,23 +620,23 @@ function RefreshRound() {
     schedulerState.roundIndex = allRounds.length - 1;
     currentRoundIndex = schedulerState.roundIndex;
 
-    // Use RandomRound directly — it uses pairPlayedSet + lastRound
+    // Use RandomRound directly -- it uses pairPlayedSet + lastRound
     // to actively avoid repeating pairs, giving genuine variety on reshuffle
     const newRound = RandomRound(schedulerState);
     newRound.round = savedRoundIndex + 1; // keep round number stable
 
-    // Restore roundIndex — shuffle should not advance the round counter
+    // Restore roundIndex -- shuffle should not advance the round counter
     schedulerState.roundIndex = savedRoundIndex;
     allRounds[allRounds.length - 1] = newRound;
     showRound(currentRoundIndex);
 }
 
 function ratingToColor(r) {
-  if (r < 2.0) return "#9e9e9e";  // grey  — beginner
-  if (r < 3.0) return "#4a9eff";  // blue  — developing
-  if (r < 4.0) return "#2dce89";  // green — intermediate
-  if (r < 4.5) return "#f5a623";  // amber — advanced
-  return "#e63757";                // red   — elite
+  if (r < 2.0) return "#9e9e9e";  // grey  -- beginner
+  if (r < 3.0) return "#4a9eff";  // blue  -- developing
+  if (r < 4.0) return "#2dce89";  // green -- intermediate
+  if (r < 4.5) return "#f5a623";  // amber -- advanced
+  return "#e63757";                // red   -- elite
 }
 
 function report() {

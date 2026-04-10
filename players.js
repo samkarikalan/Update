@@ -1,5 +1,5 @@
 /* ============================================================
-   PLAYERS TAB — Add, edit, delete, players and fixed pairs
+   PLAYERS TAB -- Add, edit, delete, players and fixed pairs
    File: players.js
    ============================================================ */
 
@@ -327,7 +327,7 @@ function removeFixedPairsForPlayer(playerName) {
 ========================= */
 
 /* =========================
-   RATING SYNC — schedulerState → history
+   RATING SYNC -- schedulerState → history
    Called after save so import history carries latest ratings
 ========================= */
 
@@ -417,7 +417,7 @@ function hideImportModal() {
   document.getElementById('newImportModal').style.display = 'none';
 }
 
-// OK button — moves selectedPlayers into scheduler
+// OK button -- moves selectedPlayers into scheduler
 function addPlayersFromInputUI(replace) {
   const importPlayers = newImportState.selectedPlayers;
   if (!importPlayers || importPlayers.length === 0) { alert('No players selected!'); return; }

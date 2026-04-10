@@ -1,5 +1,5 @@
 /* ============================================================
-   HELP MODULE — Redesigned with search, accordion, sections
+   HELP MODULE -- Redesigned with search, accordion, sections
    File: help.js
    ============================================================ */
 

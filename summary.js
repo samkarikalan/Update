@@ -1,5 +1,5 @@
 /* ============================================================
-   SUMMARY TAB — Round report and HTML export
+   SUMMARY TAB -- Round report and HTML export
    File: summary.js
    ============================================================ */
 

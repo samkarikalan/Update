@@ -1,5 +1,5 @@
 /* =============================================
-CLUB SCHEDULER PRO — Dark Theme
+CLUB SCHEDULER PRO -- Dark Theme
 BRRStyle1.css (Global / Layout / Players)
 ============================================= */
 
@@ -28,8 +28,8 @@ BRRStyle1.css (Global / Layout / Players)
 --text-dim:   #a0a0c0;
 --muted:      #6060a0;
 
---font-display: ‘Space Grotesk’, sans-serif;
---font-body:    ‘DM Sans’, -apple-system, BlinkMacSystemFont, sans-serif;
+--font-display: 'Space Grotesk', sans-serif;
+--font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 
 --r-sm: 10px;
 --r-md: 14px;
@@ -136,7 +136,7 @@ body.app-dark .lock-icon {
   padding: 0;
 }
 
-/* Organiser mode — scrollable tabs */
+/* Organiser mode -- scrollable tabs */
 body.organiser-tabs .tabs-container {
   overflow-x: auto;
   overflow-y: hidden;
@@ -265,7 +265,7 @@ height: 44px; min-height: 44px; box-sizing: border-box;
 .player-edit-card.male { background: linear-gradient(135deg,rgba(108,99,255,0.1),var(--surface2)); border-color: rgba(108,99,255,0.25); }
 .player-edit-card.female { background: linear-gradient(135deg,rgba(255,101,132,0.1),var(--surface2)); border-color: rgba(255,101,132,0.25); }
 .player-edit-card.inactive { opacity: 0.35; background: var(--surface2) !important; border-color: var(--border) !important; filter: grayscale(0.8); }
-.player-edit-card.inactive button, .player-edit-card.inactive input[type=“checkbox”] { opacity:1!important;pointer-events:auto!important;filter:none!important; }
+.player-edit-card.inactive button, .player-edit-card.inactive input[type="checkbox"] { opacity:1!important;pointer-events:auto!important;filter:none!important; }
 .pec-active,.pec-sl,.pec-gender { text-align: center; }
 .pec-sl { font-weight: 600; color: var(--muted); }
 .gender-icon { cursor: pointer; }
@@ -439,10 +439,10 @@ font-weight: 600;
 .player-help section {
 display: none;
 }
-.player-help.lang-en section[data-lang=“en”],
-.player-help.lang-jp section[data-lang=“jp”],
-.player-help.lang-kr section[data-lang=“kr”],
-.player-help.lang-vi section[data-lang=“vi”] {
+.player-help.lang-en section[data-lang="en"],
+.player-help.lang-jp section[data-lang="jp"],
+.player-help.lang-kr section[data-lang="kr"],
+.player-help.lang-vi section[data-lang="vi"] {
 display: block;
 }
 .lang-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 5px; }
@@ -452,7 +452,7 @@ display: block;
 .lang-select { background: transparent; border: none; color: var(--text); font-size: 1rem; width: 100%; outline: none; }
 .fixed-sl { text-align: center; font-weight: 600; color: var(--muted); }
 .player-help section { display: none; }
-.player-help.lang-en section[data-lang=“en”], .player-help.lang-jp section[data-lang=“jp”], .player-help.lang-kr section[data-lang=“kr”], .player-help.lang-vi section[data-lang=“vi”] { display: block; }
+.player-help.lang-en section[data-lang="en"], .player-help.lang-jp section[data-lang="jp"], .player-help.lang-kr section[data-lang="kr"], .player-help.lang-vi section[data-lang="vi"] { display: block; }
 
 
 .round-settings-body {
@@ -556,7 +556,7 @@ display: block;
   gap: 8px;
 }
 
-/* ── Left side — clickable expand ── */
+/* ── Left side -- clickable expand ── */
 .newImport-set-info {
   display: flex;
   align-items: center;
@@ -576,7 +576,7 @@ display: block;
   transition: transform 0.2s;
 }
 
-/* ── Right side — action buttons ── */
+/* ── Right side -- action buttons ── */
 .newImport-set-actions {
   display: flex;
   align-items: center;
@@ -1103,7 +1103,7 @@ display: block;
 .club-mgmt-toggle:hover { color: var(--text); }
 
 
-/* ── Vault Tiles (Option B — Dark Glass) ── */
+/* ── Vault Tiles (Option B -- Dark Glass) ── */
 .vault-tile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1133,14 +1133,14 @@ display: block;
 }
 .vault-tile:active { transform: scale(0.97); }
 
-/* Coloured top borders — glow mode only */
+/* Coloured top borders -- glow mode only */
 body.tile-style-glow .vt-playing::before  { background: #f5a623; box-shadow: 0 0 12px rgba(245,166,35,0.6); }
 body.tile-style-glow .vt-register::before { background: #6c8cff; box-shadow: 0 0 12px rgba(108,140,255,0.6); }
 body.tile-style-glow .vt-modify::before   { background: #2dce89; box-shadow: 0 0 12px rgba(45,206,137,0.6); }
 body.tile-style-glow .vt-requests::before { background: #e63757; box-shadow: 0 0 12px rgba(230,55,87,0.6); }
 body.tile-style-glow .vt-club::before     { background: #a78bfa; box-shadow: 0 0 12px rgba(167,139,250,0.6); }
 
-/* Flat mode — light theme vault tiles */
+/* Flat mode -- light theme vault tiles */
 body.app-light .vault-tile {
   background: #fff;
   border-color: #e8e8f0;
@@ -1255,7 +1255,7 @@ body.app-light .vct-change-btn { background: #ffe8ec; color: #c0392b; border: no
   cursor: pointer; white-space: nowrap; flex-shrink: 0;
 }
 
-/* ── Organiser club tile — blue accent, not red ── */
+/* ── Organiser club tile -- blue accent, not red ── */
 .org-club-tile::before { background: #6c8cff !important; }
 body:not(.app-light) .org-club-tile {
   box-shadow: 0 0 14px rgba(108,140,255,0.12) !important;
@@ -1273,7 +1273,7 @@ body.app-light .org-club-tile {
   color: #6c8cff !important;
 }
 
-/* ── Rounds Page — Single Tight Top Bar ── */
+/* ── Rounds Page -- Single Tight Top Bar ── */
 .rounds-top-bar {
   display: flex;
   align-items: center;
@@ -1354,7 +1354,7 @@ body.app-light .org-club-tile {
   cursor: not-allowed;
 }
 
-/* ── My Card Period Stats — Style C ── */
+/* ── My Card Period Stats -- Style C ── */
 .mc-period-list {
   background: var(--surface, #fff);
   border: 1px solid var(--border, #eee);
@@ -1828,7 +1828,7 @@ body.app-light .vcl-row-name { color: #1a1a2e; }
 
 
 /* ═══════════════════════════════════════════
-   TILE STYLE SYSTEM — Flat / Glow / Color
+   TILE STYLE SYSTEM -- Flat / Glow / Color
    body.tile-style-glow  → glow border style
    body.tile-style-color → solid color style
    default (no class)    → flat style
@@ -1937,7 +1937,7 @@ body.tile-style-color .spw-sub  { color: rgba(255,255,255,0.65) !important; }
 body.tile-style-color .spw-arr  { color: rgba(255,255,255,0.5) !important; }
 
 /* ═══════════════════════════════════════════
-   FULL APP COVERAGE — GLOW STYLE
+   FULL APP COVERAGE -- GLOW STYLE
 ═══════════════════════════════════════════ */
 body.tile-style-glow .home-tile,
 body.tile-style-glow .pref-card,
@@ -1980,7 +1980,7 @@ body.tile-style-glow .home-tile-name { color: #fff !important; }
 body.tile-style-glow .home-tile-sub  { color: #555 !important; }
 
 /* ═══════════════════════════════════════════
-   FULL APP COVERAGE — COLOR STYLE
+   FULL APP COVERAGE -- COLOR STYLE
 ═══════════════════════════════════════════ */
 body.tile-style-color .home-tile { border: none !important; border-radius: 16px !important; }
 body.tile-style-color .home-tile:nth-child(1) { background: #2dce89 !important; }
@@ -2001,7 +2001,7 @@ body.tile-style-color .vault-tile .vt-stat,
 body.tile-style-color .vault-tile .vt-sub { color: #fff !important; }
 
 /* ═══════════════════════════════════════════
-   MODE LAUNCHER — Full Screen
+   MODE LAUNCHER -- Full Screen
 ═══════════════════════════════════════════ */
 .mode-launcher-fullscreen {
   position: fixed;
@@ -2085,7 +2085,7 @@ body.app-light .ml-cancel { border-color: #eee; color: #aaa; }
 body.app-light .ml-settings-btn { border-color: #eee; color: #aaa; }
 
 /* ══════════════════════════════════════════════════════════
-   FRONT PAGE TILE STYLES — matches settings preview exactly
+   FRONT PAGE TILE STYLES -- matches settings preview exactly
    Flat:  surface bg + border (default)
    Glow:  dark bg + coloured top bar + glow
    Color: solid colour bg + white text
@@ -2180,7 +2180,7 @@ body.tile-style-color .ml-mode .ml-arr       { color: rgba(255,255,255,0.6) !imp
 body.tile-style-color .ml-mode .ml-mode-icon { background: rgba(255,255,255,0.2) !important; }
 
 /* ═══════════════════════════════════════════
-   LIGHT MODE FIXES — My Clubs & Search
+   LIGHT MODE FIXES -- My Clubs & Search
 ═══════════════════════════════════════════ */
 
 /* My Clubs rows */

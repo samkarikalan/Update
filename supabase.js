@@ -1,6 +1,6 @@
 /* ============================================================
    SUPABASE SERVICE LAYER
-   Replaces supabase.js — same public API, Supabase backend
+   Replaces supabase.js -- same public API, Supabase backend
    ============================================================ */
 
 const SUPABASE_URL = "https://hplkoxdorbfjhwbvqatn.supabase.co";
@@ -80,7 +80,7 @@ async function sbUpsert(table, body, onConflict) {
 }
 
 /// ============================================================
-/// CLUB SESSION — which club is active
+/// CLUB SESSION -- which club is active
 /// ============================================================
 
 function getMyClub() {
@@ -107,7 +107,7 @@ function clearMyClub() {
 /// PLAYERS API
 /// ============================================================
 
-/// Get all players for current club — uses cache if fresh
+/// Get all players for current club -- uses cache if fresh
 async function dbGetPlayers(forceFresh = false) {
   const now       = Date.now();
   const lastFetch = parseInt(localStorage.getItem(CACHE_TIMESTAMP) || "0");
@@ -155,16 +155,16 @@ async function dbGetPlayers(forceFresh = false) {
     return normalized;
 
   } catch (e) {
-    console.warn("Supabase offline — using cached players:", e.message);
+    console.warn("Supabase offline -- using cached players:", e.message);
     return cached ? JSON.parse(cached) : [];
   }
 }
 
-/// Add a new player — requires admin session
+/// Add a new player -- requires admin session
 async function dbAddPlayer(name, gender, _unused) {
   const club = getMyClub();
   if (!club.id) throw new Error(t("noClubSelectedJoin"));
-  // Mode check done at login — trust session
+  // Mode check done at login -- trust session
 
   // Check duplicate nickname in this club via memberships
   const existing = await sbGet('memberships',
@@ -200,7 +200,7 @@ async function dbAddPlayer(name, gender, _unused) {
 /* ============================================================
    OFFLINE SYNC QUEUE
    When DB write fails, push to queue. Flush on next online sync.
-   Key: kbrr_sync_queue — array of pending rating updates.
+   Key: kbrr_sync_queue -- array of pending rating updates.
 ============================================================ */
 const SYNC_QUEUE_KEY = "kbrr_sync_queue";
 
@@ -222,7 +222,7 @@ function queueGet() {
   } catch(e) { return []; }
 }
 
-/* Flush pending queue to Supabase — called at start of every sync */
+/* Flush pending queue to Supabase -- called at start of every sync */
 async function flushSyncQueue() {
   const pending = queueGet();
   if (!pending.length) return;
@@ -270,15 +270,15 @@ async function flushSyncQueue() {
 }
 
 /* ============================================================
-   dbSyncRatings — ONLY write gate for ratings.
-   Reads kbrr_rating_field — writes to one column only.
-   On failure — pushes to offline queue for retry.
+   dbSyncRatings -- ONLY write gate for ratings.
+   Reads kbrr_rating_field -- writes to one column only.
+   On failure -- pushes to offline queue for retry.
 ============================================================ */
 async function dbSyncRatings(updatedRatings) {
   const club = getMyClub();
   if (!club.id) return;
 
-  // kbrr_rating_field set at login — "club_ratings" or "rating"
+  // kbrr_rating_field set at login -- "club_ratings" or "rating"
   const ratingField = localStorage.getItem("kbrr_rating_field") || "club_rating";
   const failed = [];
 
@@ -331,7 +331,7 @@ async function dbSyncRatings(updatedRatings) {
         }
       }
     } catch(e) {
-      console.warn("dbSyncRatings offline for", update.name, "— queued");
+      console.warn("dbSyncRatings offline for", update.name, "-- queued");
       failed.push(update);
     }
   }
@@ -343,7 +343,7 @@ async function dbSyncRatings(updatedRatings) {
 }
 
 
-/// Override rating — writes to correct field based on kbrr_rating_field
+/// Override rating -- writes to correct field based on kbrr_rating_field
 async function dbOverrideRating(playerId, newRating) {
   const club        = getMyClub();
   const rounded     = Math.round(newRating * 10) / 10;
@@ -361,7 +361,7 @@ async function dbOverrideRating(playerId, newRating) {
   if (typeof syncToLocal === "function") await syncToLocal();
 }
 
-/// Edit player — requires club admin password
+/// Edit player -- requires club admin password
 async function dbEditPlayer(playerId, updates, clubAdminPassword) {
   const club = getMyClub();
   if (!club.id) throw new Error(t("noClubSelectedJoin"));
@@ -370,7 +370,7 @@ async function dbEditPlayer(playerId, updates, clubAdminPassword) {
   if (!clubs.length || clubs[0].admin_password !== clubAdminPassword)
     throw new Error(t("wrongAdminPassword"));
 
-  // updates may contain nickname — patch memberships, other fields go to players
+  // updates may contain nickname -- patch memberships, other fields go to players
   const { nickname, club_rating, ...playerUpdates } = updates;
   if (nickname || club_rating) {
     const mPatch = {};
@@ -385,7 +385,7 @@ async function dbEditPlayer(playerId, updates, clubAdminPassword) {
   localStorage.removeItem(CACHE_TIMESTAMP);
 }
 
-/// Delete player from club — requires club admin password
+/// Delete player from club -- requires club admin password
 async function dbDeletePlayer(playerId, clubAdminPassword) {
   const club = getMyClub();
   if (!club.id) throw new Error(t("noClubSelectedJoin"));
@@ -476,7 +476,7 @@ function maskEmail(email) {
   return masked + '@' + domain;
 }
 
-/// Verify club select password — returns club if correct
+/// Verify club select password -- returns club if correct
 async function dbVerifyClubAccess(clubId, selectPassword) {
   const clubs = await sbGet("clubs", `id=eq.${clubId}&select=id,name,select_password`);
   if (!clubs.length) throw new Error("Club not found.");
@@ -490,7 +490,7 @@ async function dbVerifyClubAccess(clubId, selectPassword) {
 
 async function syncAfterRound(roundWins, roundLosses, roundRatingDeltas) {
   try {
-    // STEP 1 — Push: send updated ratings + wins/losses to Supabase
+    // STEP 1 -- Push: send updated ratings + wins/losses to Supabase
     const playedNames = new Set([...roundWins.keys(), ...roundLosses.keys()]);
     const updatedRatings = schedulerState.allPlayers
       .filter(p => playedNames.has(p.name))
@@ -504,13 +504,13 @@ async function syncAfterRound(roundWins, roundLosses, roundRatingDeltas) {
 
     await dbSyncRatings(updatedRatings);
 
-    // STEP 2 — Record matches to matches table
+    // STEP 2 -- Record matches to matches table
     await dbRecordRoundMatches(updatedRatings);
 
-    // STEP 3 — Write live session to Supabase live_sessions table
+    // STEP 3 -- Write live session to Supabase live_sessions table
     await syncLiveSession(playedNames);
 
-    // Pull fresh — syncToLocal will also flush any queued items
+    // Pull fresh -- syncToLocal will also flush any queued items
     await syncToLocal();
 
   } catch (e) {
@@ -571,7 +571,7 @@ async function syncLiveSession(playedNames) {
       }
     }
 
-    // started_by — same for all rows, resolve once outside the map
+    // started_by -- same for all rows, resolve once outside the map
     const myPlayer  = (typeof getMyPlayer === "function") ? getMyPlayer() : null;
     const startedBy = myPlayer ? myPlayer.name : null;
 
@@ -605,13 +605,13 @@ async function syncLiveSession(playedNames) {
 
 
 /// ============================================================
-/// SESSIONS TABLE — stores last 3 sessions per club
+/// SESSIONS TABLE -- stores last 3 sessions per club
 /// status: 'live' while session active, 'completed' on end
 /// rounds_data: full allRounds snapshot, updated on every change
 /// players: summary of who played + wins/losses (populated on complete)
 /// ============================================================
 
-// Session ID for this organiser's current session — stored in sessionStorage
+// Session ID for this organiser's current session -- stored in sessionStorage
 function getMySessionId() {
   return sessionStorage.getItem('kbrr_session_db_id') || null;
 }
@@ -621,7 +621,7 @@ function setMySessionId(id) {
 }
 
 // Called once when organiser starts session (first round created)
-// Multiple live sessions allowed per club — one per hall/organiser
+// Multiple live sessions allowed per club -- one per hall/organiser
 async function dbStartSession() {
   try {
     const club      = getMyClub();
@@ -630,7 +630,7 @@ async function dbStartSession() {
     const startedBy = myPlayer ? myPlayer.name : null;
     const today     = new Date().toISOString().split('T')[0];
 
-    // Insert new live session — no uniqueness constraint, multiple allowed
+    // Insert new live session -- no uniqueness constraint, multiple allowed
     const created = await sbPost('sessions', {
       club_id:     club.id,
       date:        today,
@@ -676,7 +676,7 @@ async function dbSyncRoundsData() {
   }
 }
 
-// Called on End Session — mark this session completed, keep last 3 per club
+// Called on End Session -- mark this session completed, keep last 3 per club
 async function dbCompleteSession(shuttleData = null) {
   try {
     const sessionDbId = getMySessionId();
@@ -693,7 +693,7 @@ async function dbCompleteSession(shuttleData = null) {
         : 0
     }));
 
-    // Mark this session completed — include shuttle_data if provided
+    // Mark this session completed -- include shuttle_data if provided
     const patch = {
       status:     'completed',
       players,
@@ -729,7 +729,7 @@ async function dbCompleteSession(shuttleData = null) {
       } catch(e) { /* silent per player */ }
     }
 
-    // Keep only last 3 completed sessions per club — delete older ones
+    // Keep only last 3 completed sessions per club -- delete older ones
     const all = await sbGet('sessions',
       `club_id=eq.${club.id}&status=eq.completed&order=updated_at.desc&select=id`
     );
@@ -746,7 +746,7 @@ async function dbCompleteSession(shuttleData = null) {
   }
 }
 
-// Auto-cleanup stale live sessions — mark completed if older than 3 hours
+// Auto-cleanup stale live sessions -- mark completed if older than 3 hours
 async function dbCleanupStaleSessions() {
   try {
     const club = getMyClub();
@@ -772,7 +772,7 @@ async function dbCleanupStaleSessions() {
   } catch (e) { /* silent */ }
 }
 
-/* Force complete any session by ID — for ending stale/other-device sessions */
+/* Force complete any session by ID -- for ending stale/other-device sessions */
 async function dbForceCompleteSession(sessionId) {
   try {
     // 1. Mark session completed
@@ -881,7 +881,7 @@ async function dbGetPastSessions() {
 }
 
 // ============================================================
-// SAVE ROUNDS TO DB — called on every round create + winner mark
+// SAVE ROUNDS TO DB -- called on every round create + winner mark
 // Syncs full allRounds snapshot to sessions table for viewer rendering
 // ============================================================
 async function saveRoundsToDb() {
@@ -894,10 +894,10 @@ async function flushLiveSession() {
     const club = getMyClub();
     if (!club.id) return;
 
-    // live_sessions table removed — data stored in sessions.rounds_data
+    // live_sessions table removed -- data stored in sessions.rounds_data
     return;
 
-    // Write all players in parallel — no sequential awaits
+    // Write all players in parallel -- no sequential awaits
     const writes = rows
       .filter(row => row.player_name !== '__rounds__')  // skip sentinel row
       .map(async row => {
@@ -905,7 +905,7 @@ async function flushLiveSession() {
         ? JSON.parse(row.matches) : (row.matches || []);
       if (!matches.length) return;
 
-      // Write to players.sessions — merge with existing today entry if present
+      // Write to players.sessions -- merge with existing today entry if present
       try {
         const _mrows = await sbGet('memberships',
           `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(row.player_name)}&select=player_id`);
@@ -917,7 +917,7 @@ async function flushLiveSession() {
           const todayEntry = existing.find(s => s.date === today);
           const otherDays  = existing.filter(s => s.date !== today);
 
-          // Merge matches — append new ones, avoiding exact duplicates
+          // Merge matches -- append new ones, avoiding exact duplicates
           const prevMatches = todayEntry ? (todayEntry.matches || []) : [];
           const allMatches  = [...prevMatches, ...matches];
           const mergedWins   = allMatches.filter(m => m.result === "W").length;
@@ -945,7 +945,7 @@ async function flushLiveSession() {
       } catch(e) { /* continue */ }
     });
 
-    // Wait for all writes with a 10s timeout — never hang End Session
+    // Wait for all writes with a 10s timeout -- never hang End Session
     await Promise.race([
       Promise.allSettled(writes),
       new Promise(resolve => setTimeout(resolve, 10000))
@@ -965,7 +965,7 @@ async function cleanupLiveSessions() {
     const club  = getMyClub();
     if (!club.id) return;
     const today = new Date().toISOString().split("T")[0];
-    // live_sessions removed — no cleanup needed
+    // live_sessions removed -- no cleanup needed
   } catch (e) {
     console.warn("cleanupLiveSessions error:", e.message);
   }
@@ -995,7 +995,7 @@ async function syncGlobalPlayersCache() {
     }));
     localStorage.setItem(CACHE_GLOBAL_PLAYERS, JSON.stringify(players));
   } catch (e) {
-    // Silent fail — cache stays as-is if offline
+    // Silent fail -- cache stays as-is if offline
   }
 }
 
@@ -1029,7 +1029,7 @@ async function dbDeleteClub(clubId) {
 }
 
 /// ============================================================
-/// SESSION SLOT TRACKING — Update 3
+/// SESSION SLOT TRACKING -- Update 3
 /// Marks players as is_playing when they join a session.
 /// Released on session end or after SESSION_TIMEOUT_HOURS.
 /// ============================================================
@@ -1088,12 +1088,12 @@ async function dbGetUnavailablePlayers() {
     );
     return new Set((rows || []).map(r => r.nickname.trim().toLowerCase()));
   } catch(e) {
-    return new Set(); // fail open — don't block if offline
+    return new Set(); // fail open -- don't block if offline
   }
 }
 
 /// ============================================================
-/// PLAYER SESSIONS — stored in player_sessions table
+/// PLAYER SESSIONS -- stored in player_sessions table
 /// Table: player_sessions (player_name text, date text, wins int, losses int, rating float)
 /// ============================================================
 
@@ -1152,7 +1152,7 @@ function startSessionHeartbeat() {
       await sbPatch('sessions', `id=eq.${sessionId}`, {
         updated_at: new Date().toISOString()
       });
-    } catch(e) { /* silent — offline */ }
+    } catch(e) { /* silent -- offline */ }
   }, 2 * 60 * 1000); // every 2 minutes
 }
 
@@ -1192,7 +1192,7 @@ async function dbRecordRoundMatches(updatedRatings) {
     const unique = [...new Set(allNicknames)];
     if (!unique.length) return;
 
-    // Fetch all club memberships and filter client-side — avoids complex OR syntax
+    // Fetch all club memberships and filter client-side -- avoids complex OR syntax
     const members = await sbGet('memberships',
       `club_id=eq.${club.id}&select=player_id,nickname,club_rating,club_points`
     ).catch(() => []);

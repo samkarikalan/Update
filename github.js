@@ -1,5 +1,5 @@
 /// ============================================================
-/// github.js — GitHub API service for KariBRR global DB
+/// github.js -- GitHub API service for KariBRR global DB
 /// Repo: samkarikalan/sportsclub-db
 /// Files: players.json, clubs.json
 /// ============================================================
@@ -58,7 +58,7 @@ async function githubReadFile(filename) {
   }
 
   const json = await res.json();
-  // UTF-8 safe decode — works for any language/script
+  // UTF-8 safe decode -- works for any language/script
   const b64     = json.content.replace(/\n/g, "");
   const binary  = atob(b64);
   const bytes   = new Uint8Array(binary.length);
@@ -72,7 +72,7 @@ async function githubReadFile(filename) {
 /// Requires admin token. sha is needed to update existing file.
 async function githubWriteFile(filename, data, sha, message) {
   const url = `${GITHUB_API}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filename}`;
-  // UTF-8 safe encode — loop method works for any language/script
+  // UTF-8 safe encode -- loop method works for any language/script
   const jsonStr  = JSON.stringify(data, null, 2);
   const encoded  = new TextEncoder().encode(jsonStr);
   let binary = "";
@@ -103,7 +103,7 @@ async function githubWriteFile(filename, data, sha, message) {
 /// PLAYERS API
 /// ============================================================
 
-/// Read all players — uses cache if fresh
+/// Read all players -- uses cache if fresh
 async function dbGetPlayers(forceFresh = false) {
   const now = Date.now();
   const lastFetch = parseInt(localStorage.getItem(CACHE_TIMESTAMP) || "0");
@@ -119,12 +119,12 @@ async function dbGetPlayers(forceFresh = false) {
     localStorage.setItem(CACHE_TIMESTAMP, String(Date.now()));
     return data;
   } catch (e) {
-    console.warn("GitHub offline — using cached players:", e.message);
+    console.warn("GitHub offline -- using cached players:", e.message);
     return cached ? JSON.parse(cached) : [];
   }
 }
 
-/// Add a new player — requires admin token
+/// Add a new player -- requires admin token
 /// Uniqueness: name + homeClub
 async function dbAddPlayer(name, gender, homeClub) {
   if (!hasGithubToken()) throw new Error("Admin token required to add players.");
@@ -135,7 +135,7 @@ async function dbAddPlayer(name, gender, homeClub) {
   const exists = players.find(
     p => p.name.toLowerCase() === name.toLowerCase() && p.homeClub === homeClub
   );
-  if (exists) return exists; // already registered — no error
+  if (exists) return exists; // already registered -- no error
 
   const newPlayer = {
     id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -157,7 +157,7 @@ async function dbAddPlayer(name, gender, homeClub) {
 }
 
 /// Update ratings for multiple players after a session
-/// No token required — game results are objective
+/// No token required -- game results are objective
 async function dbSyncRatings(updatedRatings) {
   // updatedRatings = [{ name, homeClub, rating }, ...]
   let { data: players, sha } = await githubReadFile("players.json");
@@ -182,7 +182,7 @@ async function dbSyncRatings(updatedRatings) {
   localStorage.setItem(CACHE_TIMESTAMP, String(Date.now()));
 }
 
-/// Edit player name or gender — requires admin token
+/// Edit player name or gender -- requires admin token
 async function dbEditPlayer(playerId, updates) {
   if (!hasGithubToken()) throw new Error("Admin token required to edit players.");
 
@@ -200,7 +200,7 @@ async function dbEditPlayer(playerId, updates) {
   localStorage.setItem(CACHE_TIMESTAMP, String(Date.now()));
 }
 
-/// Override rating manually — requires admin token
+/// Override rating manually -- requires admin token
 async function dbOverrideRating(playerId, newRating) {
   if (!hasGithubToken()) throw new Error("Admin token required to override ratings.");
 
@@ -217,7 +217,7 @@ async function dbOverrideRating(playerId, newRating) {
   localStorage.setItem(CACHE_TIMESTAMP, String(Date.now()));
 }
 
-/// Delete a player — requires admin token + must be home club
+/// Delete a player -- requires admin token + must be home club
 async function dbDeletePlayer(playerId, requestingClub) {
   if (!hasGithubToken()) throw new Error("Admin token required to delete players.");
 
@@ -251,12 +251,12 @@ async function dbGetClubs() {
     localStorage.setItem(CACHE_CLUBS, JSON.stringify(data));
     return data;
   } catch (e) {
-    console.warn("GitHub offline — using cached clubs:", e.message);
+    console.warn("GitHub offline -- using cached clubs:", e.message);
     return cached ? JSON.parse(cached) : [];
   }
 }
 
-/// Register a new club — requires admin token
+/// Register a new club -- requires admin token
 async function dbAddClub(clubName) {
   if (!hasGithubToken()) throw new Error("Admin token required to register a club.");
 
@@ -293,7 +293,7 @@ async function dbIsOnline() {
 }
 
 /// ============================================================
-/// SYNC SESSION RATINGS TO GITHUB — called after every round
+/// SYNC SESSION RATINGS TO GITHUB -- called after every round
 /// ============================================================
 
 async function githubSyncAfterRound() {
@@ -306,6 +306,6 @@ async function githubSyncAfterRound() {
     }));
     await dbSyncRatings(updatedRatings);
   } catch (e) {
-    // Silent fail — never interrupt the game
+    // Silent fail -- never interrupt the game
   }
 }

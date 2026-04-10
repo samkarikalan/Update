@@ -1,5 +1,5 @@
 /* ============================================================
-   VIEWER.JS — Completely isolated from organiser mode
+   VIEWER.JS -- Completely isolated from organiser mode
    - Never touches allRounds, currentRoundIndex, roundsPage
    - Never calls setViewerMode, appMode, or organiser functions
    - Uses #viewerPage and #viewerResults only
@@ -36,7 +36,7 @@ async function viewerOpen(sessionId) {
     if (sess.status === 'live') {
       viewerStartPoll();
     } else {
-      // Past session — go straight to Summary tab
+      // Past session -- go straight to Summary tab
       vSwitchTab('summary');
     }
   } catch (e) {
@@ -145,7 +145,7 @@ function _vElapsed(isoStr) {
   return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
 }
 
-/* ── Round builder — uses same CSS classes as organiser ── */
+/* ── Round builder -- uses same CSS classes as organiser ── */
 function _vBuildRound(data) {
   if (!data) return document.createElement('div');
   const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
@@ -391,10 +391,10 @@ async function viewerLoadClubs() {
   const feedback = document.getElementById('sbClubFeedbackViewer');
   const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
   if (!select) return;
-  select.innerHTML = '<option value="">' + (t('loadingClubs')||'— Loading clubs… —') + '</option>';
+  select.innerHTML = '<option value="">' + (t('loadingClubs')||'-- Loading clubs... --') + '</option>';
   try {
     const clubs = await sbGet('clubs', 'select=id,name&order=name.asc');
-    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    select.innerHTML = '<option value="">' + (t('selectClub')||'-- Select club --') + '</option>';
     if (!clubs.length) { setFb(t('noClubsFoundDot'), false); return; }
     clubs.forEach(c => {
       const opt = document.createElement('option');
@@ -405,7 +405,7 @@ async function viewerLoadClubs() {
     const cur = (typeof getMyClub === 'function') ? getMyClub() : null;
     if (cur && cur.id) select.value = cur.id;
   } catch (e) {
-    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    select.innerHTML = '<option value="">' + (t('selectClub')||'-- Select club --') + '</option>';
     setFb(t('couldNotLoadClubsErr') + ' ' + e.message, false);
     console.warn('viewerLoadClubs:', e.message);
   }
@@ -438,7 +438,7 @@ async function viewerJoinClub() {
 }
 
 /* ══════════════════════════════════════════════
-   ORGANISER CLUB LOGIN — uses member password
+   ORGANISER CLUB LOGIN -- uses member password
    ══════════════════════════════════════════════ */
 
 function orgClubLoginRefresh() {
@@ -478,10 +478,10 @@ async function orgLoadClubs() {
   const feedback = document.getElementById('orgClubFeedback');
   const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
   if (!select) return;
-  select.innerHTML = '<option value="">' + (t('loadingClubs')||'— Loading clubs… —') + '</option>';
+  select.innerHTML = '<option value="">' + (t('loadingClubs')||'-- Loading clubs... --') + '</option>';
   try {
     const clubs = await sbGet('clubs', 'select=id,name&order=name.asc');
-    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    select.innerHTML = '<option value="">' + (t('selectClub')||'-- Select club --') + '</option>';
     if (!clubs.length) { setFb(t('noClubsFoundDot'), false); return; }
     clubs.forEach(c => {
       const opt = document.createElement('option');
@@ -492,7 +492,7 @@ async function orgLoadClubs() {
     if (cur && cur.id) select.value = cur.id;
     setFb('', true);
   } catch (e) {
-    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    select.innerHTML = '<option value="">' + (t('selectClub')||'-- Select club --') + '</option>';
     setFb(t('couldNotLoadClubsErr') + ' ' + e.message, false);
   }
 }

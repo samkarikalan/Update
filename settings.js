@@ -1,5 +1,5 @@
 /* ============================================================
-HOME — Theme, font size, language, reset actions
+HOME -- Theme, font size, language, reset actions
 File: home.js
 ============================================================ */
 
@@ -10,17 +10,17 @@ return translations[currentLang]?.[key] || key;
 }
 
 function showConfirm(messageKey, action) {
-const overlay = document.getElementById(“confirmOverlay”);
-const title   = document.getElementById(“confirmTitle”);
-const yesBtn  = document.getElementById(“confirmYes”);
-const cancelBtn = document.getElementById(“confirmCancel”);
+const overlay = document.getElementById("confirmOverlay");
+const title   = document.getElementById("confirmTitle");
+const yesBtn  = document.getElementById("confirmYes");
+const cancelBtn = document.getElementById("confirmCancel");
 
 title.textContent = t(messageKey);
-yesBtn.textContent = t(“yes”);
-cancelBtn.textContent = t(“cancel”);
+yesBtn.textContent = t("yes");
+cancelBtn.textContent = t("cancel");
 
 pendingAction = action;
-overlay.classList.remove(“hidden”);
+overlay.classList.remove("hidden");
 
 // ✅ YES button
 yesBtn.onclick = () => {
@@ -33,23 +33,23 @@ cancelBtn.onclick = closeConfirm;
 }
 
 function closeConfirm() {
-document.getElementById(“confirmOverlay”).classList.add(“hidden”);
+document.getElementById("confirmOverlay").classList.add("hidden");
 pendingAction = null;
 }
 
-let currentLang = “en”;
+let currentLang = "en";
 
 /* Language picker in Settings */
 function settingsToggleLangPicker() {
-const picker = document.getElementById(‘settingsLangPicker’);
-if (picker) picker.style.display = picker.style.display === ‘none’ ? ‘’ : ‘none’;
+const picker = document.getElementById('settingsLangPicker');
+if (picker) picker.style.display = picker.style.display === 'none' ? '' : 'none';
 }
 
 function settingsSelectLang(lang, flag, name) {
-const val = document.getElementById(‘settingsLangValue’);
-if (val) val.textContent = flag + ’ ’ + name;
-const picker = document.getElementById(‘settingsLangPicker’);
-if (picker) picker.style.display = ‘none’;
+const val = document.getElementById('settingsLangValue');
+if (val) val.textContent = flag + ' ' + name;
+const picker = document.getElementById('settingsLangPicker');
+if (picker) picker.style.display = 'none';
 setLanguage(lang);
 }
 
@@ -58,58 +58,58 @@ function toggleLangMenu() {}
 function _closeLangMenu() {}
 
 const langFlagMap = {
-en: “🇺🇸”,
-jp: “🇯🇵”,
-zh: “🇨🇳”,
-kr: “🇰🇷”,
-vi: “🇻🇳”
+en: "🇺🇸",
+jp: "🇯🇵",
+zh: "🇨🇳",
+kr: "🇰🇷",
+vi: "🇻🇳"
 
 };
 /* ===== Theme ===== */
 
 function initLanguage() {
-const savedLang = localStorage.getItem(“appLanguage”);
-const supportedLangs = [“en”, “jp”, “kr”, “vi”, “zh”];
-const langNames = { en: “English”, jp: “日本語”, kr: “한국어”, zh: “中文”, vi: “Tiếng Việt” };
+const savedLang = localStorage.getItem("appLanguage");
+const supportedLangs = ["en", "jp", "kr", "vi", "zh"];
+const langNames = { en: "English", jp: "日本語", kr: "한국어", zh: "中文", vi: "Tiếng Việt" };
 
 const lang = supportedLangs.includes(savedLang) ? savedLang : (() => {
 const b = navigator.language.toLowerCase();
-if (b.startsWith(“ja”)) return “jp”;
-if (b.startsWith(“ko”)) return “kr”;
-if (b.startsWith(“vi”)) return “vi”;
-if (b.startsWith(“zh”)) return “zh”;
-return “en”;
+if (b.startsWith("ja")) return "jp";
+if (b.startsWith("ko")) return "kr";
+if (b.startsWith("vi")) return "vi";
+if (b.startsWith("zh")) return "zh";
+return "en";
 })();
 
 // Update settings label
-const flag = langFlagMap[lang] || “🌐”;
-const val = document.getElementById(“settingsLangValue”);
-if (val) val.textContent = flag + “ “ + (langNames[lang] || lang);
+const flag = langFlagMap[lang] || "🌐";
+const val = document.getElementById("settingsLangValue");
+if (val) val.textContent = flag + " " + (langNames[lang] || lang);
 
 setLanguage(lang);
 }
 
 function initTheme() {
-const saved = localStorage.getItem(‘app-theme’);
+const saved = localStorage.getItem('app-theme');
 if (saved) {
 applyTheme(saved);
 } else {
-const prefersDark = window.matchMedia(’(prefers-color-scheme: dark)’).matches;
-applyTheme(prefersDark ? ‘dark’ : ‘light’);
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+applyTheme(prefersDark ? 'dark' : 'light');
 }
 }
 
 function initFontSize() {
-const savedSize = localStorage.getItem(“appFontSize”) || “medium”;
+const savedSize = localStorage.getItem("appFontSize") || "medium";
 setFontSize(savedSize);
 }
 
 function applyTheme(mode) {
-document.body.classList.toggle(‘app-light’, mode === ‘light’);
-document.body.classList.toggle(‘app-dark’,  mode === ‘dark’);
-document.getElementById(‘theme_light’)?.classList.toggle(‘active’, mode === ‘light’);
-document.getElementById(‘theme_dark’)?.classList.toggle(‘active’,  mode === ‘dark’);
-localStorage.setItem(‘app-theme’, mode);
+document.body.classList.toggle('app-light', mode === 'light');
+document.body.classList.toggle('app-dark',  mode === 'dark');
+document.getElementById('theme_light')?.classList.toggle('active', mode === 'light');
+document.getElementById('theme_dark')?.classList.toggle('active',  mode === 'dark');
+localStorage.setItem('app-theme', mode);
 }
 
 function setTheme(mode) {
@@ -119,7 +119,7 @@ applyTheme(mode);
 /* ===== Init ===== */
 initTheme();
 
-document.addEventListener(“DOMContentLoaded”, () => {
+document.addEventListener("DOMContentLoaded", () => {
 initTheme();     // restore theme
 initFontSize();  // restore font size
 initLanguage();  // restore language
@@ -127,39 +127,39 @@ initLanguage();  // restore language
 
 function setLanguage(lang) {
 currentLang = lang;
-localStorage.setItem(“appLanguage”, lang);
+localStorage.setItem("appLanguage", lang);
 
-document.querySelectorAll(”[id^=‘lang_’]”).forEach(btn => {
-btn.classList.remove(“active”);
+document.querySelectorAll("[id^='lang_']").forEach(btn => {
+btn.classList.remove("active");
 });
-document.getElementById(“lang_” + lang)?.classList.add(“active”);
+document.getElementById("lang_" + lang)?.classList.add("active");
 
-document.querySelectorAll(”[data-i18n]”).forEach(el => {
+document.querySelectorAll("[data-i18n]").forEach(el => {
 const key = el.dataset.i18n;
 el.textContent = translations[lang][key] || key;
 });
 
-document.querySelectorAll(”[data-i18n-placeholder]”).forEach(el => {
+document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
 const key = el.dataset.i18nPlaceholder;
-el.placeholder = translations[lang][key] || “”;
+el.placeholder = translations[lang][key] || "";
 });
 
-if (typeof loadHelp === “function”) loadHelp(currentHelpSection);
+if (typeof loadHelp === "function") loadHelp(currentHelpSection);
 // Refresh all dynamic content after language change
-if (typeof homeUpdateStepper    === “function”) homeUpdateStepper();
-if (typeof homeRefreshTiles     === “function”) homeRefreshTiles();
-if (typeof updateModePill       === “function”) updateModePill(localStorage.getItem(‘kbrr_app_mode’) || ‘viewer’);
-if (typeof subShowTrialBanner   === “function”) subShowTrialBanner();
-if (typeof clubLoginRefresh     === “function”) clubLoginRefresh();
-if (typeof updateGearPairsSub   === “function”) updateGearPairsSub();
-if (typeof renderRoundHistory   === “function”) {
-var gearBody = document.getElementById(‘roundSettingsBody’);
-if (gearBody && gearBody.classList.contains(‘open’)) renderRoundHistory();
+if (typeof homeUpdateStepper    === "function") homeUpdateStepper();
+if (typeof homeRefreshTiles     === "function") homeRefreshTiles();
+if (typeof updateModePill       === "function") updateModePill(localStorage.getItem('kbrr_app_mode') || 'viewer');
+if (typeof subShowTrialBanner   === "function") subShowTrialBanner();
+if (typeof clubLoginRefresh     === "function") clubLoginRefresh();
+if (typeof updateGearPairsSub   === "function") updateGearPairsSub();
+if (typeof renderRoundHistory   === "function") {
+var gearBody = document.getElementById('roundSettingsBody');
+if (gearBody && gearBody.classList.contains('open')) renderRoundHistory();
 }
 }
 
 function updateRoundTitle(round) {
-const roundTitle = document.getElementById(“roundTitle”);
+const roundTitle = document.getElementById("roundTitle");
 if (!roundTitle) return;
 
 roundTitle.innerText = `${translations[currentLang].nround} ${round}`;
@@ -168,22 +168,22 @@ roundTitle.innerText = `${translations[currentLang].nround} ${round}`;
 function setFontSize(size) {
 const root = document.documentElement;
 
-if (size === “small”) root.style.setProperty(”–base-font-size”, “16px”);
-if (size === “medium”) root.style.setProperty(”–base-font-size”, “19px”);
-if (size === “large”) root.style.setProperty(”–base-font-size”, “22px”);
+if (size === "small") root.style.setProperty("-base-font-size", "16px");
+if (size === "medium") root.style.setProperty("-base-font-size", "19px");
+if (size === "large") root.style.setProperty("-base-font-size", "22px");
 
-localStorage.setItem(“appFontSize”, size); // 👈 SAVE (ADD THIS)
+localStorage.setItem("appFontSize", size); // 👈 SAVE (ADD THIS)
 
-document.querySelectorAll(”#font_small, #font_medium, #font_large”).forEach(el => {
-el.classList.remove(“active”);
+document.querySelectorAll("#font_small, #font_medium, #font_large").forEach(el => {
+el.classList.remove("active");
 });
 
-document.getElementById(`font_${size}`)?.classList.add(“active”);
+document.getElementById(`font_${size}`)?.classList.add("active");
 }
 
 function ResetAll() {
 location.reload(); // This refreshes the entire app clean
-document.getElementById(“reset_all”).classList.remove(“active”);
+document.getElementById("reset_all").classList.remove("active");
 }
 
 function resetRounds() {
@@ -194,99 +194,99 @@ clearPreviousRound();
 goToRounds();
 report();
 sessionFinished = false;
-document.getElementById(“nextBtn”).disabled = false;
+document.getElementById("nextBtn").disabled = false;
 // Shuffle state managed by _syncShuffleBtn
-if (typeof _syncShuffleBtn   === ‘function’) _syncShuffleBtn();
-if (typeof _syncModeBanner   === ‘function’) _syncModeBanner();
+if (typeof _syncShuffleBtn   === 'function') _syncShuffleBtn();
+if (typeof _syncModeBanner   === 'function') _syncModeBanner();
 
 // Optional: also disable End to prevent double-click
-//document.getElementById(“endBtn”).disabled = false;
+//document.getElementById("endBtn").disabled = false;
 
-const btn = document.getElementById(“reset_rounds_btn”);
+const btn = document.getElementById("reset_rounds_btn");
 if (btn) {
-btn.classList.remove(“active”);
+btn.classList.remove("active");
 }
 }
 
 /* =========================
 PLAYER MANAGEMENT (Settings Tab)
 ========================= */
-const ADMIN_DEFAULT_PASSWORD = “1234”;
-let adminModalMode = “unlock”; // “unlock” | “changepwd”
+const ADMIN_DEFAULT_PASSWORD = "1234";
+let adminModalMode = "unlock"; // "unlock" | "changepwd"
 
 function adminGetPassword() {
-return localStorage.getItem(“adminPassword”) || ADMIN_DEFAULT_PASSWORD;
+return localStorage.getItem("adminPassword") || ADMIN_DEFAULT_PASSWORD;
 }
 
 // ── Unlock flow ──
-// playerMgmtUnlock/Lock no longer needed — Players tab handles this directly
+// playerMgmtUnlock/Lock no longer needed -- Players tab handles this directly
 
 // ── Change password flow ──
 function playerMgmtChangePwd() {
-adminModalMode = “changepwd”;
-document.getElementById(“adminModalTitle”).textContent = t(“changePassword”);
-document.getElementById(“adminPasswordConfirmRow”).style.display = “block”;
-document.getElementById(“adminModalError”).textContent = “”;
-document.getElementById(“adminPasswordInput”).value = “”;
-document.getElementById(“adminPasswordConfirm”).value = “”;
-document.getElementById(“adminModal”).style.display = “flex”;
-setTimeout(() => document.getElementById(“adminPasswordInput”).focus(), 100);
+adminModalMode = "changepwd";
+document.getElementById("adminModalTitle").textContent = t("changePassword");
+document.getElementById("adminPasswordConfirmRow").style.display = "block";
+document.getElementById("adminModalError").textContent = "";
+document.getElementById("adminPasswordInput").value = "";
+document.getElementById("adminPasswordConfirm").value = "";
+document.getElementById("adminModal").style.display = "flex";
+setTimeout(() => document.getElementById("adminPasswordInput").focus(), 100);
 }
 
 function adminCloseModal() {
-document.getElementById(“adminModal”).style.display = “none”;
+document.getElementById("adminModal").style.display = "none";
 }
 
 function adminVerifyPassword() {
-const input = document.getElementById(“adminPasswordInput”).value;
-const err   = document.getElementById(“adminModalError”);
+const input = document.getElementById("adminPasswordInput").value;
+const err   = document.getElementById("adminModalError");
 
-if (adminModalMode === “unlock”) {
+if (adminModalMode === "unlock") {
 if (input === adminGetPassword()) {
 adminCloseModal();
-document.getElementById(“playerMgmtLocked”).style.display = “none”;
-document.getElementById(“playerMgmtUnlocked”).style.display = “block”;
+document.getElementById("playerMgmtLocked").style.display = "none";
+document.getElementById("playerMgmtUnlocked").style.display = "block";
 playerMgmtRenderList();
 } else {
-err.textContent = t(“wrongPassword”);
-document.getElementById(“adminPasswordInput”).value = “”;
+err.textContent = t("wrongPassword");
+document.getElementById("adminPasswordInput").value = "";
 }
 
-} else if (adminModalMode === “changepwd”) {
-const confirm = document.getElementById(“adminPasswordConfirm”).value;
+} else if (adminModalMode === "changepwd") {
+const confirm = document.getElementById("adminPasswordConfirm").value;
 if (input.length < 4) {
-err.textContent = t(“passwordMin4”); return;
+err.textContent = t("passwordMin4"); return;
 }
 if (input !== confirm) {
-err.textContent = t(“passwordsNotMatchDot”); return;
+err.textContent = t("passwordsNotMatchDot"); return;
 }
-localStorage.setItem(“adminPassword”, input);
+localStorage.setItem("adminPassword", input);
 adminCloseModal();
-alert(“Password changed successfully.”);
+alert("Password changed successfully.");
 }
 }
 
 // ── Player subtabs: All / Playing ──
 function playerSubtabShow(tab) {
-var elAll     = document.getElementById(‘playerSubtabAll’);
-var elPlaying = document.getElementById(‘playerSubtabPlaying’);
-var elAllBtn  = document.getElementById(‘playerSubtabAllBtn’);
-var elPlayBtn = document.getElementById(‘playerSubtabPlayingBtn’);
-if (elAll)     elAll.style.display     = tab === ‘all’     ? ‘’ : ‘none’;
-if (elPlaying) elPlaying.style.display = tab === ‘playing’ ? ‘’ : ‘none’;
-if (elAllBtn)  elAllBtn.classList.toggle(‘active’,  tab === ‘all’);
-if (elPlayBtn) elPlayBtn.classList.toggle(‘active’, tab === ‘playing’);
-if (tab === ‘all’)     playerMgmtRenderList();
-if (tab === ‘playing’) playerPlayingRenderList();
+var elAll     = document.getElementById('playerSubtabAll');
+var elPlaying = document.getElementById('playerSubtabPlaying');
+var elAllBtn  = document.getElementById('playerSubtabAllBtn');
+var elPlayBtn = document.getElementById('playerSubtabPlayingBtn');
+if (elAll)     elAll.style.display     = tab === 'all'     ? '' : 'none';
+if (elPlaying) elPlaying.style.display = tab === 'playing' ? '' : 'none';
+if (elAllBtn)  elAllBtn.classList.toggle('active',  tab === 'all');
+if (elPlayBtn) elPlayBtn.classList.toggle('active', tab === 'playing');
+if (tab === 'all')     playerMgmtRenderList();
+if (tab === 'playing') playerPlayingRenderList();
 }
 
 async function playerPlayingRenderList() {
-const container = document.getElementById(‘playerPlayingList’);
-container.innerHTML = ‘<p style="color:#aaa;font-size:0.85rem">’ + t(‘loading’) + ‘</p>’;
+const container = document.getElementById('playerPlayingList');
+container.innerHTML = '<p style="color:#aaa;font-size:0.85rem">' + t('loading') + '</p>';
 const admin = isAdminMode();
 
 try {
-const club = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
+const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
 
 let rows;
 if (club.id) {
@@ -306,7 +306,7 @@ if (!rows || !rows.length) {
 
 container.innerHTML = '';
 
-// Release All button — admin and organiser (user)
+// Release All button -- admin and organiser (user)
 if (admin || getClubMode() === 'user') {
   const bar = document.createElement('div');
   bar.style.cssText = 'padding:8px 0 12px;';
@@ -324,7 +324,7 @@ rows.forEach(function(p) {
   row.className = 'player-mgmt-row';
   const started = p.session_started_at
     ? new Date(p.session_started_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-    : '—';
+    : '--';
 
   const img = document.createElement('img');
   img.src = p.gender === 'Female' ? 'female.png' : 'male.png';
@@ -356,64 +356,64 @@ rows.forEach(function(p) {
 });
 
 } catch(e) {
-container.innerHTML = ‘<p class="player-mgmt-empty">’ + t(‘failedLoadConnection’) + ‘</p>’;
-console.error(‘playerPlayingRenderList error:’, e);
+container.innerHTML = '<p class="player-mgmt-empty">' + t('failedLoadConnection') + '</p>';
+console.error('playerPlayingRenderList error:', e);
 }
 }
 
 async function playerPlayingRelease(name) {
-if (!confirm(’”’ + name + ’” ’ + t(‘releaseFromSession’))) return;
+if (!confirm('"' + name + '" ' + t('releaseFromSession'))) return;
 try {
-const _rc = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
-await sbPatch(‘memberships’, `club_id=eq.${_rc.id}&nickname=ilike.${name}`, {
+const _rc = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+await sbPatch('memberships', `club_id=eq.${_rc.id}&nickname=ilike.${name}`, {
 is_playing: false
 });
 playerPlayingRenderList();
-} catch(e) { alert(’Failed to release: ’ + e.message); }
+} catch(e) { alert('Failed to release: ' + e.message); }
 }
 
 async function playerPlayingReleaseAll() {
-if (!confirm(t(‘releaseAllConfirm’))) return;
+if (!confirm(t('releaseAllConfirm'))) return;
 try {
-const club = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
-if (!club.id) { alert(‘No club logged in.’); return; }
-await sbPatch(‘memberships’, `club_id=eq.${club.id}&is_playing=eq.true`, { is_playing: false });
+const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+if (!club.id) { alert('No club logged in.'); return; }
+await sbPatch('memberships', `club_id=eq.${club.id}&is_playing=eq.true`, { is_playing: false });
 playerPlayingRenderList();
-} catch(e) { alert(’Failed: ’ + e.message); }
+} catch(e) { alert('Failed: ' + e.message); }
 }
 
 // ── Render master player list ──
 async function playerMgmtRenderList() {
-const container = document.getElementById(“playerMgmtList”);
-container.innerHTML = “<p style='color:#aaa;font-size:0.85rem'>” + t(‘loading’) + “</p>”;
+const container = document.getElementById("playerMgmtList");
+container.innerHTML = "<p style='color:#aaa;font-size:0.85rem'>" + t('loading') + "</p>";
 
-// Always use syncToLocal as single source of truth — never fetch directly
+// Always use syncToLocal as single source of truth -- never fetch directly
 if (!newImportState.historyPlayers || !newImportState.historyPlayers.length) {
 await syncToLocal();
 }
 let players = newImportState.historyPlayers || [];
 
-container.innerHTML = “”;
+container.innerHTML = "";
 
 if (players.length === 0) {
-container.innerHTML = ‘<p class="player-mgmt-empty">’ + t(‘noPlayersInDb’) + ‘</p>’;
+container.innerHTML = '<p class="player-mgmt-empty">' + t('noPlayersInDb') + '</p>';
 return;
 }
 
-const sorted = […players].sort((a, b) =>
+const sorted = [...players].sort((a, b) =>
 a.displayName.localeCompare(b.displayName)
 );
 
-// Toolbar hidden — all edits are in the Players tab
-const toolbar = document.getElementById(“playerMgmtToolbar”);
-if (toolbar) toolbar.style.display = “none”;
+// Toolbar hidden -- all edits are in the Players tab
+const toolbar = document.getElementById("playerMgmtToolbar");
+if (toolbar) toolbar.style.display = "none";
 
 sorted.forEach((p, i) => {
-const row = document.createElement(“div”);
-row.className = “player-mgmt-row”;
-const safeName = p.displayName.replace(/’/g, “'”);
-const rating = (typeof getActiveRating === “function” ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
-// Settings is read-only — all edits happen in the Players tab
+const row = document.createElement("div");
+row.className = "player-mgmt-row";
+const safeName = p.displayName.replace(/'/g, "'");
+const rating = (typeof getActiveRating === "function" ? getActiveRating(p.displayName) : getRating(p.displayName)).toFixed(1);
+// Settings is read-only -- all edits happen in the Players tab
 row.innerHTML = `<img src="${p.gender === 'Female' ? 'female.png' : 'male.png'}" class="player-mgmt-avatar" style="cursor:default"> <span class="player-mgmt-name player-mgmt-name-link" onclick="showPlayerStats('${safeName}')">${p.displayName}</span> <span class="rating-badge" style="font-size:0.8rem;padding:2px 7px">${rating}</span>`;
 container.appendChild(row);
 });
@@ -433,15 +433,15 @@ async function playerMgmtToggleGender(displayName) {
 const key = displayName.trim().toLowerCase();
 const hp  = newImportState.historyPlayers.find(p => p.displayName.trim().toLowerCase() === key);
 if (!hp) return;
-hp.gender = hp.gender === “Female” ? “Male” : “Female”;
-localStorage.setItem(“newImportHistory”, JSON.stringify(newImportState.historyPlayers));
+hp.gender = hp.gender === "Female" ? "Male" : "Female";
+localStorage.setItem("newImportHistory", JSON.stringify(newImportState.historyPlayers));
 // Sync gender to Supabase
 try {
-// gender is on players table — find player_id via membership
-const _gc = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
+// gender is on players table -- find player_id via membership
+const _gc = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
 if (_gc.id) {
-const _mrows = await sbGet(‘memberships’, `club_id=eq.${_gc.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}&select=player_id`).catch(()=>[]);
-if (_mrows.length) await sbPatch(‘players’, `id=eq.${_mrows[0].player_id}`, { gender: hp.gender });
+const _mrows = await sbGet('memberships', `club_id=eq.${_gc.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}&select=player_id`).catch(()=>[]);
+if (_mrows.length) await sbPatch('players', `id=eq.${_mrows[0].player_id}`, { gender: hp.gender });
 }
 } catch(e) { /* silent */ }
 syncPlayersFromMaster();
@@ -458,7 +458,7 @@ const key = displayName.trim().toLowerCase();
 try {
 const club = getMyClub();
 if (club.id) {
-await sbDelete(‘memberships’, `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}`);
+await sbDelete('memberships', `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(displayName.trim())}`);
 }
 } catch(e) { /* silent */ }
 
@@ -466,26 +466,26 @@ await sbDelete(‘memberships’, `club_id=eq.${club.id}&nickname=ilike.${encode
 newImportState.historyPlayers = newImportState.historyPlayers.filter(
 p => p.displayName.trim().toLowerCase() !== key
 );
-localStorage.setItem(“newImportHistory”, JSON.stringify(newImportState.historyPlayers));
+localStorage.setItem("newImportHistory", JSON.stringify(newImportState.historyPlayers));
 playerMgmtRenderList();
 }
 
 // ── Add new player ──
 function playerMgmtAddNew() {
-const name = prompt(“Enter player name:”);
+const name = prompt("Enter player name:");
 if (!name || !name.trim()) return;
 const trimmed = name.trim();
 const key = trimmed.toLowerCase();
 if (newImportState.historyPlayers.some(p => p.displayName.trim().toLowerCase() === key)) {
-alert(“Player already exists.”); return;
+alert("Player already exists."); return;
 }
-newImportState.historyPlayers.unshift({ displayName: trimmed, gender: “Male”, rating: 1.0, clubRating: 1.0, activeRating: 1.0 });
-localStorage.setItem(“newImportHistory”, JSON.stringify(newImportState.historyPlayers));
+newImportState.historyPlayers.unshift({ displayName: trimmed, gender: "Male", rating: 1.0, clubRating: 1.0, activeRating: 1.0 });
+localStorage.setItem("newImportHistory", JSON.stringify(newImportState.historyPlayers));
 playerMgmtRenderList();
 }
 
 /* =============================================================
-GITHUB ADMIN — Token + Club Management
+GITHUB ADMIN -- Token + Club Management
 Added: step82
 ============================================================= */
 
@@ -499,49 +499,49 @@ updateRegisterTabVisibility();
 }
 
 function sbShowClubTab(tab) {
-[“join”,“create”,“players”].forEach(t => {
-const content = document.getElementById(“clubTab” + t.charAt(0).toUpperCase() + t.slice(1));
-const btn     = document.getElementById(“clubTab” + t.charAt(0).toUpperCase() + t.slice(1) + “Btn”);
-if (content) content.style.display = t === tab ? “block” : “none”;
-if (btn) btn.classList.toggle(“active”, t === tab);
+["join","create","players"].forEach(t => {
+const content = document.getElementById("clubTab" + t.charAt(0).toUpperCase() + t.slice(1));
+const btn     = document.getElementById("clubTab" + t.charAt(0).toUpperCase() + t.slice(1) + "Btn");
+if (content) content.style.display = t === tab ? "block" : "none";
+if (btn) btn.classList.toggle("active", t === tab);
 });
-if (tab === “players”) { playerSubtabShow(‘all’); }
-if (tab === “create”) sbPopulateDeleteDropdown();
+if (tab === "players") { playerSubtabShow('all'); }
+if (tab === "create") sbPopulateDeleteDropdown();
 }
 
 function sbRenderClubStatus() {
 const club  = getMyClub();
 const mode  = getClubMode();
-const el    = document.getElementById(“sbClubStatus”);
-const badge = document.getElementById(“sbModeBadge”);
+const el    = document.getElementById("sbClubStatus");
+const badge = document.getElementById("sbModeBadge");
 
-if (el) el.textContent = club.name ? club.name : t(“noClubSelected”);
+if (el) el.textContent = club.name ? club.name : t("noClubSelected");
 
 if (badge) {
-if (mode === “admin”) {
-badge.textContent = t(‘adminBadgeFull’);
-badge.style.background = “#2dce89”;
-badge.style.color = “#fff”;
-badge.style.display = “inline-block”;
-} else if (mode === “user”) {
-badge.textContent = t(“userBadgeFull”);
-badge.style.background = “#5e72e4”;
-badge.style.color = “#fff”;
-badge.style.display = “inline-block”;
+if (mode === "admin") {
+badge.textContent = t('adminBadgeFull');
+badge.style.background = "#2dce89";
+badge.style.color = "#fff";
+badge.style.display = "inline-block";
+} else if (mode === "user") {
+badge.textContent = t("userBadgeFull");
+badge.style.background = "#5e72e4";
+badge.style.color = "#fff";
+badge.style.display = "inline-block";
 } else {
-badge.style.display = “none”;
+badge.style.display = "none";
 }
 }
 
 // Restore rating mode UI if already logged in
 if (club.id) {
-const isTrusted = localStorage.getItem(“kbrr_club_trusted”) === “true”;
-const ratingMode = localStorage.getItem(“kbrr_rating_mode”) || “local”;
-const wrap = document.getElementById(“sbRatingModeWrap”);
+const isTrusted = localStorage.getItem("kbrr_club_trusted") === "true";
+const ratingMode = localStorage.getItem("kbrr_rating_mode") || "local";
+const wrap = document.getElementById("sbRatingModeWrap");
 if (wrap) {
-wrap.style.display = isTrusted ? “block” : “none”;
-document.getElementById(“sbRatingGlobal”)?.classList.toggle(“active”, ratingMode === “global”);
-document.getElementById(“sbRatingLocal”)?.classList.toggle(“active”,  ratingMode === “local”);
+wrap.style.display = isTrusted ? "block" : "none";
+document.getElementById("sbRatingGlobal")?.classList.toggle("active", ratingMode === "global");
+document.getElementById("sbRatingLocal")?.classList.toggle("active",  ratingMode === "local");
 }
 }
 
@@ -551,38 +551,38 @@ vaultSyncStatus();
 
 /* ── Vault tab functions ── */
 function vaultShowTab(tab, btn) {
-document.querySelectorAll(’.vault-inner-content’).forEach(c => c.classList.remove(‘active’));
-document.querySelectorAll(’.vault-inner-tab, .vault-tab’).forEach(b => b.classList.remove(‘active’));
-const content = document.getElementById(‘vaultTab’ + tab.charAt(0).toUpperCase() + tab.slice(1));
-if (content) content.classList.add(‘active’);
-if (btn) btn.classList.add(‘active’);
-if (tab === ‘players’)  playerPlayingRenderList();
-if (tab === ‘register’) vaultRenderRegister();
-if (tab === ‘modify’)   vaultRenderModify();
-if (tab === ‘requests’) { if (typeof vaultLoadRequests === ‘function’) vaultLoadRequests(); }
+document.querySelectorAll('.vault-inner-content').forEach(c => c.classList.remove('active'));
+document.querySelectorAll('.vault-inner-tab, .vault-tab').forEach(b => b.classList.remove('active'));
+const content = document.getElementById('vaultTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+if (content) content.classList.add('active');
+if (btn) btn.classList.add('active');
+if (tab === 'players')  playerPlayingRenderList();
+if (tab === 'register') vaultRenderRegister();
+if (tab === 'modify')   vaultRenderModify();
+if (tab === 'requests') { if (typeof vaultLoadRequests === 'function') vaultLoadRequests(); }
 }
 
-/* ── Vault Modify tab — admin-only player edits ── */
-/* ── Vault Modify — SCS-style player list ── */
+/* ── Vault Modify tab -- admin-only player edits ── */
+/* ── Vault Modify -- SCS-style player list ── */
 
 var _vmAllPlayers = []; // full loaded list for client-side filter
 
 async function vaultRenderModify() {
-const container = document.getElementById(‘vaultModifyList’);
+const container = document.getElementById('vaultModifyList');
 if (!container) return;
 
-if (!(typeof isAdminMode === ‘function’ && isAdminMode())) {
-container.innerHTML = ‘<p class="player-mgmt-empty">’ + t(‘adminAccessRequired’) + ‘</p>’;
+if (!(typeof isAdminMode === 'function' && isAdminMode())) {
+container.innerHTML = '<p class="player-mgmt-empty">' + t('adminAccessRequired') + '</p>';
 return;
 }
 
-const club = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
+const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
 if (!club.id) {
-container.innerHTML = ‘<p class="player-mgmt-empty">’ + t(‘joinClubToManage’) + ‘</p>’;
+container.innerHTML = '<p class="player-mgmt-empty">' + t('joinClubToManage') + '</p>';
 return;
 }
 
-container.innerHTML = ’<p class="player-mgmt-empty"><span class="vm-spinner"></span> ’ + t(‘loading’) + ‘</p>’;
+container.innerHTML = '<p class="player-mgmt-empty"><span class="vm-spinner"></span> ' + t('loading') + '</p>';
 
 try {
 const clubPlayers = await dbGetPlayers(true);
@@ -608,88 +608,88 @@ _vmAllPlayers = (clubPlayers || []).map(p => ({
 vaultModifyFilter();
 
 } catch(e) {
-container.innerHTML = ‘<p class="player-mgmt-empty">’ + t(‘failedLoadPlayers’) + ‘</p>’;
-console.error(‘vaultRenderModify error:’, e);
+container.innerHTML = '<p class="player-mgmt-empty">' + t('failedLoadPlayers') + '</p>';
+console.error('vaultRenderModify error:', e);
 }
 }
 
 function vaultModifyFilter() {
-const search = (document.getElementById(‘vmSearchInput’)?.value || ‘’).toLowerCase();
-const gender = document.getElementById(‘vmFilterGender’)?.value || ‘’;
-const container = document.getElementById(‘vaultModifyList’);
-const countEl   = document.getElementById(‘vmPlayerCount’);
+const search = (document.getElementById('vmSearchInput')?.value || '').toLowerCase();
+const gender = document.getElementById('vmFilterGender')?.value || '';
+const container = document.getElementById('vaultModifyList');
+const countEl   = document.getElementById('vmPlayerCount');
 if (!container) return;
 
 let filtered = _vmAllPlayers;
 if (search) filtered = filtered.filter(p => p.displayName.toLowerCase().includes(search));
-if (gender) filtered = filtered.filter(p => (p.gender || ‘Male’) === gender);
+if (gender) filtered = filtered.filter(p => (p.gender || 'Male') === gender);
 
-if (countEl) countEl.textContent = filtered.length + ’ ’ + (filtered.length !== 1 ? t(‘playerPlural’) : t(‘playerSingular’));
+if (countEl) countEl.textContent = filtered.length + ' ' + (filtered.length !== 1 ? t('playerPlural') : t('playerSingular'));
 
 if (!filtered.length) {
-container.innerHTML = ‘<p class="player-mgmt-empty">’ + t(‘noPlayersMatch’) + ‘</p>’;
+container.innerHTML = '<p class="player-mgmt-empty">' + t('noPlayersMatch') + '</p>';
 return;
 }
 
 container.innerHTML = filtered.map(p => {
-const g   = p.gender === ‘Female’ ? ‘female’ : ‘male’;
-const ini = (p.displayName || ‘?’)[0].toUpperCase();
+const g   = p.gender === 'Female' ? 'female' : 'male';
+const ini = (p.displayName || '?')[0].toUpperCase();
 const rating = p.rating.toFixed(1);
 const userIdTag = p.userId
 ? `<span class="vm-userid-chip">${t("registeredBadge")}</span>`
 : `<span class="vm-userid-chip vm-unlinked">${t("noAccountBadge")}</span>`;
 const safeId = _vmEsc(p.id);
 return `<div class="vm-player-row ${g}"> <div class="vm-avatar ${g}">${ini}</div> <div class="vm-player-info"> <div class="vm-player-name-row"> <span class="vm-player-name">${_vmEsc(p.displayName)}</span> ${userIdTag} </div> <div class="vm-player-meta">${(p.gender||'Male')==="Female"?t("genderFemale"):t("genderMale")} · ★${rating} · ${p.wins}${t("winsShort")} ${p.losses}${t("lossesShort")}</div> </div> <div class="vm-row-actions"> <button class="vm-edit-btn" onclick="vmOpenEditModal('${safeId}')" title="Edit">✎</button> <button class="vm-delete-btn" onclick="vmDeletePlayer('${safeId}','${_vmEsc(p.displayName)}')" title="Delete">✕</button> </div> </div>`;
-}).join(’’);
+}).join('');
 }
 
 function _vmEsc(s) {
-return String(s || ‘’)
-.replace(/&/g,’&’).replace(/</g,’<’).replace(/>/g,’>’)
-.replace(/”/g,’"’).replace(/’/g,’'’);
+return String(s || '')
+.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>')
+.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function vmOpenEditModal(playerId) {
 const p = _vmAllPlayers.find(x => x.id === playerId);
 if (!p) return;
-document.getElementById(‘vmEditPlayerId’).value    = p.id;
-document.getElementById(‘vmEditUserAccountId’).value = p.userAccountId || ‘’;
-document.getElementById(‘vmEditName’).value        = p.displayName;
-document.getElementById(‘vmEditGender’).value      = p.gender || ‘Male’;
-document.getElementById(‘vmEditRating’).value      = p.rating.toFixed(1);
-document.getElementById(‘vmEditWins’).value        = p.wins;
-document.getElementById(‘vmEditLosses’).value      = p.losses;
-document.getElementById(‘vmEditUserId’).value      = p.userId || ‘’;
-document.getElementById(‘vmEditPassword’).value    = ‘’;
-const fb = document.getElementById(‘vmEditFeedback’);
-if (fb) { fb.textContent = ‘’; fb.style.color = ‘’; }
-document.getElementById(‘vmEditModal’).classList.add(‘open’);
+document.getElementById('vmEditPlayerId').value    = p.id;
+document.getElementById('vmEditUserAccountId').value = p.userAccountId || '';
+document.getElementById('vmEditName').value        = p.displayName;
+document.getElementById('vmEditGender').value      = p.gender || 'Male';
+document.getElementById('vmEditRating').value      = p.rating.toFixed(1);
+document.getElementById('vmEditWins').value        = p.wins;
+document.getElementById('vmEditLosses').value      = p.losses;
+document.getElementById('vmEditUserId').value      = p.userId || '';
+document.getElementById('vmEditPassword').value    = '';
+const fb = document.getElementById('vmEditFeedback');
+if (fb) { fb.textContent = ''; fb.style.color = ''; }
+document.getElementById('vmEditModal').classList.add('open');
 }
 
 function vmCloseEditModal(e) {
-if (!e || e.target === document.getElementById(‘vmEditModal’)) {
-document.getElementById(‘vmEditModal’).classList.remove(‘open’);
+if (!e || e.target === document.getElementById('vmEditModal')) {
+document.getElementById('vmEditModal').classList.remove('open');
 }
 }
 
 async function vmSaveEdit() {
-const playerId     = document.getElementById(‘vmEditPlayerId’).value;
-const userAcctId   = document.getElementById(‘vmEditUserAccountId’).value;
-const name         = document.getElementById(‘vmEditName’).value.trim();
-const gender       = document.getElementById(‘vmEditGender’).value;
-const rating       = parseFloat(document.getElementById(‘vmEditRating’).value) || 1.0;
-const wins         = parseInt(document.getElementById(‘vmEditWins’).value)   || 0;
-const losses       = parseInt(document.getElementById(‘vmEditLosses’).value) || 0;
-const newUserId    = document.getElementById(‘vmEditUserId’).value.trim().toLowerCase();
-const newPassword  = document.getElementById(‘vmEditPassword’).value.trim();
-const fb           = document.getElementById(‘vmEditFeedback’);
-const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? ‘var(–green)’ : ‘var(–red)’; } };
+const playerId     = document.getElementById('vmEditPlayerId').value;
+const userAcctId   = document.getElementById('vmEditUserAccountId').value;
+const name         = document.getElementById('vmEditName').value.trim();
+const gender       = document.getElementById('vmEditGender').value;
+const rating       = parseFloat(document.getElementById('vmEditRating').value) || 1.0;
+const wins         = parseInt(document.getElementById('vmEditWins').value)   || 0;
+const losses       = parseInt(document.getElementById('vmEditLosses').value) || 0;
+const newUserId    = document.getElementById('vmEditUserId').value.trim().toLowerCase();
+const newPassword  = document.getElementById('vmEditPassword').value.trim();
+const fb           = document.getElementById('vmEditFeedback');
+const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? 'var(-green)' : 'var(-red)'; } };
 
-if (!name) { setFb(t(‘nameCannotBeEmpty’), false); return; }
+if (!name) { setFb(t('nameCannotBeEmpty'), false); return; }
 
-setFb(t(‘saving’), true);
+setFb(t('saving'), true);
 try {
-const club = (typeof getMyClub === ‘function’) ? getMyClub() : null;
+const club = (typeof getMyClub === 'function') ? getMyClub() : null;
 const _vm  = _vmAllPlayers.find(x => x.id === playerId);
 
 // 1. Update membership (nickname + club_rating)
@@ -726,99 +726,99 @@ setTimeout(() => {
 }, 600);
 
 } catch(e) {
-setFb(’❌ ’ + e.message, false);
+setFb('❌ ' + e.message, false);
 }
 }
 
 async function vmDeletePlayer(playerId, displayName) {
 if (!confirm(`${t('removePlayer')} "${displayName}"?`)) return;
 try {
-// Remove from club only — delete membership, keep global player
-const _dclub = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
-await sbDelete(‘memberships’, `id=eq.${playerId}&club_id=eq.${_dclub.id}`);
+// Remove from club only -- delete membership, keep global player
+const _dclub = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+await sbDelete('memberships', `id=eq.${playerId}&club_id=eq.${_dclub.id}`);
 _vmAllPlayers = _vmAllPlayers.filter(x => x.id !== playerId);
 // also update local history
 if (newImportState && newImportState.historyPlayers) {
 newImportState.historyPlayers = newImportState.historyPlayers.filter(
 h => h.displayName?.trim().toLowerCase() !== displayName.trim().toLowerCase()
 );
-localStorage.setItem(‘newImportHistory’, JSON.stringify(newImportState.historyPlayers));
+localStorage.setItem('newImportHistory', JSON.stringify(newImportState.historyPlayers));
 }
-if (typeof syncPlayersFromMaster === ‘function’) syncPlayersFromMaster();
-if (typeof updatePlayerList === ‘function’) updatePlayerList();
+if (typeof syncPlayersFromMaster === 'function') syncPlayersFromMaster();
+if (typeof updatePlayerList === 'function') updatePlayerList();
 vaultModifyFilter();
 } catch(e) {
-alert(’Failed to remove player: ’ + e.message);
+alert('Failed to remove player: ' + e.message);
 }
 }
 
 // vaultToggleGender and vaultDeletePlayer replaced by vmSaveEdit / vmDeletePlayer above
 
-// ── Club Management — OTP-based create/delete ──
+// ── Club Management -- OTP-based create/delete ──
 
-var _clubCreateEmail = ‘’; // store email during OTP flow
-var _clubDeleteEmail = ‘’; // store registration email during delete OTP flow
-var _clubDeleteId    = ‘’; // store selected club id during delete OTP flow
+var _clubCreateEmail = ''; // store email during OTP flow
+var _clubDeleteEmail = ''; // store registration email during delete OTP flow
+var _clubDeleteId    = ''; // store selected club id during delete OTP flow
 
 function toggleClubMgmt(forceOpen) {
-const panel = document.getElementById(‘clubMgmtPanel’);
-const arrow = document.getElementById(‘clubMgmtArrow’);
-const open  = forceOpen === true ? true : panel.style.display === ‘none’;
-panel.style.display = open ? ‘block’ : ‘none’;
-arrow.textContent   = open ? ‘▼’ : ‘▶’;
+const panel = document.getElementById('clubMgmtPanel');
+const arrow = document.getElementById('clubMgmtArrow');
+const open  = forceOpen === true ? true : panel.style.display === 'none';
+panel.style.display = open ? 'block' : 'none';
+arrow.textContent   = open ? '▼' : '▶';
 if (open) sbPopulateDeleteDropdown();
 }
 
-/* ── CREATE CLUB — Direct (no OTP needed) ── */
+/* ── CREATE CLUB -- Direct (no OTP needed) ── */
 async function clubCreateSendOtp() {
 // Renamed but now creates directly without OTP
-const name    = document.getElementById(‘sbNewClubName’)?.value.trim();
-const selPw   = document.getElementById(‘sbNewClubSelectPw’)?.value.trim();
-const adminPw = document.getElementById(‘sbNewClubAdminPw’)?.value.trim();
-const fb      = document.getElementById(‘clubCreateFeedback’);
-const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? ‘#2dce89’ : ‘#e63757’; } };
+const name    = document.getElementById('sbNewClubName')?.value.trim();
+const selPw   = document.getElementById('sbNewClubSelectPw')?.value.trim();
+const adminPw = document.getElementById('sbNewClubAdminPw')?.value.trim();
+const fb      = document.getElementById('clubCreateFeedback');
+const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
-if (!name)    { setFb(t(‘enterClubName’), false); return; }
-if (!selPw)   { setFb(t(‘enterMemberPw’), false); return; }
-if (!adminPw) { setFb(t(‘enterAdminPw’), false); return; }
-if (selPw === adminPw) { setFb(t(‘memberAdminDiff’), false); return; }
+if (!name)    { setFb(t('enterClubName'), false); return; }
+if (!selPw)   { setFb(t('enterMemberPw'), false); return; }
+if (!adminPw) { setFb(t('enterAdminPw'), false); return; }
+if (selPw === adminPw) { setFb(t('memberAdminDiff'), false); return; }
 
-setFb(t(‘creatingClubDot’), true);
+setFb(t('creatingClubDot'), true);
 try {
 const club = await dbAddClub(name, selPw, adminPw);
 setMyClub(club.id, club.name);
-localStorage.setItem(‘kbrr_club_mode’,    ‘admin’);
-localStorage.setItem(‘kbrr_rating_field’, ‘club_rating’);
-[‘sbNewClubName’,‘sbNewClubSelectPw’,‘sbNewClubAdminPw’].forEach(id => {
-const el = document.getElementById(id); if (el) el.value = ‘’;
+localStorage.setItem('kbrr_club_mode',    'admin');
+localStorage.setItem('kbrr_rating_field', 'club_rating');
+['sbNewClubName','sbNewClubSelectPw','sbNewClubAdminPw'].forEach(id => {
+const el = document.getElementById(id); if (el) el.value = '';
 });
-setFb(’✅ ’ + club.name + ’ ’ + (t(‘saved’)||‘created!’), true);
+setFb('✅ ' + club.name + ' ' + (t('saved')||'created!'), true);
 sbRenderClubStatus();
 vaultSyncStatus();
-if (typeof clubLoginRefresh === ‘function’) clubLoginRefresh();
+if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
 await syncToLocal();
-} catch(e) { setFb(’❌ ’ + e.message, false); }
+} catch(e) { setFb('❌ ' + e.message, false); }
 }
 
 async function clubCreateResend() { /* no longer needed */ }
 async function clubCreateVerify() { /* no longer needed */ }
 
-/* ── DELETE CLUB — Admin password check ── */
+/* ── DELETE CLUB -- Admin password check ── */
 async function clubDeleteWithPassword() {
-const select  = document.getElementById(‘sbDeleteClubSelect’);
-const pwInput = document.getElementById(‘sbDeleteAdminPw’);
-const fb      = document.getElementById(‘clubDeleteFeedback’);
-const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? ‘#2dce89’ : ‘#e63757’; } };
+const select  = document.getElementById('sbDeleteClubSelect');
+const pwInput = document.getElementById('sbDeleteAdminPw');
+const fb      = document.getElementById('clubDeleteFeedback');
+const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
-if (!select || !select.value) { setFb(t(‘selectClubToDelete’), false); return; }
+if (!select || !select.value) { setFb(t('selectClubToDelete'), false); return; }
 const pw = pwInput?.value.trim();
-if (!pw) { setFb(t(‘enterAdminPw’), false); return; }
+if (!pw) { setFb(t('enterAdminPw'), false); return; }
 
-setFb(t(‘verifyingDot’), true);
+setFb(t('verifyingDot'), true);
 try {
-const clubs = await sbGet(‘clubs’, `id=eq.${select.value}&select=id,name,admin_password`);
-if (!clubs || !clubs.length) { setFb(t(‘clubNotFound’), false); return; }
-if (clubs[0].admin_password !== pw) { setFb(t(‘wrongAdminPassword’), false); return; }
+const clubs = await sbGet('clubs', `id=eq.${select.value}&select=id,name,admin_password`);
+if (!clubs || !clubs.length) { setFb(t('clubNotFound'), false); return; }
+if (clubs[0].admin_password !== pw) { setFb(t('wrongAdminPassword'), false); return; }
 
 const clubName = clubs[0].name || '';
 await dbDeleteClub(select.value);
@@ -831,16 +831,16 @@ if (pwInput) pwInput.value = '';
 await sbPopulateDeleteDropdown();
 setFb('✅ Club "' + clubName + '" deleted.', true);
 
-} catch (e) { setFb(’❌ ’ + e.message, false); }
+} catch (e) { setFb('❌ ' + e.message, false); }
 }
 
 function vaultRenderRegister() {
-const container = document.getElementById(‘vaultRegisterContainer’);
+const container = document.getElementById('vaultRegisterContainer');
 if (!container) return;
-const club = (typeof getMyClub === ‘function’) ? getMyClub() : { name: null };
+const club = (typeof getMyClub === 'function') ? getMyClub() : { name: null };
 
 if (!club.name) {
-container.innerHTML = ‘<div class="register-club-label">’ + t(‘noClubSelectedJoin’) + ‘</div>’;
+container.innerHTML = '<div class="register-club-label">' + t('noClubSelectedJoin') + '</div>';
 return;
 }
 
@@ -908,49 +908,49 @@ container.innerHTML = `
   </div>
 </div>`;
 
-window._regDefaultGender = ‘Male’;
-if (typeof _regStagingList !== ‘undefined’) _regStagingList = [];
+window._regDefaultGender = 'Male';
+if (typeof _regStagingList !== 'undefined') _regStagingList = [];
 }
 
 function vaultRegisterShowTab(tab) {
-document.getElementById(‘vregTabIndividual’).classList.toggle(‘active’, tab === ‘individual’);
-document.getElementById(‘vregTabBulk’).classList.toggle(‘active’,       tab === ‘bulk’);
-document.getElementById(‘vregPanelIndividual’).style.display = tab === ‘individual’ ? ‘’ : ‘none’;
-document.getElementById(‘vregPanelBulk’).style.display       = tab === ‘bulk’       ? ‘’ : ‘none’;
-if (tab === ‘bulk’ && typeof _regStagingList !== ‘undefined’) {
+document.getElementById('vregTabIndividual').classList.toggle('active', tab === 'individual');
+document.getElementById('vregTabBulk').classList.toggle('active',       tab === 'bulk');
+document.getElementById('vregPanelIndividual').style.display = tab === 'individual' ? '' : 'none';
+document.getElementById('vregPanelBulk').style.display       = tab === 'bulk'       ? '' : 'none';
+if (tab === 'bulk' && typeof _regStagingList !== 'undefined') {
 _regStagingList = [];
-if (typeof regRenderStaging === ‘function’) regRenderStaging();
+if (typeof regRenderStaging === 'function') regRenderStaging();
 }
 }
 
 async function vaultRegisterAll() {
 // Same as regRegisterAll but uses bulk default password for all players
-const defPw = document.getElementById(‘vregBulkDefaultPassword’)?.value.trim();
-const fb    = document.getElementById(‘registerFeedback’);
-const btn   = document.getElementById(‘regRegisterAllBtn’);
-const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.className = ’register-feedback ’ + (ok ? ‘success’ : ‘error’); } };
+const defPw = document.getElementById('vregBulkDefaultPassword')?.value.trim();
+const fb    = document.getElementById('registerFeedback');
+const btn   = document.getElementById('regRegisterAllBtn');
+const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.className = 'register-feedback ' + (ok ? 'success' : 'error'); } };
 
-if (!defPw) { setFb(t(‘enterDefaultPwAll’), false); return; }
+if (!defPw) { setFb(t('enterDefaultPwAll'), false); return; }
 
-const club    = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
-if (!club.id) { setFb(t(‘noClubSelectedJoin’), false); return; }
+const club    = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+if (!club.id) { setFb(t('noClubSelectedJoin'), false); return; }
 
-const pending = _regStagingList.filter(p => p.status === ‘pending’ || p.status === ‘error’);
+const pending = _regStagingList.filter(p => p.status === 'pending' || p.status === 'error');
 if (!pending.length) return;
 
 btn.disabled = true;
-setFb(t(‘registeringDot’), true);
+setFb(t('registeringDot'), true);
 
 let successCount = 0, failCount = 0;
 
 for (let i = 0; i < _regStagingList.length; i++) {
 const p = _regStagingList[i];
-if (p.status === ‘success’) continue;
+if (p.status === 'success') continue;
 try {
 // Check duplicate
-const existing = await sbGet(‘memberships’,
-‘club_id=eq.’ + club.id + ‘&nickname=ilike.’ + encodeURIComponent(p.name) + ‘&select=id’);
-if (existing && existing.length) { _regStagingList[i].status = ‘duplicate’; failCount++; continue; }
+const existing = await sbGet('memberships',
+'club_id=eq.' + club.id + '&nickname=ilike.' + encodeURIComponent(p.name) + '&select=id');
+if (existing && existing.length) { _regStagingList[i].status = 'duplicate'; failCount++; continue; }
 
   // Create player row
   const created = await sbPost('players', {
@@ -962,7 +962,7 @@ if (existing && existing.length) { _regStagingList[i].status = ‘duplicate’; 
   });
   const player = created[0];
 
-  // Create membership — no auto-link, player must claim via default password
+  // Create membership -- no auto-link, player must claim via default password
   await sbPost('memberships', {
     player_id:   player.id,
     club_id:     club.id,
@@ -983,33 +983,33 @@ if (typeof regRenderStaging === 'function') regRenderStaging();
 
 btn.disabled = false;
 const parts = [];
-if (successCount) parts.push(‘✅ ’ + successCount + ’ ’ + (t(‘registeredBadge’)||‘registered’));
-if (failCount)    parts.push(‘⚠️ ’ + failCount + ’ skipped’);
-setFb(parts.join(’  ’), !failCount);
+if (successCount) parts.push('✅ ' + successCount + ' ' + (t('registeredBadge')||'registered'));
+if (failCount)    parts.push('⚠️ ' + failCount + ' skipped');
+setFb(parts.join('  '), !failCount);
 
-localStorage.removeItem(‘kbrr_cache_players’);
-localStorage.removeItem(‘kbrr_cache_ts’);
+localStorage.removeItem('kbrr_cache_players');
+localStorage.removeItem('kbrr_cache_ts');
 }
 
 async function vaultDoRegisterPlayer() {
-const club     = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null };
-const nickname = document.getElementById(‘vregNickname’)?.value.trim();
-const gender   = document.getElementById(‘vregGender’)?.value || ‘Male’;
-const rating   = parseFloat(document.getElementById(‘vregRating’)?.value) || 1.0;
-const defPw    = document.getElementById(‘vregDefaultPassword’)?.value.trim();
-const fb       = document.getElementById(‘vregFeedback’);
-const setFb    = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? ‘var(–green,#2dce89)’ : ‘var(–red,#e63757)’; } };
+const club     = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
+const nickname = document.getElementById('vregNickname')?.value.trim();
+const gender   = document.getElementById('vregGender')?.value || 'Male';
+const rating   = parseFloat(document.getElementById('vregRating')?.value) || 1.0;
+const defPw    = document.getElementById('vregDefaultPassword')?.value.trim();
+const fb       = document.getElementById('vregFeedback');
+const setFb    = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? 'var(-green,#2dce89)' : 'var(-red,#e63757)'; } };
 
-if (!club.id)   { setFb(t(‘noClubSelectedJoin’), false); return; }
-if (!nickname)  { setFb(t(‘enterNickname’), false); return; }
-if (!defPw)     { setFb(t(‘enterDefaultPw’), false); return; }
+if (!club.id)   { setFb(t('noClubSelectedJoin'), false); return; }
+if (!nickname)  { setFb(t('enterNickname'), false); return; }
+if (!defPw)     { setFb(t('enterDefaultPw'), false); return; }
 
-setFb(t(‘registeringDot’), true);
+setFb(t('registeringDot'), true);
 try {
 // Check nickname not already in this club
-const existing = await sbGet(‘memberships’,
-‘club_id=eq.’ + club.id + ‘&nickname=ilike.’ + encodeURIComponent(nickname) + ‘&select=id’);
-if (existing && existing.length) { setFb(t(‘nicknameExists’), false); return; }
+const existing = await sbGet('memberships',
+'club_id=eq.' + club.id + '&nickname=ilike.' + encodeURIComponent(nickname) + '&select=id');
+if (existing && existing.length) { setFb(t('nicknameExists'), false); return; }
 
 // Create player row
 const created = await sbPost('players', {
@@ -1021,7 +1021,7 @@ const created = await sbPost('players', {
 });
 const player = created[0];
 
-// Create membership — player must claim via default password
+// Create membership -- player must claim via default password
 await sbPost('memberships', {
   player_id:   player.id,
   club_id:     club.id,
@@ -1040,100 +1040,100 @@ localStorage.removeItem('kbrr_cache_players');
 localStorage.removeItem('kbrr_cache_ts');
 
 } catch(e) {
-setFb(’❌ ’ + e.message, false);
+setFb('❌ ' + e.message, false);
 }
 }
 
 function vaultSyncStatus() {
-const club = (typeof getMyClub === ‘function’) ? getMyClub() : { id: null, name: null };
-const mode = (typeof getClubMode === ‘function’) ? getClubMode() : null;
+const club = (typeof getMyClub === 'function') ? getMyClub() : { id: null, name: null };
+const mode = (typeof getClubMode === 'function') ? getClubMode() : null;
 
-const dot   = document.getElementById(‘vaultStatusDot’);
-const name  = document.getElementById(‘vaultStatusName’);
-const role  = document.getElementById(‘vaultStatusRole’);
-const strip = document.getElementById(‘vaultStatusStrip’);
+const dot   = document.getElementById('vaultStatusDot');
+const name  = document.getElementById('vaultStatusName');
+const role  = document.getElementById('vaultStatusRole');
+const strip = document.getElementById('vaultStatusStrip');
 
 if (!name) return; // vault section not yet in DOM
 
 if (club.name) {
 if (name)  name.textContent  = club.name;
-if (dot)   { dot.style.background = ‘#2dce89’; dot.style.boxShadow = ‘0 0 0 3px rgba(45,206,137,0.2)’; }
-if (strip) strip.style.borderColor = ‘rgba(45,206,137,0.2)’;
+if (dot)   { dot.style.background = '#2dce89'; dot.style.boxShadow = '0 0 0 3px rgba(45,206,137,0.2)'; }
+if (strip) strip.style.borderColor = 'rgba(45,206,137,0.2)';
 if (role) {
-role.style.display = ‘inline-block’;
-if (mode === ‘admin’) { role.textContent = t(‘adminBadge’)||‘ADMIN’; role.style.background = ‘#2dce89’; role.style.color = ‘#000’; }
-else                  { role.textContent = t(‘userBadge’)||‘USER’;  role.style.background = ‘var(–accent)’; role.style.color = ‘#fff’; }
+role.style.display = 'inline-block';
+if (mode === 'admin') { role.textContent = t('adminBadge')||'ADMIN'; role.style.background = '#2dce89'; role.style.color = '#000'; }
+else                  { role.textContent = t('userBadge')||'USER';  role.style.background = 'var(-accent)'; role.style.color = '#fff'; }
 }
-// Modify tab — admin only
-const modifyBtn = document.getElementById(‘vaultTabModifyBtn’);
-if (modifyBtn) modifyBtn.style.display = mode === ‘admin’ ? ‘’ : ‘none’;
+// Modify tab -- admin only
+const modifyBtn = document.getElementById('vaultTabModifyBtn');
+if (modifyBtn) modifyBtn.style.display = mode === 'admin' ? '' : 'none';
 } else {
-if (name)  name.textContent  = t(‘noClubSelected’);
-if (dot)   { dot.style.background = ‘var(–muted)’; dot.style.boxShadow = ‘none’; }
-if (role)  role.style.display = ‘none’;
+if (name)  name.textContent  = t('noClubSelected');
+if (dot)   { dot.style.background = 'var(-muted)'; dot.style.boxShadow = 'none'; }
+if (role)  role.style.display = 'none';
 }
 
 }
 
 function sbRenderRatingMode(isTrusted) {
-// global mode blocked until fully tested — hide UI always
-const wrap = document.getElementById(“sbRatingModeWrap”);
-if (wrap) wrap.style.display = “none”;
-localStorage.setItem(“kbrr_rating_mode”, “local”);
+// global mode blocked until fully tested -- hide UI always
+const wrap = document.getElementById("sbRatingModeWrap");
+if (wrap) wrap.style.display = "none";
+localStorage.setItem("kbrr_rating_mode", "local");
 }
 
 function sbSetRatingMode(mode) {
-localStorage.setItem(“kbrr_rating_mode”, mode);
-document.getElementById(“sbRatingGlobal”)?.classList.toggle(“active”, mode === “global”);
-document.getElementById(“sbRatingLocal”)?.classList.toggle(“active”,  mode === “local”);
+localStorage.setItem("kbrr_rating_mode", mode);
+document.getElementById("sbRatingGlobal")?.classList.toggle("active", mode === "global");
+document.getElementById("sbRatingLocal")?.classList.toggle("active",  mode === "local");
 // Re-sync so activeRating is recomputed from the correct field for the new mode
-if (typeof syncToLocal === “function”) syncToLocal();
+if (typeof syncToLocal === "function") syncToLocal();
 }
 
 function sbClearClub() {
 clearMyClub();
-localStorage.removeItem(‘kbrr_club_mode’);
-localStorage.removeItem(‘kbrr_club_trusted’);
-localStorage.removeItem(‘kbrr_rating_mode’);
-localStorage.removeItem(‘kbrr_rating_field’);
-localStorage.removeItem(‘kbrr_rating_field’);
+localStorage.removeItem('kbrr_club_mode');
+localStorage.removeItem('kbrr_club_trusted');
+localStorage.removeItem('kbrr_rating_mode');
+localStorage.removeItem('kbrr_rating_field');
+localStorage.removeItem('kbrr_rating_field');
 
 // Clear all player data on logout
-localStorage.removeItem(‘newImportHistory’);
-localStorage.removeItem(‘schedulerPlayers’);
-if (typeof newImportState !== ‘undefined’ && newImportState) {
+localStorage.removeItem('newImportHistory');
+localStorage.removeItem('schedulerPlayers');
+if (typeof newImportState !== 'undefined' && newImportState) {
 newImportState.historyPlayers = [];
 newImportState.selectedPlayers = [];
 }
-if (typeof schedulerState !== ‘undefined’ && schedulerState) {
+if (typeof schedulerState !== 'undefined' && schedulerState) {
 schedulerState.allPlayers    = [];
 schedulerState.activeplayers = [];
 }
 
-document.getElementById(‘sbRatingModeWrap’) && (document.getElementById(‘sbRatingModeWrap’).style.display = ‘none’);
+document.getElementById('sbRatingModeWrap') && (document.getElementById('sbRatingModeWrap').style.display = 'none');
 sbRenderClubStatus();
 vaultSyncStatus();
-if (typeof clubLoginRefresh === ‘function’) clubLoginRefresh();
+if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
 updateRegisterTabVisibility();
 
 // Reset app mode to viewer after club logout
-localStorage.setItem(‘kbrr_app_mode’, ‘viewer’);
-sessionStorage.setItem(‘appMode’, ‘viewer’);
-if (typeof appMode !== ‘undefined’) appMode = ‘viewer’;
-if (typeof updateModePill === ‘function’) updateModePill(‘viewer’);
-if (typeof showHomeScreen === ‘function’) showHomeScreen();
+localStorage.setItem('kbrr_app_mode', 'viewer');
+sessionStorage.setItem('appMode', 'viewer');
+if (typeof appMode !== 'undefined') appMode = 'viewer';
+if (typeof updateModePill === 'function') updateModePill('viewer');
+if (typeof showHomeScreen === 'function') showHomeScreen();
 }
 
 // sbDeleteClub replaced by clubDeleteSendOtp/clubDeleteVerify (OTP flow)
 
 async function sbPopulateDeleteDropdown() {
-const select = document.getElementById(“sbDeleteClubSelect”);
+const select = document.getElementById("sbDeleteClubSelect");
 if (!select) return;
 try {
 const clubs = await dbGetClubs();
-select.innerHTML = ‘<option value="">’ + (t(‘selectClubDelete’)||’— Select club to delete —’) + ‘</option>’;
+select.innerHTML = '<option value="">' + (t('selectClubDelete')||'-- Select club to delete --') + '</option>';
 clubs.forEach(c => {
-const opt = document.createElement(“option”);
+const opt = document.createElement("option");
 opt.value = c.id;
 opt.textContent = c.name;
 select.appendChild(opt);
@@ -1142,62 +1142,62 @@ select.appendChild(opt);
 }
 
 function getClubMode() {
-return localStorage.getItem(“kbrr_club_mode”) || null; // “admin” | “user” | null
+return localStorage.getItem("kbrr_club_mode") || null; // "admin" | "user" | null
 }
 
 function isAdminMode() {
-return getClubMode() === “admin”;
+return getClubMode() === "admin";
 }
 
 // sbCreateClub replaced by clubCreateSendOtp/clubCreateVerify (OTP flow)
 
 function sbFeedback(msg, color) {
-const el = document.getElementById(“sbClubFeedback”);
+const el = document.getElementById("sbClubFeedback");
 if (!el) return;
 el.textContent = msg;
-el.style.color = color === “green” ? “#2dce89” : color === “red” ? “#e63757” : “#888”;
+el.style.color = color === "green" ? "#2dce89" : color === "red" ? "#e63757" : "#888";
 }
 
 function updateRegisterTabVisibility() {
-// Vault tab moved to top nav — no longer in import modal, nothing to update here
+// Vault tab moved to top nav -- no longer in import modal, nothing to update here
 }
 
 /* =============================================================
 PLAYER STATS MODAL
 ============================================================= */
 async function showPlayerStats(name) {
-const modal    = document.getElementById(“playerStatsModal”);
-const content  = document.getElementById(“playerStatsContent”);
+const modal    = document.getElementById("playerStatsModal");
+const content  = document.getElementById("playerStatsContent");
 if (!modal || !content) return;
 
-content.innerHTML = “<div class='stats-loading'>” + t(‘loading’) + “</div>”;
-modal.style.display = “flex”;
+content.innerHTML = "<div class='stats-loading'>" + t('loading') + "</div>";
+modal.style.display = "flex";
 
 try {
 const rows = await sbGet(
-“players”,
+"players",
 `name=ilike.${encodeURIComponent(name)}&select=name,gender,wins,losses,sessions`
 );
 if (!rows || !rows.length) {
-content.innerHTML = “<div class='stats-loading'>” + t(‘playerNotFound’) + “</div>”;
+content.innerHTML = "<div class='stats-loading'>" + t('playerNotFound') + "</div>";
 return;
 }
 const p      = rows[0];
-const gender = p.gender || “Male”;
-// Single gate — sync first, then read activeRating
+const gender = p.gender || "Male";
+// Single gate -- sync first, then read activeRating
 await syncToLocal();
 const rating = getActiveRating(name).toFixed(1);
 const wins     = p.wins   || 0;
 const losses   = p.losses || 0;
 const sessions = Array.isArray(p.sessions) ? p.sessions : [];
-const genderImg = gender === “Female” ? “female.png” : “male.png”;
+const genderImg = gender === "Female" ? "female.png" : "male.png";
 const total    = wins + losses;
 const winPct   = total > 0 ? Math.round((wins / total) * 100) : 0;
 
 const sessionRows = sessions.length
   ? sessions.map(s => `
       <tr>
-        <td>${s.date || "—"}</td>
+        <td>${s.date || "--"}</td>
         <td>${s.wins || 0}</td>
         <td>${s.losses || 0}</td>
         <td>${parseFloat(s.rating || 0).toFixed(1)}</td>
@@ -1238,25 +1238,25 @@ content.innerHTML = `
 `;
 
 } catch (e) {
-content.innerHTML = “<div class='stats-loading'>Failed to load stats.</div>”;
+content.innerHTML = "<div class='stats-loading'>Failed to load stats.</div>";
 }
 }
 
 function closePlayerStats() {
-const modal = document.getElementById(“playerStatsModal”);
-if (modal) modal.style.display = “none”;
+const modal = document.getElementById("playerStatsModal");
+if (modal) modal.style.display = "none";
 }
 
-/* ── Mode Launcher — Language Picker ── */
+/* ── Mode Launcher -- Language Picker ── */
 function _mlLangLabel() {
-var saved = localStorage.getItem(‘appLanguage’) || ‘en’;
-var map = { en: ‘🇺🇸 English’, jp: ‘🇯🇵 日本語’, kr: ‘🇰🇷 한국어’, zh: ‘🇨🇳 中文’, vi: ‘🇻🇳 Tiếng Việt’ };
-return map[saved] || ‘🇺🇸 English’;
+var saved = localStorage.getItem('appLanguage') || 'en';
+var map = { en: '🇺🇸 English', jp: '🇯🇵 日本語', kr: '🇰🇷 한국어', zh: '🇨🇳 中文', vi: '🇻🇳 Tiếng Việt' };
+return map[saved] || '🇺🇸 English';
 }
 
 function mlToggleLang() {
-var picker = document.getElementById(‘mlLangPicker’);
-if (picker) picker.style.display = picker.style.display === ‘none’ ? ‘block’ : ‘none’;
+var picker = document.getElementById('mlLangPicker');
+if (picker) picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
 }
 
 function mlSelectLang(code, flag, name) {
@@ -1264,12 +1264,12 @@ function mlSelectLang(code, flag, name) {
 settingsSelectLang(code, flag, name);
 // Update display and close picker
 mlSyncLangDisplay();
-var p = document.getElementById(‘mlLangPicker’);
-if (p) p.style.display = ‘none’;
+var p = document.getElementById('mlLangPicker');
+if (p) p.style.display = 'none';
 }
 
 function mlSyncLangDisplay() {
 var label = _mlLangLabel();
-var el = document.getElementById(‘mlLangCurrent’);
-if (el) el.textContent = label + ’ ▾’;
+var el = document.getElementById('mlLangCurrent');
+if (el) el.textContent = label + ' ▾';
 }

@@ -1,5 +1,5 @@
 /* ============================================================
-   GAMES — Round rendering, win marking, player swaps
+   GAMES -- Round rendering, win marking, player swaps
    File: games.js
    ============================================================ */
 
@@ -28,7 +28,7 @@ const roundStates = {
   }
 };
 function getPairKey(a, b) {
-  if (!a || !b) return null; // invalid pair — no key
+  if (!a || !b) return null; // invalid pair -- no key
   return [a, b].sort().join("|");
 }
 
@@ -129,7 +129,7 @@ function toggleRound() {
       }
     });
 
-    // Show win cups — both modes require winner marking
+    // Show win cups -- both modes require winner marking
     document.querySelectorAll(".win-cup").forEach(cup => {
       cup.style.visibility    = "visible";
       cup.style.pointerEvents = "auto";
@@ -142,7 +142,7 @@ function toggleRound() {
   } else if (currentState === "active") {
     // ── RETURN TO IDLE MODE (advance round) ──
 
-    // Require all winners marked — both modes
+    // Require all winners marked -- both modes
     const currentRoundGames = allRounds[allRounds.length - 1].games;
     const winnersCount = currentRoundGames.filter(g => g.winner).length;
     if (!currentRoundGames.length || winnersCount !== currentRoundGames.length) {
@@ -150,7 +150,7 @@ function toggleRound() {
       return;
     }
 
-    // Update rank points — both modes
+    // Update rank points -- both modes
     updatePointsAfterRound(schedulerState);
 
     nextRound();
@@ -176,7 +176,7 @@ function toggleRound() {
     _syncShuffleBtn();
 
   } else if (currentState === "done") {
-    // done behaves same as idle — just re-enter active
+    // done behaves same as idle -- just re-enter active
     currentState = "idle";
     toggleRound();
     return;
@@ -340,9 +340,9 @@ function extractActiveFixedPairs(state, playing) {
 
 function groupByTier(state, players) {
   // Tier boundaries based on persistent player rating (master DB)
-  // 1.0 – 2.0  → Weak
-  // 2.1 – 3.5  → Intermediate
-  // 3.6 – 5.0  → Strong
+  // 1.0 - 2.0  → Weak
+  // 2.1 - 3.5  → Intermediate
+  // 3.6 - 5.0  → Strong
 
   const strong = [];
   const inter  = [];
@@ -378,7 +378,7 @@ function buildBestTeam(state, pool) {
   return [pool[0], pool[1]];
 }
 
-// OLD CompetitiveRound removed — using competitive_algorithm.js instead
+// OLD CompetitiveRound removed -- using competitive_algorithm.js instead
 
 function updateAfterRound(state, games) {
   for (const game of games) {
@@ -1100,7 +1100,7 @@ function getMatchupScores(allPairs, opponentMap) {
       matchupScores.push({
         pair1: allPairs[i],
         pair2: allPairs[j],
-        freshness,         // 0–4
+        freshness,         // 0-4
         totalScore,        // numeric repetition penalty
         opponentFreshness, // for tie-breaking only
       });
@@ -1300,7 +1300,7 @@ function renderGames(data, roundIndex) {
       if (pair1Key) previousPairSet.add(pair1Key);
       if (pair2Key) previousPairSet.add(pair2Key);
 
-      // ✅ FIXED — store game as pair-vs-pair (NOT 4 flattened players)
+      // ✅ FIXED -- store game as pair-vs-pair (NOT 4 flattened players)
       if (pair1Key && pair2Key) {
         const gameKey = [pair1Key, pair2Key].sort().join("|");
         previousGameSet.add(gameKey);
@@ -1451,7 +1451,7 @@ function renderGames(data, roundIndex) {
     const teamLeft = makeTeamDiv('L');
     const teamRight = makeTeamDiv('R');
 
-    // ⭐ FIXED — Exact game repetition detection
+    // ⭐ FIXED -- Exact game repetition detection
     if (game?.pair1 && game?.pair2) {
 
       const pair1Key = getPairKey(game.pair1[0], game.pair1[1]);
@@ -2482,7 +2482,7 @@ modeToggle.addEventListener("change", () => {
 });
 
 // Min Rounds value
-// minRoundsRow removed from UI — no warm-up concept
+// minRoundsRow removed from UI -- no warm-up concept
 
 
 
@@ -2495,7 +2495,7 @@ function updateModeLabel() {
   if (lbl) lbl.textContent = getPlayMode() === "competitive" ? "🏆" : "🎲";
 }
 
-// Check if all games in current round have winners — enable End button
+// Check if all games in current round have winners -- enable End button
 function checkAllWinnersMarked() {
   const round = allRounds[currentRoundIndex];
   if (!round || !round.games || !round.games.length) return;
@@ -2508,7 +2508,7 @@ function checkAllWinnersMarked() {
   }
 }
 
-// toggleRoundSettings — unified version
+// toggleRoundSettings -- unified version
 function toggleRoundSettings() {
   const body = document.getElementById('roundSettingsBody');
   const isOpen = body.classList.toggle('open');
@@ -2531,7 +2531,7 @@ function updateGearPairsSub() {
     : (t('optional')||'Optional');
 }
 
-/* ── Round History — same style as Summary, no ranking, newest first ── */
+/* ── Round History -- same style as Summary, no ranking, newest first ── */
 function renderRoundHistory() {
   const container = document.getElementById('roundHistoryContainer');
   if (!container) return;
@@ -2539,7 +2539,7 @@ function renderRoundHistory() {
 
   if (!Array.isArray(allRounds) || allRounds.length === 0) return;
 
-  // Only show PAST completed rounds — skip current active round
+  // Only show PAST completed rounds -- skip current active round
   // A round is completed if all its games have a winner marked
   const pastRounds = [];
   for (let i = 0; i < allRounds.length; i++) {

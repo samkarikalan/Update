@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   MODE SYSTEM — Viewer / Organiser
+   MODE SYSTEM -- Viewer / Organiser
    Stored in sessionStorage (resets on app close)
 ══════════════════════════════════════════════ */
 
@@ -46,7 +46,7 @@ function applyMode(mode) {
 }
 
 function setViewerMode(isViewer) {
-  // Use body class — all viewer restrictions handled via CSS + JS checks
+  // Use body class -- all viewer restrictions handled via CSS + JS checks
   if (isViewer) {
     document.body.classList.add('viewer-mode');
     // Ensure we're on the club tab by default
@@ -68,7 +68,7 @@ function setViewerMode(isViewer) {
     if (el) { el.style.pointerEvents = isViewer ? 'none' : ''; el.style.opacity = isViewer ? '0.35' : ''; }
   });
 
-  // Import/Add buttons — hide entirely in viewer
+  // Import/Add buttons -- hide entirely in viewer
   ['#openImportBtn', '.open-import-btn', '#addPlayersTypeBtn', '#addPlayersBrowseBtn'].forEach(sel => {
     document.querySelectorAll(sel).forEach(el => {
       el.style.display = isViewer ? 'none' : '';
@@ -82,7 +82,7 @@ function closeModeSheet() {
 }
 
 function openModeSwitcher() {
-  // Use static overlay only — update active mode highlight
+  // Use static overlay only -- update active mode highlight
   var overlay = document.getElementById('modeSelectOverlay');
   if (!overlay) return;
   // Update active state on mode buttons
@@ -110,14 +110,14 @@ function switchMode(mode) {
     return;
   }
 
-  // Organiser / Vault — check club first
+  // Organiser / Vault -- check club first
   var club = (typeof getMyClub === 'function') ? getMyClub() : null;
   if (!club || !club.id) {
     _showClubSetupSheet(mode);
     return;
   }
 
-  // Vault — also needs admin auth
+  // Vault -- also needs admin auth
   if (mode === 'vault') {
     requestVaultMode();
     return;
@@ -210,7 +210,7 @@ function showOnboardingOverlay(reason) {
 }
 
 /* ============================================================
-   MAIN — Navigation, tab access, scheduler init, round progression
+   MAIN -- Navigation, tab access, scheduler init, round progression
    File: main.js
    ============================================================ */
 
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Show mode select overlay first
   initModeOnLoad();
 
-  // schedulerState starts empty — user imports players fresh each session
+  // schedulerState starts empty -- user imports players fresh each session
   consolidateMasterDB();
   updateRoundsPageAccess();
   updateSummaryPageAccess();
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const lastUpdate = new Date(rows[0].updated_at).getTime();
       if (Date.now() - lastUpdate < AUTO_END_MS) return;
 
-      // 1hr idle — silently end session
+      // 1hr idle -- silently end session
       console.log("Auto-ending session after 1hr idle");
       if (typeof dbCompleteSession === "function") await dbCompleteSession();
       if (typeof flushLiveSession === "function") await flushLiveSession();
@@ -292,7 +292,7 @@ window.addEventListener('beforeunload', () => {
 /* =========================
    CONSOLIDATE MASTER DB
    Merges players from ALL sources into newImportHistory.
-   Safe — never overwrites existing ratings, only adds missing players.
+   Safe -- never overwrites existing ratings, only adds missing players.
    Called on app open and close.
 ========================= */
 function consolidateMasterDB() {
@@ -309,14 +309,14 @@ function consolidateMasterDB() {
         masterMap.set(p.displayName.trim().toLowerCase(), p);
     });
 
-    // Collect players from favorites and session only — NOT from sets
+    // Collect players from favorites and session only -- NOT from sets
     // Sets are separate and should not pollute history
     const allSources = [
       ...favs,
       ...session.map(p => ({ displayName: p.name, gender: p.gender })),
     ];
 
-    // Add missing players — never overwrite existing
+    // Add missing players -- never overwrite existing
     allSources.forEach(p => {
       if (!p || !p.displayName) return;
       const key = p.displayName.trim().toLowerCase();
@@ -340,14 +340,14 @@ function consolidateMasterDB() {
 }
 
 /* ============================================================
-   RATING — SINGLE DOOR
+   RATING -- SINGLE DOOR
    
    Rule: activeRating is computed ONCE at sync time in syncToLocal.
-   Everything else reads newImportHistory[].activeRating — mode-blind.
+   Everything else reads newImportHistory[].activeRating -- mode-blind.
 
-   getActiveRating(name)     — only READ path
-   setActiveRating(name,val) — only WRITE path (in-memory + localStorage)
-   syncRatings()             — refreshes all visible badges
+   getActiveRating(name)     -- only READ path
+   setActiveRating(name,val) -- only WRITE path (in-memory + localStorage)
+   syncRatings()             -- refreshes all visible badges
    
    Mode logic lives ONLY in syncToLocal (read) and dbSyncRatings (write).
    ============================================================ */
@@ -361,7 +361,7 @@ function setRatingMode(mode) {
   syncRatings();
 }
 
-/* READ — just reads activeRating, no mode logic here */
+/* READ -- just reads activeRating, no mode logic here */
 function getActiveRating(name) {
   try {
     const key = name.trim().toLowerCase();
@@ -375,7 +375,7 @@ function getActiveRating(name) {
   } catch(e) { return 1.0; }
 }
 
-/* WRITE — updates in-memory and localStorage, mode-blind */
+/* WRITE -- updates in-memory and localStorage, mode-blind */
 function setActiveRating(name, val) {
   try {
     const key     = name.trim().toLowerCase();
@@ -400,7 +400,7 @@ function setActiveRating(name, val) {
   } catch(e) { console.error("setActiveRating error", e); }
 }
 
-/* Legacy aliases — safe to leave, all point to same door */
+/* Legacy aliases -- safe to leave, all point to same door */
 function getRating(name)         { return getActiveRating(name); }
 function setRating(name, rating) { setActiveRating(name, rating); }
 function getClubRating(name)     { return getActiveRating(name); }
@@ -475,12 +475,12 @@ function showPage(pageID, el) {
   // Sync all rating badges on the newly visible page
   syncRatings();
 
-  // Players page — update list on open
+  // Players page -- update list on open
   if (pageID === 'playersPage') {
     if (typeof updatePlayerList === 'function') updatePlayerList();
   }
 
-  // Fixed Pairs page — refresh selectors on open
+  // Fixed Pairs page -- refresh selectors on open
   if (pageID === 'fixedPairsPage') {
     if (typeof updateFixedPairSelectors === 'function') updateFixedPairSelectors();
     if (typeof renderFixedPairs === 'function') renderFixedPairs();
@@ -496,7 +496,7 @@ function showPage(pageID, el) {
     if (allRounds.length <= 1) {
       resetRounds();
     } else {
-      // Session in progress — just re-render current round, never regenerate
+      // Session in progress -- just re-render current round, never regenerate
       if (typeof showRound === 'function') showRound(currentRoundIndex);
     }
     updateSessionLiveBar();
@@ -579,7 +579,7 @@ function showPage(pageID, el) {
 
   if (pageID === "vaultClubMgmtPage") {
     if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
-    // All panels hidden on open — user taps a tile to open one
+    // All panels hidden on open -- user taps a tile to open one
     ['Connect','Create','Delete'].forEach(function(p) {
       var el = document.getElementById('clubMgmt' + p + 'Panel');
       if (el) el.style.display = 'none';
@@ -648,7 +648,7 @@ function initPage() {
 }
 
 /* ============================================================
-   SYNC — Server is master.
+   SYNC -- Server is master.
    THIS is the only place mode logic runs for READING.
    Pulls from Supabase → picks correct field based on mode → 
    writes as activeRating → everything else is mode-blind.
@@ -685,7 +685,7 @@ async function syncToLocal() {
       };
     });
 
-    // Server wins — write to local cache
+    // Server wins -- write to local cache
     localStorage.setItem("newImportHistory", JSON.stringify(synced));
 
     // Update in-memory state
@@ -694,7 +694,7 @@ async function syncToLocal() {
       if (typeof newImportRefreshSelectCards === "function") newImportRefreshSelectCards();
     }
 
-    // Update allPlayers in-memory activeRating (safe — doesn't reset active session games)
+    // Update allPlayers in-memory activeRating (safe -- doesn't reset active session games)
     if (schedulerState && schedulerState.allPlayers) {
       synced.forEach(sp => {
         const ap = schedulerState.allPlayers.find(
@@ -748,7 +748,7 @@ function updateSessionLiveBar() {
 }
 
 /* =============================================================
-   VAULT MODE — Admin password gate
+   VAULT MODE -- Admin password gate
 ============================================================= */
 function requestVaultMode() {
   const overlay = document.getElementById('modeSelectOverlay');
@@ -777,7 +777,7 @@ function requestVaultMode() {
 }
 
 /* =============================================================
-   CLUB SETUP SHEET — shown when entering Organiser or Vault without a club
+   CLUB SETUP SHEET -- shown when entering Organiser or Vault without a club
    Provides: Join existing club | Create new club
 ============================================================= */
 var _clubSetupTargetMode = null; // mode to enter after club is set up
@@ -810,7 +810,7 @@ function _showClubSetupSheet(targetMode) {
       <!-- JOIN PANEL -->
       <div id="clubSetupPanelJoin" style="margin-top:14px">
         <select id="csJoinClubSelect" class="auth-input" style="margin-bottom:10px">
-          <option value="">— Loading clubs… —</option>
+          <option value="">-- Loading clubs... --</option>
         </select>
         <input type="password" id="csJoinPassword" class="auth-input" placeholder="${t('clubPasswordPh')}" style="margin-bottom:10px">
         <div id="csJoinFeedback" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:10px"></div>
@@ -859,14 +859,14 @@ async function _clubSetupLoadClubs() {
   if (!select) return;
   try {
     const clubs = await sbGet('clubs', 'select=id,name&order=name.asc');
-    select.innerHTML = '<option value="">— Select club —</option>';
+    select.innerHTML = '<option value="">-- Select club --</option>';
     clubs.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id; opt.textContent = c.name;
       select.appendChild(opt);
     });
   } catch(e) {
-    select.innerHTML = '<option value="">— Could not load clubs —</option>';
+    select.innerHTML = '<option value="">-- Could not load clubs --</option>';
   }
 }
 
@@ -882,7 +882,7 @@ async function _clubSetupJoin() {
 
   setFb(t('checkingDot'), true);
   try {
-    // Use server-side filter — avoids RLS blocking password column reads
+    // Use server-side filter -- avoids RLS blocking password column reads
     const encodedPw = encodeURIComponent(pw);
     const asAdmin = await sbGet('clubs', `id=eq.${select.value}&admin_password=eq.${encodedPw}&select=id,name`);
     const asUser  = await sbGet('clubs', `id=eq.${select.value}&select_password=eq.${encodedPw}&select=id,name`);
@@ -963,7 +963,7 @@ async function _clubSetupCreateDirect() {
       if (typeof syncToLocal === 'function') syncToLocal();
 
       const mode = _clubSetupTargetMode;
-      // Creator is always admin — go straight into requested mode
+      // Creator is always admin -- go straight into requested mode
       appMode = mode;
       sessionStorage.setItem('appMode', mode);
       localStorage.setItem('kbrr_app_mode', mode);
@@ -1033,7 +1033,7 @@ async function verifyVaultPassword() {
 }
 
 /* =============================================================
-   POWER BUTTON — End Session
+   POWER BUTTON -- End Session
 ============================================================= */
 async function endSession(fromProfile = false) {
   // Show shuttle cost sheet instead of plain confirm
@@ -1094,24 +1094,24 @@ function showShuttleSheet() {
       <div class="shuttle-calc-box" id="shuttleCalcBox" style="display:none">
         <div class="shuttle-calc-row" id="shuttleCalcShuttles" style="display:none">
           <span class="shuttle-calc-label">🪶 Shuttles</span>
-          <span class="shuttle-calc-val" id="shuttleCostShuttles">—</span>
+          <span class="shuttle-calc-val" id="shuttleCostShuttles">--</span>
         </div>
         <div class="shuttle-calc-row" id="shuttleCalcCourt" style="display:none">
           <span class="shuttle-calc-label">🏟 Court</span>
-          <span class="shuttle-calc-val" id="shuttleCostCourt">—</span>
+          <span class="shuttle-calc-val" id="shuttleCostCourt">--</span>
         </div>
         <div class="shuttle-calc-row" id="shuttleCalcMisc" style="display:none">
           <span class="shuttle-calc-label">📦 Misc</span>
-          <span class="shuttle-calc-val" id="shuttleCostMisc">—</span>
+          <span class="shuttle-calc-val" id="shuttleCostMisc">--</span>
         </div>
         <div class="shuttle-calc-row shuttle-calc-total">
           <span class="shuttle-calc-label">Per player (${playerCount})</span>
-          <span class="shuttle-calc-val shuttle-calc-big" id="shuttleCostPerPlayer">—</span>
+          <span class="shuttle-calc-val shuttle-calc-big" id="shuttleCostPerPlayer">--</span>
         </div>
       </div>
 
       <button class="shuttle-btn-end" onclick="confirmEndSession()">⏹ End Session</button>
-      <button class="shuttle-btn-skip" onclick="skipShuttleAndEnd()">Skip — end without recording</button>
+      <button class="shuttle-btn-skip" onclick="skipShuttleAndEnd()">Skip -- end without recording</button>
     </div>`;
 
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
@@ -1218,7 +1218,7 @@ async function _doEndSession(shuttleData) {
   // Release session slots
   if (typeof dbReleaseMySession === 'function') await dbReleaseMySession();
 
-  // Clear local session state — no reload
+  // Clear local session state -- no reload
   localStorage.removeItem('schedulerState');
   localStorage.removeItem('allRounds');
   localStorage.removeItem('currentRoundIndex');

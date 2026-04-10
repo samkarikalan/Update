@@ -1,10 +1,10 @@
 const SUMMARY_CSSold = `
 /* ===============================
-   ROUND EXPORT – SUMMARY CSS
+   ROUND EXPORT - SUMMARY CSS
    Used only for HTML export
 ================================ */
 /* =================================================
-   ADDITIONS – compatible with renderRounds()
+   ADDITIONS - compatible with renderRounds()
    (No existing rules modified or removed)
 ================================================= */
 

@@ -60,7 +60,7 @@ try {
       .replace(/\n\s*/g, '\n')              // Reduce whitespace
       .replace(/  +/g, ' ');               // Collapse spaces
   };
-  console.log('terser not found — using basic minification. Run: npm install');
+  console.log('terser not found -- using basic minification. Run: npm install');
 }
 
 const JS_FILES = [
@@ -113,7 +113,7 @@ async function build() {
       totalSaved += saved;
       console.log(`  ✓ ${file} (${(saved/1024).toFixed(1)}KB saved)`);
     } catch(e) {
-      console.log(`  ✗ ${file} — minification failed, copying as-is`);
+      console.log(`  ✗ ${file} -- minification failed, copying as-is`);
       fs.copyFileSync(file, path.join('dist', file));
     }
   }
