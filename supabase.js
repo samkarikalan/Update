@@ -92,6 +92,10 @@ function getMyClub() {
 function setMyClub(id, name) {
   localStorage.setItem("kbrr_my_club_id",   id);
   localStorage.setItem("kbrr_my_club_name", name);
+  // Refresh all tiles immediately whenever club changes
+  if (typeof homeRefreshTiles        === 'function') homeRefreshTiles();
+  if (typeof homeRefreshJoinClubTile === 'function') homeRefreshJoinClubTile();
+  if (typeof vaultSyncStatus         === 'function') vaultSyncStatus();
 }
 
 function clearMyClub() {
@@ -159,13 +163,13 @@ async function dbGetPlayers(forceFresh = false) {
 /// Add a new player — requires admin session
 async function dbAddPlayer(name, gender, _unused) {
   const club = getMyClub();
-  if (!club.id) throw new Error("No club selected.");
+  if (!club.id) throw new Error(t("noClubSelectedJoin"));
   // Mode check done at login — trust session
 
   // Check duplicate nickname in this club via memberships
   const existing = await sbGet('memberships',
     `club_id=eq.${club.id}&nickname=ilike.${encodeURIComponent(name.trim())}&select=id`);
-  if (existing.length) throw new Error('Player already exists in this club.');
+  if (existing.length) throw new Error(t('nicknameExists'));
 
   // Create global player row
   const created = await sbPost('players', {
@@ -287,10 +291,12 @@ async function dbSyncRatings(updatedRatings) {
       );
       if (!mrows || !mrows.length) continue;
       const m = mrows[0];
-      // Points = same delta as rating but uncapped (always accumulates)
+      // Points = same algorithm as rating but NEVER capped
+      // Use uncappedDelta if available, else fallback to rating diff
       const prevRating = parseFloat(m.club_rating) || 1.0;
-      const pointsDelta = Math.abs(rounded - prevRating);
-      const newPoints = Math.round(((parseFloat(m.club_points) || 0) + pointsDelta) * 10) / 10;
+      const rawDelta = (update.uncappedDelta !== undefined) ? update.uncappedDelta : (rounded - prevRating);
+      const pointsDelta = rawDelta; // can be negative (loss) or positive (win)
+      const newPoints = Math.max(0, Math.round(((parseFloat(m.club_points) || 0) + pointsDelta) * 10) / 10);
 
       await sbPatch('memberships', `id=eq.${m.id}`, {
         club_rating: rounded,
@@ -300,7 +306,7 @@ async function dbSyncRatings(updatedRatings) {
       if (update.wins > 0 || update.losses > 0) {
         const prows = await sbGet('players', `id=eq.${m.player_id}&select=wins,losses,global_points,sessions`);
         if (prows && prows.length) {
-          const newGlobalPoints = Math.round(((parseFloat(prows[0].global_points) || 0) + pointsDelta) * 10) / 10;
+          const newGlobalPoints = Math.max(0, Math.round(((parseFloat(prows[0].global_points) || 0) + pointsDelta) * 10) / 10);
 
           // Update sessions jsonb for period stats (week/month/year)
           const today = new Date().toISOString().split('T')[0];
@@ -308,11 +314,12 @@ async function dbSyncRatings(updatedRatings) {
           const otherDays = existing.filter(s => s.date !== today);
           const todayEntry = existing.find(s => s.date === today) || {};
           const updatedSession = {
-            date:          today,
-            wins:          (todayEntry.wins || 0) + (update.wins || 0),
-            losses:        (todayEntry.losses || 0) + (update.losses || 0),
-            points_earned: Math.round(((parseFloat(todayEntry.points_earned) || 0) + pointsDelta) * 10) / 10,
-            club_rating:   rounded
+            date:           today,
+            wins:           (todayEntry.wins || 0) + (update.wins || 0),
+            losses:         (todayEntry.losses || 0) + (update.losses || 0),
+            points_earned:  Math.max(0, Math.round(((parseFloat(todayEntry.points_earned) || 0) + pointsDelta) * 10) / 10),
+            club_rating:    rounded,
+            cost_per_player: (parseFloat(todayEntry.cost_per_player) || 0) + (parseFloat(shuttleData?.cost_per_player) || 0) || null
           };
 
           await sbPatch('players', `id=eq.${m.player_id}`, {
@@ -357,11 +364,11 @@ async function dbOverrideRating(playerId, newRating) {
 /// Edit player — requires club admin password
 async function dbEditPlayer(playerId, updates, clubAdminPassword) {
   const club = getMyClub();
-  if (!club.id) throw new Error("No club selected.");
+  if (!club.id) throw new Error(t("noClubSelectedJoin"));
 
   const clubs = await sbGet("clubs", `id=eq.${club.id}&select=admin_password`);
   if (!clubs.length || clubs[0].admin_password !== clubAdminPassword)
-    throw new Error("Wrong admin password.");
+    throw new Error(t("wrongAdminPassword"));
 
   // updates may contain nickname — patch memberships, other fields go to players
   const { nickname, club_rating, ...playerUpdates } = updates;
@@ -381,11 +388,11 @@ async function dbEditPlayer(playerId, updates, clubAdminPassword) {
 /// Delete player from club — requires club admin password
 async function dbDeletePlayer(playerId, clubAdminPassword) {
   const club = getMyClub();
-  if (!club.id) throw new Error("No club selected.");
+  if (!club.id) throw new Error(t("noClubSelectedJoin"));
 
   const clubs = await sbGet("clubs", `id=eq.${club.id}&select=admin_password`);
   if (!clubs.length || clubs[0].admin_password !== clubAdminPassword)
-    throw new Error("Wrong admin password.");
+    throw new Error(t("wrongAdminPassword"));
 
   // Remove from club only (delete membership, keep global player)
   await sbDelete('memberships', `player_id=eq.${playerId}&club_id=eq.${club.id}`);
@@ -409,9 +416,9 @@ async function dbGetClubs() {
 
 /// Create a new club
 async function dbAddClub(clubName, selectPassword, adminPassword, registrationEmail) {
-  if (!clubName.trim()) throw new Error('Club name required.');
-  if (!selectPassword)  throw new Error('Select password required.');
-  if (!adminPassword)   throw new Error('Admin password required.');
+  if (!clubName.trim()) throw new Error(t('enterClubName'));
+  if (!selectPassword)  throw new Error(t('enterMemberPw'));
+  if (!adminPassword)   throw new Error(t('enterAdminPw'));
 
   const payload = {
     name:            clubName.trim(),
@@ -458,7 +465,7 @@ async function dbVerifyOtp(email, token) {
 /* ── Get club registration email (masked for display) ── */
 async function dbGetClubRegEmail(clubId) {
   const rows = await sbGet('clubs', `id=eq.${clubId}&select=registration_email`);
-  if (!rows || !rows.length) throw new Error('Club not found.');
+  if (!rows || !rows.length) throw new Error(t('clubNotFound'));
   return rows[0].registration_email || null;
 }
 
@@ -473,7 +480,7 @@ function maskEmail(email) {
 async function dbVerifyClubAccess(clubId, selectPassword) {
   const clubs = await sbGet("clubs", `id=eq.${clubId}&select=id,name,select_password`);
   if (!clubs.length) throw new Error("Club not found.");
-  if (clubs[0].select_password !== selectPassword) throw new Error("Wrong club password.");
+  if (clubs[0].select_password !== selectPassword) throw new Error(t("wrongPasswordHint"));
   return clubs[0];
 }
 
@@ -481,17 +488,18 @@ async function dbVerifyClubAccess(clubId, selectPassword) {
 /// SYNC AFTER ROUND
 /// ============================================================
 
-async function syncAfterRound(roundWins, roundLosses) {
+async function syncAfterRound(roundWins, roundLosses, roundRatingDeltas) {
   try {
     // STEP 1 — Push: send updated ratings + wins/losses to Supabase
     const playedNames = new Set([...roundWins.keys(), ...roundLosses.keys()]);
     const updatedRatings = schedulerState.allPlayers
       .filter(p => playedNames.has(p.name))
       .map(p => ({
-        name:         p.name,
-        activeRating: getActiveRating(p.name),  // single door — mode-blind
-        wins:         (roundWins   && roundWins.get(p.name))   || 0,
-        losses:       (roundLosses && roundLosses.get(p.name)) || 0
+        name:              p.name,
+        activeRating:      getActiveRating(p.name),  // capped at 5 for rating
+        uncappedDelta:     (roundRatingDeltas && roundRatingDeltas.get(p.name)) || 0, // true delta for points
+        wins:              (roundWins   && roundWins.get(p.name))   || 0,
+        losses:            (roundLosses && roundLosses.get(p.name)) || 0
       }));
 
     await dbSyncRatings(updatedRatings);
@@ -706,18 +714,17 @@ async function dbCompleteSession(shuttleData = null) {
         const playerId = mrows[0].player_id;
         const prows = await sbGet('players', `id=eq.${playerId}&select=sessions`).catch(() => []);
         const existing = (prows.length ? prows[0].sessions : null) || [];
-        const otherDays = existing.filter(s => s.date !== today);
-        const todayEntry = existing.find(s => s.date === today) || {};
+        // Each session = separate entry (no merging same day)
         const entry = {
           date:          today,
-          wins:          (todayEntry.wins || 0) + (p.wins || 0),
-          losses:        (todayEntry.losses || 0) + (p.losses || 0),
-          points_earned: Math.round(((parseFloat(todayEntry.points_earned) || 0) + (parseFloat(mrows[0].club_points) || 0)) * 10) / 10,
+          wins:          p.wins || 0,
+          losses:        p.losses || 0,
+          points_earned: parseFloat(mrows[0].club_points) || 0,
           club_rating:   parseFloat(mrows[0].club_rating) || 1.0,
-          cost_per_player: shuttleData ? shuttleData.cost_per_player : null
+          cost_per_player: shuttleData ? (parseFloat(shuttleData.cost_per_player) || 0) : null
         };
         await sbPatch('players', `id=eq.${playerId}`, {
-          sessions: [entry, ...otherDays].slice(0, 30)
+          sessions: [entry, ...existing].slice(0, 60)
         }).catch(() => {});
       } catch(e) { /* silent per player */ }
     }

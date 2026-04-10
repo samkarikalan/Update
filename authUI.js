@@ -62,7 +62,7 @@ function authSetLoading(btnSelector, loading) {
   btn.disabled = loading;
   if (loading) {
     btn._origText = btn.textContent;
-    btn.textContent = 'Please wait...';
+    btn.textContent = t('pleaseWait');
   } else {
     btn.textContent = btn._origText || btn.textContent;
   }
@@ -88,6 +88,8 @@ async function authDoLogin() {
 }
 
 /* ── Do Sign Up ── */
+var _pendingSignup = null;
+
 async function authDoSignup() {
   var email        = (document.getElementById('signupEmail')?.value || '').trim();
   var displayName  = (document.getElementById('signupDisplayName')?.value || '').trim();
@@ -96,28 +98,39 @@ async function authDoSignup() {
   var confirm      = (document.getElementById('signupConfirm')?.value || '');
   var recoveryWord = (document.getElementById('signupRecoveryWord')?.value || '').trim();
 
-  if (password !== confirm) {
-    authShowError('signupError', 'Passwords do not match');
-    return;
-  }
+  if (!email) { authShowError('signupError', t('emailRequired')); return; }
+  if (password !== confirm) { authShowError('signupError', t('passwordsNotMatch')); return; }
 
+  // Send OTP first
   authSetLoading('#authSignup .auth-btn-primary', true);
-  var result = await authSignUp(email, password, displayName, gender, recoveryWord);
+  var otpResult = await authSendOtp(email);
   authSetLoading('#authSignup .auth-btn-primary', false);
 
-  if (result.error) {
-    authShowError('signupError', result.error);
-    return;
-  }
+  if (otpResult.error) { authShowError('signupError', '❌ ' + otpResult.error); return; }
 
-  // Auto login after signup
+  _pendingSignup = { email, displayName, gender, password, recoveryWord };
+  authShowOtpScreen(email, 'signup');
+}
+
+async function authCompleteSignup(otp) {
+  if (!_pendingSignup) return;
+  var { email, displayName, gender, password, recoveryWord } = _pendingSignup;
+
+  var btn = document.getElementById('authOtpSubmitBtn');
+  if (btn) btn.disabled = true;
+  var verifyResult = await authVerifyOtp(email, otp);
+  if (btn) btn.disabled = false;
+
+  if (verifyResult.error) { authShowError('authOtpError', '❌ ' + verifyResult.error); return; }
+
+  var result = await authSignUp(email, password, displayName, gender, recoveryWord);
+  if (result.error) { authShowError('authOtpError', result.error); return; }
+
   var loginResult = await authLogin(email, password);
-  if (loginResult.error) {
-    authShowError('signupError', 'Account created! Please login.');
-    authShowScreen('login');
-    return;
-  }
+  if (loginResult.error) { authShowScreen('login'); return; }
 
+  _pendingSignup = null;
+  authHideOtpScreen();
   authAfterLogin(loginResult.user);
 }
 
@@ -128,6 +141,9 @@ async function authAfterLogin(user) {
     setMyPlayer({ name: user.nickname, gender: 'Male' });
   }
   if (typeof updateProfileBtn === 'function') updateProfileBtn();
+
+  // Silent background sync — link players rows where nickname matches but user_account_id is null
+  authSyncPlayerLinks(user).catch(function(){});
 
   // Check for pending invite
   var pending = (typeof authGetPendingInvite === 'function') ? authGetPendingInvite() : null;
@@ -205,8 +221,8 @@ function authShowClubPicker(memberships, user) {
     overlay.appendChild(picker);
   }
   picker.style.display = '';
-  picker.innerHTML = '<div class="auth-title">Select Club</div>' +
-    '<div class="auth-sub">You are a member of multiple clubs</div>' +
+  picker.innerHTML = '<div class="auth-title">' + t('selectClubTitle') + '</div>' +
+    '<div class="auth-sub">' + t('youMemberMultipleClubs') + '</div>' +
     memberships.map(function(m) {
       var cid   = m.club_id;
       var cname = m.club_name || cid;
@@ -231,7 +247,7 @@ async function authDoForgotReset() {
   var confirmPw    = (document.getElementById('forgotConfirmPw')?.value || '');
 
   if (newPw !== confirmPw) {
-    authShowError('forgotError', 'Passwords do not match');
+    authShowError('forgotError', t('passwordsNotMatch'));
     return;
   }
 
@@ -244,7 +260,7 @@ async function authDoForgotReset() {
     return;
   }
 
-  authShowError('forgotError', '✅ Password reset! Please login.');
+  authShowError('forgotError', t('passwordReset'));
   document.getElementById('forgotError').style.color = 'var(--green, #2dce89)';
   setTimeout(function() { authShowScreen('login'); }, 1500);
 }
@@ -302,24 +318,24 @@ function authSearchClubsUI(query) {
 
   if (resultsEl) {
     resultsEl.style.display = 'block';
-    resultsEl.innerHTML = '<div class="auth-club-loading">Searching...</div>';
+    resultsEl.innerHTML = '<div class="auth-club-loading">' + t('searching') + '</div>';
   }
 
   _searchTimeout = setTimeout(async function() {
     var result = await authSearchClubs(query);
     if (result.error) {
-      if (resultsEl) resultsEl.innerHTML = '<div class="auth-club-empty">Search failed. Try again.</div>';
+      if (resultsEl) resultsEl.innerHTML = '<div class="auth-club-empty">' + t('searchFailed') + '</div>';
       return;
     }
     if (!result.clubs || !result.clubs.length) {
-      if (resultsEl) resultsEl.innerHTML = '<div class="auth-club-empty">No clubs found. Check the name.</div>';
+      if (resultsEl) resultsEl.innerHTML = '<div class="auth-club-empty">' + t('noClubsFound') + '</div>';
       return;
     }
     if (resultsEl) {
       resultsEl.innerHTML = result.clubs.map(function(club) {
         return '<div class="auth-club-item" onclick="authDoRequestJoin(\'' + club.id + '\',\'' + club.name.replace(/'/g, "\\'") + '\')">' +
           '<div class="auth-club-item-name">🏢 ' + club.name + '</div>' +
-          '<div class="auth-club-item-btn">Request to Join ›</div>' +
+          '<div class="auth-club-item-btn">' + t('requestToJoin') + '</div>' +
           '</div>';
       }).join('');
     }
@@ -333,7 +349,7 @@ async function authDoRequestJoin(clubId, clubName) {
   var pendingEl = document.getElementById('joinClubPending');
 
   if (errorEl) { errorEl.style.display = 'none'; }
-  if (resultsEl) resultsEl.innerHTML = '<div class="auth-club-loading">Sending request...</div>';
+  if (resultsEl) resultsEl.innerHTML = '<div class="auth-club-loading">' + t('sendingRequest') + '</div>';
 
   var result = await authRequestJoin(clubId);
 
@@ -366,7 +382,7 @@ async function vaultLoadRequests() {
   if (!listEl) return;
 
   if (!club || !club.id) {
-    listEl.innerHTML = '<div class="profile-sessions-empty">Connect to a club first.</div>';
+    listEl.innerHTML = '<div class="profile-sessions-empty">' + t('connectClubFirst') + '</div>';
     return;
   }
 
@@ -374,12 +390,12 @@ async function vaultLoadRequests() {
   var result = await authGetJoinRequests(club.id);
 
   if (result.error) {
-    listEl.innerHTML = '<div class="profile-sessions-empty">Failed to load requests.</div>';
+    listEl.innerHTML = '<div class="profile-sessions-empty">' + t('failedLoadRequests') + '</div>';
     return;
   }
 
   if (!result.requests || !result.requests.length) {
-    listEl.innerHTML = '<div class="profile-sessions-empty">No pending requests.</div>';
+    listEl.innerHTML = '<div class="profile-sessions-empty">' + t('noPendingRequests') + '</div>';
     return;
   }
 
@@ -425,4 +441,118 @@ async function vaultRejectRequest(requestId) {
     return;
   }
   vaultLoadRequests();
+}
+
+/* ── OTP Screen ── */
+var _otpContext = null; // 'signup' | 'claim'
+
+function authShowOtpScreen(email, context) {
+  _otpContext = context;
+  var overlay = document.getElementById('authOverlay');
+  if (overlay) overlay.style.display = 'flex';
+
+  // Hide all screens
+  ['authWelcome','authLogin','authSignup','authForgot','authJoinClub','authClaim','authClubPicker'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Build or show OTP screen
+  var otpScreen = document.getElementById('authOtpScreen');
+  if (!otpScreen) {
+    otpScreen = document.createElement('div');
+    otpScreen.id = 'authOtpScreen';
+    otpScreen.className = 'auth-screen';
+    document.getElementById('authOverlay').appendChild(otpScreen);
+  }
+  otpScreen.style.display = '';
+  otpScreen.innerHTML =
+    '<div class="auth-title">' + t('verifyEmailTitle') + '</div>' +
+    '<div class="auth-sub" style="margin-bottom:16px">Enter the 6-digit code sent to<br><strong>' + email + '</strong></div>' +
+    '<input id="authOtpInput" class="auth-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" style="letter-spacing:8px;font-size:1.2rem;text-align:center;">' +
+    '<div id="authOtpError" class="auth-error" style="display:none"></div>' +
+    '<button id="authOtpSubmitBtn" class="auth-btn auth-btn-primary" onclick="authSubmitOtp()" style="margin-top:12px;">' + t('verifyBtn') + '</button>' +
+    '<button class="auth-btn auth-btn-secondary" onclick="authResendOtp(\'' + email + '\')" style="margin-top:8px;">' + t('resendCode') + '</button>';
+
+  setTimeout(function() {
+    var inp = document.getElementById('authOtpInput');
+    if (inp) inp.focus();
+  }, 100);
+}
+
+function authHideOtpScreen() {
+  var otpScreen = document.getElementById('authOtpScreen');
+  if (otpScreen) otpScreen.style.display = 'none';
+}
+
+async function authSubmitOtp() {
+  var otp = (document.getElementById('authOtpInput')?.value || '').trim();
+  if (otp.length !== 6) { authShowError('authOtpError', t('enterSixDigitHint')); return; }
+  if (_otpContext === 'signup') await authCompleteSignup(otp);
+  if (_otpContext === 'claim')  await authCompleteClaim(otp);
+}
+
+async function authResendOtp(email) {
+  var result = await authSendOtp(email);
+  if (result.error) {
+    authShowError('authOtpError', result.error);
+  } else {
+    authShowError('authOtpError', t('codeResent'));
+    document.getElementById('authOtpError').style.color = 'var(--green,#2dce89)';
+    document.getElementById('authOtpError').style.display = '';
+  }
+}
+
+function authShowError(id, msg) {
+  var el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.display = ''; }
+}
+
+/* ── Claim Account with OTP verification ── */
+var _pendingClaim = null;
+
+async function authDoClaimAccount() {
+  var clubId       = (document.getElementById('claimClubSelect')?.value || '').trim();
+  var nickname     = (document.getElementById('claimNickname')?.value || '').trim();
+  var defaultPw    = (document.getElementById('claimDefaultPassword')?.value || '').trim();
+  var email        = (document.getElementById('claimEmail')?.value || '').trim();
+  var newPassword  = (document.getElementById('claimPassword')?.value || '');
+  var confirmPw    = (document.getElementById('claimConfirm')?.value || '');
+  var recoveryWord = (document.getElementById('claimRecoveryWord')?.value || '').trim();
+  var errEl        = document.getElementById('claimError');
+
+  var setErr = function(msg) { if (errEl) { errEl.textContent = msg; errEl.style.display = ''; } };
+
+  if (!clubId)      { setErr(t('selectYourClub')); return; }
+  if (!nickname)    { setErr(t('enterYourNickname')); return; }
+  if (!defaultPw)   { setErr(t('enterDefaultPassword')); return; }
+  if (!email)       { setErr('Enter your email'); return; }
+  if (newPassword.length < 6) { setErr('Password must be at least 6 characters'); return; }
+  if (newPassword !== confirmPw) { setErr(t('passwordsNotMatch')); return; }
+
+  // Send OTP to verify email
+  setErr(t('sendingVerification'));
+  errEl.style.color = 'var(--accent,#6c63ff)';
+  var otpResult = await authSendOtp(email);
+  if (otpResult.error) { errEl.style.color = ''; setErr(otpResult.error); return; }
+
+  // Store claim data and show OTP screen
+  _pendingClaim = { clubId, nickname, defaultPw, email, newPassword, recoveryWord };
+  authShowOtpScreen(email, 'claim');
+}
+
+async function authCompleteClaim(otp) {
+  if (!_pendingClaim) return;
+  var { clubId, nickname, defaultPw, email, newPassword, recoveryWord } = _pendingClaim;
+
+  var verifyResult = await authVerifyOtp(email, otp);
+  if (verifyResult.error) { authShowError('authOtpError', verifyResult.error); return; }
+
+  // OTP verified — complete claim
+  var result = await authClaimAccount(clubId, nickname, defaultPw, email, newPassword, recoveryWord);
+  if (result.error) { authShowError('authOtpError', result.error); return; }
+
+  _pendingClaim = null;
+  authHideOtpScreen();
+  authAfterLogin(result.user);
 }

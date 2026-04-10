@@ -46,7 +46,7 @@ async function renderSummaryFromSession() {
     }
 
     if (!roundsData || !roundsData.length) {
-      if (reportEl) reportEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.9rem;">No session data available.</div>';
+      if (reportEl) reportEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.9rem;">' + t('noSessionDataAvail') + '</div>';
       return;
     }
 
@@ -63,7 +63,7 @@ async function renderSummaryFromSession() {
     }
 
   } catch(e) {
-    if (reportEl) reportEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.9rem;">Could not load session data.</div>';
+    if (reportEl) reportEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.9rem;">' + t('couldNotLoadSession') + '</div>';
   }
 }
 

@@ -1,6 +1,6 @@
 {
-  "name": "CLUB Scheduler",
-  "short_name": "CLUB",
+  "name": "Sports Club Scheduler",
+  "short_name": "SCS",
   "description": "Badminton club session scheduler and player manager",
   "start_url": "./KariBRRApp.html",
   "scope": "./",
@@ -22,6 +22,9 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["sports", "utilities"],
+  "categories": [
+    "sports",
+    "utilities"
+  ],
   "lang": "en"
 }

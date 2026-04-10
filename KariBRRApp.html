@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <link rel="apple-touch-icon" href="cs.PNG">
@@ -11,462 +12,521 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CLUB Scheduler</title>
-  <link rel="stylesheet" href="BRRStyle1.css">
-  <link rel="stylesheet" href="BRRStyle2.css">
-  <link rel="stylesheet" href="Export.css">
+  <title>Sports Club Scheduler</title>
+
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="BRRStyle3.css">
-  <link rel="stylesheet" href="HomeStyle.css">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <script src="supabase.js" defer></script>
+
   <script src="auth.js" defer></script>
+
   <script src="authUI.js" defer></script>
+
   <script src="subscription.js" defer></script>
+
   <script src="HomeScreen.js" defer></script>
+
   <script src="main.js" defer></script>
+
   <script src="engjap.js" defer></script>
+
   <script src="competitive_algorithm.js" defer></script>
+
   <script src="games.js" defer></script>
+
   <script src="rounds.js" defer></script>
+
   <script src="players.js" defer></script>
+
   <script src="importPlayers.js" defer></script>
+
   <script src="settings.js" defer></script>
+
   <script src="summary.js" defer></script>
+
   <script src="help.js" defer></script>
+
   <script src="profile.js" defer></script>
+
   <script src="dashboard.js" defer></script>
+
   <script src="viewer.js" defer></script>
+
+  <script src="report.js" defer></script>
+
+  <link rel="stylesheet" href="ui.css">
+  <link rel="stylesheet" href="rounds.css">
 </head>
 <body>
 
   <!-- ============================= -->
+
   <!--       MODE SELECT OVERLAY     -->
+
   <!-- ============================= -->
+
   <!-- Keep ghost for compatibility  -->
-  <div id="modeSelectOverlay" class="mode-select-overlay" style="display:none;">
-    <div class="mode-select-card">
-      <div class="mode-select-logo">🏸</div>
-      <div class="mode-select-title">Choose Mode</div>
-      <div class="mode-select-subtitle">How are you using the app today?</div>
-      <div class="mode-select-options">
-        <button class="mode-select-btn viewer" onclick="document.getElementById('modeSelectOverlay').style.display='none';selectMode('viewer')">
-          <span class="mode-select-btn-icon">👁</span>
-          <div class="mode-select-btn-info">
-            <div class="mode-select-btn-name">Viewer</div>
-            <div class="mode-select-btn-desc">Watch live rounds &amp; scores</div>
+
+  <div id="modeSelectOverlay" class="mode-launcher-fullscreen" style="display:none;">
+    <div class="ml-inner">
+      <div class="ml-logo">🏸</div>
+      <div class="ml-title" data-i18n="chooseMode">Choose Mode</div>
+      <div class="ml-sub" data-i18n="howUsingAppToday">How are you using the app today?</div>
+      <div class="ml-modes">
+        <button class="ml-mode viewer" onclick="switchMode('viewer')">
+          <div class="ml-mode-icon">👁</div>
+          <div class="ml-mode-info">
+            <div class="ml-mode-name" data-i18n="viewer">Viewer</div>
+            <div class="ml-mode-desc" data-i18n="watchLiveDesc">Watch live rounds &amp; scores</div>
           </div>
-          <span class="mode-select-btn-arrow">›</span>
+          <span class="ml-arr">›</span>
         </button>
-        <button class="mode-select-btn organiser" onclick="document.getElementById('modeSelectOverlay').style.display='none';switchMode('organiser')">
-          <span class="mode-select-btn-icon">🏆</span>
-          <div class="mode-select-btn-info">
-            <div class="mode-select-btn-name">Round Organiser</div>
-            <div class="mode-select-btn-desc">Run session, score games, manage players</div>
+        <button class="ml-mode organiser" onclick="switchMode('organiser')">
+          <div class="ml-mode-icon">🏆</div>
+          <div class="ml-mode-info">
+            <div class="ml-mode-name" data-i18n="roundOrganiser">Round Organiser</div>
+            <div class="ml-mode-desc" data-i18n="roundOrganiserDesc">Run session, score games, manage players</div>
           </div>
-          <span class="mode-select-btn-arrow">›</span>
+          <span class="ml-arr">›</span>
         </button>
-        <button class="mode-select-btn vault" onclick="document.getElementById('modeSelectOverlay').style.display='none';requestVaultMode()">
-          <span class="mode-select-btn-icon">🔑</span>
-          <div class="mode-select-btn-info">
-            <div class="mode-select-btn-name">Vault Manager</div>
-            <div class="mode-select-btn-desc">Club admin — players, requests, management</div>
+        <button class="ml-mode vault" onclick="requestVaultMode()">
+          <div class="ml-mode-icon">🔑</div>
+          <div class="ml-mode-info">
+            <div class="ml-mode-name" data-i18n="vaultManager">Vault Manager</div>
+            <div class="ml-mode-desc" data-i18n="vaultManagerDesc">Club admin — players, requests, management</div>
           </div>
-          <span class="mode-select-btn-arrow">›</span>
+          <span class="ml-arr">›</span>
         </button>
+      </div>
+      <div class="ml-footer">
+        <button class="ml-settings-btn" onclick="closeModeSheet();homeGo('settingsPage','tabBtnSettings')">⚙️ <span data-i18n="settings">Settings</span></button>
+        <div class="ml-lang-row" id="mlLangRow">
+          <span class="ml-lang-current" id="mlLangCurrent" onclick="mlToggleLang()">🇺🇸 English ▾</span>
+          <div class="ml-lang-picker" id="mlLangPicker" style="display:none;">
+            <div class="ml-lang-opt" onclick="mlSelectLang('en','🇺🇸','English')">🇺🇸 English</div>
+            <div class="ml-lang-opt" onclick="mlSelectLang('jp','🇯🇵','日本語')">🇯🇵 日本語</div>
+            <div class="ml-lang-opt" onclick="mlSelectLang('kr','🇰🇷','한국어')">🇰🇷 한국어</div>
+            <div class="ml-lang-opt" onclick="mlSelectLang('zh','🇨🇳','中文')">🇨🇳 中文</div>
+            <div class="ml-lang-opt" onclick="mlSelectLang('vi','🇻🇳','Tiếng Việt')">🇻🇳 Tiếng Việt</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ============================= -->
+
   <!--        AUTH SCREENS           -->
+
   <!-- ============================= -->
+
   <div id="authOverlay" class="auth-overlay" style="display:none;">
 
-    <!-- WELCOME screen -->
-    <div id="authWelcome" class="auth-screen">
-      <div class="auth-logo">🏸</div>
-      <div class="auth-app-name">Sports Club Scheduler</div>
-      <div class="auth-tagline">Badminton &amp; Pickleball</div>
-      <div class="auth-welcome-btns">
-        <button class="auth-btn-primary" onclick="authShowScreen('login')">Login</button>
-        <button class="auth-btn-secondary" onclick="authShowScreen('signup')">Create Account</button>
-        <button class="auth-btn-secondary" onclick="authShowScreen('claim')" style="margin-top:8px">Claim My Account</button>
-      </div>
-    </div>
+```
+<!-- WELCOME screen -->
+<div id="authWelcome" class="auth-screen">
+  <div class="auth-logo">🏸</div>
+  <div class="auth-app-name" data-i18n="appTitle">Sports Club Scheduler</div>
+  <div class="auth-tagline" data-i18n="tagline" data-i18n="tagline">Badminton &amp; Pickleball</div>
+  <div class="auth-welcome-btns">
+    <button class="auth-btn-primary" onclick="authShowScreen('login')" data-i18n="login">Login</button>
+    <button class="auth-btn-secondary" onclick="authShowScreen('signup')" data-i18n="createAccount">Create Account</button>
 
-    <!-- LOGIN screen -->
-    <div id="authLogin" class="auth-screen" style="display:none;">
-      <div class="auth-back-row">
-        <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
-        <span class="auth-screen-title">Login</span>
-      </div>
-      <div class="auth-form">
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input type="email" id="loginEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none" autocomplete="email">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Password</label>
-          <input type="password" id="loginPassword" class="auth-input" placeholder="Password" autocomplete="current-password">
-        </div>
-        <div id="loginError" class="auth-error" style="display:none;"></div>
-        <button class="auth-btn-primary" onclick="authDoLogin()">Login</button>
-        <button class="auth-btn-link" onclick="authShowScreen('forgot')">Forgot password?</button>
-      </div>
-    </div>
+  </div>
+</div>
 
-    <!-- SIGN UP screen -->
-    <div id="authSignup" class="auth-screen" style="display:none;">
-      <div class="auth-back-row">
-        <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
-        <span class="auth-screen-title">Create Account</span>
-      </div>
-      <div class="auth-form">
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input type="email" id="signupEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none" autocomplete="email">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Display Name <span class="auth-hint">your name or alias</span></label>
-          <input type="text" id="signupDisplayName" class="auth-input" placeholder="e.g. Kari">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Gender</label>
-          <select id="signupGender" class="auth-input">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Password <span class="auth-hint">min 6 characters</span></label>
-          <input type="password" id="signupPassword" class="auth-input" placeholder="Password" autocomplete="new-password">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Confirm Password</label>
-          <input type="password" id="signupConfirm" class="auth-input" placeholder="Repeat password" autocomplete="new-password">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Recovery Keyword <span class="auth-hint">to reset password if forgotten</span></label>
-          <input type="text" id="signupRecoveryWord" class="auth-input" placeholder="e.g. mango, sunflower..." autocapitalize="none">
-        </div>
-        <div id="signupError" class="auth-error" style="display:none;"></div>
-        <button class="auth-btn-primary" onclick="authDoSignup()">Create Account</button>
-      </div>
+<!-- LOGIN screen -->
+<div id="authLogin" class="auth-screen" style="display:none;">
+  <div class="auth-back-row">
+    <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
+    <span class="auth-screen-title" data-i18n="login">Login</span>
+  </div>
+  <div class="auth-form">
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="emailLabel">Email</label>
+      <input type="email" id="loginEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none" autocomplete="email">
     </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="passwordLabel">Password</label>
+      <input type="password" id="loginPassword" class="auth-input" placeholder="Password" autocomplete="current-password">
+    </div>
+    <div id="loginError" class="auth-error" style="display:none;"></div>
+    <button class="auth-btn-primary" onclick="authDoLogin()" data-i18n="login">Login</button>
+    <button class="auth-btn-link" onclick="authShowScreen('forgot')" data-i18n="forgotPassword">Forgot password?</button>
+  </div>
+</div>
 
-    <!-- FORGOT PASSWORD screen -->
-    <div id="authForgot" class="auth-screen" style="display:none;">
-      <div class="auth-back-row">
-        <button class="auth-back-btn" onclick="authShowScreen('login')">&#8249;</button>
-        <span class="auth-screen-title">Reset Password</span>
-      </div>
-      <div class="auth-form">
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input type="email" id="forgotEmail" class="auth-input" placeholder="your@email.com">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Recovery Keyword</label>
-          <input type="text" id="forgotRecoveryWord" class="auth-input" placeholder="Your recovery keyword" autocapitalize="none">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">New Password</label>
-          <input type="password" id="forgotNewPw" class="auth-input" placeholder="Min 6 characters">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Confirm New Password</label>
-          <input type="password" id="forgotConfirmPw" class="auth-input" placeholder="Repeat new password">
-        </div>
-        <div id="forgotError" class="auth-error" style="display:none;"></div>
-        <button class="auth-btn-primary" onclick="authDoForgotReset()">Reset Password</button>
-      </div>
+<!-- SIGN UP screen -->
+<div id="authSignup" class="auth-screen" style="display:none;">
+  <div class="auth-back-row">
+    <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
+    <span class="auth-screen-title" data-i18n="createAccount">Create Account</span>
+  </div>
+  <div class="auth-form">
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="emailLabel">Email</label>
+      <input type="email" id="signupEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none" autocomplete="email">
     </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="displayName">Display Name <span class="auth-hint" data-i18n="yourNameAlias">your name or alias</span></label>
+      <input type="text" id="signupDisplayName" class="auth-input" placeholder="e.g. Kari">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="gender">Gender</label>
+      <select id="signupGender" class="auth-input">
+        <option value="Male" data-i18n="genderMale">Male</option>
+        <option value="Female" data-i18n="genderFemale">Female</option>
+      </select>
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">Password <span class="auth-hint" data-i18n="minSixChars">min 6 characters</span></label>
+      <input type="password" id="signupPassword" class="auth-input" placeholder="Password" autocomplete="new-password">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="confirmPassword">Confirm Password</label>
+      <input type="password" id="signupConfirm" class="auth-input" placeholder="Repeat password" autocomplete="new-password">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">Recovery Keyword <span class="auth-hint" data-i18n="toResetPassword">to reset password if forgotten</span></label>
+      <input type="text" id="signupRecoveryWord" class="auth-input" placeholder="e.g. mango, sunflower..." autocapitalize="none">
+    </div>
+    <div id="signupError" class="auth-error" style="display:none;"></div>
+    <button class="auth-btn-primary" onclick="authDoSignup()" data-i18n="createAccount">Create Account</button>
+  </div>
+</div>
 
-    <!-- CLAIM ACCOUNT screen -->
-    <div id="authClaim" class="auth-screen" style="display:none;">
-      <div class="auth-back-row">
-        <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
-        <span class="auth-screen-title">Claim My Account</span>
-      </div>
-      <div class="auth-form">
-        <p class="auth-hint-block" style="margin-bottom:16px;color:var(--text-dim,#888);font-size:0.85rem;">
-          Your admin has registered you. Enter your club, nickname and the default password they gave you to set up your account.
-        </p>
-        <div class="auth-field">
-          <label class="auth-label">Club</label>
-          <select id="claimClubSelect" class="auth-input">
-            <option value="">— Loading clubs… —</option>
-          </select>
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Nickname <span class="auth-hint">as registered by admin</span></label>
-          <input type="text" id="claimNickname" class="auth-input" placeholder="Your nickname">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Default Password <span class="auth-hint">given by admin</span></label>
-          <input type="password" id="claimDefaultPassword" class="auth-input" placeholder="Default password">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Your Email</label>
-          <input type="email" id="claimEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">New Password</label>
-          <input type="password" id="claimPassword" class="auth-input" placeholder="Min 6 characters">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Confirm Password</label>
-          <input type="password" id="claimConfirm" class="auth-input" placeholder="Repeat password">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Recovery Keyword</label>
-          <input type="text" id="claimRecoveryWord" class="auth-input" placeholder="e.g. mango, sunflower..." autocapitalize="none">
-        </div>
-        <div id="claimError" class="auth-error" style="display:none;"></div>
-        <button class="auth-btn-primary" onclick="authDoClaimAccount()">Claim Account</button>
-      </div>
+<!-- FORGOT PASSWORD screen -->
+<div id="authForgot" class="auth-screen" style="display:none;">
+  <div class="auth-back-row">
+    <button class="auth-back-btn" onclick="authShowScreen('login')">&#8249;</button>
+    <span class="auth-screen-title" data-i18n="resetPassword">Reset Password</span>
+  </div>
+  <div class="auth-form">
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="emailLabel">Email</label>
+      <input type="email" id="forgotEmail" class="auth-input" placeholder="your@email.com">
     </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="recoveryKeyword">Recovery Keyword</label>
+      <input type="text" id="forgotRecoveryWord" class="auth-input" placeholder="Your recovery keyword" autocapitalize="none">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="newPassword">New Password</label>
+      <input type="password" id="forgotNewPw" class="auth-input" placeholder="Min 6 characters">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="confirmNewPassword">Confirm New Password</label>
+      <input type="password" id="forgotConfirmPw" class="auth-input" placeholder="Repeat new password">
+    </div>
+    <div id="forgotError" class="auth-error" style="display:none;"></div>
+    <button class="auth-btn-primary" onclick="authDoForgotReset()">Reset Password</button>
+  </div>
+</div>
 
-    <!-- JOIN CLUB screen -->
-    <div id="authJoinClub" class="auth-screen" style="display:none;">
-      <div class="auth-back-row">
-        <div style="flex:1"></div>
-        <button class="auth-btn-link" onclick="authSkipJoin()">Skip</button>
-      </div>
-      <div class="auth-logo" style="font-size:2.5rem;">🏢</div>
-      <div class="auth-screen-title" style="margin-bottom:6px;">Find Your Club</div>
-      <div class="auth-tagline">Search by club name and request to join</div>
-      <div class="auth-form" style="margin-top:24px;">
-        <div class="auth-field">
-          <label class="auth-label">Search Club</label>
-          <input type="text" id="joinClubSearch" class="auth-input"
-            placeholder="Type club name..."
-            oninput="authSearchClubsUI(this.value)">
-        </div>
-        <div id="joinClubResults" class="auth-club-results" style="display:none;"></div>
-        <div id="joinClubError" class="auth-error" style="display:none;"></div>
-        <div id="joinClubPending" class="auth-pending" style="display:none;">
-          <div class="auth-pending-icon">⏳</div>
-          <div class="auth-pending-text">Request sent! Waiting for admin approval.</div>
-        </div>
-      </div>
+<!-- CLAIM ACCOUNT screen -->
+<div id="authClaim" class="auth-screen" style="display:none;">
+  <div class="auth-back-row">
+    <button class="auth-back-btn" onclick="authShowScreen('welcome')">&#8249;</button>
+    <span class="auth-screen-title" data-i18n="claimMyAccount">Claim My Account</span>
+  </div>
+  <div class="auth-form">
+    <p class="auth-hint-block" style="margin-bottom:16px;color:var(--text-dim,#888);font-size:0.85rem;">
+      Your admin has registered you. Enter your club, nickname and the default password they gave you to set up your account.
+    </p>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="clubLabel">Club</label>
+      <select id="claimClubSelect" class="auth-input">
+        <option value="">— Loading clubs… —</option>
+      </select>
     </div>
+    <div class="auth-field">
+      <label class="auth-label">Nickname <span class="auth-hint" data-i18n="asRegisteredByAdmin">as registered by admin</span></label>
+      <input type="text" id="claimNickname" class="auth-input" placeholder="Your nickname">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="defaultPassword">Default Password <span class="auth-hint" data-i18n="givenByAdmin">given by admin</span></label>
+      <input type="password" id="claimDefaultPassword" class="auth-input" placeholder="Default password">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="yourEmail">Your Email</label>
+      <input type="email" id="claimEmail" class="auth-input" placeholder="your@email.com" autocapitalize="none">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="newPassword">New Password</label>
+      <input type="password" id="claimPassword" class="auth-input" placeholder="Min 6 characters">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="confirmPassword">Confirm Password</label>
+      <input type="password" id="claimConfirm" class="auth-input" placeholder="Repeat password">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="recoveryKeyword">Recovery Keyword</label>
+      <input type="text" id="claimRecoveryWord" class="auth-input" placeholder="e.g. mango, sunflower..." autocapitalize="none">
+    </div>
+    <div id="claimError" class="auth-error" style="display:none;"></div>
+    <button class="auth-btn-primary" onclick="authDoClaimAccount()" data-i18n="claimAccount">Claim Account</button>
+  </div>
+</div>
+
+<!-- JOIN CLUB screen -->
+<div id="authJoinClub" class="auth-screen" style="display:none;">
+  <div class="auth-back-row">
+    <div style="flex:1"></div>
+    <button class="auth-btn-link" onclick="authSkipJoin()" data-i18n="skipBtn">Skip</button>
+  </div>
+  <div class="auth-logo" style="font-size:2.5rem;">🏢</div>
+  <div class="auth-screen-title" style="margin-bottom:6px;" data-i18n="findYourClub">Find Your Club</div>
+  <div class="auth-tagline" data-i18n="searchByClubName">Search by club name and request to join</div>
+  <div class="auth-form" style="margin-top:24px;">
+    <div class="auth-field">
+      <label class="auth-label" data-i18n="searchClub">Search Club</label>
+      <input type="text" id="joinClubSearch" class="auth-input"
+        placeholder="Type club name..." data-i18n-placeholder="typeClubSearch"
+        oninput="authSearchClubsUI(this.value)">
+    </div>
+    <div id="joinClubResults" class="auth-club-results" style="display:none;"></div>
+    <div id="joinClubError" class="auth-error" style="display:none;"></div>
+    <div id="joinClubPending" class="auth-pending" style="display:none;">
+      <div class="auth-pending-icon">⏳</div>
+      <div class="auth-pending-text" data-i18n="requestSent">Request sent! Waiting for admin approval.</div>
+    </div>
+  </div>
+</div>
+```
 
   </div>
 
   <!-- ============================= -->
+
   <!--        CLUB JOIN OVERLAY      -->
 
-
   <!-- HOME SCREEN -->
+
   <div id="homePageOverlay" class="home-overlay" style="display:none;">
 
-    <!-- Top bar -->
-    <div class="home-topbar">
-      <span class="home-logo">🏸 CLUB Scheduler</span>
-      <button class="mode-pill-btn" id="modePillBtn" onclick="openModeSwitcher()">
-        <span id="modePillIcon">🏸</span>
-        <span id="modePillLabel">Organiser</span>
-        <span>▾</span>
-      </button>
+```
+<!-- Top bar -->
+<div class="home-topbar">
+  <button class="mode-pill-btn" id="modePillBtn" onclick="openModeSwitcher()">
+    <span id="modePillIcon">🏸</span>
+    <span id="modePillLabel">Organiser</span>
+    <span>▾</span>
+  </button>
+</div>
+
+<!-- Trial banner moved to Settings page -->
+<div id="trialBanner" style="display:none;"></div>
+
+<!-- SESSION STEPPER (organiser) -->
+<div id="homeOrganizerFlow" style="display:none;">
+
+  <div class="session-stepper">
+    <div class="stepper-step" id="stepDot0">
+      <div class="stepper-dot"><span class="sn">1</span></div>
+      <div class="stepper-label" data-i18n="players">Players</div>
     </div>
-
-    <!-- Trial banner moved to Settings page -->
-    <div id="trialBanner" style="display:none;"></div>
-
-    <!-- SESSION STEPPER (organiser) -->
-    <div id="homeOrganizerFlow" style="display:none;">
-
-      <div class="session-stepper">
-        <div class="stepper-step" id="stepDot0">
-          <div class="stepper-dot"><span class="sn">1</span></div>
-          <div class="stepper-label">Players</div>
-        </div>
-        <div class="stepper-line" id="stepLine0"></div>
-        <div class="stepper-step" id="stepDot1">
-          <div class="stepper-dot"><span class="sn">2</span></div>
-          <div class="stepper-label">Pairs</div>
-        </div>
-        <div class="stepper-line" id="stepLine1"></div>
-        <div class="stepper-step" id="stepDot2">
-          <div class="stepper-dot"><span class="sn">3</span></div>
-          <div class="stepper-label">Courts</div>
-        </div>
-        <div class="stepper-line" id="stepLine2"></div>
-        <div class="stepper-step" id="stepDot3">
-          <div class="stepper-dot"><span class="sn">4</span></div>
-          <div class="stepper-label">Rounds</div>
-        </div>
-      </div>
-
-      <!-- Current step action card -->
-      <div class="step-card" id="stepCard">
-        <div class="step-card-icon" id="stepCardIcon">👥</div>
-        <div class="step-card-body">
-          <div class="step-card-title" id="stepCardTitle">Select Players</div>
-          <div class="step-card-sub"   id="stepCardSub">Add at least 4 players</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-          <button class="step-card-btn" id="stepCardBtn" onclick="stepAction()">Go ›</button>
-          <button class="step-card-skip" id="stepSkipBtn" onclick="stepSkip()" style="display:none;">Skip</button>
-        </div>
-      </div>
-
-      <!-- Courts inline panel (step 3) -->
-      <div class="step-courts-panel" id="stepCourtsPanel" style="display:none;">
-        <div class="step-courts-row">
-          <span class="step-courts-label">Courts</span>
-          <div class="counter">
-            <button class="circle-btn" onclick="stepCourtAdj(-1)">−</button>
-            <span id="stepNumCourts">1</span>
-            <button class="circle-btn" onclick="stepCourtAdj(1)">+</button>
-          </div>
-        </div>
-        <div class="step-courts-row">
-          <span class="step-courts-label">🏆 Competitive</span>
-          <label class="switch">
-            <input type="checkbox" id="stepModeToggle" onchange="stepSyncMode()">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <button class="step-courts-go" onclick="stepCourtsDone()">Start Rounds ›</button>
-      </div>
-
+    <div class="stepper-line" id="stepLine0"></div>
+    <div class="stepper-step" id="stepDot1">
+      <div class="stepper-dot"><span class="sn">2</span></div>
+      <div class="stepper-label" data-i18n="pairsLabel">Pairs</div>
     </div>
+    <div class="stepper-line" id="stepLine1"></div>
+    <div class="stepper-step" id="stepDot2">
+      <div class="stepper-dot"><span class="sn">3</span></div>
+      <div class="stepper-label" data-i18n="courtsLabel">Courts</div>
+    </div>
+    <div class="stepper-line" id="stepLine2"></div>
+    <div class="stepper-step" id="stepDot3">
+      <div class="stepper-dot"><span class="sn">4</span></div>
+      <div class="stepper-label" data-i18n="roundsLabel">Rounds</div>
+    </div>
+  </div>
 
-    <!-- VIEWER FLOW -->
-    <div id="homeViewerFlow" style="display:none;">
-      <div class="home-hero-card viewer-hero" onclick="homeGo('dashboardPage','tabBtnDashboard')">
-        <div>
-          <div class="home-hero-label">VIEWER</div>
-          <div class="home-hero-title">Watch Session</div>
-        </div>
-        <div class="home-hero-play">▶</div>
+  <!-- Current step action card -->
+  <div class="step-card" id="stepCard">
+    <div class="step-card-icon" id="stepCardIcon">👥</div>
+    <div class="step-card-body">
+      <div class="step-card-title" id="stepCardTitle">Select Players</div>
+      <div class="step-card-sub"   id="stepCardSub">Add at least 4 players</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+      <button class="step-card-btn" id="stepCardBtn" onclick="stepAction()">Go ›</button>
+      <button class="step-card-skip" id="stepSkipBtn" onclick="stepSkip()" style="display:none;" data-i18n="skipBtn">Skip</button>
+    </div>
+  </div>
+
+  <!-- Courts inline panel (step 3) -->
+  <div class="step-courts-panel" id="stepCourtsPanel" style="display:none;">
+    <div class="step-courts-row">
+      <span class="step-courts-label">Courts</span>
+      <div class="counter">
+        <button class="circle-btn" onclick="stepCourtAdj(-1)">−</button>
+        <span id="stepNumCourts">1</span>
+        <button class="circle-btn" onclick="stepCourtAdj(1)">+</button>
       </div>
     </div>
+    <div class="step-courts-row">
+      <span class="step-courts-label" data-i18n="competitive">🏆 Competitive</span>
+      <label class="switch">
+        <input type="checkbox" id="stepModeToggle" onchange="stepSyncMode()">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <button class="step-courts-go" onclick="stepCourtsDone()" data-i18n="startRoundsBtn">Start Rounds ›</button>
+  </div>
 
-    <!-- ── ORGANISER GRID ── -->
-    <!-- ── ORGANISER GRID (Vault + My Card removed) ── -->
-    <div id="homeOrgGrid" style="display:none;">
-      <div class="home-grid">
-        <div class="home-tile" onclick="homeGo('playersPage','tabBtnPlayers')">
-          <div class="home-tile-icon tile-players">👥</div>
-          <div class="home-tile-name">Players</div>
-          <div class="home-tile-sub" id="tileSubPlayers">Add · Remove</div>
-        </div>
-        <div class="home-tile" onclick="homeGo('fixedPairsPage','tabBtnFixedPairs')">
-          <div class="home-tile-icon tile-pairs">🤝</div>
-          <div class="home-tile-name">Fixed Pairs</div>
-          <div class="home-tile-sub" id="tileSubPairs">Always together</div>
-        </div>
-        <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
-          <div class="home-tile-icon">📡</div>
-          <div class="home-tile-name">Dashboard</div>
-          <div class="home-tile-sub" id="tileSubDashboard">Live sessions</div>
-        </div>
-        <div class="home-tile" onclick="homeGo('settingsPage',null)">
-          <div class="home-tile-icon tile-settings">⚙️</div>
-          <div class="home-tile-name">Settings</div>
-          <div class="home-tile-sub" id="tileSubSettings">Theme · Font</div>
-        </div>
+</div>
+
+<!-- VIEWER FLOW - removed (dashboard tile covers this) -->
+<div id="homeViewerFlow" style="display:none;"></div>
+
+<!-- ── ORGANISER GRID ── -->
+<div id="homeOrgGrid" style="display:none;">
+  <div class="home-grid">
+    <div class="home-tile" onclick="homeGo('orgClubMgmtPage',null)">
+      <div class="home-tile-icon tile-pairs" id="orgTileIcon">🏢</div>
+      <div class="home-tile-name" id="orgVctName">Club</div>
+      <div class="home-tile-sub" id="orgVctBadge">Tap to connect</div>
+    </div>
+    <div class="home-tile" onclick="homeGo('playersPage','tabBtnPlayers')">
+      <div class="home-tile-icon tile-players">👥</div>
+      <div class="home-tile-name" data-i18n="players">Players</div>
+      <div class="home-tile-sub" id="tileSubPlayers">Add · Remove</div>
+    </div>
+    <div class="home-tile" onclick="homeGo('fixedPairsPage','tabBtnFixedPairs')">
+      <div class="home-tile-icon tile-pairs">🤝</div>
+      <div class="home-tile-name" data-i18n="fixedPairs">Fixed Pairs</div>
+      <div class="home-tile-sub" id="tileSubPairs">Always together</div>
+    </div>
+    <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
+      <div class="home-tile-icon">📡</div>
+      <div class="home-tile-name" data-i18n="dashboard">Dashboard</div>
+      <div class="home-tile-sub" id="tileSubDashboard">Live sessions</div>
+    </div>
+    <div class="home-tile" onclick="homeGo('vaultPlayingPage',null)">
+      <div class="home-tile-icon" style="position:relative;">
+        ⚡
+        <div class="vt-badge" id="vtBadgePlaying" style="display:none;position:absolute;top:-6px;right:-6px;">LIVE</div>
       </div>
+      <div class="home-tile-name" data-i18n="playing">Playing</div>
+      <div class="home-tile-sub" id="tileSubPlaying">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── VAULT MANAGER GRID (new) ── -->
+<div id="homeVaultGrid" style="display:none;">
+
+  <!-- Club status tile — clickable, with logout -->
+  <div class="vault-club-tile" id="vaultClubStatusTile" style="display:none;">
+    <div class="vct-dot" id="vctDot" onclick="homeGo('vaultClubMgmtPage',null)" style="cursor:pointer;"></div>
+    <div class="vct-info" onclick="homeGo('vaultClubMgmtPage',null)" style="cursor:pointer;flex:1;">
+      <div class="vct-name" id="vctName">No club selected</div>
+      <span class="vct-badge" id="vctBadge" style="display:none">ADMIN</span>
+    </div>
+    <button onclick="vaultLogoutClub()" style="background:none;border:1px solid var(--red,#e63757);color:var(--red,#e63757);border-radius:8px;padding:5px 10px;font-size:0.7rem;font-weight:700;cursor:pointer;flex-shrink:0;" data-i18n="leaveClub">Leave</button>
+    <span onclick="homeGo('vaultClubMgmtPage',null)" style="color:var(--muted,#aaa);font-size:1rem;cursor:pointer;margin-left:6px;">›</span>
+  </div>
+
+  <!-- No club state — shown to first time users -->
+  <div id="vaultNoClubState" style="display:none; padding:20px 16px;">
+    <div style="text-align:center; padding:20px 0 24px;">
+      <div style="font-size:2.5rem; margin-bottom:10px;">🏢</div>
+      <div style="font-size:1rem; font-weight:700; color:var(--text); margin-bottom:6px;" data-i18n="createYourClub">Create Your Club</div>
+      <div style="font-size:0.78rem; color:var(--muted); line-height:1.5;" data-i18n="noClubYet">No club yet — create one to get started</div>
+    </div>
+    <div class="pref-card" style="padding:14px;">
+      <input type="text" id="vaultQuickClubName" class="auth-input" placeholder="Club name" style="width:100%;margin-bottom:8px;">
+      <input type="password" id="vaultQuickMemberPw" class="auth-input" placeholder="Member password" style="width:100%;margin-bottom:8px;">
+      <input type="password" id="vaultQuickAdminPw" class="auth-input" placeholder="Admin password" style="width:100%;margin-bottom:8px;">
+      <button onclick="vaultQuickCreateClub()" style="width:100%;padding:12px;background:var(--accent,#6c63ff);color:#fff;border:none;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;" data-i18n="createClub">Create Club</button>
+      <div id="vaultQuickFeedback" style="font-size:0.78rem;margin-top:8px;text-align:center;"></div>
+    </div>
+  </div>
+
+  <div id="vaultTileGrid" class="vault-tile-grid">
+
+    <div class="vault-tile vt-register" onclick="homeGo('vaultRegisterPage',null)">
+      <div class="vt-icon">📋</div>
+      <div class="vt-stat" id="vtStatRegister">—</div>
+      <div class="vt-name" data-i18n="register">Register</div>
+      <div class="vt-sub" data-i18n="playersInClub">players in club</div>
     </div>
 
-    <!-- ── VAULT MANAGER GRID (new) ── -->
-    <div id="homeVaultGrid" style="display:none;">
-
-      <!-- Club status tile -->
-      <div class="vault-club-tile" id="vaultClubStatusTile">
-        <div class="vct-dot" id="vctDot"></div>
-        <div class="vct-info">
-          <div class="vct-name" id="vctName">No club selected</div>
-          <span class="vct-badge" id="vctBadge" style="display:none">ADMIN</span>
-        </div>
-        <button class="vct-change-btn" onclick="homeGo('vaultClubMgmtPage',null)">Change</button>
-      </div>
-
-      <div class="vault-tile-grid">
-
-        <div class="vault-tile vt-playing" onclick="homeGo('vaultPlayingPage',null)">
-          <div class="vt-badge" id="vtBadgePlaying" style="display:none">LIVE</div>
-          <div class="vt-icon">⚡</div>
-          <div class="vt-stat" id="vtStatPlaying">—</div>
-          <div class="vt-name">Playing</div>
-          <div class="vt-sub">on court now</div>
-        </div>
-
-        <div class="vault-tile vt-register" onclick="homeGo('vaultRegisterPage',null)">
-          <div class="vt-icon">📋</div>
-          <div class="vt-stat" id="vtStatRegister">—</div>
-          <div class="vt-name">Register</div>
-          <div class="vt-sub">players in club</div>
-        </div>
-
-        <div class="vault-tile vt-modify" onclick="homeGo('vaultModifyPage',null)">
-          <div class="vt-icon">✏️</div>
-          <div class="vt-stat" id="vtStatModify">—</div>
-          <div class="vt-name">Modify</div>
-          <div class="vt-sub">tap to edit</div>
-        </div>
-
-        <div class="vault-tile vt-requests" onclick="homeGo('vaultRequestsPage',null)">
-          <div class="vt-badge" id="vtBadgeRequests" style="display:none">NEW</div>
-          <div class="vt-icon">🔔</div>
-          <div class="vt-stat" id="vtStatRequests">—</div>
-          <div class="vt-name">Requests</div>
-          <div class="vt-sub">pending approval</div>
-        </div>
-
-
-
-      </div>
+    <div class="vault-tile vt-modify" onclick="homeGo('vaultModifyPage',null)">
+      <div class="vt-icon">✏️</div>
+      <div class="vt-stat" id="vtStatModify">—</div>
+      <div class="vt-name" data-i18n="modify">Modify</div>
+      <div class="vt-sub" data-i18n="tapToEdit">tap to edit</div>
     </div>
 
-    <!-- ── VIEWER GRID ── -->
-    <div id="homeViewerGrid" style="display:none;">
-      <div class="home-grid-3col">
-        <div class="home-tile" onclick="homeGo('myCardPage',null)">
-          <div class="home-tile-icon tile-profile">
-            <img id="homeTileAvatarV" src="male.png" style="width:26px;height:26px;border-radius:50%;display:none;">
-            <span id="homeTileIconV">👤</span>
-          </div>
-          <div class="home-tile-name" id="homeTileNameV">My Card</div>
-          <div class="home-tile-sub" id="homeTileRatingV">Not selected</div>
-        </div>
-        <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
-          <div class="home-tile-icon">📡</div>
-          <div class="home-tile-name">Dashboard</div>
-          <div class="home-tile-sub" id="tileSubDashboardV">Live sessions</div>
-        </div>
-        <div class="home-tile" onclick="homeGo('settingsPage',null)">
-          <div class="home-tile-icon tile-settings">⚙️</div>
-          <div class="home-tile-name">Settings</div>
-          <div class="home-tile-sub" id="tileSubSettingsV">Theme · Font</div>
-        </div>
+    <div class="vault-tile vt-requests" onclick="homeGo('vaultRequestsPage',null)">
+      <div class="vt-badge" id="vtBadgeRequests" style="display:none">NEW</div>
+      <div class="vt-icon">🔔</div>
+      <div class="vt-stat" id="vtStatRequests">—</div>
+      <div class="vt-name" data-i18n="requests">Requests</div>
+      <div class="vt-sub" data-i18n="pendingApproval">pending approval</div>
+    </div>
+
+    <div class="vault-tile vt-report" onclick="homeGo('vaultReportPage',null)" style="background:linear-gradient(135deg,#1e0814,#3d1028);">
+      <div class="vt-icon">📊</div>
+      <div class="vt-stat" id="vtStatReport">—</div>
+      <div class="vt-name" data-i18n="report">Report</div>
+      <div class="vt-sub" data-i18n="monthlyStats">monthly stats</div>
+    </div>
+
+  </div><!-- end vaultTileGrid -->
+</div><!-- end homeVaultGrid -->
+
+<!-- ── VIEWER GRID ── -->
+<div id="homeViewerGrid" style="display:none;">
+  <div class="home-grid">
+    <div class="home-tile" onclick="homeGo('myCardPage',null)">
+      <div class="home-tile-icon tile-profile">
+        <img id="homeTileAvatarV" src="male.png" style="width:26px;height:26px;border-radius:50%;display:none;">
+        <span id="homeTileIconV">👤</span>
       </div>
-      <!-- Join Club row -->
-      <div id="joinClubTileRow" style="margin:10px 16px 0;">
-        <div class="home-tile" id="tileJoinClub" onclick="homeGo('joinClubPage',null)" style="display:flex;flex-direction:row;align-items:center;gap:14px;padding:14px 16px;">
-          <div class="home-tile-icon" style="margin-bottom:0;flex-shrink:0;">🏢</div>
-          <div style="flex:1;">
-            <div class="home-tile-name">My Clubs</div>
+      <div class="home-tile-name" id="homeTileNameV">My Card</div>
+      <div class="home-tile-sub" id="homeTileRatingV">Not selected</div>
+    </div>
+    <div class="home-tile" onclick="homeGo('dashboardPage','tabBtnDashboard')">
+      <div class="home-tile-icon">📡</div>
+      <div class="home-tile-name" data-i18n="dashboard">Dashboard</div>
+      <div class="home-tile-sub" id="tileSubDashboardV">Live sessions</div>
+    </div>
+  </div>
+  <!-- My Clubs expandable tile -->
+  <div id="joinClubTileRow" style="margin:10px 16px 0;">
+    <div class="vcl-tile" id="tileJoinClub">
+      <div class="vcl-header" onclick="homeGo('joinClubPage',null)">
+        <div class="vcl-header-left">
+          <div class="home-tile-icon vcl-icon">🏢</div>
+          <div>
+            <div class="home-tile-name" data-i18n="myClubs">My Clubs</div>
             <div class="home-tile-sub" id="tileSubJoinClub">Find &amp; request</div>
           </div>
-          <span style="color:var(--muted);font-size:1.1rem;">›</span>
         </div>
+        <span class="vcl-arr">›</span>
       </div>
+      <div class="vcl-list" id="vcl-list-inner"></div>
     </div>
+  </div>
+</div>
 
-    <button class="home-help-btn" onclick="homeGo('helpPage',null)">❓ Help &amp; Guide</button>
+<button class="home-help-btn" onclick="homeGo('helpPage',null)" data-i18n="helpGuide">❓ Help &amp; Guide</button>
+```
 
   </div>
 
   <!-- ============================= -->
+
   <!--           TOP BAR             -->
+
   <!-- ============================= -->
+
   <div class="top-bar">
-    <span class="app-logo-premium">CLUB Scheduler</span>
     <button class="mode-pill-btn" id="modePillBtn2" onclick="openModeSwitcher()">
         <span id="modePillIcon2">🏸</span>
         <span id="modePillLabel2">Organiser</span>
@@ -475,160 +535,189 @@
   </div>
 
   <!-- ============================= -->
+
   <!--       TOP TAB NAVIGATION      -->
-  <!-- ============================= -->
-  <!-- Ghost IDs — tab bar removed, navigation via home screen only -->
-  <span id="tabBtnVault"     style="display:none"></span>
-  <span id="tabBtnMyCard"    style="display:none"></span>
-  <span id="tabBtnFixedPairs" style="display:none"></span>
-  <span id="tabBtnPlayers"   style="display:none"></span>
-  <span id="tabBtnRounds"    style="display:none"></span>
-  <span id="tabBtnSummary"   style="display:none"></span>
-  <span id="tabBtnDashboard" style="display:none"></span>
-  <span id="tabBtnViewer"    style="display:none"></span>
-  <span id="tabBtnJoinClub"  style="display:none"></span>
 
   <!-- ============================= -->
-  <!--        JOIN CLUB PAGE         -->
+
+  <!-- Ghost IDs — tab bar removed, navigation via home screen only -->
+
+<span id="tabBtnVault"     style="display:none"></span>
+<span id="tabBtnMyCard"    style="display:none"></span>
+<span id="tabBtnFixedPairs" style="display:none"></span>
+<span id="tabBtnPlayers"   style="display:none"></span>
+<span id="tabBtnRounds"    style="display:none"></span>
+<span id="tabBtnSummary"   style="display:none"></span>
+<span id="tabBtnDashboard" style="display:none"></span>
+<span id="tabBtnViewer"    style="display:none"></span>
+<span id="tabBtnJoinClub"  style="display:none"></span>
+
   <!-- ============================= -->
+
+  <!--        JOIN CLUB PAGE         -->
+
+  <!-- ============================= -->
+
   <div id="joinClubPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">🏢 My Clubs</span>
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="myClubs">🏢 My Clubs</span>
     </div>
 
-    <div style="padding:14px;">
+```
+<div style="padding:14px;">
 
-      <!-- My Clubs list -->
-      <div id="myClubsList" style="margin-bottom:14px;">
-        <div class="jc-section-title">My Clubs</div>
-        <div id="myClubsListInner">
-          <div class="jc-empty">Loading...</div>
-        </div>
-      </div>
-
-      <!-- Divider -->
-      <div class="jc-divider"></div>
-
-      <!-- Search section -->
-      <div class="jc-section-title" style="margin-top:14px;">Find a Club</div>
-      <div style="position:relative; margin-bottom:10px;">
-        <input type="text" id="joinClubPageSearch" class="auth-input"
-          placeholder="Type club name to search..."
-          oninput="joinClubPageSearchUI(this.value)"
-          style="width:100%; box-sizing:border-box; padding-right:40px;">
-        <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;">🔍</span>
-      </div>
-      <div id="joinClubPageResults" style="display:none;"></div>
-      <div id="joinClubPageError" class="auth-error" style="display:none;"></div>
-
-      <!-- Nickname conflict section -->
-      <div id="joinClubNicknameSection" style="display:none; background:var(--card-bg,#1e1e2e); border:1px solid var(--border,#333); border-radius:14px; padding:16px; margin-top:10px;">
-        <div id="joinClubNicknameMsg" style="font-size:0.85rem; color:var(--text); margin-bottom:12px; line-height:1.5;"></div>
-        <input type="text" id="joinClubNicknameInput" class="auth-input"
-          placeholder="Enter your nickname for this club"
-          style="width:100%; box-sizing:border-box; margin-bottom:10px;"
-          onkeydown="if(event.key==='Enter') joinClubSubmitNickname()">
-        <button onclick="joinClubSubmitNickname()" style="width:100%; padding:12px; background:var(--accent,#6c63ff); color:#fff; border:none; border-radius:10px; font-size:0.95rem; font-weight:600; cursor:pointer;">Submit Request</button>
-      </div>
-      <div id="joinClubPageFeedback" style="display:none; text-align:center; padding:20px 12px; border-radius:14px; background:var(--card-bg,#1e1e2e); border:1px solid var(--border,#333); margin-top:10px;">
-        <div id="joinClubPageFeedbackIcon" style="font-size:2rem; margin-bottom:8px;">⏳</div>
-        <div id="joinClubPageFeedbackTitle" style="font-weight:600; color:var(--text); margin-bottom:4px;"></div>
-        <div id="joinClubPageFeedbackMsg" style="font-size:0.82rem; color:var(--muted);"></div>
-      </div>
-
-      <!-- Keep legacy IDs for compatibility -->
-      <div id="joinClubStatusCard" style="display:none;"></div>
-      <div id="joinClubSearchSection" style="display:none;"></div>
+  <!-- My Clubs list -->
+  <div id="myClubsList" style="margin-bottom:14px;">
+    <div class="jc-section-title" data-i18n="myClubs">My Clubs</div>
+    <div id="myClubsListInner">
+      <div class="jc-empty" data-i18n="loading">Loading...</div>
     </div>
   </div>
 
+  <!-- Divider -->
+  <div class="jc-divider"></div>
+
+  <!-- Search section -->
+  <div class="jc-section-title" style="margin-top:14px;" data-i18n="findAClub">Find a Club</div>
+  <div style="position:relative; margin-bottom:10px;">
+    <input type="text" id="joinClubPageSearch" class="auth-input"
+      placeholder="Type club name to search..." data-i18n-placeholder="typeClubSearch"
+      oninput="joinClubPageSearchUI(this.value)"
+      style="width:100%; box-sizing:border-box; padding-right:40px;">
+    <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;">🔍</span>
+  </div>
+  <div id="joinClubPageResults" style="display:none;"></div>
+  <div id="joinClubPageError" class="auth-error" style="display:none;"></div>
+
+  <!-- Password claim section (unclaimed player found) -->
+  <div id="joinClubPasswordSection" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-top:10px;">
+    <div id="joinClubPasswordMsg" style="font-size:0.85rem; color:var(--text); margin-bottom:12px; line-height:1.5;"></div>
+    <input type="password" id="joinClubPasswordInput" class="auth-input"
+      placeholder="Default password"
+      style="width:100%; box-sizing:border-box; margin-bottom:10px;"
+      onkeydown="if(event.key==='Enter') joinClubSubmitPassword()">
+    <button onclick="joinClubSubmitPassword()" style="width:100%; padding:12px; background:var(--accent,#6c63ff); color:#fff; border:none; border-radius:10px; font-size:0.95rem; font-weight:600; cursor:pointer; font-family:inherit;">🔑 <span data-i18n="claimAndJoin">Claim &amp; Join</span></button>
+  </div>
+
+  <!-- Nickname conflict section (taken by someone else) -->
+  <div id="joinClubNicknameSection" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; margin-top:10px;">
+    <div id="joinClubNicknameMsg" style="font-size:0.85rem; color:var(--text); margin-bottom:12px; line-height:1.5;"></div>
+    <input type="text" id="joinClubNicknameInput" class="auth-input"
+      placeholder="Enter your nickname for this club"
+      style="width:100%; box-sizing:border-box; margin-bottom:10px;"
+      onkeydown="if(event.key==='Enter') joinClubSubmitNickname()">
+    <button onclick="joinClubSubmitNickname()" style="width:100%; padding:12px; background:var(--accent,#6c63ff); color:#fff; border:none; border-radius:10px; font-size:0.95rem; font-weight:600; cursor:pointer; font-family:inherit;" data-i18n="submitRequest">Submit Request</button>
+  </div>
+  <div id="joinClubPageFeedback" style="display:none; text-align:center; padding:20px 12px; border-radius:14px; background:var(--card-bg,#1e1e2e); border:1px solid var(--border,#333); margin-top:10px;">
+    <div id="joinClubPageFeedbackIcon" style="font-size:2rem; margin-bottom:8px;">⏳</div>
+    <div id="joinClubPageFeedbackTitle" style="font-weight:600; color:var(--text); margin-bottom:4px;"></div>
+    <div id="joinClubPageFeedbackMsg" style="font-size:0.82rem; color:var(--muted);"></div>
+  </div>
+
+  <!-- Keep legacy IDs for compatibility -->
+  <div id="joinClubStatusCard" style="display:none;"></div>
+  <div id="joinClubSearchSection" style="display:none;"></div>
+</div>
+```
+
+  </div>
+
   <!-- ============================= -->
+
   <!--         SETTINGS PAGE         -->
+
   <!-- ============================= -->
+
   <div id="settingsPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">⚙️ Settings</span>
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="settings">⚙️ Settings</span>
     </div>
     <div class="pref-wrap">
 
-      <!-- SUBSCRIPTION / TRIAL -->
-      <div class="pref-section-label">Subscription</div>
-      <div class="pref-card" id="settingsTrialCard">
-        <div class="pref-row">
-          <span class="pref-row-label" id="settingsTrialLabel">Free Trial</span>
-          <span class="pref-row-value" id="settingsTrialValue">—</span>
-        </div>
-      </div>
-
-      <!-- MODE -->
-      <div class="pref-section-label">Mode</div>
-      <div class="pref-card">
-        <div class="pref-row pref-row-tap" onclick="openModeSwitcher()">
-          <span class="pref-row-label">Current Mode</span>
-          <span class="pref-row-value" id="settingsModeValue">—</span>
-          <span class="pref-row-chevron">›</span>
-        </div>
-      </div>
-
-      <!-- LANGUAGE -->
-      <div class="pref-section-label">Language</div>
-      <div class="pref-card">
-        <div class="pref-row pref-row-tap" onclick="settingsToggleLangPicker()">
-          <span class="pref-row-label">Language</span>
-          <span class="pref-row-value" id="settingsLangValue">🇺🇸 English</span>
-          <span class="pref-row-chevron">›</span>
-        </div>
-        <div class="pref-lang-picker" id="settingsLangPicker" style="display:none;">
-          <div class="pref-divider"></div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('en','🇺🇸','English')">🇺🇸 English</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('jp','🇯🇵','日本語')">🇯🇵 日本語</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('kr','🇰🇷','한국어')">🇰🇷 한국어</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('zh','🇨🇳','中文')">🇨🇳 中文</div>
-          <div class="pref-lang-option" onclick="settingsSelectLang('vi','🇻🇳','Tiếng Việt')">🇻🇳 Tiếng Việt</div>
-        </div>
-      </div>
-
-      <!-- APPEARANCE -->
-      <div class="pref-section-label">Appearance</div>
-      <div class="pref-card">
-        <div class="pref-row">
-          <span class="pref-row-label">Theme</span>
-          <div class="pref-pill-group">
-            <button class="pref-pill active" id="theme_light" onclick="setTheme('light')" data-i18n="light">Light</button>
-            <button class="pref-pill" id="theme_dark" onclick="setTheme('dark')" data-i18n="dark">Dark</button>
-          </div>
-        </div>
-        <div class="pref-divider"></div>
-        <div class="pref-row">
-          <span class="pref-row-label">Font Size</span>
-          <div class="pref-pill-group">
-            <button class="pref-pill active" id="font_small" onclick="setFontSize('small')" style="font-size:0.78rem" data-i18n="small">S</button>
-            <button class="pref-pill" id="font_medium" onclick="setFontSize('medium')" style="font-size:0.9rem" data-i18n="medium">M</button>
-            <button class="pref-pill" id="font_large" onclick="setFontSize('large')" style="font-size:1rem" data-i18n="large">L</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- RESET -->
-      <div class="pref-section-label">Reset</div>
-      <div class="pref-card">
-        <div class="pref-row pref-row-tap pref-row-danger" onclick="showConfirm('confirmResetAll', ResetAll)">
-          <span class="pref-row-label" data-i18n="resetAll">Reset All</span>
-          <span class="pref-row-chevron">›</span>
-        </div>
-        <div class="pref-divider"></div>
-        <div class="pref-row pref-row-tap pref-row-warn" onclick="showConfirm('confirmResetGames', resetRounds)">
-          <span class="pref-row-label" data-i18n="resetExcept">Reset Rounds Only</span>
-          <span class="pref-row-chevron">›</span>
-        </div>
-      </div>
-
+```
+  <!-- SUBSCRIPTION -->
+  <div class="pref-section-label" data-i18n="subscription">Subscription</div>
+  <div class="pref-card" id="settingsTrialCard">
+    <div class="pref-row">
+      <span class="pref-row-label" id="settingsTrialLabel">Free Trial</span>
+      <span class="pref-row-value" id="settingsTrialValue">—</span>
     </div>
   </div>
 
+  <!-- APPEARANCE — Theme + Font + Tile Style merged -->
+  <div class="pref-section-label" data-i18n="appearance">Appearance</div>
+  <div class="pref-card">
+
+    <!-- Theme -->
+    <div class="pref-row">
+      <span class="pref-row-label" data-i18n="theme">Theme</span>
+      <div class="pref-pill-group">
+        <button class="pref-pill active" id="theme_light" onclick="setTheme('light')" data-i18n="light">Light</button>
+        <button class="pref-pill" id="theme_dark" onclick="setTheme('dark')" data-i18n="dark">Dark</button>
+      </div>
+    </div>
+    <div class="pref-divider"></div>
+
+    <!-- Font Size -->
+    <div class="pref-row">
+      <span class="pref-row-label" data-i18n="fontSize">Font Size</span>
+      <div class="pref-pill-group">
+        <button class="pref-pill active" id="font_small" onclick="setFontSize('small')" style="font-size:0.78rem" data-i18n="small">S</button>
+        <button class="pref-pill" id="font_medium" onclick="setFontSize('medium')" style="font-size:0.9rem" data-i18n="medium">M</button>
+        <button class="pref-pill" id="font_large" onclick="setFontSize('large')" style="font-size:1rem" data-i18n="large">L</button>
+      </div>
+    </div>
+    <div class="pref-divider"></div>
+
+    <!-- Tile Style -->
+    <div class="pref-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <span class="pref-row-label" data-i18n="tileStyle">Tile Style</span>
+      <div style="display:flex;gap:8px;">
+        <button id="styleBtn1" onclick="setTileStyle('flat')" class="tile-style-btn active" data-i18n="flat">Flat</button>
+        <button id="styleBtn2" onclick="setTileStyle('glow')" class="tile-style-btn" data-i18n="glow">Glow</button>
+        <button id="styleBtn3" onclick="setTileStyle('color')" class="tile-style-btn" data-i18n="color">Color</button>
+      </div>
+      <!-- Live Preview -->
+      <div class="style-preview-box" id="stylePreviewBox">
+        <div class="style-preview-label" data-i18n="preview">Preview</div>
+        <div class="style-preview-grid">
+          <div class="spt"><div class="spt-icon">◆</div><div class="spt-name" data-i18n="tile">Tile</div><div class="spt-sub" data-i18n="info">Info</div></div>
+          <div class="spt"><div class="spt-icon">◆</div><div class="spt-name" data-i18n="tile">Tile</div><div class="spt-sub" data-i18n="info">Info</div></div>
+          <div class="spt"><div class="spt-icon">◆</div><div class="spt-name" data-i18n="tile">Tile</div><div class="spt-sub" data-i18n="info">Info</div></div>
+        </div>
+        <div class="style-preview-wide">
+          <span class="spw-icon">◆</span>
+          <div class="spw-info"><div class="spw-name" data-i18n="wideTile">Wide Tile</div><div class="spw-sub" data-i18n="description">Description</div></div>
+          <span class="spw-arr">›</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESET -->
+  <div class="pref-section-label" data-i18n="reset">Reset</div>
+  <div class="pref-card">
+    <div class="pref-row pref-row-tap pref-row-danger" onclick="showConfirm('confirmResetAll', ResetAll)">
+      <span class="pref-row-label" data-i18n="resetAll">Reset All</span>
+      <span class="pref-row-chevron">›</span>
+    </div>
+    <div class="pref-divider"></div>
+    <div class="pref-row pref-row-tap pref-row-warn" onclick="showConfirm('confirmResetGames', resetRounds)">
+      <span class="pref-row-label" data-i18n="resetExcept">Reset Rounds Only</span>
+      <span class="pref-row-chevron">›</span>
+    </div>
+  </div>
+
+</div>
+```
+
+  </div>
+
   <!-- Admin Password Modal -->
+
   <div id="adminModal" class="admin-modal-overlay" style="display:none">
     <div class="admin-modal">
       <div class="admin-modal-title" id="adminModalTitle">🔐 Admin Access</div>
@@ -639,7 +728,7 @@
           placeholder="Confirm new password" style="margin-top:8px">
       </div>
       <div class="admin-modal-actions">
-        <button class="admin-modal-cancel" onclick="adminCloseModal()">Cancel</button>
+        <button class="admin-modal-cancel" onclick="adminCloseModal()" data-i18n="cancel">Cancel</button>
         <button class="admin-modal-ok" onclick="adminVerifyPassword()">OK</button>
       </div>
       <div class="admin-modal-error" id="adminModalError"></div>
@@ -647,8 +736,11 @@
   </div>
 
   <!-- ============================= -->
+
   <!--       CONFIRM OVERLAY         -->
+
   <!-- ============================= -->
+
   <div id="confirmOverlay" class="confirm-overlay hidden">
     <div class="confirm-box">
       <div class="confirm-title" id="confirmTitle"></div>
@@ -660,40 +752,53 @@
   </div>
 
   <!-- ============================= -->
+
   <!--  SHARED PLAYER SLOT           -->
+
   <!--  Lives at body level.         -->
+
   <!--  JS moves it between tabs.    -->
+
   <!--  Starts inside playersPage.   -->
+
   <!-- ============================= -->
 
   <!-- ============================= -->
+
   <!--           VAULT PAGE          -->
+
   <!-- ============================= -->
 
   <!-- ================================ -->
+
   <!--   VAULT: PLAYING PAGE            -->
+
   <!-- ================================ -->
+
   <div id="vaultPlayingPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">🔴 Playing Now</span>
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="playingNow">🔴 Playing Now</span>
     </div>
     <div class="vault-wrap">
       <div class="vault-sync-row">
         <span class="vault-sync-text" id="vaultPlayingSyncStatus"></span>
-        <button class="vault-sync-btn" onclick="playerPlayingRenderList()">↻ Refresh</button>
+        <button class="vault-sync-btn" onclick="playerPlayingRenderList()" data-i18n="refresh">↻ Refresh</button>
       </div>
       <div id="playerPlayingList" class="player-mgmt-list"></div>
     </div>
   </div>
 
   <!-- ================================ -->
+
   <!--   VAULT: REGISTER PAGE           -->
+
   <!-- ================================ -->
+
   <div id="vaultRegisterPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">📋 Register Players</span>
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="registerPlayers">📋 Register Players</span>
     </div>
     <div class="vault-wrap">
       <div id="vaultRegisterContainer"></div>
@@ -701,27 +806,30 @@
   </div>
 
   <!-- ================================ -->
+
   <!--   VAULT: MODIFY PAGE             -->
+
   <!-- ================================ -->
+
   <div id="vaultModifyPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">✏️ Modify Players</span>
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="modifyPlayers">✏️ Modify Players</span>
     </div>
     <div class="vault-wrap">
       <!-- Filter row -->
       <div class="vm-filter-row">
         <select id="vmFilterGender" class="vm-filter-select" onchange="vaultModifyFilter()">
-          <option value="">All</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
+          <option value="" data-i18n="genderAll">All</option>
+          <option value="Male" data-i18n="genderMale">Male</option>
+          <option value="Female" data-i18n="genderFemale">Female</option>
         </select>
         <button class="vault-sync-btn" onclick="vaultRenderModify()">↻</button>
       </div>
       <!-- Search -->
       <div class="vm-search-wrap">
         <span class="vm-search-icon">🔍</span>
-        <input id="vmSearchInput" class="vm-search-input" type="text" placeholder="Search players…" oninput="vaultModifyFilter()">
+        <input id="vmSearchInput" class="vm-search-input" type="text" placeholder="Search players…" data-i18n-placeholder="searchPlayers" oninput="vaultModifyFilter()">
       </div>
       <!-- Count + list -->
       <div class="vm-count-row">
@@ -732,188 +840,261 @@
   </div>
 
   <!-- ================================ -->
+
   <!--   VAULT MODIFY: EDIT MODAL       -->
+
   <!-- ================================ -->
+
   <div id="vmEditModal" class="vm-modal-backdrop" onclick="vmCloseEditModal(event)">
     <div class="vm-modal-sheet">
       <div class="vm-modal-handle"></div>
-      <div class="vm-modal-title">Edit Player</div>
+      <div class="vm-modal-title" data-i18n="editPlayer">Edit Player</div>
       <input type="hidden" id="vmEditPlayerId">
       <input type="hidden" id="vmEditUserAccountId">
       <div class="vm-field-group">
-        <label class="vm-field-label">Nickname</label>
+        <label class="vm-field-label" data-i18n="nickname">Nickname</label>
         <input id="vmEditName" class="vm-field-input" type="text" placeholder="Player name">
       </div>
       <div class="vm-field-row">
         <div class="vm-field-group" style="flex:1">
-          <label class="vm-field-label">Gender</label>
+          <label class="vm-field-label" data-i18n="gender">Gender</label>
           <select id="vmEditGender" class="vm-field-input">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
+            <option value="Male" data-i18n="genderMale">Male</option>
+            <option value="Female" data-i18n="genderFemale">Female</option>
           </select>
         </div>
         <div class="vm-field-group" style="flex:1">
-          <label class="vm-field-label">Rating</label>
+          <label class="vm-field-label" data-i18n="rating">Rating</label>
           <input id="vmEditRating" class="vm-field-input" type="number" step="0.1" min="1.0" max="5.0" placeholder="1.0">
         </div>
       </div>
       <div class="vm-field-row">
         <div class="vm-field-group" style="flex:1">
-          <label class="vm-field-label">Wins</label>
+          <label class="vm-field-label" data-i18n="wins">Wins</label>
           <input id="vmEditWins" class="vm-field-input" type="number" min="0" placeholder="0">
         </div>
         <div class="vm-field-group" style="flex:1">
-          <label class="vm-field-label">Losses</label>
+          <label class="vm-field-label" data-i18n="losses">Losses</label>
           <input id="vmEditLosses" class="vm-field-input" type="number" min="0" placeholder="0">
         </div>
       </div>
       <div class="vm-field-group">
-        <label class="vm-field-label">User ID</label>
+        <label class="vm-field-label" data-i18n="userID">User ID</label>
         <input id="vmEditUserId" class="vm-field-input" type="text" placeholder="user_id" autocapitalize="none">
       </div>
       <div class="vm-field-group">
-        <label class="vm-field-label">Password (leave blank to keep)</label>
+        <label class="vm-field-label" data-i18n="passwordBlank">Password (leave blank to keep)</label>
         <input id="vmEditPassword" class="vm-field-input" type="text" placeholder="••••••••">
       </div>
       <div id="vmEditFeedback" style="font-size:0.8rem;min-height:18px;margin-bottom:8px"></div>
       <div class="vm-modal-actions">
-        <button class="vm-action-btn vm-ghost" onclick="vmCloseEditModal()">Cancel</button>
-        <button class="vm-action-btn vm-accent" onclick="vmSaveEdit()">Save Changes</button>
+        <button class="vm-action-btn vm-ghost" onclick="vmCloseEditModal()" data-i18n="cancel">Cancel</button>
+        <button class="vm-action-btn vm-accent" onclick="vmSaveEdit()" data-i18n="save">Save Changes</button>
       </div>
     </div>
   </div>
 
   <!-- ================================ -->
+
   <!--   VAULT: REQUESTS PAGE           -->
+
   <!-- ================================ -->
+
   <div id="vaultRequestsPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">🔔 Join Requests</span>
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="joinRequests">🔔 Join Requests</span>
     </div>
     <div class="vault-wrap">
       <div class="vault-sync-row">
         <span class="vault-sync-text"></span>
-        <button class="vault-sync-btn" onclick="vaultLoadRequests()">↻ Refresh</button>
+        <button class="vault-sync-btn" onclick="vaultLoadRequests()" data-i18n="refresh">↻ Refresh</button>
       </div>
       <div id="vaultRequestsList" class="vault-requests-list">
-        <div class="profile-sessions-loading">Loading requests...</div>
+        <div class="profile-sessions-loading" data-i18n="loadingRequests">Loading requests...</div>
       </div>
     </div>
   </div>
 
   <!-- ================================ -->
+
   <!--   VAULT: CLUB MGMT PAGE          -->
+
   <!-- ================================ -->
+
   <div id="vaultClubMgmtPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button>
-      <span class="page-back-title">🏢 Club Management</span>
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="clubManagement">🏢 Club Management</span>
     </div>
     <div class="vault-wrap">
 
-      <!-- Club status card -->
-      <div class="vault-club-card" id="clubLoginCard">
-        <div id="clubLoggedInState" style="display:none">
-          <div class="vault-club-connected">
-            <div class="vault-club-left">
-              <div class="vault-status-dot" id="clubLoginDot"></div>
-              <div>
-                <div class="vault-club-name" id="clubLoginName"></div>
-                <span class="vault-club-role" id="clubLoginRole"></span>
-              </div>
-            </div>
-            <button class="vault-change-btn" onclick="clubLoginSwitch()">Change</button>
-          </div>
-        </div>
-        <div id="clubLoginForm">
-          <div class="vault-section-label">&#127970; Connect to Club</div>
-          <div class="club-row">
-            <select id="sbClubSelectViewer" class="club-select" style="flex:1">
-              <option value="">&#8212; Select club &#8212;</option>
-            </select>
-          </div>
-          <div class="club-row" style="margin-top:8px">
-            <input type="password" id="sbPasswordInputViewer" class="club-input"
-                   placeholder="Enter password"
-                   onkeydown="if(event.key==='Enter')viewerJoinClub()">
-            <button class="btn-save" onclick="viewerJoinClub()">Join</button>
-          </div>
-          <div id="sbClubFeedbackViewer" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
-        </div>
-      </div>
-
-      <!-- Sync -->
-      <div class="vault-sync-row">
-        <span id="sbSyncStatus" class="vault-sync-text"></span>
-        <button class="vault-sync-btn" onclick="syncToLocal()">&#8635; Sync</button>
-      </div>
-
-      <!-- CREATE CLUB -->
-      <div class="settings-card" style="padding:14px;margin-top:10px;">
-        <div class="manage-section-title">Create New Club</div>
-        <div class="club-row">
-          <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
-        </div>
-        <div class="club-row" style="margin-top:6px">
-          <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="Member password">
-        </div>
-        <div class="club-row" style="margin-top:6px">
-          <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
-        </div>
-        <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()">Create Club</button>
-        <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-      </div>
-
-      <!-- DELETE CLUB -->
-      <div class="settings-card" style="padding:14px;margin-top:10px;">
-        <div class="manage-section-title manage-section-danger">Delete Club</div>
-        <div class="club-row">
-          <select id="sbDeleteClubSelect" class="club-select">
-            <option value="">— Select club to delete —</option>
-          </select>
-        </div>
-        <div id="clubDeleteStep1">
-          <button class="btn-clear" style="width:100%;margin-top:8px" onclick="clubDeleteSendOtp()">📧 Send OTP to Club Email</button>
-        </div>
-        <div id="clubDeleteStep2" style="display:none">
-          <div class="club-row" style="margin-top:8px">
-            <input type="text" id="sbDeleteOtp" class="club-input"
-                   placeholder="Enter 8-digit OTP" maxlength="8"
-                   onkeydown="if(event.key==='Enter')clubDeleteVerify()">
-            <button class="btn-clear" onclick="clubDeleteVerify()">Verify &amp; Delete</button>
-          </div>
-          <div style="font-size:0.75rem;color:var(--muted);margin-top:4px">
-            OTP sent to <span id="clubDeleteEmailMasked"></span>
-            · <button class="link-btn" onclick="clubDeleteResend()">Resend</button>
-          </div>
-        </div>
-        <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
-      </div>
-
+```
+  <!-- 3 action tiles -->
+  <div class="vault-tile-grid" style="margin-bottom:14px;">
+    <div class="vault-tile vt-register" onclick="clubMgmtShowPanel('connect')" style="min-height:90px;">
+      <div class="vt-icon">🔗</div>
+      <div class="vt-name" data-i18n="connectClub">Connect</div>
+      <div class="vt-sub" data-i18n="joinAClub">join a club</div>
+    </div>
+    <div class="vault-tile vt-modify" onclick="clubMgmtShowPanel('create')" style="min-height:90px;">
+      <div class="vt-icon">➕</div>
+      <div class="vt-name" data-i18n="createClub">Create</div>
+      <div class="vt-sub" data-i18n="newClub">new club</div>
+    </div>
+    <div class="vault-tile vt-requests" onclick="clubMgmtShowPanel('delete')" style="min-height:90px;">
+      <div class="vt-icon">🗑️</div>
+      <div class="vt-name" data-i18n="deleteClub">Delete</div>
+      <div class="vt-sub" data-i18n="removeClub">remove club</div>
     </div>
   </div>
 
+  <!-- CONNECT PANEL -->
+  <div id="clubMgmtConnectPanel" style="display:none;">
+    <div class="vault-club-card" id="clubLoginCard">
+      <div id="clubLoggedInState" style="display:none">
+        <div class="vault-club-connected">
+          <div class="vault-club-left">
+            <div class="vault-status-dot" id="clubLoginDot"></div>
+            <div>
+              <div class="vault-club-name" id="clubLoginName"></div>
+              <span class="vault-club-role" id="clubLoginRole"></span>
+            </div>
+          </div>
+          <button class="vault-change-btn" onclick="clubLoginSwitch()" data-i18n="change">Change</button>
+        </div>
+      </div>
+      <div id="clubLoginForm">
+        <div class="vault-section-label" data-i18n="connectToClub">&#127970; Connect to Club</div>
+        <div class="club-row">
+          <select id="sbClubSelectViewer" class="club-select" style="flex:1">
+            <option value="">&#8212; Select club &#8212;</option>
+          </select>
+        </div>
+        <div class="club-row" style="margin-top:8px">
+          <input type="password" id="sbPasswordInputViewer" class="club-input"
+                 placeholder="Admin password"
+                 onkeydown="if(event.key==='Enter')viewerJoinClub()">
+          <button class="btn-save" onclick="viewerJoinClub()" data-i18n="joinBtn">Join</button>
+        </div>
+        <div id="sbClubFeedbackViewer" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
+      </div>
+    </div>
+    <div class="vault-sync-row">
+      <span id="sbSyncStatus" class="vault-sync-text"></span>
+      <button class="vault-sync-btn" onclick="syncToLocal()" data-i18n="sync">&#8635; Sync</button>
+    </div>
+  </div>
+
+  <!-- CREATE PANEL -->
+  <div id="clubMgmtCreatePanel" style="display:none;">
+    <div class="settings-card" style="padding:14px;">
+      <div class="manage-section-title" data-i18n="createNewClub">Create New Club</div>
+      <div class="club-row">
+        <input type="text" id="sbNewClubName" class="club-input" placeholder="Club name">
+      </div>
+      <div class="club-row" style="margin-top:6px">
+        <input type="password" id="sbNewClubSelectPw" class="club-input" placeholder="Member password">
+      </div>
+      <div class="club-row" style="margin-top:6px">
+        <input type="password" id="sbNewClubAdminPw" class="club-input" placeholder="Admin password">
+      </div>
+      <button class="btn-save" style="width:100%;margin-top:8px" onclick="clubCreateSendOtp()" data-i18n="createClub">Create Club</button>
+      <div id="clubCreateFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- DELETE PANEL -->
+  <div id="clubMgmtDeletePanel" style="display:none;">
+    <div class="settings-card" style="padding:14px;">
+      <div class="manage-section-title manage-section-danger" data-i18n="deleteClub">Delete Club</div>
+      <div class="club-row">
+        <select id="sbDeleteClubSelect" class="club-select">
+          <option value="">— Select club to delete —</option>
+        </select>
+      </div>
+      <div class="club-row" style="margin-top:8px">
+        <input type="password" id="sbDeleteAdminPw" class="club-input"
+               placeholder="Admin password"
+               onkeydown="if(event.key==='Enter')clubDeleteWithPassword()">
+        <button class="btn-clear" onclick="clubDeleteWithPassword()" data-i18n="delete">Delete</button>
+      </div>
+      <div id="clubDeleteFeedback" style="font-size:0.78rem;margin-top:6px"></div>
+    </div>
+  </div>
+
+</div>
+```
+
+  </div>
+
+  <!-- ── ORGANISER CLUB MANAGEMENT PAGE ── -->
+
+  <div id="orgClubMgmtPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title" data-i18n="roundOrganiser">🏆 Club — Round Organiser</span>
+    </div>
+    <div class="vault-wrap">
+
+```
+  <!-- Club status card -->
+  <div class="vault-club-card" id="orgClubLoginCard">
+    <div id="orgClubLoggedInState" style="display:none">
+      <div class="vault-club-connected">
+        <div class="vault-club-left">
+          <div class="vault-status-dot" id="orgClubLoginDot"></div>
+          <div>
+            <div class="vault-club-name" id="orgClubLoginName"></div>
+            <span class="vault-club-role" id="orgClubLoginRole"></span>
+          </div>
+        </div>
+        <button class="vault-change-btn" onclick="orgClubLoginSwitch()" data-i18n="change">Change</button>
+      </div>
+    </div>
+    <div id="orgClubLoginForm">
+      <div class="vault-section-label" data-i18n="connectToClubBadminton">🏸 Connect to Club</div>
+      <div class="club-row">
+        <select id="orgClubSelect" class="club-select" style="flex:1">
+          <option value="">&#8212; Select club &#8212;</option>
+        </select>
+      </div>
+      <div class="club-row" style="margin-top:8px">
+        <input type="password" id="orgClubPassword" class="club-input"
+               placeholder="Member password"
+               onkeydown="if(event.key==='Enter')orgJoinClub()">
+        <button class="btn-save" onclick="orgJoinClub()" data-i18n="joinBtn">Join</button>
+      </div>
+      <div id="orgClubFeedback" style="font-size:0.78rem;margin-top:4px;color:var(--red)"></div>
+    </div>
+  </div>
+
+</div>
+```
+
+  </div>
+
   <!-- vaultPage kept as minimal stub for organiser mode -->
+
   <div id="vaultPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
+      <button class="page-back-btn" data-i18n="backHome" onclick="showHomeScreen()">&#8249; Home</button>
       <span class="page-back-title">&#9889; Vault</span>
     </div>
     <div class="vault-wrap">
       <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.9rem;">
-        Use <strong>Vault Manager</strong> mode for full admin access.
+        <span data-i18n="useAdminMode">Use Vault Manager mode for full admin access.</span>
       </div>
     </div>
   </div><!-- vaultPage -->
 
  <div id="playersPage" class="page">
-  <div class="page-back-bar"><button class="page-back-btn" id="playersBackBtn" onclick="navBack()">‹ Home</button><span class="page-back-title">👥 Players</span></div>
+  <div class="page-back-bar"><button class="page-back-btn" id="playersBackBtn" onclick="navBack()" data-i18n="backHome">‹ Home</button><span class="page-back-title" data-i18n="players">👥 Players</span></div>
 
   <div class="card browse-card" onclick="newImportShowModal()">
     <div class="browse-left">
-      <span class="browse-title">➕ Add Players</span>
-      <span class="browse-sub">Select from saved players</span>
+      <span class="browse-title" data-i18n="addPlayers">➕ Add Players</span>
+      <span class="browse-sub" data-i18n="selectFromSaved">Select from saved players</span>
     </div>
     <div class="browse-arrow">›</div>
   </div>
@@ -925,136 +1106,153 @@
 </div>
 
 <!-- FIXED PAIRS PAGE -->
+
 <div id="fixedPairsPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" id="fixedPairsBackBtn" onclick="navBack()">‹ Home</button><span class="page-back-title">🤝 Fixed Pairs</span></div>
+  <div class="page-back-bar"><button class="page-back-btn" id="fixedPairsBackBtn" onclick="navBack()" data-i18n="backHome">‹ Home</button><span class="page-back-title" data-i18n="fixedPairs">🤝 Fixed Pairs</span></div>
 
   <div class="card" id="fixedPairsCard">
     <span class="browse-title" data-i18n="fixedPairs"></span>
 
-    <div class="fp-picker-row">
-      <div class="fp-picker-field" id="fpField1" onclick="fpTogglePicker(1)">
-        <div class="fp-avatar-placeholder" id="fpAvatar1"></div>
-        <span class="fp-label" id="fpLabel1">Player 1</span>
-        <span class="fp-chevron">▼</span>
-      </div>
-      <div class="fp-picker-field" id="fpField2" onclick="fpTogglePicker(2)">
-        <div class="fp-avatar-placeholder" id="fpAvatar2"></div>
-        <span class="fp-label" id="fpLabel2">Player 2</span>
-        <span class="fp-chevron">▼</span>
-      </div>
-    </div>
-    <div id="fpDropdown1" class="fp-dropdown" style="display:none"></div>
-    <div id="fpDropdown2" class="fp-dropdown" style="display:none"></div>
+```
+<div class="fp-picker-row">
+  <div class="fp-picker-field" id="fpField1" onclick="fpTogglePicker(1)">
+    <div class="fp-avatar-placeholder" id="fpAvatar1"></div>
+    <span class="fp-label" id="fpLabel1" data-i18n="player1">Player 1</span>
+    <span class="fp-chevron">▼</span>
+  </div>
+  <div class="fp-picker-field" id="fpField2" onclick="fpTogglePicker(2)">
+    <div class="fp-avatar-placeholder" id="fpAvatar2"></div>
+    <span class="fp-label" id="fpLabel2" data-i18n="player2">Player 2</span>
+    <span class="fp-chevron">▼</span>
+  </div>
+</div>
+<div id="fpDropdown1" class="fp-dropdown" style="display:none"></div>
+<div id="fpDropdown2" class="fp-dropdown" style="display:none"></div>
 
-    <button id="fpAddBtn" class="schedule-btn disabled-btn" onclick="modifyFixedPair()" data-i18n="add" disabled></button>
-    <div id="fixed-pair-list" class="fixed-pairs-list"></div>
+<button id="fpAddBtn" class="schedule-btn disabled-btn" onclick="modifyFixedPair()" data-i18n="add" disabled></button>
+<div id="fixed-pair-list" class="fixed-pairs-list"></div>
+```
+
   </div>
 </div>
 
+  <!-- ============================= -->
+
+  <!--          ROUNDS PAGE          -->
 
   <!-- ============================= -->
-  <!--          ROUNDS PAGE          -->
-  <!-- ============================= -->
+
   <div id="roundsPage" class="page" style="display:none;">
 
-    <!-- Single tight top bar -->
-    <div class="rounds-top-bar">
-      <button class="rtb-back" onclick="showHomeScreen()">‹ Home</button>
-      <div class="rtb-spacer"></div>
-      <div class="rtb-live" id="sessionLiveBar" style="display:none;">
-        <div class="rtb-dot"></div>
-        <span class="rtb-live-txt">LIVE</span>
-        <button class="rtb-end" onclick="endSession()">End</button>
+```
+<!-- Single tight top bar -->
+<div class="rounds-top-bar">
+  <button class="rtb-back" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
+  <div class="rtb-spacer"></div>
+  <div class="rtb-live" id="sessionLiveBar" style="display:none;">
+    <div class="rtb-dot"></div>
+    <span class="rtb-live-txt">LIVE</span>
+    <button class="rtb-end" id="endBtn" onclick="endSession()" data-i18n="endBtn">End</button>
+  </div>
+</div>
+
+<div class="title-card">
+  <div id="roundTitle">R</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="mode-banner-badge ready-mode" id="roundModeBadge">READY</span>
+    <img id="lockToggleBtn" class="lock-icon" src="lock.png" alt="Lock" />
+  </div>
+</div>
+
+<div id="game-results"></div>
+
+<div class="action-card">
+  <button class="action mid small disabled-btn" id="roundShufle" onclick="RefreshRound()" aria-label="Mix round" disabled>🎲</button>
+  <button id="nextBtn" class="action right primary start-state" onclick="toggleRound()">
+    <span id="btnText">Start</span>
+    <span class="icon"> ▶</span>
+  </button>
+  <button class="action mid small" onclick="toggleRoundSettings()" aria-label="Settings">⚙️</button>
+</div>
+
+<!-- Round Settings Panel -->
+<div class="round-settings-panel">
+
+
+  <!-- Single roundSettingsBody — contains all settings + player slot -->
+  <div class="round-settings-body" id="roundSettingsBody">
+
+    <!-- Courts Row -->
+    <div class="setting-row">
+      <label class="setting-label" data-i18n="courts">Courts</label>
+      <div class="counter">
+        <button class="circle-btn" id="courtMinus">−</button>
+        <span id="num-courts">1</span>
+        <button class="circle-btn" id="courtPlus">+</button>
       </div>
     </div>
 
-    <div class="title-card">
-      <div id="roundTitle">R</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="mode-banner-badge ready-mode" id="roundModeBadge">READY</span>
-        <img id="lockToggleBtn" class="lock-icon" src="lock.png" alt="Lock" />
+    <div class="setting-divider"></div>
+
+    <!-- Mode Toggle Row -->
+    <div class="setting-row">
+      <label class="setting-label">
+        <span id="modeLabel"></span>
+        <span data-i18n="competitive">Competitive</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="modeToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+
+    <!-- Quick nav tiles -->
+    <div class="rounds-nav-tiles">
+      <div class="rounds-nav-tile" onclick="roundsGoPlayers()">
+        <div class="rounds-nav-icon tile-players">👥</div>
+        <div class="rounds-nav-name" data-i18n="players">Players</div>
+        <div class="rounds-nav-sub" id="gearSubPlayers" data-i18n="addRemove">Add · Remove</div>
+      </div>
+      <div class="rounds-nav-tile" onclick="roundsGoFixedPairs()">
+        <div class="rounds-nav-icon tile-pairs">🤝</div>
+        <div class="rounds-nav-name" data-i18n="fixedPairs">Fixed Pairs</div>
+        <div class="rounds-nav-sub" id="gearSubPairs">Optional</div>
       </div>
     </div>
 
-    <div id="game-results"></div>
+    <!-- Round History -->
+    <div id="roundHistoryContainer" style="margin-top:14px;"></div>
 
-    <div class="action-card">
-      <button class="action mid small disabled-btn" id="roundShufle" onclick="RefreshRound()" aria-label="Mix round" disabled>🎲</button>
-      <button id="nextBtn" class="action right primary start-state" onclick="toggleRound()">
-        <span id="btnText">Start</span>
-        <span class="icon"> ▶</span>
-      </button>
-      <button class="action mid small" onclick="toggleRoundSettings()" aria-label="Settings">⚙️</button>
-    </div>
-
-    <!-- Round Settings Panel -->
-    <div class="round-settings-panel">
-
-
-      <!-- Single roundSettingsBody — contains all settings + player slot -->
-      <div class="round-settings-body" id="roundSettingsBody">
-
-        <!-- Courts Row -->
-        <div class="setting-row">
-          <label class="setting-label" data-i18n="courts">Courts</label>
-          <div class="counter">
-            <button class="circle-btn" id="courtMinus">−</button>
-            <span id="num-courts">1</span>
-            <button class="circle-btn" id="courtPlus">+</button>
-          </div>
-        </div>
-
-        <div class="setting-divider"></div>
-
-        <!-- Mode Toggle Row -->
-        <div class="setting-row">
-          <label class="setting-label">
-            <span id="modeLabel"></span>
-            <span data-i18n="competitive">Competitive</span>
-          </label>
-          <label class="switch">
-            <input type="checkbox" id="modeToggle">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-
-        <!-- Quick nav tiles -->
-        <div class="rounds-nav-tiles">
-          <div class="rounds-nav-tile" onclick="roundsGoPlayers()">
-            <div class="rounds-nav-icon tile-players">👥</div>
-            <div class="rounds-nav-name">Players</div>
-            <div class="rounds-nav-sub">Add · Remove</div>
-          </div>
-          <div class="rounds-nav-tile" onclick="roundsGoSummary()">
-            <div class="rounds-nav-icon tile-summary">📊</div>
-            <div class="rounds-nav-name">Summary</div>
-            <div class="rounds-nav-sub">Session stats</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
+  </div>
+</div>
+```
 
   </div>
 
   <!-- ============================= -->
+
   <!--         SUMMARY PAGE          -->
+
   <!-- ============================= -->
+
   <div id="summaryPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" id="summaryBackBtn" onclick="navBack()">‹ Home</button><span class="page-back-title">📊 Summary</span></div>
+  <div class="page-back-bar"><button class="page-back-btn" id="summaryBackBtn" onclick="navBack()" data-i18n="backHome">‹ Home</button><span class="page-back-title" data-i18n="summary">📊 Summary</span></div>
     <div class="exp_btn" onclick="exportBRR2HTML()" data-i18n="exporthtml">📄</div>
     <div id="reportContainer"></div>
     <div id="export"></div>
   </div>
 
   <!-- ============================= -->
+
   <!--        DASHBOARD PAGE         -->
+
   <!-- ============================= -->
+
   <div id="dashboardPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
-      <span class="page-back-title">📡 Dashboard</span>
+      <button class="page-back-btn" data-i18n="backHome" onclick="showHomeScreen()">&#8249; Home</button>
+      <span class="page-back-title" data-i18n="dashboard">📡 Dashboard</span>
     </div>
     <div id="dashboardContainer" class="dashboard-container">
       <div class="dashboard-loading"><div class="help-spinner"></div></div>
@@ -1062,272 +1260,290 @@
   </div>
 
   <!-- VIEWER PAGE — session detail -->
+
   <div id="viewerPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
+      <button class="page-back-btn" data-i18n="backHome" onclick="showHomeScreen()">&#8249; Home</button>
       <button class="page-back-btn" onclick="viewerGoBack()">📡 Dashboard</button>
     </div>
     <div id="viewerResults"></div>
   </div>
 
   <!-- ============================= -->
+
   <!--          MY CARD PAGE         -->
+
   <!-- ============================= -->
+
   <div id="myCardPage" class="page" style="display:none;">
     <div class="page-back-bar">
-      <button class="page-back-btn" onclick="showHomeScreen()">&#8249; Home</button>
-      <span class="page-back-title">My Card</span>
+      <button class="page-back-btn" data-i18n="backHome" onclick="showHomeScreen()">&#8249; Home</button>
+      <span class="page-back-title" data-i18n="myCard">My Card</span>
     </div>
 
-    <!-- Not logged in state -->
-    <div id="myCardEmpty" style="display:none;">
-      <div class="dash-empty">
-        <div class="dash-empty-icon">👤</div>
-        <p style="font-weight:700;margin-bottom:6px">Sign in to view your stats</p>
-        <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px">Track your ratings, wins and match history.</p>
-        <button class="btn-save" style="margin-top:16px" onclick="authShowScreen('login')">Login</button>
-      </div>
+```
+<!-- Not logged in state -->
+<div id="myCardEmpty" style="display:none;">
+  <div class="dash-empty">
+    <div class="dash-empty-icon">👤</div>
+    <p style="font-weight:700;margin-bottom:6px" data-i18n="signInStats">Sign in to view your stats</p>
+    <p style="font-size:0.78rem;color:var(--text-dim);margin-top:4px" data-i18n="trackStats">Track your ratings, wins and match history.</p>
+    <button class="btn-save" style="margin-top:16px" onclick="authShowScreen('login')" data-i18n="login">Login</button>
+  </div>
+</div>
+
+<!-- Profile content -->
+<div id="myCardContent" style="display:none;">
+
+  <!-- Identity -->
+  <div class="mycard-identity">
+    <img id="mcAvatar" src="male.png" class="mycard-avatar">
+    <div class="mycard-identity-info">
+      <div class="mycard-name" id="mcName"></div>
+      <div id="mcTier" class="profile-tier"></div>
     </div>
+    <button id="mcLogoutBtn" class="mc-logout-btn" style="display:none" onclick="if(typeof authLogout==='function')authLogout()" data-i18n="logout">Logout</button>
+  </div>
 
-    <!-- Profile content -->
-    <div id="myCardContent" style="display:none;">
-
-      <!-- Identity -->
-      <div class="mycard-identity">
-        <img id="mcAvatar" src="male.png" class="mycard-avatar">
-        <div class="mycard-identity-info">
-          <div class="mycard-name" id="mcName"></div>
-          <div id="mcTier" class="profile-tier"></div>
-        </div>
-        <button id="mcLogoutBtn" class="mc-logout-btn" style="display:none" onclick="if(typeof authLogout==='function')authLogout()">Logout</button>
-      </div>
-
-      <!-- Ratings + Points -->
-      <div class="mycard-ratings">
-        <div class="mycard-rating-box">
-          <div class="mycard-rating-value" id="mcGlobalRating">—</div>
-          <div class="mycard-rating-label">Global Rating</div>
-        </div>
-        <div class="mycard-rating-divider"></div>
-        <div class="mycard-rating-box">
-          <div class="mycard-rating-value club" id="mcClubRating">—</div>
-          <div class="mycard-rating-label">Club Rating</div>
-        </div>
-      </div>
-      <div class="mycard-ratings" style="margin-top:8px;">
-        <div class="mycard-rating-box">
-          <div class="mycard-rating-value" id="mcGlobalPoints" style="color:var(--accent)">—</div>
-          <div class="mycard-rating-label">Global Points</div>
-        </div>
-        <div class="mycard-rating-divider"></div>
-        <div class="mycard-rating-box">
-          <div class="mycard-rating-value club" id="mcClubPoints" style="color:#f5a623">—</div>
-          <div class="mycard-rating-label">Club Points</div>
-        </div>
-      </div>
-
-      <!-- All-time Wins/Losses -->
-      <div class="profile-stats-row" style="margin:12px 16px 8px;">
-        <div class="profile-stat-box">
-          <div id="mcWins" class="profile-stat-value wins">—</div>
-          <div class="profile-stat-label">All-time Wins</div>
-        </div>
-        <div class="profile-stat-divider"></div>
-        <div class="profile-stat-box">
-          <div id="mcLosses" class="profile-stat-value losses">—</div>
-          <div class="profile-stat-label">All-time Losses</div>
-        </div>
-      </div>
-
-      <!-- Period Stats — Style C -->
-      <div class="mc-period-list" id="mcPeriodStats">
-        <div class="mc-period-row">
-          <span class="mc-period-label">This Week</span>
-          <div class="mc-period-stats-inner">
-            <span class="mc-period-val wins" id="mcWeekWins">—</span>W
-            <span class="mc-period-val losses" id="mcWeekLosses">—</span>L
-            <span class="mc-period-val points" id="mcWeekPoints">—</span>pts
-            <span class="mc-period-val cost" id="mcWeekCost"></span>
-          </div>
-        </div>
-        <div class="mc-period-row">
-          <span class="mc-period-label">This Month</span>
-          <div class="mc-period-stats-inner">
-            <span class="mc-period-val wins" id="mcMonthWins">—</span>W
-            <span class="mc-period-val losses" id="mcMonthLosses">—</span>L
-            <span class="mc-period-val points" id="mcMonthPoints">—</span>pts
-            <span class="mc-period-val cost" id="mcMonthCost"></span>
-          </div>
-        </div>
-        <div class="mc-period-row">
-          <span class="mc-period-label">This Year</span>
-          <div class="mc-period-stats-inner">
-            <span class="mc-period-val wins" id="mcYearWins">—</span>W
-            <span class="mc-period-val losses" id="mcYearLosses">—</span>L
-            <span class="mc-period-val points" id="mcYearPoints">—</span>pts
-            <span class="mc-period-val cost" id="mcYearCost"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sessions -->
-      <div class="profile-sessions-title" style="padding:8px 16px;">Sessions</div>
-      <div id="mcSessions" class="profile-sessions-list" style="padding:0 16px 12px;">
-        <div class="profile-sessions-loading">Loading...</div>
-      </div>
-
-      <!-- Recent Matches -->
-      <div class="profile-sessions-title" style="padding:8px 16px;">Recent Matches</div>
-      <div id="mcMatches" style="padding:0 16px 32px;">
-        <div class="profile-sessions-loading">Loading...</div>
-      </div>
-
+  <!-- Ratings + Points -->
+  <div class="mycard-ratings">
+    <div class="mycard-rating-box">
+      <div class="mycard-rating-value" id="mcGlobalRating">—</div>
+      <div class="mycard-rating-label" data-i18n="globalRating">Global Rating</div>
+    </div>
+    <div class="mycard-rating-divider"></div>
+    <div class="mycard-rating-box">
+      <div class="mycard-rating-value club" id="mcClubRating">—</div>
+      <div class="mycard-rating-label" data-i18n="clubRating">Club Rating</div>
+    </div>
+  </div>
+  <div class="mycard-ratings" style="margin-top:8px;">
+    <div class="mycard-rating-box">
+      <div class="mycard-rating-value" id="mcGlobalPoints" style="color:var(--accent)">—</div>
+      <div class="mycard-rating-label" data-i18n="globalPoints">Global Points</div>
+    </div>
+    <div class="mycard-rating-divider"></div>
+    <div class="mycard-rating-box">
+      <div class="mycard-rating-value club" id="mcClubPoints" style="color:#f5a623">—</div>
+      <div class="mycard-rating-label" data-i18n="clubPoints">Club Points</div>
     </div>
   </div>
 
+  <!-- All-time Wins/Losses -->
+  <div class="profile-stats-row" style="margin:12px 16px 8px;">
+    <div class="profile-stat-box">
+      <div id="mcWins" class="profile-stat-value wins">—</div>
+      <div class="profile-stat-label" data-i18n="allTimeWins">All-time Wins</div>
+    </div>
+    <div class="profile-stat-divider"></div>
+    <div class="profile-stat-box">
+      <div id="mcLosses" class="profile-stat-value losses">—</div>
+      <div class="profile-stat-label" data-i18n="allTimeLosses">All-time Losses</div>
+    </div>
+  </div>
+
+  <!-- Period Stats — Style C -->
+  <div class="mc-period-list" id="mcPeriodStats">
+    <div class="mc-period-row">
+      <span class="mc-period-label" data-i18n="thisWeek">This Week</span>
+      <div class="mc-period-stats-inner">
+        <span class="mc-period-val wins" id="mcWeekWins">—</span>W
+        <span class="mc-period-val losses" id="mcWeekLosses">—</span>L
+        <span class="mc-period-val points" id="mcWeekPoints">—</span>pts
+        <span class="mc-period-val cost" id="mcWeekCost"></span>
+      </div>
+    </div>
+    <div class="mc-period-row">
+      <span class="mc-period-label" data-i18n="thisMonth">This Month</span>
+      <div class="mc-period-stats-inner">
+        <span class="mc-period-val wins" id="mcMonthWins">—</span>W
+        <span class="mc-period-val losses" id="mcMonthLosses">—</span>L
+        <span class="mc-period-val points" id="mcMonthPoints">—</span>pts
+        <span class="mc-period-val cost" id="mcMonthCost"></span>
+      </div>
+    </div>
+    <div class="mc-period-row">
+      <span class="mc-period-label" data-i18n="thisYear">This Year</span>
+      <div class="mc-period-stats-inner">
+        <span class="mc-period-val wins" id="mcYearWins">—</span>W
+        <span class="mc-period-val losses" id="mcYearLosses">—</span>L
+        <span class="mc-period-val points" id="mcYearPoints">—</span>pts
+        <span class="mc-period-val cost" id="mcYearCost"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sessions -->
+  <div class="profile-sessions-title" style="padding:8px 16px;" data-i18n="sessions">Sessions</div>
+  <div id="mcSessions" class="profile-sessions-list" style="padding:0 16px 12px;">
+    <div class="profile-sessions-loading" data-i18n="loading">Loading...</div>
+  </div>
+
+  <!-- Recent Matches -->
+  <div class="profile-sessions-title" style="padding:8px 16px;" data-i18n="recentMatches">Recent Matches</div>
+  <div id="mcMatches" style="padding:0 16px 32px;">
+    <div class="profile-sessions-loading" data-i18n="loading">Loading...</div>
+  </div>
+
+</div>
+```
+
+  </div>
+
   <!-- ============================= -->
+
   <!--           HELP PAGE           -->
+
   <!-- ============================= -->
+
   <div id="helpPage" class="page" style="display:none;">
-  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()">‹ Home</button><span class="page-back-title">❓ Help</span></div>
+  <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button><span class="page-back-title" data-i18n="help">❓ Help</span></div>
 
-    <!-- Search bar -->
-    <div class="help-search-wrap">
-      <span class="help-search-icon">🔍</span>
-      <input type="text" id="helpSearch" class="help-search-input"
-        placeholder="Search help..."
-        oninput="helpSearch(this.value)">
-    </div>
+```
+<!-- Search bar -->
+<div class="help-search-wrap">
+  <span class="help-search-icon">🔍</span>
+  <input type="text" id="helpSearch" class="help-search-input"
+    placeholder="Search help..."
+    oninput="helpSearch(this.value)">
+</div>
 
-    <!-- Section navigation -->
-    <div id="helpNav" class="help-nav"></div>
+<!-- Section navigation -->
+<div id="helpNav" class="help-nav"></div>
 
-    <!-- Content -->
-    <div id="helpContainer" class="help-container"></div>
+<!-- Content -->
+<div id="helpContainer" class="help-container"></div>
+```
 
   </div>
 
   <!-- ============================= -->
+
   <!--         IMPORT MODAL          -->
+
   <!-- ============================= -->
+
   <div id="newImportModal"
        class="newImport-modal"
        style="display:none;"
        onclick="if(event.target===this)newImportHideModal()">
     <div class="newImport-container">
 
-      <div class="newImport-selected-section">
-        <div class="newImport-selected-header">
-          <strong>Selected (<span id="newImportSelectedCount">0</span>)</strong>
-        </div>
-        <div id="newImportSelectedCards"
-             class="newImport-cards-container newImport-selected-container">
-        </div>
-        <div class="newImport-selected-actions">
-          <button class="newImport-clear-btn" onclick="newImportClearSelected()">Clear</button>
-        </div>
-        <div class="newImport-footer">
-          <button class="newImport-ok-btn" onclick="addPlayersFromInputUI(false)">Add</button>
-          <button class="newImport-replace-btn" id="newImportReplaceBtn" onclick="addPlayersFromInputUI(true)" style="display:none;">Replace</button>
-          <button class="newImport-cancel-btn" onclick="newImportHideModal()">Cancel</button>
-        </div>
-      </div>
-
-      <div class="newImport-select-section">
-        <div class="newImport-subtabs">
-          <button class="newImport-subtab-btn active"
-                  id="newImportAddplayersBtn"
-                  onclick="newImportShowSelectMode('addplayers')">Players</button>
-          <button class="newImport-subtab-btn"
-                  id="newImportFavoritesBtn"
-                  onclick="newImportShowSelectMode('favorites')">Favourite</button>
-          <button class="newImport-subtab-btn"
-                  id="newImportHistoryBtn"
-                  onclick="newImportShowSelectMode('history')">History</button>
-
-        </div>
-
-        <input type="text"
-               id="newImportSearch"
-               class="newImport-search"
-               placeholder="Search players">
-
-        <div class="newImport-list-actions">
-          <button id="newImportClearHistoryBtn"
-                  class="newImport-clear-btn"
-                  onclick="newImportClearHistory()">Clear History</button>
-          <button id="newImportClearFavoritesBtn"
-                  class="newImport-clear-btn"
-                  onclick="newImportClearFavorites()"
-                  style="display:none">Clear Favorites</button>
-        </div>
-
-        <div id="newImportSelectCards" class="newImport-cards-container"></div>
-
-        <div id="newImportAddPlayersSection" style="display:none">
-
-          <!-- Add Players sub-tabs -->
-          <div class="newImport-subtabs addplayers-subtabs">
-            <button class="newImport-subtab-btn active" id="addPlayersTypeBtn"
-                    onclick="addPlayersShowTab('type')">✏️ Type</button>
-            <button class="newImport-subtab-btn" id="addPlayersBrowseBtn"
-                    onclick="addPlayersShowTab('browse')">🔍 Browse</button>
-          </div>
-
-          <!-- TYPE tab -->
-          <div id="addPlayersTypePanel">
-            <div class="card">
-              <textarea id="players-names" rows="3" placeholder="John&#10;Mike&#10;Sarah"></textarea>
-              <div class="addplayer-row">
-                <select id="player-gender" class="addplayer-select">
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-              <div class="addplayer-row">
-                <button class="newImport-ok-btn addplayer-btn" onclick="addPlayer()">
-                  Add Player &nbsp;<span id="addPlayerFavToggle" class="addplayer-fav-toggle-icon" onclick="event.stopPropagation(); newImportToggleAddFav()">☆</span>
-                </button>
-              </div>
-              <div id="addPlayerFeedback" style="display:none;font-size:0.8rem;color:#e6a817;padding:4px 2px;"></div>
-              <div id="newImportFavoriteSetRow" style="display:none">
-                <div class="addplayer-setname-row">
-                  <input id="newImportSetName" type="text" class="addplayer-setname-input" placeholder="Set name e.g. Monday Group">
-                </div>
-                <div class="addplayer-setname-actions">
-                  <button class="newImport-ok-btn addplayer-btn" onclick="newImportSaveFavoriteSet()">Save Set</button>
-                  <button class="newImport-cancel-btn addplayer-btn" onclick="newImportToggleAddFav()">Cancel</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- BROWSE tab -->
-          <div id="addPlayersBrowsePanel" style="display:none">
-            <div class="card">
-              <div class="addplayer-row" style="gap:8px">
-                <select id="addPlayersBrowseScope" class="addplayer-select" onchange="addPlayersBrowseLoad()">
-                  <option value="club">My Club</option>
-                  <option value="global">All Players</option>
-                </select>
-                <input type="text" id="addPlayersBrowseSearch" class="addplayer-setname-input"
-                       placeholder="Search..." oninput="addPlayersBrowseFilter()"
-                       style="flex:1;margin:0">
-              </div>
-              <div id="addPlayersBrowseList" class="addplayers-browse-list"></div>
-            </div>
-          </div>
-
-        </div>
-
-
-
-      </div>
+```
+  <div class="newImport-selected-section">
+    <div class="newImport-selected-header">
+      <strong>Selected (<span id="newImportSelectedCount">0</span>)</strong>
+    </div>
+    <div id="newImportSelectedCards"
+         class="newImport-cards-container newImport-selected-container">
+    </div>
+    <div class="newImport-selected-actions">
+      <button class="newImport-clear-btn" onclick="newImportClearSelected()" data-i18n="clearBtn">Clear</button>
+    </div>
+    <div class="newImport-footer">
+      <button class="newImport-ok-btn" onclick="addPlayersFromInputUI(false)" data-i18n="add">Add</button>
+      <button class="newImport-replace-btn" id="newImportReplaceBtn" onclick="addPlayersFromInputUI(true)" style="display:none;" data-i18n="replaceBtn">Replace</button>
+      <button class="newImport-cancel-btn" onclick="newImportHideModal()" data-i18n="cancel">Cancel</button>
     </div>
   </div>
 
+  <div class="newImport-select-section">
+    <div class="newImport-subtabs">
+      <button class="newImport-subtab-btn"
+              id="newImportAddplayersBtn"
+              onclick="newImportShowSelectMode('addplayers')">Players</button>
+      <button class="newImport-subtab-btn"
+              id="newImportFavoritesBtn"
+              onclick="newImportShowSelectMode('favorites')" data-i18n="favouriteBtn">Favourite</button>
+      <button class="newImport-subtab-btn active"
+              id="newImportHistoryBtn"
+              onclick="newImportShowSelectMode('history')" data-i18n="historyBtn">History</button>
+
+    </div>
+
+    <input type="text"
+           id="newImportSearch"
+           class="newImport-search"
+           placeholder="Search players" data-i18n-placeholder="searchPlayers">
+
+    <div class="newImport-list-actions">
+      <button id="newImportClearHistoryBtn"
+              class="newImport-clear-btn"
+              onclick="newImportClearHistory()" data-i18n="clearHistory">Clear History</button>
+      <button id="newImportClearFavoritesBtn"
+              class="newImport-clear-btn"
+              onclick="newImportClearFavorites()"
+              style="display:none" data-i18n="clearFavorites">Clear Favorites</button>
+    </div>
+
+    <div id="newImportSelectCards" class="newImport-cards-container"></div>
+
+    <div id="newImportAddPlayersSection" style="display:none">
+
+      <!-- Add Players sub-tabs -->
+      <div class="newImport-subtabs addplayers-subtabs">
+        <button class="newImport-subtab-btn active" id="addPlayersTypeBtn"
+                onclick="addPlayersShowTab('type')">✏️ Type</button>
+        <button class="newImport-subtab-btn" id="addPlayersBrowseBtn"
+                onclick="addPlayersShowTab('browse')" data-i18n="browseBtn">🔍 Browse</button>
+      </div>
+
+      <!-- TYPE tab -->
+      <div id="addPlayersTypePanel">
+        <div class="card">
+          <textarea id="players-names" rows="3" placeholder="John&#10;Mike&#10;Sarah"></textarea>
+          <div class="addplayer-row">
+            <select id="player-gender" class="addplayer-select">
+              <option value="Male" data-i18n="genderMale">Male</option>
+              <option value="Female" data-i18n="genderFemale">Female</option>
+            </select>
+          </div>
+          <div class="addplayer-row">
+            <button class="newImport-ok-btn addplayer-btn" onclick="addPlayer()">
+              Add Player &nbsp;<span id="addPlayerFavToggle" class="addplayer-fav-toggle-icon" onclick="event.stopPropagation(); newImportToggleAddFav()">☆</span>
+            </button>
+          </div>
+          <div id="addPlayerFeedback" style="display:none;font-size:0.8rem;color:#e6a817;padding:4px 2px;"></div>
+          <div id="newImportFavoriteSetRow" style="display:none">
+            <div class="addplayer-setname-row">
+              <input id="newImportSetName" type="text" class="addplayer-setname-input" placeholder="Set name e.g. Monday Group">
+            </div>
+            <div class="addplayer-setname-actions">
+              <button class="newImport-ok-btn addplayer-btn" onclick="newImportSaveFavoriteSet()" data-i18n="saveSet">Save Set</button>
+              <button class="newImport-cancel-btn addplayer-btn" onclick="newImportToggleAddFav()" data-i18n="cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BROWSE tab -->
+      <div id="addPlayersBrowsePanel" style="display:none">
+        <div class="card">
+          <div class="addplayer-row" style="gap:8px">
+            <select id="addPlayersBrowseScope" class="addplayer-select" onchange="addPlayersBrowseLoad()">
+              <option value="club">My Club</option>
+              <option value="global">All Players</option>
+            </select>
+            <input type="text" id="addPlayersBrowseSearch" class="addplayer-setname-input"
+                   placeholder="Search..." oninput="addPlayersBrowseFilter()"
+                   style="flex:1;margin:0">
+          </div>
+          <div id="addPlayersBrowseList" class="addplayers-browse-list"></div>
+        </div>
+      </div>
+
+    </div>
+
+
+
+  </div>
+</div>
+```
+
+  </div>
 
 <!-- Player Stats Modal -->
+
 <div id="playerStatsModal" class="stats-modal-overlay" style="display:none" onclick="if(event.target===this)closePlayerStats()">
   <div class="stats-modal">
     <button class="stats-close-btn" onclick="closePlayerStats()">✕</button>
@@ -1336,23 +1552,27 @@
 </div>
 
 <!-- ============================= -->
+
 <!--       PROFILE DRAWER          -->
+
 <!-- ============================= -->
+
 <div id="profileOverlay" class="profile-overlay hidden" onclick="closeProfileDrawer()"></div>
 <div id="profileDrawer" class="profile-drawer">
 
   <!-- Player Picker (shown when no player selected) -->
+
   <div id="profilePicker" class="profile-picker">
     <!-- Player list view -->
     <div id="pickerListView">
       <div class="profile-drawer-header">
-        <span class="profile-drawer-title">Who are you?</span>
+        <span class="profile-drawer-title" data-i18n="whoAreYou">Who are you?</span>
         <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
       </div>
-      <p class="profile-picker-hint">Select your name to personalise your profile</p>
+      <p class="profile-picker-hint" data-i18n="selectNameProfile">Select your name to personalise your profile</p>
       <div class="profile-picker-search-wrap">
         <input type="text" id="profileSearch" class="profile-picker-search"
-          placeholder="🔍 Search player..."
+          placeholder="🔍 Search player..." data-i18n-placeholder="searchPlayerDot"
           oninput="filterPickerList(this.value)">
       </div>
       <div id="profilePickerList" class="profile-picker-list"></div>
@@ -1362,96 +1582,148 @@
   </div>
 
   <!-- Profile Card (shown when player selected) -->
+
   <div id="profileCard" class="profile-card-view" style="display:none;">
     <div class="profile-drawer-header">
-      <span class="profile-drawer-title">My Profile</span>
+      <span class="profile-drawer-title" data-i18n="myProfile">My Profile</span>
       <div style="display:flex;align-items:center;gap:8px;">
-        <button class="profile-switch-btn" onclick="switchProfilePlayer()">Switch</button>
-        <button class="profile-switch-btn" style="color:var(--red)" onclick="authDoLogout()">Logout</button>
+        <button class="profile-switch-btn" onclick="switchProfilePlayer()" data-i18n="switchBtn">Switch</button>
+        <button class="profile-switch-btn" style="color:var(--red)" onclick="authDoLogout()" data-i18n="logout">Logout</button>
         <button class="profile-drawer-close" onclick="closeProfileDrawer()">✕</button>
       </div>
     </div>
     </div>
 
-    <!-- Avatar + Name + Ratings -->
-    <div class="profile-identity">
-      <img id="pcAvatar" src="male.png" class="profile-avatar">
-      <div class="profile-identity-info">
-        <div class="profile-name-row">
-          <div id="pcName" class="profile-name"></div>
-          <div class="profile-ratings-inline">
-            <div class="inline-rating">
-              <span class="inline-rating-label">Global Rating</span>
-              <span id="pcRating" class="inline-rating-value global"></span>
-            </div>
-            <div class="inline-rating">
-              <span class="inline-rating-label">Club Rating</span>
-              <span id="pcClubRating" class="inline-rating-value club">—</span>
-            </div>
-          </div>
+```
+<!-- Avatar + Name + Ratings -->
+<div class="profile-identity">
+  <img id="pcAvatar" src="male.png" class="profile-avatar">
+  <div class="profile-identity-info">
+    <div class="profile-name-row">
+      <div id="pcName" class="profile-name"></div>
+      <div class="profile-ratings-inline">
+        <div class="inline-rating">
+          <span class="inline-rating-label" data-i18n="globalRating">Global Rating</span>
+          <span id="pcRating" class="inline-rating-value global"></span>
         </div>
-        <div id="pcTier" class="profile-tier"></div>
+        <div class="inline-rating">
+          <span class="inline-rating-label" data-i18n="clubRating">Club Rating</span>
+          <span id="pcClubRating" class="inline-rating-value club">—</span>
+        </div>
       </div>
     </div>
+    <div id="pcTier" class="profile-tier"></div>
+  </div>
+</div>
 
-    <!-- Stats row -->
-    <div class="profile-stats-row">
-      <div class="profile-stat-box">
-        <div id="pcWins" class="profile-stat-value wins">—</div>
-        <div class="profile-stat-label">All-time Wins</div>
-      </div>
-      <div class="profile-stat-divider"></div>
-      <div class="profile-stat-box">
-        <div id="pcLosses" class="profile-stat-value losses">—</div>
-        <div class="profile-stat-label">All-time Losses</div>
-      </div>
-    </div>
+<!-- Stats row -->
+<div class="profile-stats-row">
+  <div class="profile-stat-box">
+    <div id="pcWins" class="profile-stat-value wins">—</div>
+    <div class="profile-stat-label" data-i18n="allTimeWins">All-time Wins</div>
+  </div>
+  <div class="profile-stat-divider"></div>
+  <div class="profile-stat-box">
+    <div id="pcLosses" class="profile-stat-value losses">—</div>
+    <div class="profile-stat-label" data-i18n="allTimeLosses">All-time Losses</div>
+  </div>
+</div>
+```
 
   </div>
 
 </div>
 
   <!-- ONBOARDING OVERLAY -->
+
   <div id="onboardingOverlay" class="onboarding-overlay" style="display:none;">
     <div class="onboarding-card">
       <div class="onboarding-icon">🏸</div>
-      <div class="onboarding-title" id="onboardingTitle">Welcome</div>
+      <div class="onboarding-title" id="onboardingTitle" data-i18n="welcomeTitle">Welcome</div>
       <div class="onboarding-msg" id="onboardingMsg"></div>
-      <button class="onboarding-btn" id="onboardingBtn">Get Started</button>
+      <button class="onboarding-btn" id="onboardingBtn" data-i18n="getStarted">Get Started</button>
     </div>
   </div>
 
   <!-- PAYWALL OVERLAY -->
+
   <div id="paywallOverlay" class="paywall-overlay" style="display:none;">
     <div class="paywall-card">
       <div class="paywall-icon">🏸</div>
-      <div class="paywall-title">Club Scheduler Pro</div>
-      <div class="paywall-subtitle">Your free trial has ended</div>
+      <div class="paywall-title" data-i18n="clubSchedulerPro">Club Scheduler Pro</div>
+      <div class="paywall-subtitle" data-i18n="trialEnded">Your free trial has ended</div>
 
-      <div class="paywall-features">
-        <div class="paywall-feature">✓ Organiser mode — run sessions</div>
-        <div class="paywall-feature">✓ Players &amp; Fixed Pairs management</div>
-        <div class="paywall-feature">✓ Live rounds &amp; scoring</div>
-        <div class="paywall-feature">✓ Full stats &amp; session history</div>
-        <div class="paywall-feature">✓ Viewer mode — watch live scores</div>
-      </div>
+```
+  <div class="paywall-features">
+    <div class="paywall-feature" data-i18n="subFeature3">✓ Organiser mode — run sessions</div>
+    <div class="paywall-feature" data-i18n="subFeature4">✓ Players &amp; Fixed Pairs management</div>
+    <div class="paywall-feature" data-i18n="subFeature2">✓ Live rounds &amp; scoring</div>
+    <div class="paywall-feature" data-i18n="subFeature1">✓ Full stats &amp; session history</div>
+    <div class="paywall-feature" data-i18n="subFeature5">✓ Viewer mode — watch live scores</div>
+  </div>
 
-      <div class="paywall-price">¥500 <span>/ year</span></div>
-      <div class="paywall-note">Less than one shuttle per year</div>
+  <div class="paywall-price">¥500 <span>/ year</span></div>
+  <div class="paywall-note" data-i18n="lessOneShuttle">Less than one shuttle per year</div>
 
-      <button class="paywall-btn-primary" onclick="subPurchase()">Subscribe Now</button>
-      <button class="paywall-btn-restore" onclick="subRestore()">Restore Purchase</button>
-    </div>
+  <button class="paywall-btn-primary" onclick="subPurchase()" data-i18n="subscribeNow">Subscribe Now</button>
+  <button class="paywall-btn-restore" onclick="subRestore()" data-i18n="restorePurchase">Restore Purchase</button>
+</div>
+```
+
   </div>
 
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/SCSWork/sw.js')
+        navigator.serviceWorker.register('./sw.js')
           .then(function(reg) { console.log('SW registered'); })
           .catch(function(err) { console.log('SW failed:', err); });
       });
     }
   </script>
+
+  <!-- ══════════════════════════════════════════════════ -->
+
+  <!--              VAULT REPORT PAGE                      -->
+
+  <!-- ══════════════════════════════════════════════════ -->
+
+  <div id="vaultReportPage" class="page" style="display:none;">
+    <div class="page-back-bar">
+      <button class="page-back-btn" onclick="navBack()" data-i18n="backHome">‹ Home</button>
+      <span class="page-back-title">📊 <span data-i18n="report">Report</span></span>
+    </div>
+    <div style="padding:16px;">
+
+```
+  <!-- Month selector -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div>
+      <div style="font-size:1rem;font-weight:700;" id="reportMonthTitle">Monthly Report</div>
+      <div style="font-size:0.75rem;color:var(--muted);" id="reportMonthSub">Current month</div>
+    </div>
+    <button id="reportGenerateBtn"
+      onclick="reportGenerate()"
+      style="background:linear-gradient(135deg,#e85d75,#c0392b);color:#fff;border:none;border-radius:12px;padding:10px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:inherit;">
+      ☁️ Export
+    </button>
+  </div>
+
+  <!-- Status -->
+  <div id="reportStatus" style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;min-height:20px;"></div>
+
+  <!-- Link -->
+  <a id="reportLink" href="#" target="_blank"
+    style="display:none;font-size:0.72rem;color:var(--accent);word-break:break-all;margin-bottom:16px;display:none;line-height:1.4;">
+  </a>
+
+  <!-- Preview container — widgets rendered here -->
+  <div id="reportPreview" style="margin-top:8px;"></div>
+
+</div>
+```
+
+  </div>
+
 </body>
 </html>

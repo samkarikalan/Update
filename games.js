@@ -184,12 +184,12 @@ function toggleRound() {
 
   // Update button label
   if (currentState === "idle") {
-    // Show "Start" if no rounds played yet, else "Next Round"
+    // Show t("startGame") if no rounds played yet, else "Next Round"
     const isFirst = allRounds.length <= 1;
     if (isFirst) {
       btn.classList.add("start-state");
       textEl.removeAttribute("data-i18n");
-      textEl.textContent = "Start";
+      textEl.textContent = t("startGame");
     } else {
       btn.classList.remove("start-state");
       textEl.dataset.i18n = "nround";
@@ -212,10 +212,10 @@ function toggleRound() {
 function setStatus(status) {
   //statusEl.classList.remove("status-ready", "status-progress");
 
-  /*if (status === "Ready") {
+  /*if (status === t("readyGame")) {
     statusEl.dataset.i18n = "statusReady";
     statusEl.classList.add("status-ready");
-  } else if (status === "In Progress") {
+  } else if (status === t("inProgressGame")) {
     statusEl.dataset.i18n = "statusProgress";
     statusEl.classList.add("status-progress");
   } 
@@ -1193,6 +1193,7 @@ function showRound(index) {
   // Sync mode banner and shuffle after every round display
   _syncModeBanner();
   _syncShuffleBtn();
+  checkAllWinnersMarked();
 }
 
 
@@ -1351,7 +1352,7 @@ function renderGames(data, roundIndex) {
       const winCup = document.createElement('img');
       winCup.src = 'win-cup.png';
       winCup.className = 'win-cup blinking';
-      winCup.title = 'Mark winner';
+      winCup.title = t('markWinner');
       winCup.style.visibility = 'hidden';
       winCup.style.pointerEvents = 'none';
 
@@ -1390,6 +1391,7 @@ function renderGames(data, roundIndex) {
           game.winner = teamSide;
           game.winners = teamPairs.slice();
           if (typeof saveRoundsToDb === "function") saveRoundsToDb();
+          checkAllWinnersMarked();
         } else {
           allCups.forEach(cup => {
             cup.classList.remove('active');
@@ -1406,6 +1408,7 @@ function renderGames(data, roundIndex) {
           game.winner = undefined;
           game.winners = [];
           if (typeof saveRoundsToDb === "function") saveRoundsToDb();
+          checkAllWinnersMarked();
         }
       };
 
@@ -1464,7 +1467,7 @@ function renderGames(data, roundIndex) {
 
     const vsDivider = document.createElement('div');
     vsDivider.className = 'vs-divider';
-    vsDivider.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+    vsDivider.innerHTML = `<div class="vs-line"></div><span>${t('vsLabel')}</span><div class="vs-line"></div>`;
 
     teamsDiv.append(teamLeft, vsDivider, teamRight);
     courtDiv.append(courtName, teamsDiv);
@@ -1512,7 +1515,7 @@ function goodrenderGames(data, roundIndex) {
       const winCup = document.createElement('img');
       winCup.src = 'win-cup.png';
       winCup.className = 'win-cup blinking';
-      winCup.title = 'Mark winner';
+      winCup.title = t('markWinner');
       winCup.style.visibility = 'hidden';
       winCup.style.pointerEvents = 'none';
 
@@ -1554,6 +1557,7 @@ function goodrenderGames(data, roundIndex) {
           game.winner = teamSide;
           game.winners = teamPairs.slice();
           if (typeof saveRoundsToDb === "function") saveRoundsToDb();
+          checkAllWinnersMarked();
         } else {
           // 👉 Unmark → show BOTH cups again
           allCups.forEach(cup => {
@@ -1616,7 +1620,7 @@ function goodrenderGames(data, roundIndex) {
 
     const vsDivider = document.createElement('div');
     vsDivider.className = 'vs-divider';
-    vsDivider.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+    vsDivider.innerHTML = `<div class="vs-line"></div><span>${t('vsLabel')}</span><div class="vs-line"></div>`;
 
     teamsDiv.append(teamLeft, vsDivider, teamRight);
     courtDiv.append(courtName, teamsDiv);
@@ -1666,7 +1670,7 @@ function renderGames2(data, index) {
       const winCup = document.createElement('img');
       winCup.src = 'win-cup.png';
       winCup.className = 'win-cup blinking';
-      winCup.title = 'Mark winner';
+      winCup.title = t('markWinner');
 
       // Start hidden
       winCup.style.visibility = 'hidden';
@@ -1776,7 +1780,7 @@ function renderGames2(data, index) {
 
     const vsDivider = document.createElement('div');
     vsDivider.className = 'vs-divider';
-    vsDivider.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+    vsDivider.innerHTML = `<div class="vs-line"></div><span>${t('vsLabel')}</span><div class="vs-line"></div>`;
 
     teamsDiv.append(teamLeft, vsDivider, teamRight);
     courtDiv.append(courtName, teamsDiv);
@@ -1829,7 +1833,7 @@ restDiv.appendChild(title);
 
   if (!data.resting || data.resting.length === 0) {
     const span = document.createElement('span');
-    span.innerText = 'None';
+    span.innerText = t('noneGame');
     restBox.appendChild(span);
   } else {
     data.resting.forEach(restName => {
@@ -2260,7 +2264,7 @@ function handleDropRestToTeam(
   // ---------------------------------------------
   const { restCount } = schedulerState;
 
-  if (oldPlayer && oldPlayer !== '(Empty)') {
+  if (oldPlayer && oldPlayer !== t('emptyGame')) {
 
     // Read only value
     const stored = restCount.get(oldPlayer) || 0;
@@ -2278,7 +2282,7 @@ function handleDropRestToTeam(
 function handleDropBetweenTeams(e, teamSide, gameIndex, playerIndex, data, index, src) {
   // src contains info about the player you selected first
   const { teamSide: fromTeamSide, gameIndex: fromGameIndex, playerIndex: fromPlayerIndex, playerName: player } = src;
-  if (!player || player === '(Empty)') return;
+  if (!player || player === t('emptyGame')) return;
   const fromTeamKey = fromTeamSide === 'L' ? 'pair1' : 'pair2';
   const toTeamKey = teamSide === 'L' ? 'pair1' : 'pair2';
   const fromTeam = data.games[fromGameIndex][fromTeamKey];
@@ -2288,7 +2292,7 @@ function handleDropBetweenTeams(e, teamSide, gameIndex, playerIndex, data, index
   const targetPlayer = toTeam[playerIndex];
   // ✅ Swap players
   toTeam[playerIndex] = movedPlayer;
-  fromTeam[fromPlayerIndex] = targetPlayer && targetPlayer !== '(Empty)' ? targetPlayer : '(Empty)';
+  fromTeam[fromPlayerIndex] = targetPlayer && targetPlayer !== t('emptyGame') ? targetPlayer : t('emptyGame');
   showRound(index);
 }
 
@@ -2417,7 +2421,7 @@ lockBtn.addEventListener('click', () => {
   interactionLocked = !interactionLocked;
   document.body.classList.toggle('locked', interactionLocked);
   lockBtn.src = interactionLocked ? 'lock.png' : 'unlock.png';
-  lockBtn.alt = interactionLocked ? 'Lock' : 'Unlock';
+  lockBtn.alt = interactionLocked ? 'Lock' : t('unlockBtn');
   _syncModeBanner();
   _syncShuffleBtn();
 });
@@ -2429,13 +2433,13 @@ function _syncModeBanner() {
 
   if (currentState === "active") {
     badge.className = 'mode-banner-badge live-mode';
-    badge.textContent = 'LIVE';
+    badge.textContent = t('liveBadge') || 'LIVE';
   } else if (!interactionLocked) {
     badge.className = 'mode-banner-badge setup-mode';
-    badge.textContent = 'SETUP';
+    badge.textContent = t('setupBadge') || 'SETUP';
   } else {
     badge.className = 'mode-banner-badge ready-mode';
-    badge.textContent = 'READY';
+    badge.textContent = t('readyBadge') || 'READY';
   }
 }
 
@@ -2491,12 +2495,83 @@ function updateModeLabel() {
   if (lbl) lbl.textContent = getPlayMode() === "competitive" ? "🏆" : "🎲";
 }
 
+// Check if all games in current round have winners — enable End button
+function checkAllWinnersMarked() {
+  const round = allRounds[currentRoundIndex];
+  if (!round || !round.games || !round.games.length) return;
+  const allMarked = round.games.every(g => g.winner);
+  const endBtn = document.getElementById('endBtn');
+  if (endBtn) {
+    endBtn.style.opacity = allMarked ? '1' : '';
+    endBtn.style.boxShadow = allMarked ? '0 0 0 2px #2dce89' : '';
+    endBtn.title = allMarked ? '' : '';
+  }
+}
+
 // toggleRoundSettings — unified version
 function toggleRoundSettings() {
   const body = document.getElementById('roundSettingsBody');
   const isOpen = body.classList.toggle('open');
   const gearBtn = document.querySelector('.action-card .action.mid.small:last-child');
   if (gearBtn) gearBtn.classList.toggle('settings-active', isOpen);
+  if (isOpen) {
+    renderRoundHistory();
+    updateGearPairsSub();
+  }
+}
+
+/* ── Update Fixed Pairs subtitle in gear panel ── */
+function updateGearPairsSub() {
+  const el = document.getElementById('gearSubPairs');
+  if (!el) return;
+  const n = (typeof schedulerState !== 'undefined' && schedulerState.fixedPairs)
+    ? schedulerState.fixedPairs.length : 0;
+  el.textContent = n > 0
+    ? n + ' ' + (n === 1 ? (t('pairSet')||'pair set') : (t('pairsSet')||'pairs set'))
+    : (t('optional')||'Optional');
+}
+
+/* ── Round History — same style as Summary, no ranking, newest first ── */
+function renderRoundHistory() {
+  const container = document.getElementById('roundHistoryContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!Array.isArray(allRounds) || allRounds.length === 0) return;
+
+  // Only show PAST completed rounds — skip current active round
+  // A round is completed if all its games have a winner marked
+  const pastRounds = [];
+  for (let i = 0; i < allRounds.length; i++) {
+    const round = allRounds[i];
+    if (!round || !round.games || !round.games.length) continue;
+    const allMarked = round.games.every(g => g.winner);
+    // Skip current round (last) if not all winners marked
+    if (i === currentRoundIndex && !allMarked) continue;
+    if (allMarked) pastRounds.push({ round, index: i });
+  }
+
+  if (!pastRounds.length) return;
+
+  // Visual separator between settings and rounds history
+  const sep = document.createElement('div');
+  sep.style.cssText = 'margin:14px 0 10px;border-top:1px solid var(--border2);padding-top:12px;';
+  const sepLabel = document.createElement('div');
+  sepLabel.style.cssText = 'font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:8px;';
+  sepLabel.textContent = t('roundsLabel') || 'Round History';
+  sep.appendChild(sepLabel);
+  container.appendChild(sep);
+
+  // Set _vRoundsData so _vBuildRound can work
+  window._vRoundsData = allRounds;
+
+  // Render past rounds newest first
+  for (let i = pastRounds.length - 1; i >= 0; i--) {
+    if (typeof _vBuildRound === 'function') {
+      const roundEl = _vBuildRound(pastRounds[i].round);
+      container.appendChild(roundEl);
+    }
+  }
 }
 
 // ── Points helpers ────────────────────────────────────────────

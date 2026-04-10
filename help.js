@@ -10,7 +10,7 @@ var helpSearchTimer = null;
 
 /* ── Search placeholder per language ── */
 const HELP_I18N = {
-  en: { search: 'Search help...', no_results: 'No results found', loading: 'Loading...', error: 'Help unavailable. Check your connection.', contact: 'Still need help? Contact support' },
+  en: { search: t('searchHelp'), no_results: t('noResultsFound'), loading: t('loading'), error: t('helpUnavailable'), contact: t('stillNeedHelp') },
   jp: { search: 'ヘルプを検索...', no_results: '結果が見つかりません', loading: '読み込み中...', error: '接続を確認してください。', contact: 'まだお困りですか？サポートに連絡' },
   kr: { search: '도움말 검색...', no_results: '결과 없음', loading: '로딩 중...', error: '연결을 확인하세요.', contact: '도움이 필요하신가요? 지원팀 문의' },
   zh: { search: '搜索帮助...', no_results: '没有结果', loading: '加载中...', error: '请检查您的连接。', contact: '仍需帮助？联系支持' },

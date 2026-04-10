@@ -56,6 +56,11 @@ allRounds = new Proxy(allRounds, {
   set(target, prop, value) {
     target[prop] = value;
     updateSummaryPageAccess();
+  // Refresh round history in gear panel if open
+  const gearBody = document.getElementById('roundSettingsBody');
+  if (gearBody && gearBody.classList.contains('open')) {
+    if (typeof renderRoundHistory === 'function') renderRoundHistory();
+  }
     return true;
   },
   deleteProperty(target, prop) {
@@ -163,18 +168,8 @@ function goToRounds() {
     allRounds.push(AischedulerNextRound(schedulerState));
     currentRoundIndex = 0;
     showRound(0);
-    // Start session in DB only if not already started
-    const existingSessionId = (typeof getMySessionId === 'function') ? getMySessionId() : null;
-    if (!existingSessionId && typeof dbStartSession === 'function') {
-      dbStartSession().then(() => {
-        if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
-        if (typeof updateSessionLiveBar === 'function') updateSessionLiveBar();
-        if (typeof startSessionHeartbeat === 'function') startSessionHeartbeat();
-      });
-    } else {
-      if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
-      if (typeof updateSessionLiveBar === 'function') updateSessionLiveBar();
-    }
+    // Ensure live session is registered — retries silently if it fails
+    ensureLiveSession();
   } else {   
       schedulerState.numCourts = numCourts;      
       schedulerState.fixedMap = new Map();
@@ -202,8 +197,30 @@ function goBack() {
   btn.disabled = false;
 }
 
+/* ── Ensure live session exists — retries silently until success ── */
+async function ensureLiveSession() {
+  try {
+    const existingId = (typeof getMySessionId === 'function') ? getMySessionId() : null;
+    if (existingId) return; // already registered
+
+    const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+    if (!club || !club.id) return; // no club yet — will retry next round
+
+    if (typeof dbStartSession === 'function') {
+      await dbStartSession();
+      if (typeof saveRoundsToDb       === 'function') saveRoundsToDb();
+      if (typeof updateSessionLiveBar === 'function') updateSessionLiveBar();
+      if (typeof startSessionHeartbeat === 'function') startSessionHeartbeat();
+    }
+  } catch(e) {
+    console.warn('ensureLiveSession failed — will retry next round:', e.message);
+  }
+}
+
 function nextRound() {
-  
+  // Retry live session registration in case it failed earlier
+  ensureLiveSession();
+
   if (currentRoundIndex + 1 < allRounds.length) {
     currentRoundIndex++;
     showRound(currentRoundIndex);
@@ -216,11 +233,10 @@ function nextRound() {
     if (typeof saveRoundsToDb === 'function') saveRoundsToDb();
   }
   updateSummaryPageAccess();
-  // Sync ratings to Supabase silently after every round (called from updSchedule with wins/losses)
 }
 function endRounds() {  
 	sessionFinished = true;
-	updSchedule(allRounds.length - 1, schedulerState); // pass schedulerState
+	updSchedule(allRounds.length - 1, schedulerState, false); // false = don't sync ratings again
     const newRound = AischedulerNextRound(schedulerState); // do NOT wrap in []
     allRounds.push(newRound);
     currentRoundIndex = allRounds.length - 2;
@@ -384,7 +400,7 @@ function allPairsExhausted(queue, pairPlayedSet) {
 
 
 
-function updSchedule(roundIndex, schedulerState) {
+function updSchedule(roundIndex, schedulerState, syncToDb = true) {
   //AUTO_SAVE();
 	const data = allRounds[roundIndex];
   if (!data) return;
@@ -504,8 +520,9 @@ for (const game of games) {
 
 // Rating updates — all modes
 // Also track wins/losses per player this round
-const roundWins   = new Map();
-const roundLosses = new Map();
+const roundWins         = new Map();
+const roundLosses       = new Map();
+const roundRatingDeltas = new Map(); // uncapped delta for points
 
 for (const game of games) {
   if (!game.winner) continue;
@@ -521,14 +538,19 @@ for (const game of games) {
   const loseLoss = gap < -0.3 ? 0.4 : gap < 0.3 ? 0.2 : 0.1;
 
   for (const p of winners) {
-    setRating(p, (typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p)) + winGain);
+    const prevW = typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p);
+    setRating(p, prevW + winGain);
     roundWins.set(p, (roundWins.get(p) || 0) + 1);
+    // Track uncapped delta (winGain always positive)
+    roundRatingDeltas.set(p, (roundRatingDeltas.get(p) || 0) + winGain);
   }
   for (const p of losers) {
     const current = typeof getActiveRating === "function" ? getActiveRating(p) : getRating(p);
     const updated = Math.max(1.0, current - loseLoss);
     setRating(p, updated);
     roundLosses.set(p, (roundLosses.get(p) || 0) + 1);
+    // Track uncapped delta for points (loseLoss always positive, points decrease too)
+    roundRatingDeltas.set(p, (roundRatingDeltas.get(p) || 0) - loseLoss);
   }
 }
 
@@ -545,8 +567,8 @@ for (const game of games) {
 syncRatings();
 updatePlayerList();
 
-// Sync ratings + wins/losses to Supabase
-if (typeof syncAfterRound === "function") syncAfterRound(roundWins, roundLosses);
+// Sync ratings + wins/losses to Supabase (only from nextRound, not endRounds)
+if (syncToDb && typeof syncAfterRound === "function") syncAfterRound(roundWins, roundLosses, roundRatingDeltas);
 
 // after tracking pairs & games
 checkAndResetPairCycle(schedulerState, games, roundIndex);
@@ -562,17 +584,9 @@ if ( resetRest === true &&
 }
 
 function createRestQueue() {
-  // Sort players weak-to-strong by active rating once at session start.
-  // FIFO rotation then takes over naturally from here.
-  // This ensures rest groups are rating-spread rather than clustered,
-  // giving every round a balanced playing pool.
-  const players = [...schedulerState.activeplayers];
-  players.sort((a, b) => {
-    const ra = (typeof getActiveRating === 'function') ? getActiveRating(a) : 1.0;
-    const rb = (typeof getActiveRating === 'function') ? getActiveRating(b) : 1.0;
-    return ra - rb; // ascending: weakest first
-  });
-  return players;
+  // Return active players in their input order.
+  // FIFO rotation handles fair rest distribution from here.
+  return [...schedulerState.activeplayers];
 }
 
 function rebuildRestQueue(restQueue) {
@@ -632,7 +646,7 @@ function report() {
 
   // Guard: nothing to show if no players in session
   if (!schedulerState.allPlayers || schedulerState.allPlayers.length === 0) {
-    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.9rem;">No session data yet.<br>Complete some rounds first.</div>';
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:0.9rem;">' + t('noSessionData') + '</div>';
     return;
   }
 

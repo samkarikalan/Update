@@ -47,6 +47,7 @@ body.app-light {
   --surface3:   #e2e7f0;
   --border:     rgba(0,0,0,0.08);
   --border2:    rgba(0,0,0,0.13);
+  --card-bg:    #ffffff;
 
   --text:       #1a1a2e;
   --text-dim:   #555577;
@@ -284,6 +285,8 @@ height: 44px; min-height: 44px; box-sizing: border-box;
 .pec-delete { text-align: right; }
 .pec-delete .delete { all: unset; font-size: 22px; cursor: pointer; color: var(--muted); transition: color 0.2s; }
 .pec-delete .delete:hover { color: var(--red); }
+.pec-delete-btn { all: unset; cursor: pointer; color: var(--muted); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; transition: color 0.2s, background 0.2s; }
+.pec-delete-btn:hover, .pec-delete-btn:active { color: var(--red, #e63757); background: rgba(230,55,87,0.1); }
 
 /* ── Fixed Pair ── */
 .fixed-card { display: grid; grid-template-columns: 1fr 55px; align-items: center; gap: 8px; font-size: 1rem; padding: 10px 14px; border-radius: var(--r-xl); border: 1px solid var(--border2); background: var(--surface2); margin: 5px 0; }
@@ -1130,11 +1133,22 @@ display: block;
 }
 .vault-tile:active { transform: scale(0.97); }
 
-.vt-playing::before  { background: #f5a623; box-shadow: 0 0 12px rgba(245,166,35,0.6); }
-.vt-register::before { background: #6c8cff; box-shadow: 0 0 12px rgba(108,140,255,0.6); }
-.vt-modify::before   { background: #2dce89; box-shadow: 0 0 12px rgba(45,206,137,0.6); }
-.vt-requests::before { background: #e63757; box-shadow: 0 0 12px rgba(230,55,87,0.6); }
-.vt-club::before     { background: #a78bfa; box-shadow: 0 0 12px rgba(167,139,250,0.6); }
+/* Coloured top borders — glow mode only */
+body.tile-style-glow .vt-playing::before  { background: #f5a623; box-shadow: 0 0 12px rgba(245,166,35,0.6); }
+body.tile-style-glow .vt-register::before { background: #6c8cff; box-shadow: 0 0 12px rgba(108,140,255,0.6); }
+body.tile-style-glow .vt-modify::before   { background: #2dce89; box-shadow: 0 0 12px rgba(45,206,137,0.6); }
+body.tile-style-glow .vt-requests::before { background: #e63757; box-shadow: 0 0 12px rgba(230,55,87,0.6); }
+body.tile-style-glow .vt-club::before     { background: #a78bfa; box-shadow: 0 0 12px rgba(167,139,250,0.6); }
+
+/* Flat mode — light theme vault tiles */
+body.app-light .vault-tile {
+  background: #fff;
+  border-color: #e8e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+body.app-light .vt-stat { color: #1a1a2e; }
+body.app-light .vt-name { color: #1a1a2e; }
+body.app-light .vt-sub  { color: #aaa; }
 
 .vt-club {
   min-height: 72px;
@@ -1239,6 +1253,24 @@ body.app-light .vct-change-btn { background: #ffe8ec; color: #c0392b; border: no
   border: none; border-radius: 10px;
   padding: 8px 16px; font-size: 0.82rem; font-weight: 600;
   cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── Organiser club tile — blue accent, not red ── */
+.org-club-tile::before { background: #6c8cff !important; }
+body:not(.app-light) .org-club-tile {
+  box-shadow: 0 0 14px rgba(108,140,255,0.12) !important;
+}
+body:not(.app-light) .org-club-tile::before {
+  box-shadow: 0 0 14px rgba(108,140,255,0.6) !important;
+}
+body.app-light .org-club-tile {
+  background: #f0f2ff !important;
+  border-color: #cdd5ff !important;
+  box-shadow: 0 2px 12px rgba(108,140,255,0.08) !important;
+}
+.org-badge {
+  background: rgba(108,140,255,0.18) !important;
+  color: #6c8cff !important;
 }
 
 /* ── Rounds Page — Single Tight Top Bar ── */
@@ -1705,6 +1737,61 @@ body.app-light .vct-change-btn { background: #ffe8ec; color: #c0392b; border: no
 .auth-club-pick-btn strong { color: var(--text, #1a1a2e); font-weight: 700; }
 .auth-club-pick-btn span   { color: var(--muted, #888); font-size: 0.78rem; }
 
+/* ── My Clubs Viewer Tile ── */
+.vcl-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.vcl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  gap: 12px;
+}
+.vcl-header:active { background: var(--surface2); }
+.vcl-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+.vcl-icon { margin-bottom: 0 !important; flex-shrink: 0; }
+.vcl-arr { color: var(--muted); font-size: 1.1rem; flex-shrink: 0; }
+.vcl-list { padding: 0 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+.vcl-list:empty { display: none; }
+.vcl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  background: var(--surface2);
+  border-radius: 12px;
+}
+.vcl-dot { font-size: 1rem; flex-shrink: 0; }
+.vcl-row-info { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.vcl-row-name { font-size: 0.82rem; font-weight: 700; color: var(--text); }
+.vcl-row-nick { font-size: 0.67rem; color: var(--muted); }
+.vcl-badge {
+  font-size: 0.58rem; font-weight: 700;
+  padding: 3px 7px; border-radius: 20px; flex-shrink: 0;
+}
+.vcl-badge-member  { background: rgba(45,206,137,0.15); color: #2dce89; }
+.vcl-badge-pending { background: rgba(245,166,35,0.15);  color: #f5a623; }
+.vcl-badge-active  { background: rgba(108,140,255,0.2);  color: #6c8cff; font-weight: 800; }
+.vcl-row-active {
+  background: rgba(108,140,255,0.12) !important;
+  border: 1px solid rgba(108,140,255,0.3);
+}
+.vcl-row-active .vcl-row-name { color: #6c8cff !important; }
+body.app-light .vcl-row-active { background: rgba(108,140,255,0.08) !important; border-color: rgba(108,140,255,0.25); }
+body.app-light .vcl-tile  { background: #fff; border-color: #e8e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+body.app-light .vcl-row   { background: #f5f5fb; }
+body.app-light .vcl-row-name { color: #1a1a2e; }
+
 /* ── My Clubs Page ── */
 .jc-section-title {
   font-size: 0.65rem; font-weight: 700;
@@ -1736,4 +1823,415 @@ body.app-light .vct-change-btn { background: #ffe8ec; color: #c0392b; border: no
   font-size: 0.6rem; font-weight: 700; padding: 3px 8px;
   border-radius: 20px; background: rgba(245,166,35,0.15); color: #f5a623;
   flex-shrink: 0;
+}
+
+
+
+/* ═══════════════════════════════════════════
+   TILE STYLE SYSTEM — Flat / Glow / Color
+   body.tile-style-glow  → glow border style
+   body.tile-style-color → solid color style
+   default (no class)    → flat style
+═══════════════════════════════════════════ */
+
+/* ── Style selector buttons ── */
+.tile-style-btn {
+  flex: 1;
+  padding: 7px 4px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border, #eee);
+  background: var(--surface, #fff);
+  color: var(--muted, #888);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tile-style-btn.active {
+  background: var(--text, #1a1a2e);
+  border-color: var(--text, #1a1a2e);
+  color: #fff;
+}
+
+/* ── Live Preview Box ── */
+.style-preview-box {
+  background: var(--surface2, #f0f0f8);
+  border-radius: 12px;
+  padding: 10px;
+  margin-top: 4px;
+}
+.style-preview-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--muted, #aaa);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.style-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.spt {
+  border-radius: 10px;
+  padding: 10px 6px 8px;
+  text-align: center;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #eee);
+  position: relative;
+  overflow: hidden;
+}
+.spt-icon { font-size: 1rem; margin-bottom: 3px; }
+.spt-name { font-size: 0.6rem; font-weight: 700; color: var(--text, #1a1a2e); }
+.spt-sub  { font-size: 0.5rem; color: var(--muted, #aaa); margin-top: 1px; }
+.style-preview-wide {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #eee);
+}
+.spw-icon { font-size: 1rem; flex-shrink: 0; }
+.spw-info { flex: 1; }
+.spw-name { font-size: 0.65rem; font-weight: 700; color: var(--text, #1a1a2e); }
+.spw-sub  { font-size: 0.52rem; color: var(--muted, #aaa); margin-top: 1px; }
+.spw-arr  { color: var(--muted, #ccc); font-size: 0.8rem; }
+
+/* ─── GLOW preview ─── */
+body.tile-style-glow .style-preview-box { background: #0d0d1a; }
+body.tile-style-glow .style-preview-label { color: #444; }
+body.tile-style-glow .spt {
+  background: #1a1a2e !important;
+  border-color: #2a2a40 !important;
+  padding-top: 12px;
+}
+body.tile-style-glow .spt::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  border-radius: 10px 10px 0 0;
+}
+body.tile-style-glow .spt:nth-child(1)::before { background: #2dce89; box-shadow: 0 0 6px rgba(45,206,137,0.8); }
+body.tile-style-glow .spt:nth-child(2)::before { background: #6c8cff; box-shadow: 0 0 6px rgba(108,140,255,0.8); }
+body.tile-style-glow .spt:nth-child(3)::before { background: #f5a623; box-shadow: 0 0 6px rgba(245,166,35,0.8); }
+body.tile-style-glow .spt-name { color: #fff !important; }
+body.tile-style-glow .spt-sub  { color: #555 !important; }
+body.tile-style-glow .style-preview-wide { background: #1a1a2e !important; border-color: #2a2a40 !important; }
+body.tile-style-glow .spw-name { color: #fff !important; }
+body.tile-style-glow .spw-sub  { color: #555 !important; }
+body.tile-style-glow .spw-arr  { color: #555 !important; }
+
+/* ─── COLOR preview ─── */
+body.tile-style-color .spt { border: none !important; }
+body.tile-style-color .spt:nth-child(1) { background: #2dce89 !important; }
+body.tile-style-color .spt:nth-child(2) { background: #6c8cff !important; }
+body.tile-style-color .spt:nth-child(3) { background: #f5a623 !important; }
+body.tile-style-color .spt-name { color: #fff !important; }
+body.tile-style-color .spt-sub  { color: rgba(255,255,255,0.65) !important; }
+body.tile-style-color .style-preview-wide { background: #e63757 !important; border: none !important; }
+body.tile-style-color .spw-name { color: #fff !important; }
+body.tile-style-color .spw-sub  { color: rgba(255,255,255,0.65) !important; }
+body.tile-style-color .spw-arr  { color: rgba(255,255,255,0.5) !important; }
+
+/* ═══════════════════════════════════════════
+   FULL APP COVERAGE — GLOW STYLE
+═══════════════════════════════════════════ */
+body.tile-style-glow .home-tile,
+body.tile-style-glow .pref-card,
+body.tile-style-glow .jc-club-row,
+body.tile-style-glow .match-card,
+body.tile-style-glow .dashboard-card,
+body.tile-style-glow .session-card {
+  background: var(--surface2, #1a1a2e) !important;
+  border: 1px solid var(--border, #2a2a40) !important;
+  position: relative;
+  overflow: hidden;
+}
+body.tile-style-glow:not(.app-light) .vault-tile {
+  background: var(--surface2, #1a1a2e) !important;
+  border: 1px solid var(--border, #2a2a40) !important;
+  position: relative;
+  overflow: hidden;
+}
+body.tile-style-glow .home-tile { padding-top: 20px !important; border-radius: 16px !important; }
+body.tile-style-glow .home-tile::before,
+body.tile-style-glow .vault-tile::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: inherit;
+}
+body.tile-style-glow .home-tile:nth-child(1)::before,
+body.tile-style-glow .vault-tile:nth-child(1)::before { background: #2dce89; box-shadow: 0 0 8px rgba(45,206,137,0.6); }
+body.tile-style-glow .home-tile:nth-child(2)::before,
+body.tile-style-glow .vault-tile:nth-child(2)::before { background: #6c8cff; box-shadow: 0 0 8px rgba(108,140,255,0.6); }
+body.tile-style-glow .home-tile:nth-child(3)::before,
+body.tile-style-glow .vault-tile:nth-child(3)::before { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,0.6); }
+body.tile-style-glow .home-tile:nth-child(4)::before,
+body.tile-style-glow .vault-tile:nth-child(4)::before { background: #e63757; box-shadow: 0 0 8px rgba(230,55,87,0.6); }
+body.tile-style-glow .home-tile:nth-child(5)::before,
+body.tile-style-glow .vault-tile:nth-child(5)::before { background: #a78bfa; box-shadow: 0 0 8px rgba(167,139,250,0.6); }
+body.tile-style-glow .home-tile:nth-child(6)::before,
+body.tile-style-glow .vault-tile:nth-child(6)::before { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,0.6); }
+body.tile-style-glow .home-tile-icon { background: rgba(255,255,255,0.06) !important; }
+body.tile-style-glow .home-tile-name { color: #fff !important; }
+body.tile-style-glow .home-tile-sub  { color: #555 !important; }
+
+/* ═══════════════════════════════════════════
+   FULL APP COVERAGE — COLOR STYLE
+═══════════════════════════════════════════ */
+body.tile-style-color .home-tile { border: none !important; border-radius: 16px !important; }
+body.tile-style-color .home-tile:nth-child(1) { background: #2dce89 !important; }
+body.tile-style-color .home-tile:nth-child(2) { background: #6c8cff !important; }
+body.tile-style-color .home-tile:nth-child(3) { background: #f5a623 !important; }
+body.tile-style-color .home-tile:nth-child(4) { background: #e63757 !important; }
+body.tile-style-color .home-tile:nth-child(5) { background: #a78bfa !important; }
+body.tile-style-color .home-tile:nth-child(6) { background: #1a1a2e !important; }
+body.tile-style-color .home-tile .home-tile-icon { background: rgba(255,255,255,0.15) !important; }
+body.tile-style-color .home-tile .home-tile-name { color: #fff !important; }
+body.tile-style-color .home-tile .home-tile-sub  { color: rgba(255,255,255,0.7) !important; }
+body.tile-style-color .vault-tile:nth-child(1) { background: #2dce89 !important; }
+body.tile-style-color .vault-tile:nth-child(2) { background: #6c8cff !important; }
+body.tile-style-color .vault-tile:nth-child(3) { background: #a78bfa !important; }
+body.tile-style-color .vault-tile:nth-child(4) { background: #e63757 !important; }
+body.tile-style-color .vault-tile .vt-name,
+body.tile-style-color .vault-tile .vt-stat,
+body.tile-style-color .vault-tile .vt-sub { color: #fff !important; }
+
+/* ═══════════════════════════════════════════
+   MODE LAUNCHER — Full Screen
+═══════════════════════════════════════════ */
+.mode-launcher-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg, #0d0d1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: mlFadeIn 0.2s ease;
+}
+@keyframes mlFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.ml-inner {
+  width: 100%;
+  max-width: 360px;
+  padding: 40px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ml-logo  { font-size: 3rem; margin-bottom: 12px; }
+.ml-title { font-size: 1.4rem; font-weight: 800; color: var(--text, #fff); margin-bottom: 6px; text-align: center; }
+.ml-sub   { font-size: 0.72rem; color: var(--muted, #555); margin-bottom: 36px; text-align: center; }
+
+.ml-modes { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+.ml-mode {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px; border-radius: 16px;
+  background: var(--surface2, #1a1a2e);
+  border: 1px solid var(--border, #2a2a40);
+  cursor: pointer; width: 100%; text-align: left;
+  position: relative; overflow: hidden;
+  transition: transform 0.1s;
+}
+.ml-mode:active { transform: scale(0.98); }
+.ml-mode.ml-active { border-color: rgba(255,255,255,0.2); }
+
+.ml-mode-icon { font-size: 1.6rem; flex-shrink: 0; }
+.ml-mode-info { flex: 1; }
+.ml-mode-name { font-size: 0.9rem; font-weight: 700; color: var(--text, #fff); }
+.ml-mode-desc { font-size: 0.65rem; color: var(--muted, #555); margin-top: 2px; }
+.ml-arr { color: var(--muted, #444); font-size: 1rem; }
+
+.ml-cancel {
+  background: none; border: 1px solid var(--border, #2a2a40);
+  color: var(--muted, #555); border-radius: 12px;
+  padding: 10px 32px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; margin-top: 6px;
+}
+
+/* Light theme overrides */
+body.app-light .mode-launcher-fullscreen { background: #f5f5fb; }
+body.app-light .ml-title { color: #1a1a2e; }
+body.app-light .ml-mode { background: #fff; border-color: #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+body.app-light .ml-mode-name { color: #1a1a2e; }
+body.app-light .ml-mode-desc { color: #aaa; }
+body.app-light .ml-arr { color: #ccc; }
+body.app-light .ml-cancel { border-color: #eee; color: #aaa; }
+
+/* ── Mode Launcher Footer ── */
+.ml-footer {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+.ml-settings-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--border, #2a2a40);
+  color: var(--muted, #555);
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ml-cancel { flex: 1; width: 100%; }
+body.app-light .ml-settings-btn { border-color: #eee; color: #aaa; }
+
+/* ══════════════════════════════════════════════════════════
+   FRONT PAGE TILE STYLES — matches settings preview exactly
+   Flat:  surface bg + border (default)
+   Glow:  dark bg + coloured top bar + glow
+   Color: solid colour bg + white text
+   Colors: viewer=#6c8cff  organiser=#2dce89  vault=#f5a623
+   Settings button: always flat/neutral, never styled
+══════════════════════════════════════════════════════════ */
+
+/* ─── FLAT base: modeSelectOverlay ─── */
+.mode-select-btn.viewer    { border-color: rgba(108,140,255,0.3); }
+.mode-select-btn.organiser { border-color: rgba(45,206,137,0.3); }
+.mode-select-btn.vault     { border-color: rgba(245,166,35,0.3); }
+.mode-select-btn.viewer    .mode-select-btn-name { color: #6c8cff; }
+.mode-select-btn.organiser .mode-select-btn-name { color: #2dce89; }
+.mode-select-btn.vault     .mode-select-btn-name { color: #f5a623; }
+.mode-select-btn.viewer    .mode-select-btn-icon { background: rgba(108,140,255,0.12); }
+.mode-select-btn.organiser .mode-select-btn-icon { background: rgba(45,206,137,0.12); }
+.mode-select-btn.vault     .mode-select-btn-icon { background: rgba(245,166,35,0.12); }
+
+/* ─── FLAT base: modeSheetOverlay ─── */
+.ml-mode {
+  background: var(--surface, #161625) !important;
+  border: 1.5px solid var(--border2, #2a2a40) !important;
+}
+.ml-mode.viewer    { border-color: rgba(108,140,255,0.3) !important; }
+.ml-mode.organiser { border-color: rgba(45,206,137,0.3) !important; }
+.ml-mode.vault     { border-color: rgba(245,166,35,0.3) !important; }
+.ml-mode.viewer    .ml-mode-name { color: #6c8cff; }
+.ml-mode.organiser .ml-mode-name { color: #2dce89; }
+.ml-mode.vault     .ml-mode-name { color: #f5a623; }
+.ml-mode.viewer    .ml-mode-icon { background: rgba(108,140,255,0.12); }
+.ml-mode.organiser .ml-mode-icon { background: rgba(45,206,137,0.12); }
+.ml-mode.vault     .ml-mode-icon { background: rgba(245,166,35,0.12); }
+
+/* ─── GLOW: modeSelectOverlay ─── */
+body.tile-style-glow .mode-select-btn:not(.settings) {
+  position: relative; overflow: hidden;
+}
+body.tile-style-glow:not(.app-light) .mode-select-btn:not(.settings) {
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a40 !important;
+}
+body.tile-style-glow .mode-select-btn:not(.settings)::after {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+}
+body.tile-style-glow .mode-select-btn.viewer::after    { background: #6c8cff; box-shadow: 0 0 8px rgba(108,140,255,0.8); }
+body.tile-style-glow .mode-select-btn.organiser::after { background: #2dce89; box-shadow: 0 0 8px rgba(45,206,137,0.8); }
+body.tile-style-glow .mode-select-btn.vault::after     { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,0.8); }
+body.tile-style-glow .mode-select-btn:not(.settings) .mode-select-btn-name  { color: #fff !important; }
+body.tile-style-glow .mode-select-btn:not(.settings) .mode-select-btn-desc  { color: #555 !important; }
+body.tile-style-glow .mode-select-btn:not(.settings) .mode-select-btn-arrow { color: #444 !important; }
+body.tile-style-glow .mode-select-btn:not(.settings) .mode-select-btn-icon  { background: rgba(255,255,255,0.06) !important; }
+
+/* ─── GLOW: modeSheetOverlay ─── */
+body.tile-style-glow .ml-mode {
+  position: relative; overflow: hidden;
+}
+body.tile-style-glow:not(.app-light) .ml-mode {
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a40 !important;
+}
+body.tile-style-glow .ml-mode::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+}
+body.tile-style-glow .ml-mode.viewer::before    { background: #6c8cff; box-shadow: 0 0 8px rgba(108,140,255,0.8); }
+body.tile-style-glow .ml-mode.organiser::before { background: #2dce89; box-shadow: 0 0 8px rgba(45,206,137,0.8); }
+body.tile-style-glow .ml-mode.vault::before     { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,0.8); }
+body.tile-style-glow:not(.app-light) .ml-mode .ml-mode-name { color: #fff !important; }
+body.tile-style-glow:not(.app-light) .ml-mode .ml-mode-desc { color: #555 !important; }
+body.tile-style-glow:not(.app-light) .ml-mode .ml-arr       { color: #444 !important; }
+body.tile-style-glow:not(.app-light) .ml-mode .ml-mode-icon { background: rgba(255,255,255,0.06) !important; }
+
+/* ─── COLOR: modeSelectOverlay ─── */
+body.tile-style-color .mode-select-btn:not(.settings) { border: none !important; }
+body.tile-style-color .mode-select-btn.viewer    { background: #6c8cff !important; }
+body.tile-style-color .mode-select-btn.organiser { background: #2dce89 !important; }
+body.tile-style-color .mode-select-btn.vault     { background: #f5a623 !important; }
+body.tile-style-color .mode-select-btn:not(.settings) .mode-select-btn-name  { color: #fff !important; }
+body.tile-style-color .mode-select-btn:not(.settings) .mode-select-btn-desc  { color: rgba(255,255,255,0.75) !important; }
+body.tile-style-color .mode-select-btn:not(.settings) .mode-select-btn-arrow { color: rgba(255,255,255,0.6) !important; }
+body.tile-style-color .mode-select-btn:not(.settings) .mode-select-btn-icon  { background: rgba(255,255,255,0.2) !important; }
+
+/* ─── COLOR: modeSheetOverlay ─── */
+body.tile-style-color .ml-mode { border: none !important; }
+body.tile-style-color .ml-mode.viewer    { background: #6c8cff !important; }
+body.tile-style-color .ml-mode.organiser { background: #2dce89 !important; }
+body.tile-style-color .ml-mode.vault     { background: #f5a623 !important; }
+body.tile-style-color .ml-mode .ml-mode-name { color: #fff !important; }
+body.tile-style-color .ml-mode .ml-mode-desc { color: rgba(255,255,255,0.75) !important; }
+body.tile-style-color .ml-mode .ml-arr       { color: rgba(255,255,255,0.6) !important; }
+body.tile-style-color .ml-mode .ml-mode-icon { background: rgba(255,255,255,0.2) !important; }
+
+/* ═══════════════════════════════════════════
+   LIGHT MODE FIXES — My Clubs & Search
+═══════════════════════════════════════════ */
+
+/* My Clubs rows */
+body.app-light .jc-club-row {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+body.app-light .jc-club-name { color: #1a1a2e; }
+body.app-light .jc-club-nick { color: #8888aa; }
+
+/* My Clubs section label */
+body.app-light .jc-section-title {
+  color: #8888aa;
+}
+
+/* Search result items */
+body.app-light .auth-club-results {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.10);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+body.app-light .auth-club-item {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.06);
+}
+body.app-light .auth-club-item:active { background: #f0f2f8; }
+body.app-light .auth-club-item-name { color: #1a1a2e; }
+
+/* Join Club page background */
+body.app-light .jc-wrap {
+  background: var(--bg, #f4f6fb);
+}
+
+/* Search input */
+body.app-light .jc-search-input {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.12);
+  color: #1a1a2e;
+}
+body.app-light .jc-search-input::placeholder { color: #aaa; }
+
+/* Empty state text */
+body.app-light .jc-empty { color: #8888aa; }
+
+/* Status badge */
+body.app-light .jc-club-badge { 
+  background: rgba(45,206,137,0.15); 
+  color: #1da06e; 
+}
+body.app-light .jc-club-pending { 
+  background: rgba(245,166,35,0.15); 
+  color: #c47a00; 
 }

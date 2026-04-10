@@ -5,7 +5,6 @@
    ============================================= */
 
 /* ── Imports for cleaner typography ── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
 /* ── Override font vars ── */
 :root {
@@ -76,7 +75,7 @@ body.app-dark .courtcard {
    COURT NAME HEADER
 ───────────────────────────────────────────── */
 .courtname {
-  font-family: 'Nunito', var(--font-display), sans-serif !important;
+  font-family: var(--font-display) !important;
   font-size: 0.65rem !important;
   font-weight: 800 !important;
   letter-spacing: 2px !important;
@@ -150,7 +149,7 @@ body.app-dark .team[data-team-side="R"] {
   border-radius: 8px !important;
   background: transparent !important;
   border: none !important;
-  font-family: 'Nunito', var(--font-body), sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.88rem !important;
   font-weight: 600 !important;
   color: var(--brr-text-dark) !important;
@@ -182,7 +181,7 @@ body.app-dark .Rplayer-btn {
    PLAYER NAME
 ───────────────────────────────────────────── */
 .player-name {
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.88rem !important;
   font-weight: 600 !important;
   color: inherit !important;
@@ -236,7 +235,7 @@ body.app-dark .vs-divider .vs-line {
 }
 
 .vs-divider span {
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.58rem !important;
   font-weight: 800 !important;
   color: #b0bac6 !important;
@@ -316,7 +315,7 @@ body.locked .swap-icon { display: none !important; }
    RESTING PLAYERS
 ───────────────────────────────────────────── */
 .round-header {
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.65rem !important;
   font-weight: 800 !important;
   letter-spacing: 2px !important;
@@ -350,7 +349,7 @@ body.locked .swap-icon { display: none !important; }
   border-radius: 20px !important;
   background: rgba(255,255,255,0.75) !important;
   border: 1px solid #d8e0ea !important;
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.82rem !important;
   font-weight: 600 !important;
   color: #5a6577 !important;
@@ -385,7 +384,7 @@ body.app-dark .rest-btn {
 }
 
 #roundTitle {
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.8rem !important;
   font-weight: 800 !important;
   letter-spacing: 2.5px !important;
@@ -444,7 +443,7 @@ body.app-dark .action.mid.small:hover {
   flex: 1 !important;
   background: linear-gradient(135deg, #2dce89 0%, #23b576 100%) !important;
   color: #ffffff !important;
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.95rem !important;
   font-weight: 800 !important;
   border: none !important;
@@ -526,7 +525,7 @@ body.app-dark .round-settings-panel {
 }
 
 .setting-label {
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 0.92rem !important;
   font-weight: 600 !important;
   color: var(--text) !important;
@@ -550,7 +549,7 @@ body.app-dark .setting-divider {
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
-  font-family: 'Nunito', sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 1.0rem !important;
   font-weight: 700 !important;
   color: var(--text) !important;
@@ -772,7 +771,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   border-bottom: 1px solid var(--border);
 }
 .profile-drawer-title {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 800;
   color: var(--text);
@@ -813,7 +812,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   border-radius: 12px;
   background: var(--surface2);
   border: 1px solid var(--border);
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--text);
@@ -854,7 +853,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
 }
 .profile-identity-info { flex: 1; }
 .profile-name {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--text);
@@ -897,7 +896,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   gap: 3px;
 }
 .profile-stat-value {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 1.6rem;
   font-weight: 900;
   color: var(--text);
@@ -921,7 +920,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
 
 /* ── Sessions ── */
 .profile-sessions-title {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -988,7 +987,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   border: none;
   background: linear-gradient(135deg, #e53e3e, #c53030);
   color: #fff;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
@@ -1007,7 +1006,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   border: 1px solid var(--border2);
   background: var(--surface2);
   color: var(--text);
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.9rem;
   outline: none;
   box-sizing: border-box;
@@ -1253,7 +1252,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   padding: 16px;
 }
 .rating-mode-label {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.9rem;
   font-weight: 800;
   color: var(--text);
@@ -1275,7 +1274,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   border: 2px solid var(--border2);
   background: var(--surface2);
   color: var(--text-dim);
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
@@ -1293,7 +1292,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   margin: 12px 0 10px;
 }
 .sb-rating-label {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.78rem;
   font-weight: 800;
   color: var(--text-dim);
@@ -1312,7 +1311,7 @@ body.app-dark .courtcard.court-6 { border-color: #64748b !important; }
   border: 2px solid var(--border2);
   background: var(--surface2);
   color: var(--text-dim);
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
@@ -1525,7 +1524,7 @@ body.app-dark .newImport-player-card.player-added {
   background: var(--surface2);
   color: var(--text);
   font-size: 1rem;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   text-align: center;
   outline: none;
   box-sizing: border-box;
@@ -1545,7 +1544,7 @@ body.app-dark .newImport-player-card.player-added {
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   border: none;
   cursor: pointer;
   margin-top: 4px;
@@ -1559,7 +1558,7 @@ body.app-dark .newImport-player-card.player-added {
   color: var(--text-dim);
   font-size: 0.88rem;
   font-weight: 600;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-display);
   border: 1.5px solid var(--border);
   cursor: pointer;
 }
@@ -1861,7 +1860,7 @@ body.app-dark .newImport-player-card.player-added {
 }
 .mode-select-title {
   font-family: var(--font-display);
-  font-size: 1.6rem; font-weight: 700;
+  font-size: 1.4rem; font-weight: 700;
   color: var(--text); letter-spacing: -0.02em;
 }
 .mode-select-subtitle {
@@ -2603,3 +2602,18 @@ select.vm-field-input option { background: var(--surface2); }
 .vm-accent:hover { filter: brightness(1.1); }
 .vm-ghost { background: var(--surface2); border: 1px solid var(--border2); color: var(--text-dim); }
 .vm-ghost:hover { background: var(--surface3); color: var(--text); }
+
+/* Override old flat colors — now handled by BRRStyle1 unified scheme */
+.mode-select-btn.viewer::before   { background: none; }
+.mode-select-btn.organiser::before { background: none; }
+.mode-select-btn.viewer    { border-color: rgba(108,140,255,0.3); }
+.mode-select-btn.organiser { border-color: rgba(45,206,137,0.3); }
+.mode-select-btn.viewer    .mode-select-btn-name { color: #6c8cff; }
+.mode-select-btn.organiser .mode-select-btn-name { color: #2dce89; }
+.mode-select-btn.viewer    .mode-select-btn-icon { background: rgba(108,140,255,0.12); }
+.mode-select-btn.organiser .mode-select-btn-icon { background: rgba(45,206,137,0.12); }
+
+/* Settings button — always flat neutral */
+.mode-select-btn.settings { border-color: rgba(150,150,150,0.2); }
+.mode-select-btn.settings .mode-select-btn-icon { background: var(--surface2); }
+.mode-select-btn.settings .mode-select-btn-name { color: var(--text); }

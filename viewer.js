@@ -75,7 +75,7 @@ function _vRender(roundsData) {
   if (!container) return;
   container.innerHTML = '';
   if (!roundsData || !roundsData.length) {
-    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:0.85rem;">No rounds yet</div>';
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:0.85rem;">' + t('noRoundsYet') + '</div>';
     return;
   }
   container.appendChild(_vBuildSubTabs());
@@ -140,7 +140,7 @@ function _vElapsed(isoStr) {
   if (!isoStr) return '';
   const ms = Date.now() - new Date(isoStr).getTime();
   const m  = Math.floor(ms / 60000);
-  if (m < 1)  return 'just started';
+  if (m < 1)  return t('justStarted');
   if (m < 60) return m + 'm';
   return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
 }
@@ -156,7 +156,7 @@ function _vBuildRound(data) {
 
   const header = document.createElement('div');
   header.className = 'round-header';
-  header.textContent = (tr.roundno || 'Round ') + data.round;
+  header.textContent = (tr.roundno || (t('round') + ' ')) + data.round;
   wrapper.appendChild(header);
 
   (data.games || []).forEach((game, gi) => {
@@ -165,7 +165,7 @@ function _vBuildRound(data) {
 
     const courtName = document.createElement('div');
     courtName.className = 'courtname';
-    courtName.textContent = 'Court ' + (gi + 1);
+    courtName.textContent = (t('court') || 'Court') + ' ' + (gi + 1);
     courtDiv.appendChild(courtName);
 
     const teamsDiv = document.createElement('div');
@@ -201,7 +201,7 @@ function _vBuildRound(data) {
       if (si === 0) {
         const vs = document.createElement('div');
         vs.className = 'vs-divider';
-        vs.innerHTML = '<div class="vs-line"></div><span>VS</span><div class="vs-line"></div>';
+        vs.innerHTML = `<div class="vs-line"></div><span>${t('vsLabel')}</span><div class="vs-line"></div>`;
         teamsDiv.appendChild(vs);
       }
     });
@@ -215,7 +215,7 @@ function _vBuildRound(data) {
     const restRow = document.createElement('div');
     restRow.className = 'round-header';
     restRow.style.paddingLeft = '12px';
-    restRow.textContent = tr2.sittingOut || 'Resting';
+    restRow.textContent = tr2.sittingOut || t('resting');
     const restBox = document.createElement('div');
     restBox.className = 'rest-box';
     data.resting.forEach(name => {
@@ -299,7 +299,7 @@ function _vRenderSummary(container) {
   const roundsTitle = document.createElement('div');
   roundsTitle.className = 'round-header';
   roundsTitle.style.margin = '16px 4px 6px';
-  roundsTitle.textContent = tr.rounds || 'Rounds';
+  roundsTitle.textContent = tr.rounds || t('roundsLabel');
   container.appendChild(roundsTitle);
 
   for (let i = _vRoundsData.length - 1; i >= 0; i--) {
@@ -362,12 +362,18 @@ function clubLoginRefresh() {
     if (name) name.textContent = club.name;
     if (dot)  { dot.style.background = '#2dce89'; dot.style.boxShadow = '0 0 0 3px rgba(45,206,137,0.2)'; }
     if (role) {
-      role.textContent = mode === 'admin' ? 'ADMIN' : 'USER';
+      role.textContent = mode === 'admin' ? (t('adminBadge')||'ADMIN') : (t('userBadge')||'USER');
       role.style.background = mode === 'admin' ? '#2dce89' : 'var(--accent)';
       role.style.color = mode === 'admin' ? '#000' : '#fff';
       role.style.display = 'inline-block';
     }
   }
+
+  // Refresh all home tiles to reflect new club
+  if (typeof homeRefreshTiles        === 'function') homeRefreshTiles();
+  if (typeof homeRefreshJoinClubTile === 'function') homeRefreshJoinClubTile();
+  if (typeof vaultSyncStatus         === 'function') vaultSyncStatus();
+  if (typeof updateModePill          === 'function') updateModePill(localStorage.getItem('kbrr_app_mode') || 'viewer');
 }
 
 function clubLoginSwitch() {
@@ -385,11 +391,11 @@ async function viewerLoadClubs() {
   const feedback = document.getElementById('sbClubFeedbackViewer');
   const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
   if (!select) return;
-  select.innerHTML = '<option value="">— Loading clubs… —</option>';
+  select.innerHTML = '<option value="">' + (t('loadingClubs')||'— Loading clubs… —') + '</option>';
   try {
     const clubs = await sbGet('clubs', 'select=id,name&order=name.asc');
-    select.innerHTML = '<option value="">— Select club —</option>';
-    if (!clubs.length) { setFb('No clubs found.', false); return; }
+    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    if (!clubs.length) { setFb(t('noClubsFoundDot'), false); return; }
     clubs.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id; opt.textContent = c.name;
@@ -399,8 +405,8 @@ async function viewerLoadClubs() {
     const cur = (typeof getMyClub === 'function') ? getMyClub() : null;
     if (cur && cur.id) select.value = cur.id;
   } catch (e) {
-    select.innerHTML = '<option value="">— Select club —</option>';
-    setFb('❌ Could not load clubs: ' + e.message, false);
+    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    setFb(t('couldNotLoadClubsErr') + ' ' + e.message, false);
     console.warn('viewerLoadClubs:', e.message);
   }
 }
@@ -411,28 +417,106 @@ async function viewerJoinClub() {
   const feedback = document.getElementById('sbClubFeedbackViewer');
   const status   = document.getElementById('sbClubStatusViewer');
   const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
-  if (!select || !select.value) { setFb('Please select a club.', false); return; }
+  if (!select || !select.value) { setFb(t('pleaseSelectClub'), false); return; }
   const pw = pwInput ? pwInput.value.trim() : '';
-  if (!pw) { setFb('Enter password.', false); return; }
+  if (!pw) { setFb(t('enterPasswordHint'), false); return; }
   try {
-    const isOrganiser = (typeof appMode !== 'undefined') && appMode === 'organiser';
-    const fields = isOrganiser ? 'id,name,select_password,admin_password' : 'id,name,select_password';
-    const clubs = await sbGet('clubs', `id=eq.${select.value}&select=${fields}`);
-    if (!clubs.length) throw new Error('Club not found.');
+    // Club Management only accepts admin password
+    const clubs = await sbGet('clubs', `id=eq.${select.value}&admin_password=eq.${encodeURIComponent(pw)}&select=id,name`);
+    if (!clubs.length) throw new Error(t('wrongPasswordHint'));
 
-    let role = 'user';
-    if (isOrganiser && pw === clubs[0].admin_password) {
-      role = 'admin';
-    } else if (pw !== clubs[0].select_password) {
-      throw new Error('Wrong password.');
-    }
+    const role = 'admin';
 
     if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
     localStorage.setItem('kbrr_club_mode', role);
     localStorage.setItem('kbrr_rating_field', 'club_rating');
     if (pwInput) pwInput.value = '';
-    setFb(role === 'admin' ? '✅ Joined as Admin' : '✅ Joined successfully', true);
+    setFb(role === 'admin' ? '✅ Joined as Admin' : t('joinedSuccessfully'), true);
     clubLoginRefresh();
     if (typeof syncToLocal === 'function') syncToLocal();
+  } catch (e) { setFb('❌ ' + e.message, false); }
+}
+
+/* ══════════════════════════════════════════════
+   ORGANISER CLUB LOGIN — uses member password
+   ══════════════════════════════════════════════ */
+
+function orgClubLoginRefresh() {
+  const club = (typeof getMyClub === 'function') ? getMyClub() : null;
+  const loggedIn = !!(club && club.id);
+
+  const loggedInState = document.getElementById('orgClubLoggedInState');
+  const loginForm     = document.getElementById('orgClubLoginForm');
+  if (loggedInState) loggedInState.style.display = loggedIn ? '' : 'none';
+  if (loginForm)     loginForm.style.display     = loggedIn ? 'none' : '';
+
+  if (loggedIn) {
+    const dot  = document.getElementById('orgClubLoginDot');
+    const name = document.getElementById('orgClubLoginName');
+    const role = document.getElementById('orgClubLoginRole');
+    if (name) name.textContent = club.name;
+    if (dot)  { dot.style.background = '#6c8cff'; dot.style.boxShadow = '0 0 0 3px rgba(108,140,255,0.2)'; }
+    if (role) {
+      role.textContent = t('sessionBadge');
+      role.style.background = 'rgba(108,140,255,0.18)';
+      role.style.color = '#6c8cff';
+      role.style.display = 'inline-block';
+    }
+  }
+}
+
+function orgClubLoginSwitch() {
+  const loggedInState = document.getElementById('orgClubLoggedInState');
+  const loginForm     = document.getElementById('orgClubLoginForm');
+  if (loggedInState) loggedInState.style.display = 'none';
+  if (loginForm)     loginForm.style.display     = '';
+  orgLoadClubs();
+}
+
+async function orgLoadClubs() {
+  const select   = document.getElementById('orgClubSelect');
+  const feedback = document.getElementById('orgClubFeedback');
+  const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
+  if (!select) return;
+  select.innerHTML = '<option value="">' + (t('loadingClubs')||'— Loading clubs… —') + '</option>';
+  try {
+    const clubs = await sbGet('clubs', 'select=id,name&order=name.asc');
+    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    if (!clubs.length) { setFb(t('noClubsFoundDot'), false); return; }
+    clubs.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name;
+      select.appendChild(opt);
+    });
+    const cur = (typeof getMyClub === 'function') ? getMyClub() : null;
+    if (cur && cur.id) select.value = cur.id;
+    setFb('', true);
+  } catch (e) {
+    select.innerHTML = '<option value="">' + (t('selectClub')||'— Select club —') + '</option>';
+    setFb(t('couldNotLoadClubsErr') + ' ' + e.message, false);
+  }
+}
+
+async function orgJoinClub() {
+  const select   = document.getElementById('orgClubSelect');
+  const pwInput  = document.getElementById('orgClubPassword');
+  const feedback = document.getElementById('orgClubFeedback');
+  const setFb = (msg, ok) => { if (feedback) { feedback.textContent = msg; feedback.style.color = ok ? '#2dce89' : '#e63757'; } };
+  if (!select || !select.value) { setFb(t('pleaseSelectClub'), false); return; }
+  const pw = pwInput ? pwInput.value.trim() : '';
+  if (!pw) { setFb(t('enterMemberPwHint'), false); return; }
+  try {
+    // Accept member password (not admin)
+    const clubs = await sbGet('clubs', `id=eq.${select.value}&select_password=eq.${encodeURIComponent(pw)}&select=id,name`);
+    if (!clubs.length) throw new Error(t('wrongPasswordHint'));
+
+    if (typeof setMyClub === 'function') setMyClub(clubs[0].id, clubs[0].name);
+    localStorage.setItem('kbrr_club_mode', 'user');
+    localStorage.setItem('kbrr_rating_field', 'club_rating');
+    if (pwInput) pwInput.value = '';
+    setFb(t('connectedAsMember'), true);
+    orgClubLoginRefresh();
+    if (typeof syncToLocal === 'function') syncToLocal();
+    if (typeof homeRefreshScreen === 'function') homeRefreshScreen();
   } catch (e) { setFb('❌ ' + e.message, false); }
 }

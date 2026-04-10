@@ -90,7 +90,7 @@ function fpRenderDropdown(n) {
   const wrap = document.createElement("div");
   wrap.className = "fp-dropdown-inner";
   if (!available.length) {
-    wrap.innerHTML = '<div class="fp-option-empty">No players available</div>';
+    wrap.innerHTML = '<div class="fp-option-empty">' + t('noPlayersAvailable') + '</div>';
   }
   available.forEach(name => {
     const row = document.createElement("div");
@@ -145,7 +145,7 @@ function fpResetPickers() {
       oldAv.replaceWith(ph);
     }
     const label = document.getElementById("fpLabel" + n);
-    if (label) { label.textContent = "Player " + n; label.classList.remove("fp-label-chosen"); }
+    if (label) { label.textContent = t('playerPrefix') + n; label.classList.remove("fp-label-chosen"); }
     const dd = document.getElementById("fpDropdown" + n);
     if (dd) dd.style.display = "none";
   });
@@ -241,7 +241,7 @@ function fcRenderDropdown(key, n) {
   inner.className = 'fp-dropdown-inner';
 
   if (!available.length) {
-    inner.innerHTML = '<div class="fp-option-empty">No players available</div>';
+    inner.innerHTML = '<div class="fp-option-empty">' + t('noPlayersAvailable') + '</div>';
   } else {
     available.forEach(name => {
       const row = document.createElement('div');
@@ -577,7 +577,7 @@ function createPlayerCard(player, index) {
       <span class="rating-badge" data-player="${player.name}">${(typeof getActiveRating === 'function' ? getActiveRating(player.name) : getRating(player.name)).toFixed(1)}</span>
     </div>
     <div class="pec-col pec-delete">
-      <button class="pec-delete-btn" onclick="deletePlayer(${index})" title="Remove player">🗑</button>
+      <button class="pec-delete-btn" onclick="deletePlayer(${index})" title="Remove player"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
     </div>
   `;
   return card;
@@ -624,6 +624,8 @@ function updatePlayerList() {
   updateFixedPairSelectors();
   updateCourtButtons();
   updateRoundsPageAccess();
+  // Refresh home tiles to reflect updated player count
+  if (typeof homeRefreshTiles === 'function') homeRefreshTiles();
 }
 
 /* =========================

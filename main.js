@@ -76,60 +76,28 @@ function setViewerMode(isViewer) {
   });
 }
 
+function closeModeSheet() {
+  var o = document.getElementById('modeSelectOverlay');
+  if (o) o.style.display = 'none';
+}
+
 function openModeSwitcher() {
-  // Remove existing sheet if any
-  const existing = document.getElementById('modeSheetOverlay');
-  if (existing) { existing.remove(); return; }
-
-  const overlay = document.createElement('div');
-  overlay.className = 'mode-sheet-overlay';
-  overlay.id = 'modeSheetOverlay';
-  overlay.onclick = () => overlay.remove();
-
-  const sheet = document.createElement('div');
-  sheet.className = 'mode-switch-sheet';
-  sheet.innerHTML = `
-    <div class="mode-sheet-handle"></div>
-    <div class="mode-sheet-title">Switch Mode</div>
-    <div class="mode-sheet-options">
-      <button class="mode-sheet-btn viewer ${appMode === 'viewer' ? 'active-viewer' : ''}"
-              onclick="switchMode('viewer')">
-        <div class="mode-sheet-icon">👁</div>
-        <div class="mode-sheet-info">
-          <div class="mode-sheet-name">Viewer</div>
-          <div class="mode-sheet-desc">Watch live rounds &amp; scores</div>
-        </div>
-        ${appMode === 'viewer' ? '<span class="mode-sheet-check">✅</span>' : ''}
-      </button>
-      <button class="mode-sheet-btn organiser ${appMode === 'organiser' ? 'active-organiser' : ''}"
-              onclick="switchMode('organiser')">
-        <div class="mode-sheet-icon"><img src="win-cup.png" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.25))"></div>
-        <div class="mode-sheet-info">
-          <div class="mode-sheet-name">Round Organiser</div>
-          <div class="mode-sheet-desc">Run session, score games, manage players</div>
-        </div>
-        ${appMode === 'organiser' ? '<span class="mode-sheet-check">✅</span>' : ''}
-      </button>
-      <button class="mode-sheet-btn vault ${appMode === 'vault' ? 'active-vault' : ''}"
-              onclick="requestVaultMode()">
-        <div class="mode-sheet-icon" style="background:rgba(245,158,11,0.18)">🔑</div>
-        <div class="mode-sheet-info">
-          <div class="mode-sheet-name">Vault Manager</div>
-          <div class="mode-sheet-desc">Club admin — players, requests, management</div>
-        </div>
-        ${appMode === 'vault' ? '<span class="mode-sheet-check">✅</span>' : ''}
-      </button>
-    </div>
-  `;
-  overlay.appendChild(sheet);
-  document.body.appendChild(overlay);
-  // Prevent sheet clicks from closing overlay
-  sheet.onclick = e => e.stopPropagation();
+  // Use static overlay only — update active mode highlight
+  var overlay = document.getElementById('modeSelectOverlay');
+  if (!overlay) return;
+  // Update active state on mode buttons
+  overlay.querySelectorAll('.ml-mode').forEach(function(btn) {
+    btn.classList.remove('ml-active');
+    if (btn.classList.contains(appMode)) btn.classList.add('ml-active');
+  });
+  // Sync language label
+  if (typeof mlSyncLangDisplay === 'function') mlSyncLangDisplay();
+  overlay.style.display = 'flex';
 }
 
 function switchMode(mode) {
-  const overlay = document.getElementById('modeSheetOverlay');
-  if (overlay) overlay.remove();
+  const overlay = document.getElementById('modeSelectOverlay');
+  if (overlay) overlay.style.display = 'none';
 
   // Viewer needs no club
   if (mode === 'viewer') {
@@ -187,6 +155,8 @@ function initModeOnLoad() {
   // Keep home hidden
   var homeEl = document.getElementById('homePageOverlay');
   if (homeEl) homeEl.style.display = 'none';
+  // Apply saved home style
+  loadHomeStyle();
   // Update mode pill to reflect saved mode
   const savedMode = localStorage.getItem('kbrr_app_mode') || 'organiser';
   updateModePill(savedMode);
@@ -201,46 +171,11 @@ async function initAppFlow() {
     return;
   }
 
-  // ── Step 2: Show mode select if no saved mode ──
-  var savedMode = localStorage.getItem('kbrr_app_mode') || sessionStorage.getItem('appMode') || '';
-  if (!savedMode) {
-    // First launch — show mode select screen
-    var overlay = document.getElementById('modeSelectOverlay');
-    if (overlay) overlay.style.display = 'flex';
-    return;
-  }
-
-  // Vault requires admin auth, downgrade if needed
-  if (savedMode === 'vault' && localStorage.getItem('kbrr_club_mode') !== 'admin') {
-    savedMode = 'viewer';
-  }
-
-  // ── Step 3: Check club for organiser/vault ──
-  var club = (typeof getMyClub === 'function') ? getMyClub() : { id: null };
-
-  if (!club || !club.id) {
-    if (savedMode === 'viewer') {
-      selectMode('viewer');
-      return;
-    }
-    // Organiser or vault without club — show club setup
-    _showClubSetupSheet(savedMode);
-    return;
-  }
-
-  // ── Step 4: Check players (organiser only) ──
-  if (savedMode === 'organiser') {
-    try {
-      var players = await dbGetPlayers(true);
-      if (!players || players.length === 0) {
-        showOnboardingOverlay('noPlayers');
-        return;
-      }
-    } catch(e) {}
-  }
-
-  // ── All good — show home ──
-  selectMode(savedMode);
+  // ── Step 2: Always show mode select on load ──
+  var overlay = document.getElementById('modeSelectOverlay');
+  if (overlay) overlay.style.display = 'flex';
+  // Sync language label on static overlay
+  if (typeof mlSyncLangDisplay === 'function') mlSyncLangDisplay();
 }
 
 function showOnboardingOverlay(reason) {
@@ -263,13 +198,13 @@ function showOnboardingOverlay(reason) {
   };
 
   if (reason === 'notLoggedIn') {
-    if (title) title.textContent = 'Welcome to Sports Club Scheduler';
-    if (msg)   msg.textContent   = 'Connect to your club to get started.';
+    if (title) title.textContent = t('welcomeToApp');
+    if (msg)   msg.textContent = t('connectClubToStart');
     if (btn)   { btn.textContent = 'Connect to Club'; btn.onclick = goToVault; }
   } else if (reason === 'noPlayers') {
-    if (title) title.textContent = 'No players found';
-    if (msg)   msg.textContent   = 'Your club has no players yet. Add players in the Vault to get started.';
-    if (btn)   { btn.textContent = 'Go to Vault'; btn.onclick = goToVault; }
+    if (title) title.textContent = t('noPlayersFoundWarn');
+    if (msg)   msg.textContent   = t('noPlayersYetVault');
+    if (btn)   { btn.textContent = t('goToVault'); btn.onclick = goToVault; }
   }
   overlay.style.display = 'flex';
 }
@@ -520,6 +455,9 @@ function showPage(pageID, el) {
   // Show selected page
   document.getElementById(pageID).style.display = 'block';
 
+  // Hide both top bars while inside a page
+  document.querySelectorAll('.home-topbar, .top-bar').forEach(b => b.style.display = 'none');
+
   // Update active tab styling
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   if (el) {
@@ -568,6 +506,30 @@ function showPage(pageID, el) {
     if (typeof renderSummaryFromSession === 'function') renderSummaryFromSession();
   }
 
+  if (pageID === "vaultReportPage") {
+    // Update month label
+    const d = new Date();
+    const label = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+    const titleEl = document.getElementById('reportMonthTitle');
+    const subEl   = document.getElementById('reportMonthSub');
+    if (titleEl) titleEl.textContent = label + ' ' + (t('report') || 'Report');
+    if (subEl)   subEl.textContent   = t('monthlyStats') || 'Monthly stats';
+    // Render preview
+    if (typeof reportFetchData === 'function') {
+      reportFetchData().then(data => {
+        const html = reportBuildHTML(data);
+        const preview = document.getElementById('reportPreview');
+        if (preview) {
+          const iframe = document.createElement('iframe');
+          iframe.style.cssText = 'width:100%;height:80vh;border:none;border-radius:16px;';
+          iframe.srcdoc = html;
+          preview.innerHTML = '';
+          preview.appendChild(iframe);
+        }
+      }).catch(() => {});
+    }
+  }
+
   if (pageID === "myCardPage") {
     if (typeof renderMyCard === 'function') renderMyCard();
   }
@@ -579,6 +541,7 @@ function showPage(pageID, el) {
   if (pageID === "settingsPage") {
     if (typeof subShowTrialBanner === 'function') subShowTrialBanner();
     updateModePill(localStorage.getItem('kbrr_app_mode') || 'organiser');
+    loadHomeStyle();
   }
 
   if (pageID === "helpPage") {
@@ -616,8 +579,16 @@ function showPage(pageID, el) {
 
   if (pageID === "vaultClubMgmtPage") {
     if (typeof clubLoginRefresh === 'function') clubLoginRefresh();
-    if (typeof viewerLoadClubs === 'function') viewerLoadClubs();
-    if (typeof sbPopulateDeleteDropdown === 'function') sbPopulateDeleteDropdown();
+    // All panels hidden on open — user taps a tile to open one
+    ['Connect','Create','Delete'].forEach(function(p) {
+      var el = document.getElementById('clubMgmt' + p + 'Panel');
+      if (el) el.style.display = 'none';
+    });
+  }
+
+  if (pageID === "orgClubMgmtPage") {
+    if (typeof orgClubLoginRefresh === 'function') orgClubLoginRefresh();
+    if (typeof orgLoadClubs === 'function') orgLoadClubs();
   }
 
   // Update last visited page
@@ -684,10 +655,10 @@ function initPage() {
 ============================================================ */
 async function syncToLocal() {
   const club = (typeof getMyClub === "function") ? getMyClub() : { id: null };
-  setSyncIndicator("🔄 Syncing...", "#aaa");
+  setSyncIndicator(t("syncing"), "#aaa");
 
   if (!club.id) {
-    setSyncIndicator("⚠️ No club selected", "#e6a817");
+    setSyncIndicator(t("noClubSelectedWarn"), "#e6a817");
     return;
   }
 
@@ -697,7 +668,7 @@ async function syncToLocal() {
 
     const players = await dbGetPlayers(true);
     if (!players || !players.length) {
-      setSyncIndicator("⚠️ No players found", "#e6a817");
+      setSyncIndicator(t("noPlayersFoundWarn"), "#e6a817");
       return;
     }
 
@@ -736,13 +707,13 @@ async function syncToLocal() {
     syncRatings();
 
     const count = synced.length;
-    const msg   = `✅ ${count} player${count !== 1 ? "s" : ""} synced · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+    const msg   = `✅ ${count} ${t("playerPlural")} synced · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
     localStorage.setItem("kbrr_last_sync", JSON.stringify({ msg, color: "#2dce89" }));
     setSyncIndicator(msg, "#2dce89");
 
   } catch (e) {
     console.warn("syncToLocal failed:", e.message);
-    const msg = "⚠️ Offline — using cache";
+    const msg = t("offlineCache");
     localStorage.setItem("kbrr_last_sync", JSON.stringify({ msg, color: "#e6a817" }));
     setSyncIndicator(msg, "#e6a817");
   }
@@ -780,8 +751,8 @@ function updateSessionLiveBar() {
    VAULT MODE — Admin password gate
 ============================================================= */
 function requestVaultMode() {
-  const overlay = document.getElementById('modeSheetOverlay');
-  if (overlay) overlay.remove();
+  const overlay = document.getElementById('modeSelectOverlay');
+  if (overlay) overlay.style.display = 'none';
 
   if (appMode === 'vault') { switchMode('vault'); return; }
 
@@ -798,6 +769,7 @@ function requestVaultMode() {
     sessionStorage.setItem('appMode', 'vault');
     localStorage.setItem('kbrr_app_mode', 'vault');
     applyMode('vault');
+    updateModePill('vault');
     if (typeof showHomeScreen === 'function') showHomeScreen();
     return;
   }
@@ -816,7 +788,7 @@ function _showClubSetupSheet(targetMode) {
   const existing = document.getElementById('clubSetupSheetOverlay');
   if (existing) existing.remove();
 
-  const modeLabel = targetMode === 'vault' ? '🔑 Vault Manager' : '🏆 Round Organiser';
+  const modeLabel = targetMode === 'vault' ? t('vaultManager') : t('roundOrganiser');
 
   const overlay = document.createElement('div');
   overlay.id = 'clubSetupSheetOverlay';
@@ -840,7 +812,7 @@ function _showClubSetupSheet(targetMode) {
         <select id="csJoinClubSelect" class="auth-input" style="margin-bottom:10px">
           <option value="">— Loading clubs… —</option>
         </select>
-        <input type="password" id="csJoinPassword" class="auth-input" placeholder="Club password" style="margin-bottom:10px">
+        <input type="password" id="csJoinPassword" class="auth-input" placeholder="${t('clubPasswordPh')}" style="margin-bottom:10px">
         <div id="csJoinFeedback" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:10px"></div>
         <div style="display:flex;gap:10px">
           <button class="admin-modal-cancel" style="flex:1" onclick="document.getElementById('clubSetupSheetOverlay').remove()">Cancel</button>
@@ -851,9 +823,9 @@ function _showClubSetupSheet(targetMode) {
       <!-- CREATE PANEL -->
       <div id="clubSetupPanelCreate" style="display:none;margin-top:14px">
         <div id="clubSetupPanelCreateForm">
-          <input type="text"     id="csCreateName"    class="auth-input" placeholder="Club name"      style="margin-bottom:8px">
-          <input type="password" id="csCreateUserPw"  class="auth-input" placeholder="Member password" style="margin-bottom:8px">
-          <input type="password" id="csCreateAdminPw" class="auth-input" placeholder="Admin password"  style="margin-bottom:10px">
+          <input type="text"     id="csCreateName"    class="auth-input" placeholder="${t('clubNamePh')}"      style="margin-bottom:8px">
+          <input type="password" id="csCreateUserPw"  class="auth-input" placeholder="${t('memberPasswordPh')}" style="margin-bottom:8px">
+          <input type="password" id="csCreateAdminPw" class="auth-input" placeholder="${t('enterAdminPasswordPh')}"  style="margin-bottom:10px">
           <div id="csCreateFeedback" style="font-size:0.82rem;min-height:18px;margin-bottom:10px"></div>
           <div style="display:flex;gap:10px">
             <button class="admin-modal-cancel" style="flex:1" onclick="document.getElementById('clubSetupSheetOverlay').remove()">Cancel</button>
@@ -904,18 +876,18 @@ async function _clubSetupJoin() {
   const fb = document.getElementById('csJoinFeedback');
   const setFb = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
-  if (!select || !select.value) { setFb('Please select a club.', false); return; }
+  if (!select || !select.value) { setFb(t('pleaseSelectClubDot'), false); return; }
   const pw = pwInput ? pwInput.value.trim() : '';
-  if (!pw) { setFb('Enter the club password.', false); return; }
+  if (!pw) { setFb(t('enterClubPassword'), false); return; }
 
-  setFb('Checking…', true);
+  setFb(t('checkingDot'), true);
   try {
     // Use server-side filter — avoids RLS blocking password column reads
     const encodedPw = encodeURIComponent(pw);
     const asAdmin = await sbGet('clubs', `id=eq.${select.value}&admin_password=eq.${encodedPw}&select=id,name`);
     const asUser  = await sbGet('clubs', `id=eq.${select.value}&select_password=eq.${encodedPw}&select=id,name`);
 
-    if (!asAdmin.length && !asUser.length) throw new Error('Wrong password.');
+    if (!asAdmin.length && !asUser.length) throw new Error(t('wrongPasswordDot'));
 
     let role = asAdmin.length ? 'admin' : 'user';
     const clubs = asAdmin.length ? asAdmin : asUser;
@@ -925,7 +897,7 @@ async function _clubSetupJoin() {
     localStorage.setItem('kbrr_rating_field', 'club_rating');
     if (pwInput) pwInput.value = '';
 
-    setFb(role === 'admin' ? '✅ Joined as Admin' : '✅ Joined successfully', true);
+    setFb(role === 'admin' ? t('joinedAsAdmin') : t('joinedSuccessfully'), true);
 
     // Small delay so user sees success, then enter the mode
     setTimeout(() => {
@@ -942,6 +914,7 @@ async function _clubSetupJoin() {
           sessionStorage.setItem('appMode', 'vault');
           localStorage.setItem('kbrr_app_mode', 'vault');
           applyMode('vault');
+          updateModePill('vault');
           if (typeof showHomeScreen === 'function') showHomeScreen();
         } else {
           _showVaultPasswordPrompt();
@@ -951,6 +924,7 @@ async function _clubSetupJoin() {
         sessionStorage.setItem('appMode', mode);
         localStorage.setItem('kbrr_app_mode', mode);
         applyMode(mode);
+        updateModePill(mode);
         if (typeof showHomeScreen === 'function') showHomeScreen();
       }
     }, 700);
@@ -969,18 +943,18 @@ async function _clubSetupCreateDirect() {
   const fb      = document.getElementById('csCreateFeedback');
   const setFb   = (msg, ok) => { if (fb) { fb.textContent = msg; fb.style.color = ok ? '#2dce89' : '#e63757'; } };
 
-  if (!name)    { setFb('Enter club name.', false); return; }
-  if (!userPw)  { setFb('Enter member password.', false); return; }
-  if (!adminPw) { setFb('Enter admin password.', false); return; }
-  if (userPw === adminPw) { setFb('Member and admin passwords must be different.', false); return; }
+  if (!name)    { setFb(t('enterClubName'), false); return; }
+  if (!userPw)  { setFb(t('enterMemberPw'), false); return; }
+  if (!adminPw) { setFb(t('enterAdminPw'), false); return; }
+  if (userPw === adminPw) { setFb(t('memberAdminDiff'), false); return; }
 
-  setFb('Creating club…', true);
+  setFb(t('creatingClubDot'), true);
   try {
     const club = await dbAddClub(name, userPw, adminPw);
     if (typeof setMyClub === 'function') setMyClub(club.id, club.name);
     localStorage.setItem('kbrr_club_mode', 'admin');
     localStorage.setItem('kbrr_rating_field', 'club_rating');
-    setFb('✅ Club "' + club.name + '" created! You are now Admin.', true);
+    setFb('✅ ' + club.name + ' ' + t('clubCreatedAdmin'), true);
 
     setTimeout(() => {
       const ov = document.getElementById('clubSetupSheetOverlay');
@@ -1014,7 +988,7 @@ function _showVaultPasswordPrompt() {
         Enter the club admin password to access Vault Manager.
       </p>
       <input type="password" id="vaultPwInput" class="admin-password-input"
-             placeholder="Admin password"
+             placeholder="${t('enterAdminPasswordPh')}"
              onkeydown="if(event.key==='Enter')verifyVaultPassword()"
              style="margin-bottom:12px;width:100%">
       <div id="vaultPwError" style="font-size:0.82rem;color:var(--red);min-height:18px;margin-bottom:12px"></div>
@@ -1036,16 +1010,16 @@ async function verifyVaultPassword() {
   const input = document.getElementById('vaultPwInput');
   const errEl = document.getElementById('vaultPwError');
   const pw    = (input ? input.value : '').trim();
-  if (!pw) { if (errEl) errEl.textContent = 'Enter the admin password'; return; }
+  if (!pw) { if (errEl) errEl.textContent = t('enterAdminPasswordHint'); return; }
 
   const club = (typeof getMyClub === 'function') ? getMyClub() : null;
-  if (!club || !club.id) { if (errEl) errEl.textContent = 'No club selected'; return; }
+  if (!club || !club.id) { if (errEl) errEl.textContent = t('noClubSelected'); return; }
 
-  if (errEl) errEl.textContent = 'Checking...';
+  if (errEl) errEl.textContent = t('checkingDotDot');
   try {
     const rows = await sbGet('clubs', `id=eq.${club.id}&admin_password=eq.${encodeURIComponent(pw)}&select=id`);
     if (!rows || !rows.length) {
-      if (errEl) errEl.textContent = 'Wrong admin password';
+      if (errEl) errEl.textContent = t('wrongAdminPw');
       if (input) input.value = '';
       return;
     }
@@ -1054,7 +1028,7 @@ async function verifyVaultPassword() {
     if (ov) ov.remove();
     switchMode('vault');
   } catch(e) {
-    if (errEl) errEl.textContent = 'Error: ' + e.message;
+    if (errEl) errEl.textContent = t('errorPrefix') + e.message;
   }
 }
 
@@ -1232,7 +1206,7 @@ async function _doEndSession(shuttleData) {
   // Show ending feedback
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a2e;color:#fff;padding:16px 24px;border-radius:14px;font-size:0.9rem;font-weight:700;z-index:99999;text-align:center;';
-  toast.textContent = '⏹ Ending session…';
+  toast.textContent = t('endingSession');
   document.body.appendChild(toast);
 
   // Mark session completed in sessions table
@@ -1267,7 +1241,7 @@ async function _doEndSession(shuttleData) {
   updateSessionLiveBar();
 
   // Remove toast
-  toast.textContent = '✅ Session ended';
+  toast.textContent = t('sessionEnded');
   setTimeout(() => toast.remove(), 1500);
 
   // Stay on dashboard and refresh it
@@ -1295,3 +1269,30 @@ document.addEventListener("click", function(e) {
   }
 });
 
+
+/* ── Tile Style System ── */
+function setTileStyle(style) {
+  document.body.classList.remove('tile-style-glow','tile-style-color');
+  if (style === 'glow')  document.body.classList.add('tile-style-glow');
+  if (style === 'color') document.body.classList.add('tile-style-color');
+  localStorage.setItem('kbrr_tile_style', style);
+
+  // Update buttons
+  ['flat','glow','color'].forEach(function(s, i) {
+    var btn = document.getElementById('styleBtn'+(i+1));
+    if (btn) btn.classList.toggle('active', s === style);
+  });
+
+  // Update preview box class instantly
+  var box = document.getElementById('stylePreviewBox');
+  if (box) {
+    box.classList.remove('glow','color');
+    if (style === 'glow')  box.classList.add('glow');
+    if (style === 'color') box.classList.add('color');
+  }
+}
+
+function loadHomeStyle() {
+  var style = localStorage.getItem('kbrr_tile_style') || 'flat';
+  setTileStyle(style);
+}
