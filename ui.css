@@ -7143,3 +7143,40 @@ body.appear-transitioning * { transition: background 0.5s ease, color 0.4s ease 
   animation: applySuccess 0.5s ease forwards;
 }
 
+/* ── Fixed Pairs page: Add button and pairs list ── */
+.schedule-btn {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  margin: 12px 0 8px;
+  border-radius: var(--r-xl);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.schedule-btn:active { transform: scale(0.97); }
+.schedule-btn.disabled-btn {
+  background: var(--surface3);
+  color: var(--muted);
+  box-shadow: none;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.fixed-pairs-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Player card drag state — tighten highlight ── */
+.player-edit-card.dragging {
+  opacity: 0.5;
+  border: 2px dashed var(--accent);
+}
+
