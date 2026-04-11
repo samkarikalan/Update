@@ -131,60 +131,54 @@ function setFontSize(size) {
 var _appearPending = { theme: null, font: null, tile: null };
 
 function appearSyncFromSaved() {
-  // Sync pill active states from saved prefs (called when settings page opens)
+  // Sync pill active states from saved prefs when settings page opens
   const theme = localStorage.getItem('app-theme') || 'dark';
   const font  = localStorage.getItem('appFontSize') || 'medium';
   const tile  = localStorage.getItem('kbrr_tile_style') || 'flat';
 
-  ['theme_light','theme_dark'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
+  // Theme pills
+  ['theme_light','theme_dark'].forEach(id => document.getElementById(id)?.classList.remove('active'));
   document.getElementById(theme === 'light' ? 'theme_light' : 'theme_dark')?.classList.add('active');
 
-  ['font_small','font_medium','font_large'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
+  // Font pills
+  ['font_small','font_medium','font_large'].forEach(id => document.getElementById(id)?.classList.remove('active'));
   document.getElementById('font_' + font)?.classList.add('active');
 
-  ['styleBtn1','styleBtn2','styleBtn3'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
+  // Tile buttons
+  ['styleBtn1','styleBtn2','styleBtn3'].forEach(id => document.getElementById(id)?.classList.remove('active'));
   const tileMap = { flat: 'styleBtn1', glow: 'styleBtn2', color: 'styleBtn3' };
   document.getElementById(tileMap[tile])?.classList.add('active');
 
-  // Reset pending
+  // Reset pending state
   _appearPending = { theme: null, font: null, tile: null };
+
+  // Sync preview box to current saved state
+  const box = document.getElementById('stylePreviewBox');
+  if (box) {
+    box.setAttribute('data-style', tile);
+    box.setAttribute('data-theme', theme);
+    box.setAttribute('data-font',  font);
+  }
   _appearUpdateApplyBtn();
 }
 
 function appearSelect(type, value, btn) {
-  // Animate pill selection
-  const group = btn.closest('.appear-pill-group') || btn.parentElement;
+  // Animate pill
+  const group = btn.closest('.appear-pill-group, .tile-style-group') || btn.parentElement;
   group.querySelectorAll('.pref-pill, .tile-style-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-
-  // Pulse animation on button
   btn.classList.add('appear-pulse');
   setTimeout(() => btn.classList.remove('appear-pulse'), 400);
 
-  // Store pending
+  // Store pending — do NOT apply to app yet
   _appearPending[type] = value;
 
-  // Show live preview for theme and font immediately
-  if (type === 'theme') {
-    // Live preview: flash the body class temporarily with animation
-    document.body.classList.add('appear-transitioning');
-    applyTheme(value);
-    setTimeout(() => document.body.classList.remove('appear-transitioning'), 600);
-  }
-  if (type === 'font') {
-    setFontSize(value);
-  }
-  if (type === 'tile') {
-    setTileStyle(value);
+  // Update ONLY the preview box via data attributes — nothing touches the live app
+  const box = document.getElementById('stylePreviewBox');
+  if (box) {
+    if (type === 'tile')  box.setAttribute('data-style', value);
+    if (type === 'theme') box.setAttribute('data-theme', value);
+    if (type === 'font')  box.setAttribute('data-font',  value);
   }
 
   _appearUpdateApplyBtn();
@@ -194,28 +188,27 @@ function _appearUpdateApplyBtn() {
   const btn   = document.getElementById('appearApplyBtn');
   const bar   = document.getElementById('appearPreviewBar');
   const label = document.getElementById('appearPreviewLabel');
-  if (!btn) return;
-
   const hasPending = Object.values(_appearPending).some(v => v !== null);
   if (hasPending) {
-    btn.classList.add('appear-apply-ready');
+    btn?.classList.add('appear-apply-ready');
     if (bar) bar.style.display = '';
     const parts = [];
-    if (_appearPending.theme) parts.push((_appearPending.theme === 'light' ? '☀️ Light' : '🌙 Dark') + ' theme');
-    if (_appearPending.font)  parts.push(_appearPending.font + ' font');
-    if (_appearPending.tile)  parts.push(_appearPending.tile + ' tiles');
-    if (label) label.textContent = '→ ' + parts.join(' · ');
+    if (_appearPending.theme) parts.push(_appearPending.theme === 'light' ? '☀️ Light' : '🌙 Dark');
+    if (_appearPending.font)  parts.push(_appearPending.font.charAt(0).toUpperCase() + _appearPending.font.slice(1) + ' font');
+    if (_appearPending.tile)  parts.push(_appearPending.tile.charAt(0).toUpperCase() + _appearPending.tile.slice(1) + ' tiles');
+    if (label) label.textContent = parts.join(' · ') + ' — tap Apply';
   } else {
-    btn.classList.remove('appear-apply-ready');
+    btn?.classList.remove('appear-apply-ready');
     if (bar) bar.style.display = 'none';
   }
 }
 
+
+
 function appearApply() {
   const btn = document.getElementById('appearApplyBtn');
-  const icon = document.getElementById('appearApplyIcon');
 
-  // Apply all pending
+  // Apply all pending to the whole app
   if (_appearPending.theme) applyTheme(_appearPending.theme);
   if (_appearPending.font)  setFontSize(_appearPending.font);
   if (_appearPending.tile)  setTileStyle(_appearPending.tile);
@@ -223,9 +216,7 @@ function appearApply() {
   // Success animation
   if (btn) {
     btn.classList.add('appear-apply-success');
-    if (icon) icon.textContent = '✓';
-    btn.textContent = '';
-    btn.innerHTML = '<span id="appearApplyIcon">✓</span> Applied!';
+    btn.innerHTML = '<span>✓</span> Applied!';
     setTimeout(() => {
       btn.classList.remove('appear-apply-ready', 'appear-apply-success');
       btn.innerHTML = '<span id="appearApplyIcon">✦</span> Apply Changes';

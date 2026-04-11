@@ -105,11 +105,10 @@ function initFontSize() {
 
 
 function applyTheme(mode) {
-  document.body.classList.toggle('app-dark', mode === 'dark');
-
+  document.body.classList.toggle('app-light', mode === 'light');
+  document.body.classList.toggle('app-dark',  mode === 'dark');
   document.getElementById('theme_light')?.classList.toggle('active', mode === 'light');
-  document.getElementById('theme_dark')?.classList.toggle('active', mode === 'dark');
-
+  document.getElementById('theme_dark')?.classList.toggle('active',  mode === 'dark');
   localStorage.setItem('app-theme', mode);
 }
 
@@ -162,9 +161,9 @@ function updateRoundTitle(round) {
 function setFontSize(size) {
   const root = document.documentElement;
 
-  if (size === "small") root.style.setProperty("--base-font-size", "12px");
-  if (size === "medium") root.style.setProperty("--base-font-size", "14px");
-  if (size === "large") root.style.setProperty("--base-font-size", "17px");
+  if (size === "small") root.style.setProperty("--base-font-size", "21px");
+  if (size === "medium") root.style.setProperty("--base-font-size", "24px");
+  if (size === "large") root.style.setProperty("--base-font-size", "27px");
 
   localStorage.setItem("appFontSize", size); // 👈 SAVE (ADD THIS)
 

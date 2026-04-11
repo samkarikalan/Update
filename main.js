@@ -232,6 +232,10 @@ function isPageVisible(pageId) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Restore theme and font size from saved prefs FIRST
+  if (typeof initTheme    === 'function') initTheme();
+  if (typeof initFontSize === 'function') initFontSize();
+
   // Show mode select overlay first
   initModeOnLoad();
 
@@ -1276,24 +1280,17 @@ document.addEventListener("click", function(e) {
 
 /* ── Tile Style System ── */
 function setTileStyle(style) {
+  // Apply tile style to the whole app (body class) and save
   document.body.classList.remove('tile-style-glow','tile-style-color');
   if (style === 'glow')  document.body.classList.add('tile-style-glow');
   if (style === 'color') document.body.classList.add('tile-style-color');
   localStorage.setItem('kbrr_tile_style', style);
 
-  // Update buttons
+  // Sync tile style buttons active state
   ['flat','glow','color'].forEach(function(s, i) {
     var btn = document.getElementById('styleBtn'+(i+1));
     if (btn) btn.classList.toggle('active', s === style);
   });
-
-  // Update preview box class instantly
-  var box = document.getElementById('stylePreviewBox');
-  if (box) {
-    box.classList.remove('glow','color');
-    if (style === 'glow')  box.classList.add('glow');
-    if (style === 'color') box.classList.add('color');
-  }
 }
 
 function loadHomeStyle() {

@@ -124,7 +124,6 @@
 
   <div id="authOverlay" class="auth-overlay" style="display:none;">
 
-```
 <!-- WELCOME screen -->
 <div id="authWelcome" class="auth-screen">
   <div class="auth-logo">🏸</div>
@@ -294,7 +293,6 @@
     </div>
   </div>
 </div>
-```
 
   </div>
 
@@ -306,7 +304,6 @@
 
   <div id="homePageOverlay" class="home-overlay" style="display:none;">
 
-```
 <!-- Top bar -->
 <div class="home-topbar">
   <button class="mode-pill-btn" id="modePillBtn" onclick="openModeSwitcher()">
@@ -516,7 +513,6 @@
 </div>
 
 <button class="home-help-btn" onclick="homeGo('helpPage',null)" data-i18n="helpGuide">❓ Help &amp; Guide</button>
-```
 
   </div>
 
@@ -564,7 +560,6 @@
       <span class="page-back-title" data-i18n="myClubs">🏢 My Clubs</span>
     </div>
 
-```
 <div style="padding:14px;">
 
   <!-- My Clubs list -->
@@ -619,7 +614,6 @@
   <div id="joinClubStatusCard" style="display:none;"></div>
   <div id="joinClubSearchSection" style="display:none;"></div>
 </div>
-```
 
   </div>
 
@@ -698,6 +692,7 @@
     <div class="pref-divider"></div>
     <div class="appear-preview-bar" id="appearPreviewBar" style="display:none;">
       <span class="appear-preview-label" id="appearPreviewLabel"></span>
+      <div id="appearFontPreview" style="display:none;margin-top:8px;padding:8px 10px;background:var(--surface2);border-radius:10px;color:var(--text);transition:font-size 0.3s ease;">Aa — Font Preview</div>
     </div>
 
     <!-- Apply Button -->
@@ -940,7 +935,6 @@
     </div>
     <div class="vault-wrap">
 
-```
   <!-- 3 action tiles -->
   <div class="vault-tile-grid" style="margin-bottom:14px;">
     <div class="vault-tile vt-register" onclick="clubMgmtShowPanel('connect')" style="min-height:90px;">
@@ -1035,7 +1029,6 @@
   </div>
 
 </div>
-```
 
   </div>
 
@@ -1048,7 +1041,6 @@
     </div>
     <div class="vault-wrap">
 
-```
   <!-- Club status card -->
   <div class="vault-club-card" id="orgClubLoginCard">
     <div id="orgClubLoggedInState" style="display:none">
@@ -1081,7 +1073,6 @@
   </div>
 
 </div>
-```
 
   </div>
 
@@ -1124,7 +1115,6 @@
   <div class="card" id="fixedPairsCard">
     <span class="browse-title" data-i18n="fixedPairs"></span>
 
-```
 <div class="fp-picker-row">
   <div class="fp-picker-field" id="fpField1" onclick="fpTogglePicker(1)">
     <div class="fp-avatar-placeholder" id="fpAvatar1"></div>
@@ -1142,7 +1132,6 @@
 
 <button id="fpAddBtn" class="schedule-btn disabled-btn" onclick="modifyFixedPair()" data-i18n="add" disabled></button>
 <div id="fixed-pair-list" class="fixed-pairs-list"></div>
-```
 
   </div>
 </div>
@@ -1155,7 +1144,6 @@
 
   <div id="roundsPage" class="page" style="display:none;">
 
-```
 <!-- Single tight top bar -->
 <div class="rounds-top-bar">
   <button class="rtb-back" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button>
@@ -1237,7 +1225,6 @@
 
   </div>
 </div>
-```
 
   </div>
 
@@ -1292,7 +1279,6 @@
       <span class="page-back-title" data-i18n="myCard">My Card</span>
     </div>
 
-```
 <!-- Not logged in state -->
 <div id="myCardEmpty" style="display:none;">
   <div class="dash-empty">
@@ -1397,7 +1383,6 @@
   </div>
 
 </div>
-```
 
   </div>
 
@@ -1410,7 +1395,6 @@
   <div id="helpPage" class="page" style="display:none;">
   <div class="page-back-bar"><button class="page-back-btn" onclick="showHomeScreen()" data-i18n="backHome">‹ Home</button><span class="page-back-title" data-i18n="help">❓ Help</span></div>
 
-```
 <!-- Search bar -->
 <div class="help-search-wrap">
   <span class="help-search-icon">🔍</span>
@@ -1424,7 +1408,6 @@
 
 <!-- Content -->
 <div id="helpContainer" class="help-container"></div>
-```
 
   </div>
 
@@ -1440,7 +1423,6 @@
        onclick="if(event.target===this)newImportHideModal()">
     <div class="newImport-container">
 
-```
   <div class="newImport-selected-section">
     <div class="newImport-selected-header">
       <strong>Selected (<span id="newImportSelectedCount">0</span>)</strong>
@@ -1549,7 +1531,6 @@
 
   </div>
 </div>
-```
 
   </div>
 
@@ -1605,7 +1586,6 @@
     </div>
     </div>
 
-```
 <!-- Avatar + Name + Ratings -->
 <div class="profile-identity">
   <img id="pcAvatar" src="male.png" class="profile-avatar">
@@ -1639,7 +1619,6 @@
     <div class="profile-stat-label" data-i18n="allTimeLosses">All-time Losses</div>
   </div>
 </div>
-```
 
   </div>
 
@@ -1664,7 +1643,6 @@
       <div class="paywall-title" data-i18n="clubSchedulerPro">Club Scheduler Pro</div>
       <div class="paywall-subtitle" data-i18n="trialEnded">Your free trial has ended</div>
 
-```
   <div class="paywall-features">
     <div class="paywall-feature" data-i18n="subFeature3">✓ Organiser mode — run sessions</div>
     <div class="paywall-feature" data-i18n="subFeature4">✓ Players &amp; Fixed Pairs management</div>
@@ -1679,7 +1657,6 @@
   <button class="paywall-btn-primary" onclick="subPurchase()" data-i18n="subscribeNow">Subscribe Now</button>
   <button class="paywall-btn-restore" onclick="subRestore()" data-i18n="restorePurchase">Restore Purchase</button>
 </div>
-```
 
   </div>
 
@@ -1706,7 +1683,6 @@
     </div>
     <div style="padding:16px;">
 
-```
   <!-- Month selector -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <div>
@@ -1732,7 +1708,6 @@
   <div id="reportPreview" style="margin-top:8px;"></div>
 
 </div>
-```
 
   </div>
 
