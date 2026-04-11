@@ -1908,81 +1908,29 @@ body.app-light .vcl-row-name { color: #1a1a2e; }
 .spw-sub  { font-size: 0.52rem; color: var(--muted, #aaa); margin-top: 1px; }
 .spw-arr  { color: var(--muted, #ccc); font-size: 0.8rem; }
 
-/* ─── PREVIEW BOX: scoped to #stylePreviewBox so nothing leaks to the app ─── */
-
-/* Transition for smooth preview changes */
-#stylePreviewBox { transition: background 0.3s ease; }
-#stylePreviewBox .spt, #stylePreviewBox .style-preview-wide { transition: background 0.3s ease, border-color 0.3s ease; }
-
-/* FLAT (default) */
-#stylePreviewBox[data-style="flat"] .spt { background: var(--surface,#fff); border: 1px solid var(--border,#eee); }
-#stylePreviewBox[data-style="flat"] .style-preview-wide { background: var(--surface,#fff); border: 1px solid var(--border,#eee); }
-
-/* GLOW */
-#stylePreviewBox[data-style="glow"] { background: #0d0d1a; }
-#stylePreviewBox[data-style="glow"] .style-preview-label { color: #555; }
-#stylePreviewBox[data-style="glow"] .spt {
-  background: #1a1a2e !important; border-color: #2a2a40 !important; padding-top: 12px;
+/* ─── PREVIEW BOX: JS renders inline styles — CSS only provides transitions ─── */
+#stylePreviewBox {
+  transition: background 0.35s ease;
+  border-radius: 12px;
+  overflow: hidden;
 }
-#stylePreviewBox[data-style="glow"] .spt::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 10px 10px 0 0;
+#stylePreviewBox .spt,
+#stylePreviewBox .style-preview-wide {
+  transition: background 0.35s ease, border-color 0.35s ease;
 }
+/* Glow top-bar lines on spt tiles (controlled by JS via data-style) */
+#stylePreviewBox .spt { position: relative; overflow: hidden; }
+#stylePreviewBox .spt::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 10px 10px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+#stylePreviewBox[data-style="glow"] .spt::before { opacity: 1; }
 #stylePreviewBox[data-style="glow"] .spt:nth-child(1)::before { background: #2dce89; box-shadow: 0 0 8px rgba(45,206,137,0.9); }
 #stylePreviewBox[data-style="glow"] .spt:nth-child(2)::before { background: #6c8cff; box-shadow: 0 0 8px rgba(108,140,255,0.9); }
 #stylePreviewBox[data-style="glow"] .spt:nth-child(3)::before { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,0.9); }
-#stylePreviewBox[data-style="glow"] .spt-name { color: #fff !important; }
-#stylePreviewBox[data-style="glow"] .spt-sub  { color: #555 !important; }
-#stylePreviewBox[data-style="glow"] .style-preview-wide { background: #1a1a2e !important; border-color: #2a2a40 !important; }
-#stylePreviewBox[data-style="glow"] .spw-name { color: #fff !important; }
-#stylePreviewBox[data-style="glow"] .spw-sub  { color: #555 !important; }
-#stylePreviewBox[data-style="glow"] .spw-arr  { color: #555 !important; }
-
-/* COLOR */
-#stylePreviewBox[data-style="color"] .spt { border: none !important; }
-#stylePreviewBox[data-style="color"] .spt:nth-child(1) { background: #2dce89 !important; }
-#stylePreviewBox[data-style="color"] .spt:nth-child(2) { background: #6c8cff !important; }
-#stylePreviewBox[data-style="color"] .spt:nth-child(3) { background: #f5a623 !important; }
-#stylePreviewBox[data-style="color"] .spt-name { color: #fff !important; }
-#stylePreviewBox[data-style="color"] .spt-sub  { color: rgba(255,255,255,0.65) !important; }
-#stylePreviewBox[data-style="color"] .style-preview-wide { background: #e63757 !important; border: none !important; }
-#stylePreviewBox[data-style="color"] .spw-name { color: #fff !important; }
-#stylePreviewBox[data-style="color"] .spw-sub  { color: rgba(255,255,255,0.65) !important; }
-#stylePreviewBox[data-style="color"] .spw-arr  { color: rgba(255,255,255,0.5) !important; }
-
-/* THEME PREVIEW — dark/light scoped to preview box only */
-#stylePreviewBox[data-theme="dark"] { background: #1a1a22; }
-#stylePreviewBox[data-theme="dark"] .style-preview-label { color: #505080; }
-#stylePreviewBox[data-theme="dark"] .spt { background: #22222e !important; border-color: rgba(255,255,255,0.07) !important; }
-#stylePreviewBox[data-theme="dark"] .spt-name { color: #f0f0f5 !important; }
-#stylePreviewBox[data-theme="dark"] .spt-sub  { color: #6060a0 !important; }
-#stylePreviewBox[data-theme="dark"] .style-preview-wide { background: #22222e !important; border-color: rgba(255,255,255,0.07) !important; }
-#stylePreviewBox[data-theme="dark"] .spw-name { color: #f0f0f5 !important; }
-#stylePreviewBox[data-theme="dark"] .spw-sub  { color: #6060a0 !important; }
-#stylePreviewBox[data-theme="dark"] .spw-arr  { color: #6060a0 !important; }
-
-#stylePreviewBox[data-theme="light"] { background: #eef1f7; }
-#stylePreviewBox[data-theme="light"] .style-preview-label { color: #8888aa; }
-#stylePreviewBox[data-theme="light"] .spt { background: #ffffff !important; border-color: rgba(0,0,0,0.08) !important; }
-#stylePreviewBox[data-theme="light"] .spt-name { color: #1a1a2e !important; }
-#stylePreviewBox[data-theme="light"] .spt-sub  { color: #8888aa !important; }
-#stylePreviewBox[data-theme="light"] .style-preview-wide { background: #ffffff !important; border-color: rgba(0,0,0,0.08) !important; }
-#stylePreviewBox[data-theme="light"] .spw-name { color: #1a1a2e !important; }
-#stylePreviewBox[data-theme="light"] .spw-sub  { color: #8888aa !important; }
-#stylePreviewBox[data-theme="light"] .spw-arr  { color: #8888aa !important; }
-
-/* FONT SIZE PREVIEW — shown in .spt-name and .spw-name */
-#stylePreviewBox[data-font="small"]  .spt-name,
-#stylePreviewBox[data-font="small"]  .spw-name { font-size: 0.5rem !important; }
-#stylePreviewBox[data-font="medium"] .spt-name,
-#stylePreviewBox[data-font="medium"] .spw-name { font-size: 0.65rem !important; }
-#stylePreviewBox[data-font="large"]  .spt-name,
-#stylePreviewBox[data-font="large"]  .spw-name { font-size: 0.82rem !important; }
-#stylePreviewBox[data-font="small"]  .spt-sub,
-#stylePreviewBox[data-font="small"]  .spw-sub  { font-size: 0.42rem !important; }
-#stylePreviewBox[data-font="medium"] .spt-sub,
-#stylePreviewBox[data-font="medium"] .spw-sub  { font-size: 0.52rem !important; }
-#stylePreviewBox[data-font="large"]  .spt-sub,
-#stylePreviewBox[data-font="large"]  .spw-sub  { font-size: 0.65rem !important; }
 
 /* ═══════════════════════════════════════════
    FULL APP COVERAGE -- GLOW STYLE

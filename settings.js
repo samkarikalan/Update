@@ -152,35 +152,117 @@ function appearSyncFromSaved() {
   // Reset pending state
   _appearPending = { theme: null, font: null, tile: null };
 
-  // Sync preview box to current saved state
-  const box = document.getElementById('stylePreviewBox');
-  if (box) {
-    box.setAttribute('data-style', tile);
-    box.setAttribute('data-theme', theme);
-    box.setAttribute('data-font',  font);
-  }
+  // Render preview showing current saved state
+  _renderPreview(theme, tile, font);
   _appearUpdateApplyBtn();
 }
 
+/* ─── Single preview renderer — composes theme + style + font together ─── */
+function _renderPreview(theme, style, font) {
+  const box  = document.getElementById('stylePreviewBox');
+  const label = box?.querySelector('.style-preview-label');
+  const spts  = box?.querySelectorAll('.spt');
+  const wide  = box?.querySelector('.style-preview-wide');
+  const names = box?.querySelectorAll('.spt-name, .spw-name');
+  const subs  = box?.querySelectorAll('.spt-sub, .spw-sub');
+  if (!box) return;
+
+  // Keep data attrs for glow ::before CSS
+  box.setAttribute('data-style', style);
+
+  // ── Theme colours ──
+  const dark  = { bg: '#1a1a22', tile: '#22222e', border: 'rgba(255,255,255,0.07)', text: '#f0f0f5', sub: '#6060a0', label: '#505080', wide: '#22222e' };
+  const light = { bg: '#eef1f7', tile: '#ffffff',  border: 'rgba(0,0,0,0.08)',       text: '#1a1a2e', sub: '#8888aa', label: '#8888aa', wide: '#ffffff' };
+  const t = theme === 'light' ? light : dark;
+
+  // ── Font sizes ──
+  const fontSizes = { small: { name: '0.52rem', sub: '0.42rem' }, medium: { name: '0.65rem', sub: '0.52rem' }, large: { name: '0.85rem', sub: '0.65rem' } };
+  const fs = fontSizes[font] || fontSizes.medium;
+
+  // ── Tile colours per style ──
+  const tileColors = ['#2dce89', '#6c8cff', '#f5a623'];
+  const wideColor  = '#e63757';
+
+  // Apply box background
+  box.style.background = (style === 'glow') ? '#0d0d1a' : t.bg;
+  if (label) { label.style.color = (style === 'glow') ? '#555' : t.label; }
+
+  // Apply each spt tile
+  if (spts) {
+    spts.forEach(function(spt, i) {
+      var nameEl = spt.querySelector('.spt-name');
+      var subEl  = spt.querySelector('.spt-sub');
+
+      if (style === 'color') {
+        spt.style.background   = tileColors[i] || tileColors[0];
+        spt.style.border       = 'none';
+        spt.style.paddingTop   = '10px';
+        if (nameEl) { nameEl.style.color = '#fff'; }
+        if (subEl)  { subEl.style.color  = 'rgba(255,255,255,0.65)'; }
+      } else if (style === 'glow') {
+        spt.style.background   = '#1a1a2e';
+        spt.style.border       = '1px solid #2a2a40';
+        spt.style.paddingTop   = '12px';
+        if (nameEl) { nameEl.style.color = '#fff'; }
+        if (subEl)  { subEl.style.color  = '#555'; }
+      } else {
+        // flat
+        spt.style.background   = t.tile;
+        spt.style.border       = '1px solid ' + t.border;
+        spt.style.paddingTop   = '10px';
+        if (nameEl) { nameEl.style.color = t.text; }
+        if (subEl)  { subEl.style.color  = t.sub; }
+      }
+      if (nameEl) nameEl.style.fontSize = fs.name;
+      if (subEl)  subEl.style.fontSize  = fs.sub;
+    });
+  }
+
+  // Apply wide tile
+  if (wide) {
+    var wName = wide.querySelector('.spw-name');
+    var wSub  = wide.querySelector('.spw-sub');
+    var wArr  = wide.querySelector('.spw-arr');
+    if (style === 'color') {
+      wide.style.background = wideColor;
+      wide.style.border     = 'none';
+      if (wName) { wName.style.color = '#fff'; wName.style.fontSize = fs.name; }
+      if (wSub)  { wSub.style.color  = 'rgba(255,255,255,0.65)'; wSub.style.fontSize = fs.sub; }
+      if (wArr)  { wArr.style.color  = 'rgba(255,255,255,0.5)'; }
+    } else if (style === 'glow') {
+      wide.style.background = '#1a1a2e';
+      wide.style.border     = '1px solid #2a2a40';
+      if (wName) { wName.style.color = '#fff'; wName.style.fontSize = fs.name; }
+      if (wSub)  { wSub.style.color  = '#555'; wSub.style.fontSize = fs.sub; }
+      if (wArr)  { wArr.style.color  = '#555'; }
+    } else {
+      wide.style.background = t.wide;
+      wide.style.border     = '1px solid ' + t.border;
+      if (wName) { wName.style.color = t.text; wName.style.fontSize = fs.name; }
+      if (wSub)  { wSub.style.color  = t.sub;  wSub.style.fontSize = fs.sub; }
+      if (wArr)  { wArr.style.color  = t.sub; }
+    }
+  }
+}
+
 function appearSelect(type, value, btn) {
-  // Animate pill
-  const group = btn.closest('.appear-pill-group, .tile-style-group') || btn.parentElement;
+  // Highlight selected pill
+  const group = btn.closest('.appear-pill-group') || btn.closest('.tile-style-group') || btn.parentElement;
   group.querySelectorAll('.pref-pill, .tile-style-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   btn.classList.add('appear-pulse');
   setTimeout(() => btn.classList.remove('appear-pulse'), 400);
 
-  // Store pending — do NOT apply to app yet
+  // Store pending — do NOT touch the live app
   _appearPending[type] = value;
 
-  // Update ONLY the preview box via data attributes — nothing touches the live app
-  const box = document.getElementById('stylePreviewBox');
-  if (box) {
-    if (type === 'tile')  box.setAttribute('data-style', value);
-    if (type === 'theme') box.setAttribute('data-theme', value);
-    if (type === 'font')  box.setAttribute('data-font',  value);
-  }
+  // Get current effective values (pending overrides saved)
+  const theme = _appearPending.theme || localStorage.getItem('app-theme') || 'dark';
+  const style = _appearPending.tile  || localStorage.getItem('kbrr_tile_style') || 'flat';
+  const font  = _appearPending.font  || localStorage.getItem('appFontSize') || 'medium';
 
+  // Re-render preview with all three combined
+  _renderPreview(theme, style, font);
   _appearUpdateApplyBtn();
 }
 
