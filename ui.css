@@ -4654,17 +4654,21 @@ body.app-light .tile-settings { background: var(--surface3); }
 /* Player edit card */
 .player-edit-card {
   display: grid;
-  grid-template-columns: 1fr 32px 42px 52px;
+  grid-template-columns: 20px 20px 35px 1fr auto 40px;
   align-items: center;
-  gap: 8px;
-  padding: 11px 14px;
-  border-radius: 16px;
+  gap: 5px;
+  padding: 0 12px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--border2);
   background: var(--surface2);
-  margin: 4px 0;
-  transition: background 0.15s, opacity 0.2s;
+  margin: 3px 0;
+  transition: all 0.25s;
   cursor: grab;
   user-select: none;
+  height: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+  font-size: 0.92rem;
 }
 .player-edit-card:active { cursor: grabbing; opacity: 0.85; }
 .player-edit-card.male   { background: linear-gradient(135deg,rgba(108,99,255,0.08),var(--surface2)); border-color: rgba(108,99,255,0.22); }
@@ -7179,4 +7183,55 @@ body.appear-transitioning * { transition: background 0.5s ease, color 0.4s ease 
   opacity: 0.5;
   border: 2px dashed var(--accent);
 }
+
+/* ── Fixed Pairs picker (fp-picker-row, fp-picker-field, fp-dropdown) ── */
+.fp-picker-row { display: flex; gap: 8px; margin: 8px 0 0; }
+.fp-picker-field {
+  flex: 1; background: var(--surface2); border: 1.5px solid var(--border2);
+  border-radius: var(--r-md); padding: 9px 10px;
+  display: flex; align-items: center; gap: 7px;
+  cursor: pointer; transition: border-color 0.2s; min-height: 46px;
+}
+.fp-picker-field:hover { border-color: var(--accent); }
+.fp-picker-field.fp-open { border-color: var(--accent); background: var(--surface3); }
+.fp-picker-field.fp-selected { border-color: var(--accent); }
+.fp-avatar-placeholder {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background: var(--surface3); border: 1.5px dashed var(--muted);
+}
+.fp-avatar-img { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+.fp-label { font-size: 0.82rem; color: var(--text-dim); flex: 1; }
+.fp-label-chosen { color: var(--text); font-weight: 600; }
+.fp-chevron {
+  font-size: 0.65rem; color: var(--muted);
+  transition: transform 0.2s; pointer-events: none;
+}
+.fp-picker-field.fp-open .fp-chevron { transform: rotate(180deg); }
+.fp-dropdown { margin-bottom: 6px; }
+.fp-dropdown-inner {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--r-md); box-shadow: var(--shadow); overflow: hidden;
+  animation: fpSlideDown 0.15s ease;
+  max-height: 200px; overflow-y: auto;
+}
+@keyframes fpSlideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fp-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; cursor: pointer; transition: background 0.15s;
+  border-bottom: 1px solid var(--border);
+}
+.fp-option:last-child { border-bottom: none; }
+.fp-option:hover { background: var(--surface3); }
+.fp-option.fp-highlighted { background: var(--accent-dim); }
+.fp-option-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; }
+.fp-option-name { font-size: 0.88rem; color: var(--text); flex: 1; }
+.fp-option-rating {
+  font-size: 0.72rem; color: var(--muted);
+  background: var(--surface3); padding: 2px 6px; border-radius: 20px;
+}
+.fp-option-empty { padding: 10px 12px; font-size: 0.82rem; color: var(--muted); text-align: center; }
+.fixed-pairs-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 
