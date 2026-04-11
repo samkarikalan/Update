@@ -117,9 +117,9 @@ function setTheme(mode) {
 
 function setFontSize(size) {
   const root = document.documentElement;
-  if (size === "small")  root.style.setProperty("--base-font-size", "21px");
-  if (size === "medium") root.style.setProperty("--base-font-size", "24px");
-  if (size === "large")  root.style.setProperty("--base-font-size", "27px");
+  if (size === "small")  root.style.setProperty("--base-font-size", "15px");
+  if (size === "medium") root.style.setProperty("--base-font-size", "18px");
+  if (size === "large")  root.style.setProperty("--base-font-size", "21px");
   localStorage.setItem("appFontSize", size);
   document.querySelectorAll("#font_small, #font_medium, #font_large").forEach(el => {
     el.classList.remove("active");

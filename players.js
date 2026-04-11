@@ -577,7 +577,7 @@ function createPlayerCard(player, index) {
       <span class="rating-badge" data-player="${player.name}">${(typeof getActiveRating === 'function' ? getActiveRating(player.name) : getRating(player.name)).toFixed(1)}</span>
     </div>
     <div class="pec-col pec-delete">
-      <button class="pec-delete-btn" onclick="deletePlayer(${index})" title="Remove player"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+      <button class="circle-btn delete" onclick="deletePlayer(${index})" title="Remove player">−</button>
     </div>
   `;
   return card;
